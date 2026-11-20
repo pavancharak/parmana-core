@@ -48,6 +48,25 @@ Restrict who may read or change the secret. Anyone who can read it can sign reco
 
 When the secondary key is a file, the deployment writes it into `PARMANA_KEY_DIR` before the server starts. The server does not fetch files. Make the directory readable only by the server's user, and do not commit the files.
 
+## Infrastructure for the secondary key secret
+
+The Terraform stack in `infra/parmana-prod-signing/main.tf` creates the secret, its own KMS key, and the policies that limit who can read the secret. It is a reviewed draft: it validates, and it has not been planned or applied against an AWS account.
+
+What it creates:
+
+- A KMS key used only for the secret. The server role may decrypt with it. Key administration goes to `secret_key_admin_arn`, which must not be the server role.
+- The secret named `secondary_key_secret_name`, encrypted with that key.
+- A resource policy on the secret that **denies** `GetSecretValue` to every principal except the server role. The deny covers the account root, so a broad IAM grant elsewhere does not allow a read.
+- A rotation writer, only if `rotation_role_arn` is set. That role can write a new value and describe the secret. It cannot read the value.
+- An inline policy on the server role that allows reading that one secret and decrypting with its key.
+
+What it does not create, and why:
+
+- **The secret's value.** It is the dilithium3 private key as PEM. Create it outside Terraform, with a command that reads the PEM from a file that is then deleted, so the key never appears in Terraform state or in this repository. The file must not be in a shared folder.
+- **The CloudTrail alert.** Reads of the secret are logged only if a trail records Secrets Manager data events. Add an alert on `GetSecretValue` from any principal other than the server role. This is an operator step.
+
+Before applying, run `terraform plan` and check that the resource policy and the KMS key policy name only the intended roles.
+
 ## Verifying a key
 
 Obtain a key's fingerprint with `parmana-verify key-fingerprint <public-key.pem>`, and check it out of band before pinning it in a trust file. A verifier accepts a record only under a key it has pinned.
