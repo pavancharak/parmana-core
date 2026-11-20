@@ -604,3 +604,27 @@ article pre.mermaid svg {
   max-width: 100%;
   height: auto;
 }
+
+.zoom-toggle {
+  display: block;
+  margin: 18px 0 -10px auto;
+  font: inherit;
+  font-size: 12px;
+  color: var(--soft);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.zoom-toggle:hover {
+  color: var(--fg);
+}
+article pre.mermaid.zoomed {
+  overflow-x: auto;
+  text-align: left;
+}
+article pre.mermaid.zoomed svg {
+  max-width: none;
+  width: 170%;
+}
