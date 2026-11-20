@@ -48,7 +48,7 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 
 ### F5. Two packages are on npm at `0.1.0` while the repository is `4.1.1`
 
-**Owner answer (2026-11-20): both packages are meant to be public.** Checked: both manifests are at `4.1.1` and not private; both pack cleanly (`npm pack --dry-run` lists only their built `dist` files). The registry has `0.1.0` and `0.0.0-stage`. **Not yet published.** Publishing `4.1.1` is irreversible on npm, so it waits for an explicit go-ahead.
+**Owner answer (2026-11-20): both packages are meant to be public.** Checked: both manifests are at `4.1.1` and not private; both pack cleanly (`npm pack --dry-run` lists only their built `dist` files). The registry has `0.1.0` and `0.0.0-stage`. **Not published, and blocked (2026-11-20).** Two blockers. (1) This environment has no npm credentials (`npm whoami`: ENEEDAUTH), and the release runbook requires publishing from the owner account. (2) `docs/internal/runbooks/RELEASE-ALL-PACKAGES.md` lists nine packages, and neither of these two is among them. Publishing them by hand would skip the runbook's controls: the version-bump PR, the release manifest, SLSA provenance and the registry checks. Next step for the owner: either add both packages to the release manifest and the runbook, then release them through the process, or mark both private if they are internal.
 
 - **Evidence.** `@parmana/envelope-verifier` and `@parmana/execution-system` are `0.1.0` on the registry.
 - **Why not changed.** Publishing is an owner decision.
