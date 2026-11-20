@@ -114,10 +114,16 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Evidence.** The register's change responses (sources, thresholds, actions, approver keys, policy versions, role grants) are documented as `type: object` with `additionalProperties: true`. The record types are defined in `packages/policy/src/v2/register.ts`, and the sample responses are illustrative, not captured.
 - **Recommendation.** Give each record its own schema, and capture a real response from a deployment with policy version 2 enabled to replace the illustrative example.
 
-### F17. Policy v2 is not exercised against a live server
+### F17. Policy v2 is partly exercised against a live server
 
-- **Evidence.** The Policy v2 routes are checked by the route-parity, sample and schema tests, and the server's policy v2 unit tests. No deployment with `PARMANA_POLICY_V2_DECISIONS` set was started in this pass, so no live request was made.
-- **Recommendation.** Start a server with the policy v2 settings and record a decision, a review and an evidence replay, before the owner promotes the contract.
+- **Evidence.** A server ran with `PARMANA_POLICY_V2_DECISIONS=true`, a durable PostgreSQL database (the local 16.16 cluster, migrated), and a bootstrap owner. Against it: a decision request was answered and recorded (`REJECT`, `NO_APPROVED_POLICY`, evidence `ev-1`); the evidence replay reproduced the decision with no differences; the register read and the audit trail answered; and a caller without a role was refused with `403`. The first run, before the fix below, failed with a `TypeError` on the review state.
+- **Not exercised.** A decision that goes to human review, the review decision and its grant, the alert board, the sweeps, and the full register setup (actions, sources, thresholds, approvals and go-live). The decision in this run had no approved policy, so no approval path was reached.
+- **Recommendation.** Set up one approved policy version and a reviewer grant, then record an approve path, a review path and a refusal, and replay each. Record the run here before the owner promotes the contract.
+
+### F20. A partial review state crashed the decision route, and a test left one behind (fixed)
+
+- **Evidence.** The integration test `packages/policy/tests/integration/policy-v2-commit.integration.test.ts` saved `{ items: [] }` as the review state. It truncated the tables before each test but not after the last one, so the row stayed in the shared database. The next server start that read it failed: `ReviewQueue.load` read `snapshot.results` of an undefined value, and each decision answered `500`.
+- **Fix.** `ReviewQueue.load` now checks every part of a stored snapshot, and fails with the part named (`'results' must be a list`). The integration test truncates the Policy v2 tables in `afterAll`. Two unit tests cover the partial snapshot and a complete round trip. The Policy v2 test files (15 files, 130 tests) pass against the local PostgreSQL.
 
 ### F18. The Python SDK could not propose an approver key that the server accepts (fixed)
 
@@ -125,10 +131,10 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Fix.** `propose_add` takes `capabilities: list[str]` (keyword-only, 1 to 50 names, checked before the call), and sends it. The approver API tests and the docs code samples now include it. The Python test suite passes (212 tests). `governance_changes.py` was run against a fresh live server: the maker's own approval is refused, the checker approves the key.
 - **Still open.** The method has been published since 1.4.0 without the argument, so it never worked against a server. The fix needs a release, and a note in the Python changelog that `capabilities` is now required. That release is for the owner to make.
 
-### F19. The published request schema omits `capabilities`, which the server requires
+### F19. The published request schema omits `capabilities`, which the server requires (fixed)
 
-- **Evidence.** `schemas/requests/propose-approval-issuer-change-request.schema.json` lists `action`, `approverId`, `keyId`, `publicKeyPem` and `reason`, and it has no `capabilities` property. The server requires `capabilities` for an `add` change, so a client that follows the schema is refused (HTTP 400). The OpenAPI document (`openapi/openapi.yaml`) describes the add change the same way and does not mention capabilities.
-- **Recommendation.** Add `capabilities` (an array of 1 to 50 capability names) to the schema, and to the OpenAPI request body for `POST /approval-issuers/changes`, so the contract and the server agree. This changes a normative contract, so it needs the owner's decision.
+- **Evidence.** `schemas/requests/propose-approval-issuer-change-request.schema.json` had no `capabilities` property, and the server requires it for an `add` change. The shared change schema, `schemas/common/approval-issuer-change.schema.json`, has `additionalProperties: false` and no `capabilities` either, so a response that includes it would fail that schema.
+- **Fix.** The request schema now has `capabilities` (1 to 50 names, each matching the server's pattern), required with `publicKeyPem` for `add` and not allowed for `revoke`. The shared change schema has `capabilities`. The OpenAPI add example shows it. The bundle and the code samples were regenerated with `npm run openapi`. The 26 test files that cover the schemas, the OpenAPI document and the approver routes pass (170 tests), run against a local PostgreSQL.
 
 ### F14. Verifier Windows commands were not run here
 

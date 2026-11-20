@@ -179,7 +179,7 @@ These public functions or routes exist but are documented only at the level of t
 
 - A live refund against a server with a registered payment source. Tutorial 129 runs the decision in-process; the server path was not run.
 - A run of each of the 202, 500 and 502 branches, and of `reconcile`.
-- A governance example for approving an external connector (the example proposes one and shows it refused) and for signal sources. The approver-key example was blocked by the Python SDK (fixed, F18).
+- The approval of an external connector and of a signal source is covered by connector_and_signal_source.py, run on one network only: on a network where the endpoint does not resolve to a public address, the server refuses the approval, and the example prints that outcome.
 - A bulk trust-record export example.
 - Examples for `KEY_PROVIDER=aws-kms` and the secrets provider.
 - Any example in a language other than TypeScript, Python or the shell. The repository has no Java or Go SDK; the API manifest lists them as `null`.

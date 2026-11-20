@@ -277,3 +277,28 @@ describe("the audit log", () => {
     ]);
   });
 });
+
+describe("loading a stored snapshot", () => {
+  it("names the missing part instead of failing later", () => {
+    const queue = new ReviewQueue(() => START);
+    expect(() =>
+      queue.load({ items: [] } as unknown as Parameters<
+        ReviewQueue["load"]
+      >[0]),
+    ).toThrow(/'results' must be a list/);
+  });
+
+  it("loads a complete snapshot back", () => {
+    const queue = new ReviewQueue(() => START);
+    const empty = {
+      items: [],
+      results: [],
+      grants: [],
+      events: [],
+      alerted: [],
+      counter: 0,
+    };
+    expect(() => queue.load(empty)).not.toThrow();
+    expect(queue.snapshot()).toEqual(empty);
+  });
+});
