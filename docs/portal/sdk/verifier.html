@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en" data-root="../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offline verifier: @parmana/verifier and parmana-verifier · Parmana developer docs</title>
+<meta name="description" content="Offline verifier: @parmana/verifier and parmana-verifier SDKs · Evidence verification · TypeScript SDK · Python SDK Use this when you need to check an Execution Trust Record without trusting the Parmana server and without the Parmana SDK : ">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="index.html">SDKs and packages</a></li><li><a href="typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="python.html">Python SDK: parmana</a></li><li><a href="cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="verifier.html" aria-current="page">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>SDKs and packages</span><span class="sep">/</span><span>Offline verifier: @parmana/verifier and parmana-verifier</span></div>
+    <article>
+<h1 id="offline-verifier-parmanaverifier-and-parmana-verifier">Offline verifier: <code>@parmana/verifier</code> and <code>parmana-verifier</code><a class="anchor" href="#offline-verifier-parmanaverifier-and-parmana-verifier" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">SDKs</a> · <a href="../security/evidence-verification.html">Evidence verification</a> · <a href="typescript.html">TypeScript SDK</a> · <a href="python.html">Python SDK</a></p>
+<p>Use this when you need to check an Execution Trust Record <strong>without trusting the Parmana server and without the Parmana SDK</strong>: an auditor, a regulator, a second team, or a CI job. It needs a record file and a trust file that lists the public keys you accept. It makes no network calls and has no dependencies.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Packages</td>
+<td><code>@parmana/verifier</code> (npm, 2.0.3) · <code>parmana-verifier</code> (PyPI, 2.0.3)</td>
+</tr>
+<tr>
+<td>Command</td>
+<td><code>parmana-verify</code> (both packages)</td>
+</tr>
+<tr>
+<td>Runtime</td>
+<td>Node.js 24 or later (npm). Python with <code>cryptography</code> 48 or later for ML-DSA-65 (PyPI)</td>
+</tr>
+<tr>
+<td>Status</td>
+<td><strong>Implemented.</strong> Its test suite passed 108 of 108 in this verification.</td>
+</tr>
+</tbody></table></div>
+<h2 id="install">Install<a class="anchor" href="#install" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">npm install -g @parmana/verifier@2.0.3     # or run without installing: npx @parmana/verifier@2.0.3 ...
+pip install "parmana-verifier==2.0.3"</code></pre></div>
+<p>Check the command (the npm package&#39;s <code>--help</code> prints its usage and exits with code 2, which is its usage code):</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">npx @parmana/verifier@2.0.3 --help</code></pre></div>
+<h2 id="usage">Usage<a class="anchor" href="#usage" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">parmana-verify &lt;proof.json&gt; &lt;trust.json&gt;        # verify a record
+parmana-verify key-fingerprint &lt;public-key.pem&gt; # print the sha256 fingerprint to pin</code></pre></div>
+<p><code>proof.json</code> is the Execution Trust Record. <code>trust.json</code> is the trust set.</p>
+<p>Exit codes: <code>0</code> valid, <code>1</code> invalid (the reasons are in the output), <code>2</code> usage error, missing file, or invalid JSON.</p>
+<p>The output is one line of JSON:</p>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{
+  "valid": true,
+  "coverage": "legacy",
+  "errors": [],
+  "checks": { "trustRecordHash": true, "signature": true },
+  "correspondence": {
+    "status": "passed",
+    "executions": [{ "executionId": "…", "result": { "status": "passed" } }]
+  }
+}</code></pre></div>
+<ul>
+<li><code>valid</code>: the record passes every check that applies.</li>
+<li><code>coverage</code>: <code>&quot;full&quot;</code> when a schema version 3 envelope verifies, otherwise <code>&quot;legacy&quot;</code>.</li>
+<li><code>checks</code>: each check that ran. <code>hybridSignatures</code> appears when the record carries a hybrid envelope.</li>
+<li><code>correspondence</code>: whether what was dispatched matches what was authorized. It does not change <code>valid</code> or the exit code. Read it with <code>valid</code>.</li>
+</ul>
+<h2 id="the-trust-file">The trust file<a class="anchor" href="#the-trust-file" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{
+  "allowLegacyV2": false,
+  "allowLegacyOnly": false,
+  "keys": [
+    {
+      "keyId": "default",
+      "algorithm": "ed25519",
+      "publicKeyPem": "-----BEGIN PUBLIC KEY-----\n…\n-----END PUBLIC KEY-----\n",
+      "fingerprint": "sha256:&lt;64 hex digits&gt;",
+      "validFrom": "2026-01-01T00:00:00.000Z",
+      "validUntil": null,
+      "compromised": false
+    }
+  ]
+}</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>keys[].keyId</code></td>
+<td>The key id the record names in its signature.</td>
+</tr>
+<tr>
+<td><code>keys[].algorithm</code></td>
+<td><code>ed25519</code> or <code>dilithium3</code> (ML-DSA-65). Must match the record&#39;s signature algorithm.</td>
+</tr>
+<tr>
+<td><code>keys[].publicKeyPem</code></td>
+<td>The public key.</td>
+</tr>
+<tr>
+<td><code>keys[].fingerprint</code></td>
+<td>The SHA-256 of the key&#39;s SPKI DER encoding, <code>sha256:</code> plus 64 hex digits. The verifier refuses a key whose PEM does not hash to this value.</td>
+</tr>
+<tr>
+<td><code>keys[].validFrom</code>, <code>validUntil</code></td>
+<td>The key is used only for records created in this window. <code>validUntil</code> may be <code>null</code>.</td>
+</tr>
+<tr>
+<td><code>keys[].compromised</code></td>
+<td><code>true</code> rejects every signature this key made, whatever the timestamp.</td>
+</tr>
+<tr>
+<td><code>allowLegacyV2</code></td>
+<td>Accept a schema version 2 or unversioned record. Default <code>false</code>.</td>
+</tr>
+<tr>
+<td><code>allowLegacyOnly</code></td>
+<td>Accept a record with no hybrid envelope. Default <code>false</code>.</td>
+</tr>
+<tr>
+<td><code>hybridRequiredFrom</code></td>
+<td>A UTC instant. Records created at or after it must carry a valid hybrid envelope.</td>
+</tr>
+</tbody></table></div>
+<p>The full format is in the verifier repository&#39;s <code>docs/FORMAT.md</code>.</p>
+<h3 id="pin-the-key">Pin the key<a class="anchor" href="#pin-the-key" aria-label="Link to this section">#</a></h3>
+<p>A signature proves only that the holder of a key made it. Before you trust a key, get its PEM and its fingerprint from the operator through a second channel, then compare:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">parmana-verify key-fingerprint operator-public-key.pem
+# sha256:…  ← compare character by character with the value the operator gave you</code></pre></div>
+<p>Only add the key to your trust file once the two match.</p>
+<h3 id="default-trust-rules-why-a-record-can-be-refused">Default trust rules: why a record can be refused<a class="anchor" href="#default-trust-rules-why-a-record-can-be-refused" aria-label="Link to this section">#</a></h3>
+<p>With the defaults, the verifier refuses a record that is schema version 2 or unversioned, and refuses a record with no hybrid envelope. The error names the setting that would accept it. <strong>By default, the server produces schema version 2 records with a single signature.</strong> A default trust file therefore refuses them. You must decide to accept them by setting <code>allowLegacyV2</code> and <code>allowLegacyOnly</code>. The verification in this portal did exactly that, and the script comments say so: <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/verify-standalone.sh"><code>verify-standalone.sh</code></a>. A schema version 3 hybrid record needs no legacy settings: it verified under the default rules in this portal (see <a href="../security/index.html#schema-versions-and-coverage">Security</a>).</p>
+<h2 id="verified-behaviour">Verified behaviour<a class="anchor" href="#verified-behaviour" aria-label="Link to this section">#</a></h2>
+<p>These results come from the verification for this portal:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Test suite (<code>npm test</code> in the verifier repository)</td>
+<td>108 of 108 passed</td>
+</tr>
+<tr>
+<td>Governed record, single signature, with the legacy settings</td>
+<td><code>valid: true</code>, exit 0</td>
+</tr>
+<tr>
+<td>The same record with one covered field changed</td>
+<td><code>valid: false</code>, <code>trustRecordHash mismatch</code>, exit 1</td>
+</tr>
+<tr>
+<td>Hybrid record (ed25519 + dilithium3), with <code>allowLegacyV2</code></td>
+<td><code>valid: true</code>, <code>hybridSignatures: true</code>, exit 0</td>
+</tr>
+<tr>
+<td>Hybrid record with a covered field changed</td>
+<td><code>valid: false</code>, hash and both signatures fail, exit 1</td>
+</tr>
+<tr>
+<td>Governed record with the default trust rules</td>
+<td><code>valid: false</code>, refused with the reason and the setting that would accept it</td>
+</tr>
+</tbody></table></div>
+<h2 id="use-it-from-code">Use it from code<a class="anchor" href="#use-it-from-code" aria-label="Link to this section">#</a></h2>
+<p>The SDKs have the same check built in. Use the SDK function when your code already depends on the SDK. Use the standalone verifier when it must not depend on Parmana code.</p>
+<ul>
+<li>TypeScript: <code>verifyExecutionTrustRecordOffline(record, publicKeys)</code> from <code>@parmana/sdk</code>.</li>
+<li>Python: <code>verify_execution_trust_record_offline(record, public_keys)</code> from <code>parmana.crypto</code>.</li>
+</ul>
+<p>The SDK functions report <code>valid</code> and <code>coverage</code>, but they do not apply the standalone verifier&#39;s refuse-by-default rule. Check <code>coverage</code> in your code. See <a href="../security/evidence-verification.html">Evidence verification</a>.</p>
+<h2 id="limits">Limits<a class="anchor" href="#limits" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The verifier checks what the record says and what the keys you trust signed. It does not check that the business action happened, or that the connector did what the record says. Use the correspondence report and the connector&#39;s own records for that.</li>
+<li>The verifier cannot tell you that a key is authentic. The fingerprint check does that, and only if you compare against a value from a source you trust.</li>
+<li>Post-quantum (<code>dilithium3</code>) verification needs Node.js 24 with OpenSSL 3.5 or later. On an older runtime the record is reported invalid, with the reason, and the command exits 1. It does not crash.</li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/sdk/verifier.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="cli.html"><span>Previous</span>Operator CLI: @parmana/cli (parmana-ops)</a><a class="pn next" href="connector-sdk.html"><span>Next</span>Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#install">Install</a></li><li class="d2"><a href="#usage">Usage</a></li><li class="d2"><a href="#the-trust-file">The trust file</a></li><li class="d3"><a href="#pin-the-key">Pin the key</a></li><li class="d3"><a href="#default-trust-rules-why-a-record-can-be-refused">Default trust rules: why a record can be refused</a></li><li class="d2"><a href="#verified-behaviour">Verified behaviour</a></li><li class="d2"><a href="#use-it-from-code">Use it from code</a></li><li class="d2"><a href="#limits">Limits</a></li></ul></nav>
+</div>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

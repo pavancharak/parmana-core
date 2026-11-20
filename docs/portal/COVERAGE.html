@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="en" data-root="">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentation coverage and verification report · Parmana developer docs</title>
+<meta name="description" content="Documentation coverage and verification report Portal home · Changelog · Known issues This report says what was documented, what was checked, what was run, what failed, and what remains. It was produced on 2026-11-20 from the parmana-core c">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="index.html">Parmana developer portal</a></li><li><a href="overview.html">Overview</a></li><li><a href="getting-started.html">Getting started</a></li><li><a href="faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="architecture.html">Architecture</a></li><li><a href="glossary.html">Glossary</a></li><li><a href="policies/index.html">Policy management</a></li><li><a href="security/index.html">Security and cryptographic verification</a></li><li><a href="security/evidence-verification.html">Evidence verification</a></li><li><a href="security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="tutorials/index.html">Tutorials</a></li><li><a href="tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="api/index.html">REST API reference</a></li><li><a href="api/endpoints.html">Core endpoints</a></li><li><a href="api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="sdk/index.html">SDKs and packages</a></li><li><a href="sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="sdk/python.html">Python SDK: parmana</a></li><li><a href="sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="sdk/python-method-index.html">Python SDK method index</a></li><li><a href="packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="deployment/index.html">Deployment and operations</a></li><li><a href="reference/index.html">Developer reference</a></li><li><a href="reference/environment-variables.html">Environment variable reference</a></li><li><a href="reference/error-codes.html">Error code catalogue</a></li><li><a href="reference/error-code-index.html">Error code index</a></li><li><a href="troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="CHANGELOG.html">Changelog</a></li><li><a href="COVERAGE.html" aria-current="page">Documentation coverage and verification report</a></li><li><a href="FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Project</span><span class="sep">/</span><span>Documentation coverage and verification report</span></div>
+    <article>
+<h1 id="documentation-coverage-and-verification-report">Documentation coverage and verification report<a class="anchor" href="#documentation-coverage-and-verification-report" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">Portal home</a> · <a href="CHANGELOG.html">Changelog</a> · <a href="#known-issues-found-during-this-review">Known issues</a></p>
+<p>This report says what was documented, what was checked, what was run, what failed, and what remains. It was produced on <strong>2026-11-20</strong> from the parmana-core checkout on branch <code>ccr-ead4b602-t6o6n7</code>. The checkout&#39;s HEAD commit before this work was <code>1845194</code>. Every result below was observed in that run. Nothing is reported as passing that was not run.</p>
+<h2 id="summary">Summary<a class="anchor" href="#summary" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Measure</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Portal files</td>
+<td>38 Markdown files (34 narrative, 4 generated), plus 9 example files and 2 tools</td>
+</tr>
+<tr>
+<td>TypeScript SDK methods documented</td>
+<td><strong>58 of 58</strong> named in narrative pages, with signature and HTTP request for each in the generated index</td>
+</tr>
+<tr>
+<td>Python SDK methods documented</td>
+<td><strong>50 of 50</strong> named in narrative pages, with HTTP request for each in the generated index</td>
+</tr>
+<tr>
+<td>OpenAPI operations documented</td>
+<td><strong>94 of 94</strong> named in narrative pages; <strong>56</strong> have a TypeScript SDK method that sends the same request, the other 38 are called over HTTP</td>
+</tr>
+<tr>
+<td>Error codes indexed from source</td>
+<td><strong>106</strong>, each with the file that raises it; <strong>8</strong> observed in a response or runner output</td>
+</tr>
+<tr>
+<td>Environment variables documented</td>
+<td><strong>All 65</strong> names the code reads are in the <a href="reference/environment-variables.html">reference</a>: 54 in the server, SDK and CLI tables, and 11 script, test and tooling names in their own table</td>
+</tr>
+<tr>
+<td>Links</td>
+<td><strong>476 checked, all resolve</strong> (the final check run is in the <a href="#verification-log">verification log</a>)</td>
+</tr>
+<tr>
+<td>Examples run</td>
+<td><strong>All 9</strong> governed-quickstart files ran and passed in their stated configuration; the repository&#39;s own examples ran through <code>npm run examples</code> (116 examples, exit 0)</td>
+</tr>
+<tr>
+<td>REST requests checked against a live server</td>
+<td><strong>27 of 27</strong> (<code>rest-smoke.sh</code>)</td>
+</tr>
+<tr>
+<td>Repository tests run</td>
+<td>Python <code>pytest</code>: <strong>208 of 208</strong>. Verifier <code>npm test</code>: <strong>108 of 108</strong>. TypeScript SDK examples integration test: <strong>3 of 3</strong>. The TypeScript workspace <code>npm test</code>: <strong>22 files, 248 tests passed</strong> (re-run in the latest pass; an earlier run failed, see issue 11).</td>
+</tr>
+</tbody></table></div>
+<h2 id="what-was-documented-by-section">What was documented, by section<a class="anchor" href="#what-was-documented-by-section" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Files</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Overview and getting started</td>
+<td><a href="index.html">README</a>, <a href="overview.html">overview</a>, <a href="getting-started.html">getting started</a>, <a href="faq.html">FAQ</a>, <a href="glossary.html">glossary</a></td>
+<td>Complete. Every command in getting-started was run.</td>
+</tr>
+<tr>
+<td>Architecture</td>
+<td><a href="architecture.html">architecture</a></td>
+<td>Complete: five diagrams, synchronous and asynchronous operations, data flows, trust boundaries. Diagrams are Mermaid, not rendered here.</td>
+</tr>
+<tr>
+<td>SDKs</td>
+<td><a href="sdk/index.html">index</a>, <a href="sdk/typescript.html">TypeScript</a>, <a href="sdk/python.html">Python</a>, <a href="sdk/verifier.html">verifier</a>, <a href="sdk/cli.html">CLI</a>, <a href="sdk/connector-sdk.html">connector SDK</a>, and the two generated method indexes</td>
+<td>Complete for the listed packages. The connector SDK page documents the contract and its import surface, not a release path.</td>
+</tr>
+<tr>
+<td>REST API</td>
+<td><a href="api/index.html">overview</a>, <a href="api/endpoints.html">core endpoints</a>, <a href="api/endpoint-index.html">endpoint index</a> (generated)</td>
+<td>Core endpoints and all 66 operations. Experimental routes labelled.</td>
+</tr>
+<tr>
+<td>Tutorials</td>
+<td><a href="tutorials/index.html">index</a> and eight pages</td>
+<td>Complete. Each tutorial names what was run and what was not.</td>
+</tr>
+<tr>
+<td>Policy management</td>
+<td><a href="policies/index.html">policies</a></td>
+<td>Complete for the fields, versions, approval flow and the version-in-effect rule.</td>
+</tr>
+<tr>
+<td>Deployment and operations</td>
+<td><a href="deployment/index.html">deployment</a></td>
+<td>Implemented options are labelled; Docker, PostgreSQL and cloud were <strong>not run</strong> here.</td>
+</tr>
+<tr>
+<td>Security and evidence</td>
+<td><a href="security/index.html">security</a>, <a href="security/evidence-verification.html">evidence verification</a></td>
+<td>Complete. Schema coverage, the uncovered-field limit and the tamper results were reproduced.</td>
+</tr>
+<tr>
+<td>Troubleshooting</td>
+<td><a href="troubleshooting/index.html">troubleshooting</a></td>
+<td>Complete for the observed messages.</td>
+</tr>
+<tr>
+<td>Reference</td>
+<td><a href="reference/index.html">reference</a>, <a href="reference/error-codes.html">error codes</a>, <a href="reference/error-code-index.html">error index</a>, <a href="reference/environment-variables.html">environment variables</a></td>
+<td>Complete for what was checked.</td>
+</tr>
+</tbody></table></div>
+<h2 id="verification-log">Verification log<a class="anchor" href="#verification-log" aria-label="Link to this section">#</a></h2>
+<p>Each row is a command that was run, its observed result, and the time it took where the run recorded one.</p>
+<h3 id="repository-tests">Repository tests<a class="anchor" href="#repository-tests" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Result</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>npm ci --ignore-scripts</code>, then <code>npm rebuild re2 esbuild</code></td>
+<td>Installed 752 packages. <code>re2</code> needed a rebuild for the server to start.</td>
+<td>not recorded</td>
+</tr>
+<tr>
+<td><code>npm run build</code></td>
+<td>Exit 0</td>
+<td>not recorded</td>
+</tr>
+<tr>
+<td><code>npm test</code> in <code>/home/user/parmana-verifier</code> (verifier)</td>
+<td><strong>108 passed, 0 failed</strong></td>
+<td>1.2 s (verifier&#39;s own duration)</td>
+</tr>
+<tr>
+<td><code>npx vitest run typescript/test/integration/examples.integration.test.ts</code>, with database variables unset</td>
+<td><strong>3 passed</strong> (the two SDK examples, and the refusal without approval)</td>
+<td>4.07 s</td>
+</tr>
+<tr>
+<td><code>npm run test --workspace=typescript</code></td>
+<td><strong>Failed</strong>: 8 of 28 files failed (6 zero-byte test files; 2 integration suites needing environment). 229 tests passed, 3 skipped.</td>
+<td>not recorded</td>
+</tr>
+<tr>
+<td><code>npm test --workspace=typescript</code>, latest pass</td>
+<td><strong>Passed</strong>: 22 files, 248 tests, exit 0. Supersedes the earlier failed run above.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>pytest -q</code> in <code>python/</code> (after <code>pip install &quot;./python[verify,dev]&quot;</code>)</td>
+<td><strong>208 passed</strong></td>
+<td>17.3 s</td>
+</tr>
+<tr>
+<td><code>npm run examples</code> (repository runner, with database variables unset)</td>
+<td>Exit 0. 116 examples ran. The runner&#39;s own summary is in its output.</td>
+<td>not timed</td>
+</tr>
+<tr>
+<td>Tutorial 103 (maker-checker, hermetic), with <code>PARMANA_POLICY_DIR</code> and <code>PARMANA_KEY_DIR</code></td>
+<td>Exit 0. Propose 201; service caller 403 <code>NON_HUMAN_CALLER_DENIED</code>; self-approval 403 <code>SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE</code>; no envelope 403 <code>STEP_UP_AUTHORIZATION_INVALID</code>; checker with envelope approved, policy file written.</td>
+<td>not timed</td>
+</tr>
+</tbody></table></div>
+<h3 id="governed-quickstart-against-a-local-server-memory-storage-test-configuration">Governed quickstart (against a local server, memory storage, test configuration)<a class="anchor" href="#governed-quickstart-against-a-local-server-memory-storage-test-configuration" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>node docs/developer-portal/examples/governed-quickstart/setup.mjs</code></td>
+<td>Wrote keys, policies, caller keys and <code>start-server.sh</code> to <code>~/.parmana/governed-quickstart</code>.</td>
+</tr>
+<tr>
+<td><code>bash ~/.parmana/governed-quickstart/start-server.sh</code></td>
+<td><code>API running on http://0.0.0.0:3000</code>; <code>GET /health</code> returned <code>UP</code>.</td>
+</tr>
+<tr>
+<td><code>npx tsx …/typescript/governed-flow.ts</code></td>
+<td>Exit 0. Maker proposal; self-approval refused (403); checker approved; execution APPROVED; server VERIFIED; offline valid; repeat refused (409). Run twice, both passed.</td>
+</tr>
+<tr>
+<td><code>python3 …/python/governed_flow.py</code></td>
+<td>Exit 0. The same six steps, with the Python SDK. Passed.</td>
+</tr>
+<tr>
+<td>CLI maker-checker, <code>packages/cli/dist/index.js</code> (<code>policy propose</code>, <code>approval sign</code>, <code>approval submit</code>) for <code>vendor-payment@2.1.1</code></td>
+<td>Exit 0. Maker&#39;s submission refused 403 <code>SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE</code>; checker&#39;s submission accepted; policy file written. Run twice (before and after a restart).</td>
+</tr>
+<tr>
+<td><code>npx tsx …/typescript/declare-then-execute.ts</code> with <code>GOVERNED_POLICY_VERSION=2.1.1</code></td>
+<td>Exit 0. RECEIVED, then APPROVED, then VERIFIED.</td>
+</tr>
+<tr>
+<td><code>npx tsx …/typescript/approval-cases.ts</code> with <code>2.1.1</code></td>
+<td>Exit 0. A, B, C, D refused (403); E approved.</td>
+</tr>
+<tr>
+<td><code>npx tsx …/typescript/limits.ts</code> with <code>2.1.1</code></td>
+<td>Exit 0. Three refusals (403).</td>
+</tr>
+<tr>
+<td><code>bash …/rest-smoke.sh</code> with <code>GOVERNED_POLICY_VERSION=2.1.1</code></td>
+<td>Exit 0. <strong>27 passed, 0 failed.</strong></td>
+</tr>
+<tr>
+<td><code>bash …/verify-standalone.sh</code></td>
+<td>Exit 0. Valid record, <code>coverage: legacy</code>, exit 0. Changed copy: <code>valid: false</code>, exit 1. The script used the published <code>@parmana/verifier@2.0.3</code> from npm.</td>
+</tr>
+</tbody></table></div>
+<h3 id="evidence-checks-offline-with-pinned-keys">Evidence checks (offline, with pinned keys)<a class="anchor" href="#evidence-checks-offline-with-pinned-keys" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Schema 2 record, legacy trust settings, as written</td>
+<td><code>valid: true</code>, <code>coverage: legacy</code>.</td>
+</tr>
+<tr>
+<td>Schema 2 record, a covered field changed (<code>executions[0].decision.outcome</code>)</td>
+<td><code>valid: false</code>, <code>trustRecordHash mismatch</code>.</td>
+</tr>
+<tr>
+<td>Schema 2 record, an <strong>uncovered</strong> field changed (<code>updatedAt</code>)</td>
+<td><strong><code>valid: true</code></strong>. Not detected. Reproduced.</td>
+</tr>
+<tr>
+<td>Schema 3 hybrid record (ed25519 + dilithium3), default trust rules</td>
+<td><code>valid: true</code>, <code>coverage: full</code>, <code>hybridSignatures: true</code>.</td>
+</tr>
+<tr>
+<td>Schema 3 record, uncovered field changed (<code>updatedAt</code>)</td>
+<td><code>valid: false</code>, both signatures fail.</td>
+</tr>
+<tr>
+<td>The same schema 3 record through the TypeScript SDK offline function</td>
+<td><code>valid: true</code>, <code>coverage: full</code>. Tampered: <code>valid: false</code>.</td>
+</tr>
+<tr>
+<td>The same schema 3 record through the Python SDK offline function</td>
+<td><code>valid: true</code>, <code>coverage: full</code>. Tampered: <code>valid: false</code>.</td>
+</tr>
+<tr>
+<td>Schema 2 record through the TypeScript and Python SDK offline functions, no legacy settings</td>
+<td><code>valid: true</code>, <code>coverage: legacy</code>. The SDK functions do not apply the standalone verifier&#39;s refuse-by-default rule.</td>
+</tr>
+<tr>
+<td>Fingerprint of the server&#39;s published key versus the signing key</td>
+<td>Identical (<code>sha256:72b5…</code>), checked in the first run.</td>
+</tr>
+</tbody></table></div>
+<h3 id="installs-and-registry-checks">Installs and registry checks<a class="anchor" href="#installs-and-registry-checks" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>npm install @parmana/sdk@4.1.1</code> in a fresh directory, import, <code>VERSION</code></td>
+<td><code>4.1.1</code>; <code>ParmanaClient</code>, <code>createBusinessTransaction</code>, <code>signApproval</code>, <code>signPolicyChangeStepUp</code>, <code>verifyExecutionTrustRecordOffline</code>, <code>ExecutionRejectedError</code>, <code>ParmanaError</code>, <code>HttpTransport</code> exported.</td>
+</tr>
+<tr>
+<td><code>pip install &quot;parmana==4.1.1&quot;</code> in a fresh venv</td>
+<td><code>4.1.1</code>; <code>ParmanaClient</code> imports. <code>parmana.crypto</code> exports checked from the <code>[verify]</code> install.</td>
+</tr>
+<tr>
+<td><code>npm install @parmana/verifier@2.0.3</code> in a fresh directory</td>
+<td><code>parmana-verify</code> binary present, prints usage (exit 2).</td>
+</tr>
+<tr>
+<td><code>pip install &quot;parmana-verifier==2.0.3&quot;</code></td>
+<td>Installed, version 2.0.3.</td>
+</tr>
+<tr>
+<td><code>pip install &quot;parmana-connector-sdk==4.1.1&quot;</code></td>
+<td>Installed. Imports from the README resolve; a malformed capability raises <code>ValueError</code>.</td>
+</tr>
+<tr>
+<td><code>npm install -g --prefix … @parmana/cli@4.1.1</code>, then run <code>parmana-ops</code></td>
+<td><strong>Printed nothing, exit 0</strong> with the published 4.1.1. The repository fixes this (item 5); a release is needed.</td>
+</tr>
+<tr>
+<td><code>npm view</code> for every workspace package marked public</td>
+<td>Eight on npm at the repository version; two on npm at <code>0.1.0</code>; ten not on npm (see <a href="sdk/index.html#published-packages">SDKs</a>).</td>
+</tr>
+</tbody></table></div>
+<h3 id="feature-exercises-and-the-full-run-this-pass">Feature exercises and the full run (this pass)<a class="anchor" href="#feature-exercises-and-the-full-run-this-pass" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>env -u DATABASE_URL -u TEST_DATABASE_URL PARMANA_STORAGE=memory npx vitest run</code> over the execution-intent, kill-switch, inbound and outcome test files (no database)</td>
+<td>39 files passed, 6 skipped; 332 tests passed, 28 skipped, 1 expected failure. Each skipped file needs a PostgreSQL database.</td>
+</tr>
+<tr>
+<td><code>npm run db:migrate apply</code> against a throwaway PostgreSQL 16.15 cluster on <code>localhost</code> (not the hosted database)</td>
+<td>57 migrations applied.</td>
+</tr>
+<tr>
+<td>The six database-gated files, with <code>TEST_DATABASE_URL</code> set to that cluster and <code>ALLOW_LIVE_SUPABASE=1</code></td>
+<td>9 files, 67 tests passed, none skipped.</td>
+</tr>
+<tr>
+<td><code>npx vitest run</code> for <code>execution-record-incomplete-http.integration.test.ts</code> (new)</td>
+<td>1 passed. The 500 <code>EXECUTION_RECORD_INCOMPLETE</code> response has the code and the transaction id, and the connector ran once.</td>
+</tr>
+<tr>
+<td><code>npx vitest run</code> over the 11 OpenAPI-related test files, after the Policy v2 operations were added</td>
+<td>34 tests passed.</td>
+</tr>
+<tr>
+<td><code>npm run openapi</code></td>
+<td>Exit 0. The spec is valid; 94 operations have three samples each; the bundle, the docs copy and the Postman collection (20 folders, 100 requests) are regenerated.</td>
+</tr>
+<tr>
+<td><code>npx redocly lint openapi/openapi.yaml</code></td>
+<td>Valid.</td>
+</tr>
+<tr>
+<td><code>python3 -m pytest tests/test_api_reference_samples.py</code> in <code>python/</code> (mypy <code>--strict</code> over the samples)</td>
+<td>2 passed.</td>
+</tr>
+<tr>
+<td><code>npx vitest run packages/execution-gateway</code></td>
+<td>29 files, 247 tests passed.</td>
+</tr>
+<tr>
+<td><code>npm run examples</code></td>
+<td>Exit 0. 116 examples completed, tutorial 81 among them.</td>
+</tr>
+<tr>
+<td>Tutorial 81 alone, with the environment its README now states</td>
+<td>Exit 0, <code>Tutorial Complete</code>. Without that environment it exits 1 with <code>PARMANA_POLICY_DIR is not set</code>, which is what the README was corrected for.</td>
+</tr>
+<tr>
+<td><code>npm run build:packages</code>, then <code>npx vitest run</code> over the whole repository, with <code>TEST_DATABASE_URL</code> set to the local cluster</td>
+<td>486 of 487 files passed; 4552 tests passed, 1 expected failure, 1 skipped, 2 todo. Exit 0. The one skipped test is the ML-DSA-65 CI check, which runs only when <code>CI=true</code> on Node 24; this run was not on CI. Two <code>it.todo</code> placeholders in <code>refund-amount-scenarios.test.ts</code> are reported as todo.</td>
+</tr>
+<tr>
+<td>Full run after the third-pass commit, with the local cluster up</td>
+<td>487 files: 454 passed, <strong>32 failed</strong> with <code>ECONNREFUSED</code>: the local PostgreSQL had stopped in the sandbox. After restarting the cluster from its existing data directory, the 32 failing files were re-run: <strong>32 passed, 137 tests</strong>. The database is treated as a dependency of the run, not a cause of failure, so this is the re-run result, not a clean full run.</td>
+</tr>
+<tr>
+<td><code>node docs/developer-portal/tools/generate-indexes.mjs</code> and <code>check-docs.mjs</code></td>
+<td>Indexes regenerated (94 OpenAPI operations, 56 with a TypeScript method; 106 error codes). Checker: 38 files, 476 links, all resolve, 0 unnamed operations, exit 0.</td>
+</tr>
+</tbody></table></div>
+<p>The database-gated suites ran against a cluster that holds only the tracked migrations, with the <code>postgres</code> role and trust authentication, on <code>localhost</code>. The cluster is a throwaway, outside the repository, and was stopped after the run.</p>
+<h3 id="docker">Docker<a class="anchor" href="#docker" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>docker compose config -q</code></td>
+<td>Exit 0. Five services listed.</td>
+</tr>
+<tr>
+<td><code>docker info</code></td>
+<td>Daemon not reachable. <strong>The stack was not started.</strong></td>
+</tr>
+</tbody></table></div>
+<h2 id="known-issues-found-during-this-review">Known issues found during this review<a class="anchor" href="#known-issues-found-during-this-review" aria-label="Link to this section">#</a></h2>
+<p>Status after the production-readiness pass. <strong>Fixed</strong> items were changed in the repository and are covered by a test or a live check named in the entry. <strong>Open</strong> items need an owner decision or could not be verified here; each is detailed in <a href="FINDINGS.html">FINDINGS.md</a>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Issue</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>The existing quickstart did not run as written</td>
+<td><strong>Fixed</strong> (quickstart page, approver generator)</td>
+<td>The corrected command starts a server; <code>GET /version</code> and the documented governance refusal were checked live. The approval step remains a manual flow by design: <a href="FINDINGS.html#f7-approvals-are-not-automated-for-the-quickstart">F7</a>.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>PARMANA_ALLOW_UNGOVERNED_POLICY</code> was set by tools but read by nothing</td>
+<td><strong>Fixed</strong> (removed from the runner, load test and tutorial 81)</td>
+<td><code>npm run examples</code> still exits 0 with 116 examples.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>npm run dev:setup</code> cannot run the fixture flows</td>
+<td><strong>Open</strong>: <a href="FINDINGS.html#f3-npm-run-devsetup-cannot-run-the-fixture-flows">F3</a></td>
+<td>Not changed: the dev setup&#39;s policy directory and binding are a design choice.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>/version</code> and the API manifest reported a hand-typed <code>0.4.0</code></td>
+<td><strong>Fixed</strong> (<code>packages/api/src/apiVersionInfo.ts</code> reads the package version)</td>
+<td><code>GET /version</code> returns <code>4.1.1</code> live; a unit-level integration test checks both routes against <code>packages/api/package.json</code>.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>The installed <code>parmana-ops</code> printed nothing</td>
+<td><strong>Fixed in the repository; not yet in a published release.</strong> The published 4.1.1 still has it.</td>
+<td><code>packages/cli/src/index.ts</code> compares real paths; <code>packages/cli/tests/entry-point.test.ts</code> runs the command through a symlink with another name. A release is needed.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Hybrid mode without a secondary provider released actions and then failed to record them</td>
+<td><strong>Fixed</strong> (refused at start-up, before the port is bound)</td>
+<td><code>packages/api/tests/unit/bootstrap/hybrid-secondary-provider.test.ts</code>.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Default records sign only seven fields (schema 2)</td>
+<td><strong>Fixed</strong>: default is schema 3 since 2026-11-20 (owner decision, ADR-0016); schema 2 is the rollback</td>
+<td>Config tests (<code>packages/shared/tests/unit/config.test.ts</code>) and the hybrid verifier tests, all passing in the full run.</td>
+</tr>
+<tr>
+<td>8</td>
+<td>A stale comment said schema 3 records were unreadable</td>
+<td><strong>Fixed</strong> (comment corrected to the verified state)</td>
+<td><code>packages/shared/src/config/Config.ts</code>.</td>
+</tr>
+<tr>
+<td>9</td>
+<td>The SDK offline check reports legacy records as valid</td>
+<td><strong>Open</strong>: <a href="FINDINGS.html#f2-the-sdk-offline-check-reports-legacy-records-as-valid">F2</a></td>
+<td>A public API change; a compatible option is recommended.</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>.env.example</code> said <code>PARMANA_KEY_DIR</code> was optional under <code>NODE_ENV=test</code></td>
+<td><strong>Fixed</strong></td>
+<td>The comment now records the observed behaviour.</td>
+</tr>
+<tr>
+<td>11</td>
+<td>The TypeScript workspace <code>npm test</code> failed (empty test files, missing setup)</td>
+<td><strong>Fixed</strong> (empty files removed; the script uses the root configuration)</td>
+<td><code>npm test --workspace=typescript</code> passes with no extra environment: 22 files, 248 tests.</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Tutorials 60, 103 and 120 failed when run without their environment</td>
+<td><strong>Fixed</strong> (READMEs state the command)</td>
+<td>Each documented command was run and exited 0.</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Policy v2 routes were not in the OpenAPI document</td>
+<td><strong>Fixed</strong>: 28 operations added, tagged and marked experimental, with generated samples</td>
+<td><code>openapi-route-parity.test.ts</code> mounts the Policy v2 routes and checks each documented path; <code>npm run openapi</code> passes; the 11 OpenAPI-related test files pass (34 tests).</td>
+</tr>
+<tr>
+<td>14</td>
+<td>An unknown route returned an HTML page</td>
+<td><strong>Fixed</strong> (JSON <code>404</code>, <code>ROUTE_NOT_FOUND</code>)</td>
+<td><code>packages/api/tests/integration/version-and-unknown-route.integration.test.ts</code>; checked live with a key.</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Two packages are <code>0.1.0</code> on npm while the repository is <code>4.1.1</code></td>
+<td><strong>Open</strong>: <a href="FINDINGS.html#f5-two-packages-are-on-npm-at-010-while-the-repository-is-411">F5</a></td>
+<td>A publishing decision.</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Tutorial 81&#39;s README command failed: it needs the environment the examples runner sets</td>
+<td><strong>Fixed</strong> (the README states the command and environment)</td>
+<td>Run alone with that environment: exit 0, <code>Tutorial Complete</code>.</td>
+</tr>
+<tr>
+<td>17</td>
+<td>The route-parity test could not check Policy v2 routes, because it did not mount them</td>
+<td><strong>Fixed</strong></td>
+<td><code>packages/api/tests/unit/openapi-route-parity.test.ts</code> supplies placeholder services, which only the mount needs.</td>
+</tr>
+<tr>
+<td>18</td>
+<td>The generated samples had no Policy v2 entries, so <code>npm run openapi</code> failed</td>
+<td><strong>Fixed</strong> (<code>scripts/openapi/generate-policy-v2-samples.ts</code>, run by <code>npm run openapi</code>)</td>
+<td>The TypeScript samples typecheck against the SDK; the Python samples pass <code>mypy --strict</code> (2 tests).</td>
+</tr>
+<tr>
+<td>19</td>
+<td>The portal said 105 error codes; the generated index has 106</td>
+<td><strong>Fixed</strong></td>
+<td><code>generate-indexes.mjs</code> reports 106.</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Sandbox environment held a hosted <code>DATABASE_URL</code></td>
+<td>Not a repository defect</td>
+<td>Noted in <a href="FINDINGS.html#notes">FINDINGS</a>.</td>
+</tr>
+<tr>
+<td>17</td>
+<td><strong>New</strong>: production started with memory storage when <code>PARMANA_STORAGE</code> was unset. The <code>doctor</code> reported it; the server did not refuse it.</td>
+<td><strong>Fixed</strong> (<code>assertStorageConfigured</code> refuses it in production; a reversal to confirm: <a href="FINDINGS.html#f0-production-with-memory-storage-is-now-refused-a-reversal-to-confirm">F0</a>)</td>
+<td><code>packages/api/tests/unit/bootstrap/assert-storage-production-durable.test.ts</code>.</td>
+</tr>
+<tr>
+<td>18</td>
+<td><strong>New</strong>: the generated error reference and <code>llms-full.txt</code> were out of date after the changes</td>
+<td><strong>Fixed</strong> (regenerated with the repository&#39;s scripts)</td>
+<td>The two architecture tests that check them now pass.</td>
+</tr>
+<tr>
+<td>19</td>
+<td><strong>New</strong>: the approver key generator failed on a missing output folder</td>
+<td><strong>Fixed</strong></td>
+<td>Created the folder; checked with a nested path.</td>
+</tr>
+<tr>
+<td>20</td>
+<td><strong>New</strong>: the Python verifier passes 107 tests and the Node verifier 108</td>
+<td><strong>Open</strong>: <a href="FINDINGS.html#f10-python-verifier-test-count-differs-from-node">F10</a></td>
+<td>Verdicts agree on every record tried.</td>
+</tr>
+</tbody></table></div>
+<h2 id="undocumented-or-unclear-functionality">Undocumented or unclear functionality<a class="anchor" href="#undocumented-or-unclear-functionality" aria-label="Link to this section">#</a></h2>
+<p>These public functions or routes exist but are documented only at the level of their name, or are not exercised here.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Status in the portal</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Execution intents (ADR-0012): <code>executionIntent</code>, <code>verifyExecutionIntent</code>, <code>unfinalizedExecutionIntents</code>, <code>finalizeExecutionIntent</code>, <code>resolveExecutionIntent</code>, and the <code>/execution-intents</code> routes</td>
+<td><strong>Exercised</strong> by the existing HTTP and runtime tests, which passed with no skips against a local PostgreSQL 16 (see the verification log). Still experimental.</td>
+</tr>
+<tr>
+<td>Kill switch (<code>/kill-switch/*</code>, <code>KILL_SWITCH_*</code>)</td>
+<td><strong>Exercised</strong> by the HTTP tests (<code>kill-switch.integration.test.ts</code>) and the PostgreSQL store tests (<code>postgres-kill-switch.integration.test.ts</code>), which passed against a local PostgreSQL 16. Opt-in; still experimental.</td>
+</tr>
+<tr>
+<td>Inbound refund decisions (<code>/v1/inbound/*</code>, <code>INBOUND_AUDIENCE</code>)</td>
+<td><strong>Exercised</strong>: the HTTP test (<code>inbound-checks-http.integration.test.ts</code>), the route unit tests and the PostgreSQL repository tests all passed against a local PostgreSQL 16. Opt-in; still experimental.</td>
+</tr>
+<tr>
+<td>Handbook download leads (<code>/handbook/download-leads</code>) and the handbook PDF</td>
+<td>Named in the endpoint index. Not described beyond the OpenAPI summary.</td>
+</tr>
+<tr>
+<td>Sandbox approvals (<code>/sandbox/approvals</code>)</td>
+<td><strong>Exercised</strong> by <code>sandbox.integration.test.ts</code>, which passed against a local PostgreSQL 16. Demo only, in sandbox mode.</td>
+</tr>
+<tr>
+<td>Policy v2 (<code>decidePolicyV2</code>, <code>policyV2Review</code>, <code>decidePolicyV2Review</code>, <code>policyV2Replay</code>, and <code>/v2/*</code>)</td>
+<td><strong>Documented in the OpenAPI document</strong> as experimental, with samples, and checked by the parity, sample and schema tests. <strong>Not exercised against a live server</strong> (see F17).</td>
+</tr>
+<tr>
+<td>Connector release path (the signed release from the gateway to a connector)</td>
+<td><strong>Exercised</strong>: tutorial 81 completed in <code>npm run examples</code> (all 116 examples completed), and the 29 execution-gateway test files (247 tests) passed.</td>
+</tr>
+<tr>
+<td><code>@parmana/crypto</code>, <code>@parmana/shared</code>, <code>@parmana/envelope-verifier</code>, <code>@parmana/execution-system</code></td>
+<td>Listed as building blocks. Not documented as APIs.</td>
+</tr>
+<tr>
+<td>Governance changes for approvers, external connectors, business signal sources and authority grants</td>
+<td>Every method and operation is named in the <a href="sdk/typescript.html#governance-changes-every-method">TypeScript</a> and <a href="sdk/python.html#methods-not-covered-above">Python</a> pages and the <a href="api/endpoints.html#every-other-operation">endpoint page</a>. Not exercised against a server.</td>
+</tr>
+<tr>
+<td><code>POST /transactions/{id}/reconcile</code></td>
+<td><strong>Exercised</strong> on PostgreSQL (<code>transaction-status-postgres.integration.test.ts</code>: a release whose EXECUTED write failed is written as EXECUTED by the operator route). Refused without a human credential, over HTTP.</td>
+</tr>
+<tr>
+<td>Bulk trust-record export (<code>GET /trust-records</code> with <code>since</code> and <code>until</code>)</td>
+<td>Described. Not exercised.</td>
+</tr>
+<tr>
+<td><code>parmana-ops log verify</code>, <code>log export</code>, <code>log check-db</code>, <code>approver …</code>, <code>keys generate-approver-key</code>, <code>completion</code></td>
+<td>Listed in the CLI page from <code>--help</code>. Not exercised.</td>
+</tr>
+<tr>
+<td>The 202, 500 <code>EXECUTION_RECORD_INCOMPLETE</code>, and 502 <code>EXECUTION_OUTCOME_UNKNOWN</code> branches</td>
+<td><strong>Exercised by tests, not by a live run</strong>: 202 on PostgreSQL (<code>transaction-status-postgres.integration.test.ts</code>); 500 over HTTP (<code>execution-record-incomplete-http.integration.test.ts</code>, new in this pass); 502 over HTTP (<code>execution-failure.integration.test.ts</code>).</td>
+</tr>
+<tr>
+<td><code>SIGNING_UNAVAILABLE</code>, <code>AUDIT_UNAVAILABLE</code>, <code>TENANT_NOT_ALLOWED</code></td>
+<td>Described from source. Not triggered.</td>
+</tr>
+<tr>
+<td>The <code>PARMANA_KEY_MATERIAL_*</code>, <code>PARMANA_SECRETS_PROVIDER</code> and AWS variables</td>
+<td>Described from the example file and the code. Not exercised.</td>
+</tr>
+<tr>
+<td>Python LLM tool-call example (<code>python/examples/10_llm_tool_call.py</code>)</td>
+<td>Referenced, not run.</td>
+</tr>
+</tbody></table></div>
+<h2 id="missing-examples">Missing examples<a class="anchor" href="#missing-examples" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>A Python version of the declare-then-execute flow and of the approval cases.</li>
+<li>A Python version of the CLI maker-checker flow (the CLI is the same in both languages).</li>
+<li>A live refund against a server with a registered payment source. Tutorial 129 runs the decision in-process; the server path was not run.</li>
+<li>A run of each of the 202, 500 and 502 branches, and of <code>reconcile</code>.</li>
+<li>A governance example for approver keys, connectors, signal sources and authority grants.</li>
+<li>A bulk trust-record export example.</li>
+<li>Examples for <code>KEY_PROVIDER=aws-kms</code> and the secrets provider.</li>
+<li>Any example in a language other than TypeScript, Python or the shell. The repository has no Java or Go SDK; the API manifest lists them as <code>null</code>.</li>
+</ul>
+<h2 id="terminology">Terminology<a class="anchor" href="#terminology" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The portal uses <strong>Business Transaction</strong>, <strong>Execution Trust Record</strong>, <strong>policy version in effect</strong>, <strong>approval artifact</strong> and <strong>maker-checker</strong> throughout, as the glossary defines them.</li>
+<li>The repository uses both &quot;Trust Record&quot; and &quot;Execution Trust Record&quot;. The portal uses &quot;Execution Trust Record&quot; in full at first mention on each page, and &quot;record&quot; after that.</li>
+<li>The API says &quot;approval&quot;, the schema says <code>approvalArtifact</code>, and the SDK calls the function <code>signApproval</code>. The portal uses &quot;approval&quot; in prose and the exact names in code.</li>
+<li>The API&#39;s <code>status</code> values (<code>RECEIVED</code>, <code>EXECUTING</code>, <code>VERIFIED</code>, and others) are plain strings in the Python SDK in this build.</li>
+</ul>
+<h2 id="remaining-gaps">Remaining gaps<a class="anchor" href="#remaining-gaps" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>The Docker stack, PostgreSQL migrations and the cloud deployment were not run. The Docker path needs a host with a running daemon.</li>
+<li>No latency or throughput figure is published. The load-test script was not run.</li>
+<li>Backup, restore, rotation and KMS verification were described from scripts and code, not run.</li>
+<li>The Python SDK&#39;s async behaviour is not applicable (the client is synchronous); the portal says so.</li>
+<li>The TypeScript SDK in a browser is not documented, and is not verified.</li>
+<li>The website navigation (see below) is proposed, not applied.</li>
+</ol>
+<h2 id="website-integration">Website integration<a class="anchor" href="#website-integration" aria-label="Link to this section">#</a></h2>
+<p>The repository&#39;s documentation site is Mintlify (<code>docs/site/docs.json</code>). This portal does not change that site. It is plain Markdown, and the <a href="index.html#proposed-website-navigation">portal index</a> proposes a navigation. <strong>Publishing or changing the site needs the owner&#39;s approval, and was not done.</strong></p>
+<h2 id="recommended-next-steps">Recommended next steps<a class="anchor" href="#recommended-next-steps" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>Publish a <code>@parmana/cli</code> release that contains the entry-point fix (item 5), and then drop the workaround from the CLI pages.</li>
+<li>Decide F1 (the schema 3 default) and F2 (the SDK fail-closed option), with the owner.</li>
+<li>Decide F3 and F6, the dev setup and the Policy v2 contract.</li>
+<li>Decide F5 (publish or privatise the two <code>0.1.0</code> packages).</li>
+<li>Run the Docker stack, the migrations and the load test on a host with a daemon, and record the results (F8, F9).</li>
+<li>Keep the governed kit in CI, since it is the only path in the portal that runs end to end.</li>
+</ol>
+<h2 id="files-created">Files created<a class="anchor" href="#files-created" aria-label="Link to this section">#</a></h2>
+<p>All files are under <code>docs/developer-portal/</code>:</p>
+<ul>
+<li>Portal: <code>README.md</code>, <code>overview.md</code>, <code>getting-started.md</code>, <code>architecture.md</code>, <code>faq.md</code>, <code>glossary.md</code>, <code>CHANGELOG.md</code>, <code>COVERAGE.md</code></li>
+<li>SDKs: <code>sdk/README.md</code>, <code>sdk/typescript.md</code>, <code>sdk/python.md</code>, <code>sdk/verifier.md</code>, <code>sdk/cli.md</code>, <code>sdk/connector-sdk.md</code>, <code>sdk/typescript-method-index.md</code> (generated), <code>sdk/python-method-index.md</code> (generated)</li>
+<li>API: <code>api/README.md</code>, <code>api/endpoints.md</code>, <code>api/endpoint-index.md</code> (generated)</li>
+<li>Tutorials: <code>tutorials/README.md</code>, <code>tutorials/nodejs-integration.md</code>, <code>tutorials/python-integration.md</code>, <code>tutorials/fintech-integration.md</code>, <code>tutorials/refund-authorization.md</code>, <code>tutorials/maker-checker.md</code>, <code>tutorials/transaction-limits.md</code>, <code>tutorials/ai-agents.md</code></li>
+<li>Policies: <code>policies/README.md</code></li>
+<li>Deployment: <code>deployment/README.md</code></li>
+<li>Security: <code>security/README.md</code>, <code>security/evidence-verification.md</code></li>
+<li>Troubleshooting: <code>troubleshooting/README.md</code></li>
+<li>Reference: <code>reference/README.md</code>, <code>reference/error-codes.md</code>, <code>reference/error-code-index.md</code> (generated), <code>reference/environment-variables.md</code></li>
+<li>Examples: <code>examples/README.md</code>, <code>examples/governed-quickstart/setup.mjs</code>, <code>examples/governed-quickstart/start-server.sh</code> (written to <code>~/.parmana</code> by the setup), <code>examples/governed-quickstart/rest-smoke.sh</code>, <code>examples/governed-quickstart/verify-standalone.sh</code>, <code>examples/governed-quickstart/typescript/{governed-flow,declare-then-execute,approval-cases,limits,make-transaction}.ts</code>, <code>examples/governed-quickstart/python/governed_flow.py</code></li>
+<li>Tools: <code>tools/generate-indexes.mjs</code>, <code>tools/check-docs.mjs</code></li>
+<li>Changelog: <code>CHANGELOG.md</code></li>
+</ul>
+<p>No file outside <code>docs/developer-portal/</code> was changed. The existing documentation, the server, the packages, the tests and the examples are unchanged.</p>
+<h2 id="verification-log-1">Verification log<a class="anchor" href="#verification-log-1" aria-label="Link to this section">#</a></h2>
+<p>The final checker run is listed here. Re-run it with <code>node docs/developer-portal/tools/check-docs.mjs</code> and <code>node docs/developer-portal/tools/generate-indexes.mjs</code> from the repository root.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>generate-indexes.mjs</code></td>
+<td>TypeScript 58 methods (57 with a request, 1 local). OpenAPI 94 operations (56 covered by a TypeScript method). Python 50 methods (48 with a request, 2 local). Error codes 106 (8 triggered).</td>
+</tr>
+<tr>
+<td><code>check-docs.mjs</code></td>
+<td>38 files. 476 links: all resolve. TypeScript methods not named in narrative pages: 0. Python: 0. OpenAPI operations not named in narrative pages: 0. Stale claims: none. Exit 0.</td>
+</tr>
+</tbody></table></div>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/COVERAGE.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="CHANGELOG.html"><span>Previous</span>Changelog</a><a class="pn next" href="FINDINGS.html"><span>Next</span>Findings: open items after the production-readiness pass</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#summary">Summary</a></li><li class="d2"><a href="#what-was-documented-by-section">What was documented, by section</a></li><li class="d2"><a href="#verification-log">Verification log</a></li><li class="d3"><a href="#repository-tests">Repository tests</a></li><li class="d3"><a href="#governed-quickstart-against-a-local-server-memory-storage-test-configuration">Governed quickstart (against a local server, memory storage, test configuration)</a></li><li class="d3"><a href="#evidence-checks-offline-with-pinned-keys">Evidence checks (offline, with pinned keys)</a></li><li class="d3"><a href="#installs-and-registry-checks">Installs and registry checks</a></li><li class="d3"><a href="#feature-exercises-and-the-full-run-this-pass">Feature exercises and the full run (this pass)</a></li><li class="d3"><a href="#docker">Docker</a></li><li class="d2"><a href="#known-issues-found-during-this-review">Known issues found during this review</a></li><li class="d2"><a href="#undocumented-or-unclear-functionality">Undocumented or unclear functionality</a></li><li class="d2"><a href="#missing-examples">Missing examples</a></li><li class="d2"><a href="#terminology">Terminology</a></li><li class="d2"><a href="#remaining-gaps">Remaining gaps</a></li><li class="d2"><a href="#website-integration">Website integration</a></li><li class="d2"><a href="#recommended-next-steps">Recommended next steps</a></li><li class="d2"><a href="#files-created">Files created</a></li><li class="d2"><a href="#verification-log-1">Verification log</a></li></ul></nav>
+</div>
+<script src="search-index.js"></script>
+<script src="portal.js"></script>
+</body>
+</html>

@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en" data-root="../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security and cryptographic verification · Parmana developer docs</title>
+<meta name="description" content="Security and cryptographic verification Portal home · Evidence verification · Architecture · Repository threat model · Security policy This page explains what Parmana signs, what the signatures cover, how the keys are trusted, and what happ">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="index.html" aria-current="page">Security and cryptographic verification</a></li><li><a href="evidence-verification.html">Evidence verification</a></li><li><a href="schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Concepts</span><span class="sep">/</span><span>Security and cryptographic verification</span></div>
+    <article>
+<h1 id="security-and-cryptographic-verification">Security and cryptographic verification<a class="anchor" href="#security-and-cryptographic-verification" aria-label="Link to this section">#</a></h1>
+<p><a href="../index.html">Portal home</a> · <a href="evidence-verification.html">Evidence verification</a> · <a href="../architecture.html">Architecture</a> · <a href="https://github.com/pavancharak/parmana-core/blob/main/THREAT-MODEL.md">Repository threat model</a> · <a href="https://github.com/pavancharak/parmana-core/blob/main/SECURITY.md">Security policy</a></p>
+<p>This page explains what Parmana signs, what the signatures cover, how the keys are trusted, and what happens when something goes wrong. The claims are checked against the code and against tests run for this portal. Where the protection has a limit, the limit is stated next to the claim.</p>
+<p>For the full threat model, read <a href="https://github.com/pavancharak/parmana-core/blob/main/THREAT-MODEL.md">THREAT-MODEL.md</a>. For how to report a vulnerability, read <a href="https://github.com/pavancharak/parmana-core/blob/main/SECURITY.md">SECURITY.md</a>.</p>
+<h2 id="what-is-signed">What is signed<a class="anchor" href="#what-is-signed" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Signed by</th>
+<th>Algorithm</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Execution Trust Record</strong></td>
+<td>the deployment&#39;s <code>default</code> key</td>
+<td>Ed25519; optionally also ML-DSA-65 (<code>dilithium3</code>)</td>
+<td>The evidence for one Business Transaction: the transaction, the authorization, the decision, the outcome.</td>
+</tr>
+<tr>
+<td><strong>Gateway attestation</strong></td>
+<td>the <code>gateway</code> key</td>
+<td>Ed25519</td>
+<td>The gateway&#39;s statement about a release. Its public half is in the key directory.</td>
+</tr>
+<tr>
+<td><strong>Receipt</strong></td>
+<td>the deployment&#39;s signing key (and the secondary key in hybrid mode)</td>
+<td>Ed25519 (ML-DSA-65 secondary in hybrid mode)</td>
+<td>A signed statement that a verified record existed, with its hash.</td>
+</tr>
+<tr>
+<td><strong>Approval artifact</strong></td>
+<td>the approver&#39;s own key</td>
+<td>Ed25519</td>
+<td>A human&#39;s approval for one action, scoped by capability, target, amount, expiry, and single use.</td>
+</tr>
+<tr>
+<td><strong>Policy step-up envelope</strong></td>
+<td>the checker&#39;s own key</td>
+<td>Ed25519</td>
+<td>A checker&#39;s approval of one policy change, valid for 120 seconds.</td>
+</tr>
+<tr>
+<td><strong>Approval record</strong></td>
+<td>the deployment&#39;s signing key</td>
+<td>the signing key&#39;s algorithm (Ed25519 by default)</td>
+<td>The stored approval of a policy version, written when the checker&#39;s approval succeeds.</td>
+</tr>
+</tbody></table></div>
+<h2 id="hashing-and-canonical-json">Hashing and canonical JSON<a class="anchor" href="#hashing-and-canonical-json" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Every signed structure is first turned into <strong>canonical bytes</strong>. The rule is the same in the server, the TypeScript SDK, the Python SDK and the standalone verifier: object keys sorted by code unit, array order kept, no insignificant whitespace, non-ASCII characters written as they are, encoded as UTF-8.</li>
+<li>The record&#39;s <code>trustRecordHash</code> is the lowercase hexadecimal <strong>SHA-256</strong> of the canonical bytes of the covered content.</li>
+<li>Signatures are computed over those canonical bytes (or over the hash, for the hybrid envelope).</li>
+<li>Fingerprints of public keys are <code>sha256:</code> plus the SHA-256 of the key&#39;s SPKI DER encoding, as 64 lowercase hex digits.</li>
+</ul>
+<p>Verified: changing one covered field of a record changes <code>trustRecordHash</code>, and both the hash and the signature checks fail (the three verifiers agree).</p>
+<h2 id="trust-roots">Trust roots<a class="anchor" href="#trust-roots" aria-label="Link to this section">#</a></h2>
+<p>A signature proves only that the holder of a key made it. Whether to believe a record depends on which keys you trust:</p>
+<ul>
+<li><strong>Your trust root</strong> is a set of public keys that you chose and checked. Pin each one by its fingerprint, compared with a value from a second source. <a href="evidence-verification.html#step-2-pin-the-keys-you-trust">Evidence verification</a> shows the steps.</li>
+<li><strong>The server publishes</strong> its keys at <code>GET /keys/{keyId}</code> and <code>GET /.well-known/jwks.json</code>. A published key is a candidate for pinning. It is not a trust decision on its own.</li>
+<li><strong>Approver keys</strong> are trusted through approval-issuer governance (a person proposes and another approves; see <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/site/guides/manage-approvers.mdx">Manage approvers</a>). Test deployments may trust a local test approver through <code>PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE</code>, only with <code>NODE_ENV=test</code>. The server refuses that setting in any other environment.</li>
+<li><strong>Checker step-up keys</strong> are stored in the checker&#39;s caller entry (<code>stepUpPublicKey</code>).</li>
+</ul>
+<h2 id="schema-versions-and-coverage">Schema versions and coverage<a class="anchor" href="#schema-versions-and-coverage" aria-label="Link to this section">#</a></h2>
+<p>The record&#39;s <code>schemaVersion</code> says which fields the signatures cover. The verifier reports this as <code>coverage</code>. The <a href="schema-v3.html">complete schema 3 reference</a> covers the cutover, the configuration, the decision and the rollout.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Schema version</th>
+<th>What the signatures cover</th>
+<th>Coverage reported</th>
+<th>Default on this build</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>2</strong> (or unversioned)</td>
+<td>Seven top-level fields: <code>trustRecordId</code>, <code>businessTransactionId</code>, <code>transaction</code>, <code>authorization</code>, <code>overrides</code>, <code>executions</code>, <code>createdAt</code>.</td>
+<td><code>legacy</code></td>
+<td>No. Rollback only (<code>HYBRID_SCHEMA_VERSION=2</code>).</td>
+</tr>
+<tr>
+<td><strong>3</strong> (hybrid)</td>
+<td>Every top-level field except <code>signature</code>, <code>signatures</code>, <code>schemaVersion</code>, <code>verifications</code> and <code>receipts</code>. <code>schemaVersion</code> is covered by the hybrid message.</td>
+<td><code>full</code></td>
+<td><strong>Yes</strong>, since 2026-11-20 (ADR-0016).</td>
+</tr>
+</tbody></table></div>
+<p><strong>Verified in this portal, on records from the same run:</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Change to the record</th>
+<th>Schema 2 (<code>legacy</code>)</th>
+<th>Schema 3 (<code>full</code>)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A covered field (<code>executions[0].decision.outcome</code>)</td>
+<td>Detected: <code>trustRecordHash mismatch</code>, signature fails</td>
+<td>Detected</td>
+</tr>
+<tr>
+<td>An uncovered field (<code>updatedAt</code>)</td>
+<td><strong>Not detected: <code>valid: true</code></strong></td>
+<td>Detected: both signatures fail</td>
+</tr>
+</tbody></table></div>
+<p>So a schema 2 record&#39;s <code>valid: true</code> tells you only that its covered fields are unchanged. It does not cover <code>updatedAt</code>, <code>evidenceAnchor</code>, <code>verifications</code> or <code>receipts</code>. A party who can write to the stored file can change those without the check failing. The verifier documents this in its format notes; this portal reproduced it.</p>
+<p><strong>Schema 2 can also be stripped.</strong> <code>schemaVersion</code> is not covered by the legacy signature. Someone who can write to stored records could remove the hybrid envelope and set the version to 2. The fix is <code>hybridRequiredFrom</code> in the trust file, which requires a hybrid envelope for records created at or after a cutover time.</p>
+<p><strong>Schema 3 is the default.</strong> Hybrid signing makes the server issue schema 3 records. Configure hybrid signing:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">CRYPTO_MODE=hybrid
+PRIMARY_SIGNATURE_PROVIDER=ed25519
+SECONDARY_SIGNATURE_PROVIDER=dilithium3
+# HYBRID_SCHEMA_VERSION is 3 when unset. Set 2 only to roll back.</code></pre></div>
+<p>Verified: with this configuration, a record reported <code>&quot;coverage&quot;:&quot;full&quot;</code> under the verifier&#39;s default trust rules (no legacy flags), and the TypeScript and Python SDK offline checks agreed (<code>coverage: &quot;full&quot;</code>). A tampered copy was rejected by all three. The server&#39;s source describes the schema 3 setting as an issuance decision (ADR-0016), and it is off unless set. Choose it deliberately for production, and confirm the verifiers you hand records to accept it.</p>
+<p>Configuration notes:</p>
+<ul>
+<li><strong><code>CRYPTO_MODE=hybrid</code> without <code>SECONDARY_SIGNATURE_PROVIDER</code> breaks execution.</strong> The action is released, and the server then fails to produce the record. In a run for this portal the response was <code>500</code> with <code>Secondary signature provider is not configured.</code> See <a href="../troubleshooting/index.html#hybrid-signing-without-a-secondary-provider-now-refused-at-start-up">Troubleshooting</a>.</li>
+<li>The secondary key must be a <code>dilithium3</code> (ML-DSA-65) key, generated with the repository&#39;s key script (<code>scripts/generate-keypair.ts --algorithm dilithium3</code>) or equivalent. This needs Node.js 24 with OpenSSL 3.5 or later.</li>
+</ul>
+<h2 id="tamper-detection">Tamper detection<a class="anchor" href="#tamper-detection" aria-label="Link to this section">#</a></h2>
+<p>Verified results, using one record and the same pinned keys:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Original record, schema 2, legacy settings</td>
+<td><code>valid: true</code>, exit 0</td>
+</tr>
+<tr>
+<td>Changed covered field</td>
+<td><code>valid: false</code>, <code>trustRecordHash mismatch</code>, <code>signature verification failed</code>, exit 1</td>
+</tr>
+<tr>
+<td>Original hybrid record, schema 3, default settings</td>
+<td><code>valid: true</code>, <code>coverage: full</code></td>
+</tr>
+<tr>
+<td>Hybrid record, changed field</td>
+<td><code>valid: false</code>, hash and both signatures fail</td>
+</tr>
+<tr>
+<td>Record signed by a different key</td>
+<td><code>signature verification failed for keyId &quot;default&quot;</code></td>
+</tr>
+</tbody></table></div>
+<p>The verifier&#39;s trust rules add more checks: a key whose PEM does not match its fingerprint is not used; a compromised key rejects its signatures whatever their timestamp; a record created outside a key&#39;s validity window is not verified with that key.</p>
+<h2 id="evidence-integrity">Evidence integrity<a class="anchor" href="#evidence-integrity" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The record is signed when it is written. Verifications and receipts are attached afterwards, and the record&#39;s signature does not cover them (for schema 2 and 3 alike). Keep the signed record as your evidence, and treat verifications and receipts as separate, dated statements.</li>
+<li><code>replay</code> checks the stored hash and signature again. It does not evaluate the policy and does not execute anything.</li>
+<li><code>receipt</code> requires the record to be <code>VERIFIED</code> first.</li>
+<li>A <strong>refusal</strong> is recorded too. A refused execution has a refusal record, signed, retrievable by its business transaction id.</li>
+</ul>
+<h2 id="fail-closed-behaviour">Fail-closed behaviour<a class="anchor" href="#fail-closed-behaviour" aria-label="Link to this section">#</a></h2>
+<p>Parmana refuses rather than guesses. These behaviours were observed:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Behaviour observed</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The server starts without a policy directory</td>
+<td>Refuses to start: <code>PARMANA_POLICY_DIR is not set.</code></td>
+</tr>
+<tr>
+<td><code>NODE_ENV=production</code> with memory storage (the default when <code>PARMANA_STORAGE</code> is unset)</td>
+<td>Refuses to start, before the port is bound: memory is not durable.</td>
+</tr>
+<tr>
+<td><code>CRYPTO_MODE=hybrid</code> without <code>SECONDARY_SIGNATURE_PROVIDER</code>, or equal to the primary</td>
+<td>Refuses to start. Earlier builds released actions first, then failed to record them.</td>
+</tr>
+<tr>
+<td>The server starts without a signing key directory</td>
+<td>Refuses to start: <code>PARMANA_KEY_DIR is not configured.</code></td>
+</tr>
+<tr>
+<td>No approval, or an approval that does not verify</td>
+<td>Refused with <code>403</code>.</td>
+</tr>
+<tr>
+<td>An approval reused, expired, or for another target</td>
+<td>Refused with <code>403</code>, <code>humanApproved</code> verified as false.</td>
+</tr>
+<tr>
+<td>The policy version is not the one in effect</td>
+<td>Refused with <code>403</code>: &quot;was superseded&quot;.</td>
+</tr>
+<tr>
+<td>A policy version with no approval record</td>
+<td>Refused with <code>403</code>: &quot;has no PolicyChangeApprovalRecord&quot;.</td>
+</tr>
+<tr>
+<td>The payment source does not answer (refund policy)</td>
+<td>Refused: <code>SOURCE_UNAVAILABLE</code>.</td>
+</tr>
+<tr>
+<td>A bad or missing caller key</td>
+<td><code>401</code>. Nothing is evaluated.</td>
+</tr>
+<tr>
+<td>The test approver configured outside <code>NODE_ENV=test</code></td>
+<td>Refuses to start.</td>
+</tr>
+<tr>
+<td><code>DATABASE_PROVIDER</code> set (a removed setting)</td>
+<td>Refuses to start: <code>DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead.</code></td>
+</tr>
+<tr>
+<td>The action released, but the record cannot be signed</td>
+<td><code>500</code>: the action ran; do not resubmit.</td>
+</tr>
+<tr>
+<td>The action released, then the connector call fails</td>
+<td><code>502</code>, <code>EXECUTION_OUTCOME_UNKNOWN</code>: reconcile.</td>
+</tr>
+</tbody></table></div>
+<h2 id="caller-authentication">Caller authentication<a class="anchor" href="#caller-authentication" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Keys are sent as <code>Authorization: Bearer &lt;key&gt;</code>. The server holds only the SHA-256 hash of each key (<code>PARMANA_API_KEYS</code>).</li>
+<li>The OpenAPI document states that the stored hash is compared in constant time.</li>
+<li>Repeated authentication failures are rate limited (<code>RATE_LIMIT_AUTH_FAILURE_PER_MINUTE</code>).</li>
+<li>A key may act only for its allowed principals and invoke only its allowed capabilities, and the server checks both on every request.</li>
+</ul>
+<h2 id="key-management">Key management<a class="anchor" href="#key-management" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Where it lives</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Signing key (<code>default</code>)</td>
+<td>The key directory (<code>PARMANA_KEY_DIR</code>) for <code>KEY_PROVIDER=local</code>, or a KMS for <code>KEY_PROVIDER=aws-kms</code></td>
+<td>The server signs with it and never returns it.</td>
+</tr>
+<tr>
+<td>Gateway key (<code>gateway</code>)</td>
+<td>The key directory, or KMS</td>
+<td>Signs gateway attestations.</td>
+</tr>
+<tr>
+<td>Secondary key (<code>default-secondary</code>)</td>
+<td>The key directory</td>
+<td>Required for hybrid mode.</td>
+</tr>
+<tr>
+<td>Approver keys</td>
+<td>The approver&#39;s own machine</td>
+<td>The server holds only the public key.</td>
+</tr>
+<tr>
+<td>Checker step-up keys</td>
+<td>The checker&#39;s own machine</td>
+<td>The server holds only the public key, in the checker&#39;s caller entry.</td>
+</tr>
+<tr>
+<td>Caller keys</td>
+<td>The caller&#39;s secret store</td>
+<td>The server holds the hash. Shown once, when generated.</td>
+</tr>
+</tbody></table></div>
+<p><strong>Rotation.</strong> The repository has <code>scripts/rotate-verification-key.ts</code> (<code>npm run rotate:verification-key</code>). It was not run in this verification. Rotate a signing key only with the old public key kept in your trust set, so records signed before the rotation still verify. Mark an old key <code>compromised</code> only when you must reject its signatures.</p>
+<p><strong>KMS.</strong> <code>KEY_PROVIDER=aws-kms</code> is supported. The server checks that a KMS key is reachable at start-up, and the signing algorithm is restricted to Ed25519 in that mode. The verification script <code>npm run verify:kms</code> was not run here.</p>
+<p><strong>Never</strong> put a private key in a repository, an environment variable shown in logs, or a shared secret store that the signer cannot control. <code>PARMANA_KEY_MATERIAL_JSON</code> can carry key material that the server writes into the key directory at boot (see the comments in the repository&#39;s <code>.env.example</code>). Treat that variable as a secret, and see <a href="../reference/environment-variables.html">Environment variables</a>.</p>
+<h2 id="limits">Limits<a class="anchor" href="#limits" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Coverage</strong> depends on the schema version. Schema 2 leaves most fields outside the signature (see above).</li>
+<li><strong>The signature proves the key holder made it, not that the business action happened.</strong> Use the connector&#39;s own records and the correspondence report to show that the action ran as recorded.</li>
+<li><strong>Trust is only as good as the pinned keys.</strong> An attacker who controls your trust file controls what you believe.</li>
+<li><strong>Source answers are as good as the source.</strong> A sourced fact is only as trustworthy as the registered source that answers it.</li>
+<li><strong>Records from a deployment with no storage durability are lost on restart.</strong> Memory storage is for development only.</li>
+<li><strong><code>/v2/*</code>, <code>/execution-intents/*</code> and <code>/kill-switch/*</code> are experimental or opt-in.</strong> Read their status in the <a href="../api/index.html#experimental-and-opt-in-routes">API overview</a>.</li>
+</ul>
+<h2 id="checklist-for-a-production-deployment">Checklist for a production deployment<a class="anchor" href="#checklist-for-a-production-deployment" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"> Hybrid signing with schema 3 is configured, and the verifiers you hand records to accept <code>coverage: full</code>.</li>
+<li><input disabled="" type="checkbox"> <code>NODE_ENV=production</code>, PostgreSQL storage, and no test approver or auth-disabled setting.</li>
+<li><input disabled="" type="checkbox"> Signing keys in a KMS or a key directory the server alone can read; approver and checker keys with their owners.</li>
+<li><input disabled="" type="checkbox"> Trust files pinned by fingerprint, compared with a second source.</li>
+<li><input disabled="" type="checkbox"> <code>hybridRequiredFrom</code> set in every trust file, so a schema 2 stripping attack is refused for records created after the cutover.</li>
+<li><input disabled="" type="checkbox"> Policy changes approved through maker-checker, and <code>POLICY_CHANGE_CHECKERS</code> set to named people.</li>
+<li><input disabled="" type="checkbox"> Caller keys scoped to their capabilities and principals, and reviewed.</li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/security/README.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="../policies/index.html"><span>Previous</span>Policy management</a><a class="pn next" href="evidence-verification.html"><span>Next</span>Evidence verification</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#what-is-signed">What is signed</a></li><li class="d2"><a href="#hashing-and-canonical-json">Hashing and canonical JSON</a></li><li class="d2"><a href="#trust-roots">Trust roots</a></li><li class="d2"><a href="#schema-versions-and-coverage">Schema versions and coverage</a></li><li class="d2"><a href="#tamper-detection">Tamper detection</a></li><li class="d2"><a href="#evidence-integrity">Evidence integrity</a></li><li class="d2"><a href="#fail-closed-behaviour">Fail-closed behaviour</a></li><li class="d2"><a href="#caller-authentication">Caller authentication</a></li><li class="d2"><a href="#key-management">Key management</a></li><li class="d2"><a href="#limits">Limits</a></li><li class="d2"><a href="#checklist-for-a-production-deployment">Checklist for a production deployment</a></li></ul></nav>
+</div>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

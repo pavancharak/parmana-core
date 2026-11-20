@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en" data-root="../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operator CLI: @parmana/cli (parmana-ops) · Parmana developer docs</title>
+<meta name="description" content="Operator CLI: @parmana/cli ( parmana-ops ) SDKs · Maker-checker tutorial · Policy management parmana-ops is the operator's command-line tool. It proposes policy changes from a file, signs a checker's step-up envelope on the checker's own ma">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="index.html">SDKs and packages</a></li><li><a href="typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="python.html">Python SDK: parmana</a></li><li><a href="cli.html" aria-current="page">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>SDKs and packages</span><span class="sep">/</span><span>Operator CLI: @parmana/cli (parmana-ops)</span></div>
+    <article>
+<h1 id="operator-cli-parmanacli-parmana-ops">Operator CLI: <code>@parmana/cli</code> (<code>parmana-ops</code>)<a class="anchor" href="#operator-cli-parmanacli-parmana-ops" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">SDKs</a> · <a href="../tutorials/maker-checker.html">Maker-checker tutorial</a> · <a href="../policies/index.html">Policy management</a></p>
+<p><code>parmana-ops</code> is the operator&#39;s command-line tool. It proposes policy changes from a file, signs a checker&#39;s step-up envelope on the checker&#39;s own machine, submits it, creates caller keys, and generates approver keys. It is the recommended route for a policy change in a real deployment, because the signing key never has to leave the checker&#39;s machine.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Package</td>
+<td><code>@parmana/cli</code> (npm, 4.1.1)</td>
+</tr>
+<tr>
+<td>Binary</td>
+<td><code>parmana-ops</code></td>
+</tr>
+<tr>
+<td>Status</td>
+<td><strong>Implemented.</strong> The installed-binary defect is fixed in the repository. The published 4.1.1 on npm still has it until a release containing the fix is published (see below).</td>
+</tr>
+</tbody></table></div>
+<h2 id="install">Install<a class="anchor" href="#install" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">npm install -g @parmana/cli@4.1.1</code></pre></div>
+<h2 id="the-installed-binary-fixed-in-the-repository-not-yet-in-a-published-release">The installed binary: fixed in the repository, not yet in a published release<a class="anchor" href="#the-installed-binary-fixed-in-the-repository-not-yet-in-a-published-release" aria-label="Link to this section">#</a></h2>
+<p>In <code>@parmana/cli</code> 4.1.1 on npm, running the installed <code>parmana-ops</code> printed nothing and exited 0. The entry-point check matched only file names ending in <code>index.js</code> or <code>parmana</code>, so a bin started under its own name never ran <code>main()</code>.</p>
+<p><strong>The repository now compares real paths</strong>, following symlinks, so the bin name works. Two regression tests cover it: one runs the command through a symlink with a different name, and one checks that importing the module does not run the command. Until a release containing the fix is published, the published package still has the defect. Use the file directly:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">CLI="$(npm root -g)/@parmana/cli/dist/index.js"
+node "$CLI" --help
+node "$CLI" policy status vendor-payment 2.1.1</code></pre></div>
+<p>From a repository checkout, <code>node packages/cli/dist/index.js</code> works, and so does <code>parmana-ops</code> through a symlink once the package is built.</p>
+<h2 id="global-options-and-environment">Global options and environment<a class="anchor" href="#global-options-and-environment" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Option or variable</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--output text|json</code></td>
+<td>Output format. Default <code>text</code>.</td>
+</tr>
+<tr>
+<td><code>--profile &lt;name&gt;</code> / <code>PARMANA_PROFILE</code></td>
+<td>A named API address from the config file.</td>
+</tr>
+<tr>
+<td><code>--api-url &lt;url&gt;</code> / <code>PARMANA_API_URL</code></td>
+<td>The API address. The flag overrides the variable and the profile.</td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>Print the request without sending it.</td>
+</tr>
+<tr>
+<td><code>--verbose</code></td>
+<td>Log each request and response code, with secrets removed.</td>
+</tr>
+<tr>
+<td><code>--timeout &lt;seconds&gt;</code></td>
+<td>Per-request timeout. Default 30.</td>
+</tr>
+<tr>
+<td><code>PARMANA_TOKEN</code></td>
+<td>The caller&#39;s bearer token. Read from the environment only.</td>
+</tr>
+<tr>
+<td><code>PARMANA_CONFIG</code></td>
+<td>Path to the config file.</td>
+</tr>
+</tbody></table></div>
+<p>Use <code>PARMANA_TOKEN</code> for the token. Do not pass it as a flag, because flags end up in shell history.</p>
+<h2 id="commands">Commands<a class="anchor" href="#commands" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>policy propose &lt;policy.json&gt; --name &lt;n&gt; --version &lt;v&gt; --reason &quot;&lt;why&gt;&quot;</code></td>
+<td>Propose a policy change. The file&#39;s <code>policyId</code> and <code>policyVersion</code> must match <code>--name</code> and <code>--version</code>.</td>
+</tr>
+<tr>
+<td><code>policy status &lt;name&gt; &lt;version&gt;</code></td>
+<td>List the pending changes for one policy version. Approved and rejected changes are not listed.</td>
+</tr>
+<tr>
+<td><code>approval sign --key-file &lt;private.pem&gt; --key-id &lt;id&gt; --pending &lt;id&gt; --action &lt;approve|reject&gt; [--out &lt;file&gt;]</code></td>
+<td>Sign a step-up envelope locally. Nothing is sent. The envelope expires 120 seconds after signing.</td>
+</tr>
+<tr>
+<td><code>approval submit --pending &lt;id&gt; --action &lt;approve|reject&gt; --envelope &lt;file&gt;</code></td>
+<td>Send a signed envelope with the checker&#39;s own token.</td>
+</tr>
+<tr>
+<td><code>approver list</code>, <code>approver propose-add</code>, <code>approver propose-revoke</code>, <code>approver submit</code></td>
+<td>Manage approver keys through approval-issuer changes.</td>
+</tr>
+<tr>
+<td><code>keys generate-api-key --caller-id &lt;id&gt; --out-dir &lt;dir&gt; [--allowed-capabilities a,b] [--allowed-principal-ids a,b] [--credential-holder-type USER] [--generate-step-up-key]</code></td>
+<td>Generate a caller&#39;s raw key, its <code>PARMANA_API_KEYS</code> entry, and optionally a step-up key pair. Writes owner-only files and prints no secret.</td>
+</tr>
+<tr>
+<td><code>keys generate-approver-key</code></td>
+<td>Generate an approver&#39;s Ed25519 key pair. The private key stays with the approver.</td>
+</tr>
+<tr>
+<td><code>log verify</code>, <code>log export</code>, <code>log check-db</code></td>
+<td>Check and export the approval log.</td>
+</tr>
+<tr>
+<td><code>completion</code></td>
+<td>Print a shell completion script.</td>
+</tr>
+</tbody></table></div>
+<p><code>--generate-step-up-key</code> requires <code>--credential-holder-type USER</code>.</p>
+<h2 id="the-maker-checker-flow-with-the-cli">The maker-checker flow with the CLI<a class="anchor" href="#the-maker-checker-flow-with-the-cli" aria-label="Link to this section">#</a></h2>
+<p>This was run against a local server for this portal, using the repository build of the CLI (<code>packages/cli/dist/index.js</code>) in place of the bin name, for the reason above:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">export PARMANA_API_URL=http://localhost:3000
+CLI=packages/cli/dist/index.js
+
+# 1. The maker proposes a version from a file.
+PARMANA_TOKEN="$MAKER_KEY" node $CLI policy propose vendor-payment-2.1.1.json \
+  --name vendor-payment --version 2.1.1 --reason "Limit change"
+# -&gt; pendingPolicyChangeId: &lt;id&gt;
+
+# 2. The maker tries to approve (refused, as it must be).
+PARMANA_TOKEN="$MAKER_KEY" node $CLI approval submit --pending &lt;id&gt; --action approve --envelope envelope.json
+# -&gt; HTTP 403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE
+
+# 3. The checker signs the envelope locally, then submits it with their own token.
+node $CLI approval sign --key-file checker-stepup.private.pem --key-id checker-step-up-key \
+  --pending &lt;id&gt; --action approve --out envelope.json
+PARMANA_TOKEN="$CHECKER_KEY" node $CLI approval submit --pending &lt;id&gt; --action approve --envelope envelope.json
+# -&gt; the change is returned; the policy version is now in effect for execution</code></pre></div>
+<p>Keep <code>$MAKER_KEY</code> and <code>$CHECKER_KEY</code> in your shell only for the commands that need them, and in a secret store otherwise. Never commit the step-up private key.</p>
+<h2 id="verified-behaviour">Verified behaviour<a class="anchor" href="#verified-behaviour" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>policy propose</code> from a file</td>
+<td>Returned the pending change id and the proposed content.</td>
+</tr>
+<tr>
+<td><code>approval sign</code></td>
+<td>Wrote the envelope and reported that it expires 120 seconds after signing.</td>
+</tr>
+<tr>
+<td>Maker submits its own approval</td>
+<td><code>HTTP 403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE</code>, with a hint that the token is not allowed.</td>
+</tr>
+<tr>
+<td>Checker submits</td>
+<td>The change was approved: no longer listed as pending, and the live <code>policy.json</code> was written to the policy directory.</td>
+</tr>
+</tbody></table></div>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/sdk/cli.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="python.html"><span>Previous</span>Python SDK: parmana</a><a class="pn next" href="verifier.html"><span>Next</span>Offline verifier: @parmana/verifier and parmana-verifier</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#install">Install</a></li><li class="d2"><a href="#the-installed-binary-fixed-in-the-repository-not-yet-in-a-published-release">The installed binary: fixed in the repository, not yet in a published release</a></li><li class="d2"><a href="#global-options-and-environment">Global options and environment</a></li><li class="d2"><a href="#commands">Commands</a></li><li class="d2"><a href="#the-maker-checker-flow-with-the-cli">The maker-checker flow with the CLI</a></li><li class="d2"><a href="#verified-behaviour">Verified behaviour</a></li></ul></nav>
+</div>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

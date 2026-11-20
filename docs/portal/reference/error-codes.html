@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en" data-root="../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Error code catalogue · Parmana developer docs</title>
+<meta name="description" content="Error code catalogue Reference · Full code index (106 codes, generated) · Troubleshooting · API overview A Parmana error is an HTTP status plus a body. The body has an error message and, for most refusals, a code . The SDKs turn the status ">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="index.html">Developer reference</a></li><li><a href="environment-variables.html">Environment variable reference</a></li><li><a href="error-codes.html" aria-current="page">Error code catalogue</a></li><li><a href="error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Operate</span><span class="sep">/</span><span>Error code catalogue</span></div>
+    <article>
+<h1 id="error-code-catalogue">Error code catalogue<a class="anchor" href="#error-code-catalogue" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">Reference</a> · <a href="error-code-index.html">Full code index (106 codes, generated)</a> · <a href="../troubleshooting/index.html">Troubleshooting</a> · <a href="../api/index.html#errors">API overview</a></p>
+<p>A Parmana error is an HTTP status plus a body. The body has an <code>error</code> message and, for most refusals, a <code>code</code>. The SDKs turn the status into a class, and keep the server&#39;s code where one is sent.</p>
+<p>This page lists the codes a developer meets most often. Each row says whether the code was <strong>observed</strong> in this verification (the status and message are real), or <strong>from source/spec</strong> (the code and status are in the OpenAPI document or the server source, and the row says where). The <a href="error-code-index.html">generated index</a> lists every code the server source defines, with the file that raises it.</p>
+<h2 id="status-to-sdk-class">Status to SDK class<a class="anchor" href="#status-to-sdk-class" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>TypeScript class</th>
+<th>Python class</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>400</code></td>
+<td><code>ValidationError</code></td>
+<td><code>ValidationError</code></td>
+<td>Malformed request. Nothing was stored.</td>
+</tr>
+<tr>
+<td><code>401</code></td>
+<td><code>AuthenticationError</code></td>
+<td><code>AuthenticationError</code></td>
+<td>No key, or an unknown key.</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td><code>AuthorizationError</code>, or <code>ExecutionRejectedError</code> for <code>POLICY_DENIED</code></td>
+<td><code>AuthorizationError</code>, or <code>ExecutionRejectedError</code></td>
+<td><code>CAPABILITY_NOT_ALLOWED</code> and <code>TENANT_NOT_ALLOWED</code> keep their code as <code>serverCode</code>.</td>
+</tr>
+<tr>
+<td><code>404</code></td>
+<td><code>NotFoundError</code></td>
+<td><code>NotFoundError</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>409</code></td>
+<td><code>ConflictError</code></td>
+<td><code>ConflictError</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>202</code></td>
+<td><code>ExecutionPendingError</code> (on execute)</td>
+<td><code>ExecutionPendingError</code></td>
+<td>Released; the status is not yet final.</td>
+</tr>
+<tr>
+<td><code>429</code></td>
+<td><code>RateLimitError</code></td>
+<td><code>RateLimitError</code></td>
+<td><code>retryAfterSeconds</code> when <code>Retry-After</code> is sent.</td>
+</tr>
+<tr>
+<td><code>5xx</code></td>
+<td><code>InternalServerError</code></td>
+<td><code>InternalServerError</code></td>
+<td>The server code is kept as <code>serverCode</code>.</td>
+</tr>
+<tr>
+<td>none</td>
+<td><code>NetworkError</code>, <code>TimeoutError</code></td>
+<td><code>NetworkError</code>, <code>TimeoutError</code></td>
+<td></td>
+</tr>
+</tbody></table></div>
+<p>The mapping is in <code>typescript/src/transport/mapHttpErrorResponse.ts</code> and in the Python <code>errors</code> package.</p>
+<h2 id="codes-observed-in-this-verification">Codes observed in this verification<a class="anchor" href="#codes-observed-in-this-verification" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Where it comes from</th>
+<th>Message (as observed)</th>
+<th>Meaning and fix</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CAPABILITY_NOT_ALLOWED</code></td>
+<td><code>403</code></td>
+<td>Caller check on <code>POST /execute</code></td>
+<td><code>Caller is not permitted to invoke this capability.</code></td>
+<td>The key may not invoke this action. Check <code>GET /callers/me</code>.</td>
+</tr>
+<tr>
+<td><code>CAPABILITY_NOT_BOUND</code></td>
+<td><code>404</code></td>
+<td><code>GET /policies/in-effect</code></td>
+<td><code>No policy is bound to capability &quot;…&quot;.</code></td>
+<td>The capability has no policy binding on this build. Name the policy in the request instead.</td>
+</tr>
+<tr>
+<td><code>VERIFICATION_FAILED</code></td>
+<td><code>404</code></td>
+<td><code>POST /verify</code>, <code>POST /receipt</code></td>
+<td><code>Execution Trust Record not found.</code></td>
+<td>The key has no record with that id. Check the id and the key.</td>
+</tr>
+<tr>
+<td><code>SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE</code></td>
+<td><code>403</code></td>
+<td><code>POST /policies/pending-changes/{id}/approve</code></td>
+<td><code>…was proposed by this same caller — the proposer (maker) may not also approve or reject it (checker).</code></td>
+<td>The maker tried to approve their own change. A different checker approves.</td>
+</tr>
+<tr>
+<td><code>NON_HUMAN_CALLER_DENIED</code></td>
+<td><code>403</code></td>
+<td>Governance routes</td>
+<td><code>NON_HUMAN_CALLER_DENIED</code> (code)</td>
+<td>A service caller tried a human-only route.</td>
+</tr>
+<tr>
+<td><code>STEP_UP_AUTHORIZATION_INVALID</code></td>
+<td><code>403</code></td>
+<td>Governance approve and reject</td>
+<td>(code)</td>
+<td>The envelope is missing, expired, wrong, or not signed by the checker&#39;s registered key. Sign a fresh envelope and submit it at once.</td>
+</tr>
+<tr>
+<td><code>SOURCE_UNAVAILABLE</code></td>
+<td>Not captured (the runner reported a business-validation outcome)</td>
+<td>A sourced fact</td>
+<td><code>business validation SOURCE_UNAVAILABLE: … payment provider timed out</code></td>
+<td>The source did not answer. Parmana fails closed. Do not approve on a guess.</td>
+</tr>
+<tr>
+<td><code>RATE_LIMITED</code></td>
+<td><code>429</code></td>
+<td>Rate limits</td>
+<td><code>429 RATE_LIMITED with Retry-After 60</code></td>
+<td>Too many requests, or too many failed authentications. Wait for <code>Retry-After</code>.</td>
+</tr>
+</tbody></table></div>
+<p>Plain error bodies without a code are also common. Each row below was observed unless it says &quot;from source&quot;:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Body (observed)</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>401</code></td>
+<td><code>{&quot;error&quot;:&quot;authentication required&quot;}</code></td>
+<td>No key, or an unknown key.</td>
+</tr>
+<tr>
+<td><code>400</code></td>
+<td><code>{&quot;error&quot;:&quot;businessTransactionId must be a valid UUID.&quot;}</code></td>
+<td>The id is not a UUID.</td>
+</tr>
+<tr>
+<td><code>400</code></td>
+<td><code>{&quot;error&quot;:&quot;capability is required, for example ?capability=erp:invoice-pay.&quot;}</code></td>
+<td>A required query parameter is missing.</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td><code>{&quot;error&quot;:&quot;Caller is not permitted to assert this authority.principalId.&quot;}</code> (from source, not triggered here)</td>
+<td>The key may not act for this principal. No code.</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td><code>{&quot;error&quot;:&quot;Execution rejected: Rejected: …&quot;}</code></td>
+<td>An execution refused by the decision. The message names the reason.</td>
+</tr>
+<tr>
+<td><code>404</code></td>
+<td><code>{&quot;error&quot;:&quot;Business Transaction not found.&quot;}</code></td>
+<td>Unknown transaction for this key.</td>
+</tr>
+<tr>
+<td><code>404</code></td>
+<td><code>{&quot;error&quot;:&quot;Execution Trust Record not found.&quot;}</code></td>
+<td>Unknown record.</td>
+</tr>
+<tr>
+<td><code>404</code></td>
+<td><code>{&quot;error&quot;:&quot;Policy &#39;vendor-payment&#39; version &#39;2.1.0&#39; was not found.&quot;}</code></td>
+<td>No such version on this server.</td>
+</tr>
+<tr>
+<td><code>409</code></td>
+<td><code>{&quot;error&quot;:&quot;Business Transaction &#39;…&#39; already exists.&quot;}</code></td>
+<td>The id was used. Nothing ran again.</td>
+</tr>
+<tr>
+<td><code>400</code></td>
+<td><code>{&quot;error&quot;:&quot;Request body must be a Refusal Record (refusalRecordId, …).&quot;}</code></td>
+<td>A verification body is missing fields. The message names them.</td>
+</tr>
+<tr>
+<td><code>404</code></td>
+<td><code>{&quot;error&quot;:&quot;Route not found.&quot;,&quot;code&quot;:&quot;ROUTE_NOT_FOUND&quot;}</code></td>
+<td>An unknown path, sent with a valid key. Added in this change; earlier builds returned an HTML page.</td>
+</tr>
+</tbody></table></div>
+<h3 id="execution-refusals">Execution refusals<a class="anchor" href="#execution-refusals" aria-label="Link to this section">#</a></h3>
+<p>A refused execution comes back as <code>403</code> with a message that begins <code>Execution rejected:</code>. The message is the reason. The observed reasons:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Reason (observed)</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Rejected: policy &quot;vendor-payment&quot;@&quot;2.1.0&quot; has no PolicyChangeApprovalRecord -- it has never completed the Policy Governance approval flow.</code></td>
+<td>The version was never approved through maker-checker.</td>
+</tr>
+<tr>
+<td><code>Rejected: policy &quot;vendor-payment&quot;@&quot;2.1.0&quot; was superseded: the version in effect is &quot;2.1.1&quot;, the one most recently approved.</code></td>
+<td>The request named an older version.</td>
+</tr>
+<tr>
+<td><code>Rejected: declared signal(s) do not match independently verified state (humanApproved=true != verified humanApproved=false).</code></td>
+<td>The verified human approval is false: expired, wrong target or amount, or not trusted.</td>
+</tr>
+<tr>
+<td><code>Rejected: declared signal(s) do not match the executed intent (paymentAmount=999 != intent.parameters.amount=1000).</code></td>
+<td>A bound signal differs from the request.</td>
+</tr>
+<tr>
+<td><code>Rejected: no approval verifier is configured, so the signed human approval this action needs cannot be checked.</code></td>
+<td>The server has no approval verifier configured (tutorial 120).</td>
+</tr>
+<tr>
+<td><code>Vendor payment rejected because the assessed payment risk exceeds the maximum permitted threshold.</code></td>
+<td>A policy rule rejected the request.</td>
+</tr>
+<tr>
+<td><code>Vendor payment rejected because one or more required policy conditions were not satisfied.</code></td>
+<td>A required condition is not met, for example no approval attached.</td>
+</tr>
+</tbody></table></div>
+<h2 id="codes-from-source-and-the-openapi-document">Codes from source and the OpenAPI document<a class="anchor" href="#codes-from-source-and-the-openapi-document" aria-label="Link to this section">#</a></h2>
+<p>These were not triggered by a live server run. Each is described from the OpenAPI document (<code>openapi/openapi.yaml</code>) or the server source. Where an automated test in the server&#39;s suite triggers the branch, the row names that test. The status is the one the document states.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Meaning</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POLICY_DENIED</code></td>
+<td><code>403</code></td>
+<td>The policy refused the request. Final for that request.</td>
+<td>Show the reason. Do not retry.</td>
+</tr>
+<tr>
+<td><code>EXECUTION_RECORD_INCOMPLETE</code></td>
+<td><code>500</code></td>
+<td>The action was released, but its signed record could not be produced. The OpenAPI document says not to retry as a new transaction. Triggered over HTTP by <code>packages/api/tests/integration/execution-record-incomplete-http.integration.test.ts</code> (the response has the code and the transaction id, and the connector ran once).</td>
+<td>Reconcile the transaction.</td>
+</tr>
+<tr>
+<td><code>EXECUTION_OUTCOME_UNKNOWN</code></td>
+<td><code>502</code></td>
+<td>The action was released and the connector call failed. Triggered over HTTP by <code>packages/api/tests/integration/execution-failure.integration.test.ts</code>.</td>
+<td>Reconcile against the connector. Do not resend as new.</td>
+</tr>
+<tr>
+<td><code>SIGNING_UNAVAILABLE</code></td>
+<td><code>503</code></td>
+<td>Signing is unavailable. The source describes it as &quot;nothing executed&quot;.</td>
+<td>Retry later with the same id.</td>
+</tr>
+<tr>
+<td><code>TENANT_NOT_ALLOWED</code></td>
+<td><code>403</code></td>
+<td>The key may not act for this <code>tenantId</code>.</td>
+<td>Use an allowed tenant, or omit it.</td>
+</tr>
+<tr>
+<td><code>AUDIT_UNAVAILABLE</code></td>
+<td><code>503</code> (in the audit path)</td>
+<td>The caller audit trail could not be written, so the request is refused rather than run unrecorded.</td>
+<td>Check the database.</td>
+</tr>
+<tr>
+<td><code>EXECUTION_STATUS_PENDING</code></td>
+<td><code>202</code></td>
+<td>Released and recorded, status <code>EXECUTING</code>. Triggered on PostgreSQL by <code>packages/api/tests/integration/transaction-status-postgres.integration.test.ts</code> (the EXECUTED write fails after the release).</td>
+<td>Reconcile.</td>
+</tr>
+<tr>
+<td><code>NO_APPROVAL_RECORD</code></td>
+<td><code>403</code> at execution (observed as the refusal &quot;has no PolicyChangeApprovalRecord&quot;)</td>
+<td>A policy version has no approval record.</td>
+<td>Approve the version through maker-checker.</td>
+</tr>
+</tbody></table></div>
+<p>The full list of codes the server defines, with the file that raises each, is in the <a href="error-code-index.html">generated index</a>. Many of them are for features that are opt-in or experimental: execution intents (<code>EXECUTION_INTENT_*</code>), the kill switch (<code>KILL_SWITCH_*</code>), inbound refunds, the policy v2 review and replay flow (<code>REVIEW_*</code>, <code>THRESHOLD_*</code>), and connector changes. Those are described in the <a href="../api/index.html#experimental-and-opt-in-routes">API overview</a>.</p>
+<h2 id="http-status-summary">HTTP status summary<a class="anchor" href="#http-status-summary" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Typical codes</th>
+<th>First check</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>200</code></td>
+<td>none</td>
+<td>Read the body. For verify and replay, read <code>status</code> or <code>verified</code>, not the status alone.</td>
+</tr>
+<tr>
+<td><code>201</code></td>
+<td>none</td>
+<td>A proposal or declaration was accepted.</td>
+</tr>
+<tr>
+<td><code>202</code></td>
+<td><code>EXECUTION_STATUS_PENDING</code></td>
+<td>Reconcile. Do not resubmit.</td>
+</tr>
+<tr>
+<td><code>400</code></td>
+<td>none (message names the field)</td>
+<td>Fix the request.</td>
+</tr>
+<tr>
+<td><code>401</code></td>
+<td>none</td>
+<td>Check the key.</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td><code>POLICY_DENIED</code>, <code>CAPABILITY_NOT_ALLOWED</code>, <code>TENANT_NOT_ALLOWED</code>, <code>SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE</code>, <code>NON_HUMAN_CALLER_DENIED</code>, <code>STEP_UP_AUTHORIZATION_INVALID</code></td>
+<td>Read the message and the code.</td>
+</tr>
+<tr>
+<td><code>404</code></td>
+<td><code>CAPABILITY_NOT_BOUND</code></td>
+<td>Check the id, the policy version, and the binding.</td>
+</tr>
+<tr>
+<td><code>409</code></td>
+<td>none</td>
+<td>The id was used. Read the existing outcome.</td>
+</tr>
+<tr>
+<td><code>429</code></td>
+<td><code>RATE_LIMITED</code></td>
+<td>Wait for <code>Retry-After</code>.</td>
+</tr>
+<tr>
+<td><code>500</code></td>
+<td><code>EXECUTION_RECORD_INCOMPLETE</code></td>
+<td>The action may have run. Reconcile.</td>
+</tr>
+<tr>
+<td><code>502</code></td>
+<td><code>EXECUTION_OUTCOME_UNKNOWN</code></td>
+<td>The action may have run. Reconcile.</td>
+</tr>
+<tr>
+<td><code>503</code></td>
+<td><code>SIGNING_UNAVAILABLE</code>, <code>AUDIT_UNAVAILABLE</code></td>
+<td>Nothing was executed. Retry later.</td>
+</tr>
+</tbody></table></div>
+<p>For the debugging steps that go with each row, see <a href="../troubleshooting/index.html">Troubleshooting</a>.</p>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/reference/error-codes.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="environment-variables.html"><span>Previous</span>Environment variable reference</a><a class="pn next" href="error-code-index.html"><span>Next</span>Error code index</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#status-to-sdk-class">Status to SDK class</a></li><li class="d2"><a href="#codes-observed-in-this-verification">Codes observed in this verification</a></li><li class="d3"><a href="#execution-refusals">Execution refusals</a></li><li class="d2"><a href="#codes-from-source-and-the-openapi-document">Codes from source and the OpenAPI document</a></li><li class="d2"><a href="#http-status-summary">HTTP status summary</a></li></ul></nav>
+</div>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

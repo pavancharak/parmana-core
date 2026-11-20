@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en" data-root="../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Core endpoints · Parmana developer docs</title>
+<meta name="description" content="Core endpoints REST API overview · Endpoint index (all 66) · Error codes This page covers the routes most integrations use. For each one: the purpose, the authentication, the request, the response, the errors, and a curl and JavaScript exam">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="index.html">REST API reference</a></li><li><a href="endpoints.html" aria-current="page">Core endpoints</a></li><li><a href="endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>API reference</span><span class="sep">/</span><span>Core endpoints</span></div>
+    <article>
+<h1 id="core-endpoints">Core endpoints<a class="anchor" href="#core-endpoints" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">REST API overview</a> · <a href="endpoint-index.html">Endpoint index (all 66)</a> · <a href="../reference/error-codes.html">Error codes</a></p>
+<p>This page covers the routes most integrations use. For each one: the purpose, the authentication, the request, the response, the errors, and a <code>curl</code> and JavaScript example. Where the verification run covered a route, the responses are real output from a local server; each one says so. Other responses are described from the OpenAPI document and the code, and say so.</p>
+<p>Conventions used in the examples:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">export PARMANA_API_URL=http://localhost:3000        # your Parmana endpoint
+export PARMANA_API_KEY=&lt;your-caller-key&gt;            # raw key, never the hash</code></pre></div>
+<p>Responses are abbreviated with <code>…</code> where they are long. Everything is JSON unless noted.</p>
+<p>The runnable version of most of these calls is <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/rest-smoke.sh"><code>examples/governed-quickstart/rest-smoke.sh</code></a>. It runs against the local server that the <a href="../getting-started.html">getting-started guide</a> starts.</p>
+<hr>
+<h2 id="health-and-identity">Health and identity<a class="anchor" href="#health-and-identity" aria-label="Link to this section">#</a></h2>
+<h3 id="get-health"><code>GET /health</code><a class="anchor" href="#get-health" aria-label="Link to this section">#</a></h3>
+<p>Liveness. No key.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s "$PARMANA_API_URL/health"</code></pre></div>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{ "status": "UP" }</code></pre></div>
+<p>Verified: <code>200</code>.</p>
+<h3 id="get-ready"><code>GET /ready</code><a class="anchor" href="#get-ready" aria-label="Link to this section">#</a></h3>
+<p>Readiness. Reports whether the server is ready and what storage it uses. No key.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s "$PARMANA_API_URL/ready"</code></pre></div>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{ "status": "READY", "storage": "not-supabase-backed", "authDisabled": false }</code></pre></div>
+<p>Verified on memory storage: <code>200</code>. With <code>PARMANA_STORAGE=postgres</code> (or <code>supabase</code>) the server checks the database connection before it reports ready. <code>authDisabled: true</code> means the server was started with <code>PARMANA_AUTH_DISABLED=true</code>, which must never happen in a real deployment.</p>
+<h3 id="get-version"><code>GET /version</code><a class="anchor" href="#get-version" aria-label="Link to this section">#</a></h3>
+<p>The server&#39;s name and version. Requires a key.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -H "Authorization: Bearer $PARMANA_API_KEY" "$PARMANA_API_URL/version"</code></pre></div>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{ "name": "Parmana", "version": "4.1.1", "api": "v1" }</code></pre></div>
+<p>Verified: <code>200</code> with a key, <code>401</code> without. <strong><code>version</code> is the <code>@parmana/api</code> package version (4.1.1 on this build)</strong>; it is a build identifier, separate from the REST API version <code>api</code>. An earlier build reported a hard-coded <code>0.4.0</code>; that is fixed.</p>
+<h3 id="get-callersme"><code>GET /callers/me</code><a class="anchor" href="#get-callersme" aria-label="Link to this section">#</a></h3>
+<p>The caller this key identifies, and what it may do. Requires a key.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -H "Authorization: Bearer $PARMANA_API_KEY" "$PARMANA_API_URL/callers/me"</code></pre></div>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{
+  "callerId": "demo",
+  "allowedPrincipalIds": ["demo"],
+  "allowedCapabilities": ["test:fixture-execute"],
+  "unrestrictedCapabilities": false
+}</code></pre></div>
+<p>Verified: <code>200</code>. Read this before you build a request. A request for a principal or action not in these lists is refused.</p>
+<h3 id="get-keyskeyid"><code>GET /keys/{keyId}</code><a class="anchor" href="#get-keyskeyid" aria-label="Link to this section">#</a></h3>
+<p>The public key for a key id, as PEM and JWK. Use it to pin a key for offline verification. Requires a key.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -H "Authorization: Bearer $PARMANA_API_KEY" "$PARMANA_API_URL/keys/default"</code></pre></div>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{
+  "keyId": "default",
+  "algorithm": "ed25519",
+  "use": "sig",
+  "pem": "-----BEGIN PUBLIC KEY-----\n…\n-----END PUBLIC KEY-----\n",
+  "jwk": { "kty": "OKP", "crv": "Ed25519", "x": "…" }
+}</code></pre></div>
+<p>Verified: <code>200</code>. Take the key from this route only for a first look. For verification, pin the fingerprint from a second source (see <a href="../security/evidence-verification.html">Evidence verification</a>).</p>
+<h3 id="get-well-knownjwksjson"><code>GET /.well-known/jwks.json</code><a class="anchor" href="#get-well-knownjwksjson" aria-label="Link to this section">#</a></h3>
+<p>The same keys as a JWK set, for tools that expect one. Requires a key.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -H "Authorization: Bearer $PARMANA_API_KEY" "$PARMANA_API_URL/.well-known/jwks.json"</code></pre></div>
+<p>Verified: <code>200</code>, listing the <code>default</code> and <code>gateway</code> keys.</p>
+<hr>
+<h2 id="execute-and-declare">Execute and declare<a class="anchor" href="#execute-and-declare" aria-label="Link to this section">#</a></h2>
+<p>The request body for each of the three routes below is a Business Transaction. Its fields and required checks are the same for all three:</p>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{
+  "businessTransactionId": "3b9d2c1e-5f7a-4b8c-9d0e-1f2a3b4c5d6e",
+  "metadata": {
+    "businessTransactionId": "3b9d2c1e-5f7a-4b8c-9d0e-1f2a3b4c5d6e",
+    "correlationId": "order-7731",
+    "sourceSystem": "ap-automation",
+    "submittedBy": "ap-automation",
+    "submittedAt": "2026-11-20T05:00:00.000Z"
+  },
+  "authority": {
+    "authorityId": "a-1",
+    "authorityType": "SERVICE",
+    "principalId": "demo",
+    "displayName": "Accounts payable agent",
+    "issuedAt": "2026-11-20T05:00:00.000Z"
+  },
+  "authorization": {
+    "authorizationId": "z-1",
+    "authorityId": "a-1",
+    "purpose": "Authorize vendor payment",
+    "issuedAt": "2026-11-20T05:00:00.000Z"
+  },
+  "intent": {
+    "intentId": "i-1",
+    "authorizationId": "z-1",
+    "action": "test:fixture-execute",
+    "target": "vendor://payments",
+    "parameters": { "amount": 1000, "currency": "USD" },
+    "createdAt": "2026-11-20T05:00:00.000Z"
+  },
+  "policy": {
+    "name": "vendor-payment",
+    "version": "2.1.1",
+    "schemaVersion": "1.0.0"
+  },
+  "signals": {
+    "humanApproved": true,
+    "approvalArtifact": { "…": "the signed approval, from signApproval()" },
+    "vendorVerified": true,
+    "invoiceVerified": true,
+    "paymentApproved": true,
+    "sufficientFunds": true,
+    "paymentAmount": 1000,
+    "riskScore": 5,
+    "vendorId": "vendor://payments"
+  }
+}</code></pre></div>
+<p>The server checks these before anything is evaluated, and returns <code>400</code> on failure:</p>
+<ul>
+<li><code>businessTransactionId</code> is a UUID.</li>
+<li><code>metadata.businessTransactionId</code> equals <code>businessTransactionId</code>.</li>
+<li><code>authorization.authorityId</code> equals <code>authority.authorityId</code>.</li>
+<li><code>intent.authorizationId</code> equals <code>authorization.authorizationId</code>.</li>
+<li><code>policy.name</code>, <code>policy.version</code> and <code>intent.action</code> are non-empty.</li>
+</ul>
+<p>The server assigns <code>status</code> and <code>createdAt</code>, and overwrites <code>metadata.submittedBy</code> with the caller&#39;s identity. The SDK builder includes <code>status</code> and <code>createdAt</code> in what it sends, and the server accepts the request, but the values you send are not used. Do not rely on them.</p>
+<p>The signal names in the example are the ones the <code>vendor-payment</code> policy reads. Each policy declares its own signals; see <a href="../policies/index.html">Policy management</a>.</p>
+<p>The full schema is <code>schemas/requests/transaction-create-request.schema.json</code>.</p>
+<h3 id="post-execute"><code>POST /execute</code><a class="anchor" href="#post-execute" aria-label="Link to this section">#</a></h3>
+<p>Decide and, if approved, release, in one call. Returns the signed record.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -X POST "$PARMANA_API_URL/execute" \
+  -H "Authorization: Bearer $PARMANA_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data @transaction.json</code></pre></div>
+<p>Responses:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Body</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>200</code></td>
+<td>Execution Trust Record (see below)</td>
+<td>Approved and released.</td>
+</tr>
+<tr>
+<td><code>202</code></td>
+<td><code>{&quot;businessTransactionId&quot;:&quot;…&quot;,&quot;status&quot;:&quot;EXECUTING&quot;,&quot;outcome&quot;:&quot;pending&quot;,&quot;reconcile&quot;:&quot;/transactions/{id}/reconcile&quot;,&quot;record&quot;:{…}}</code></td>
+<td>Released and recorded, status not yet set to executed. Reconcile. Do not resend.</td>
+</tr>
+<tr>
+<td><code>400</code></td>
+<td><code>{&quot;error&quot;:&quot;…&quot;}</code></td>
+<td>Malformed request. Nothing was stored.</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td><code>{&quot;error&quot;:&quot;…&quot;,&quot;code&quot;:&quot;POLICY_DENIED&quot;}</code></td>
+<td>The policy refused. Final for this request.</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td><code>{&quot;error&quot;:&quot;Caller is not permitted to invoke this capability.&quot;,&quot;code&quot;:&quot;CAPABILITY_NOT_ALLOWED&quot;}</code></td>
+<td>The key may not invoke this action.</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td><code>{&quot;error&quot;:&quot;Caller is not permitted to act for this tenantId.&quot;,&quot;code&quot;:&quot;TENANT_NOT_ALLOWED&quot;}</code></td>
+<td>The key may not act for this tenant.</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td><code>{&quot;error&quot;:&quot;Caller is not permitted to assert this authority.principalId.&quot;}</code></td>
+<td>The key may not act for this principal.</td>
+</tr>
+<tr>
+<td><code>404</code></td>
+<td><code>{&quot;error&quot;:&quot;Policy &#39;vendor-payment&#39; version &#39;2.1.0&#39; was not found.&quot;}</code></td>
+<td>No such policy version on this server.</td>
+</tr>
+<tr>
+<td><code>409</code></td>
+<td><code>{&quot;error&quot;:&quot;Business Transaction &#39;…&#39; already exists.&quot;}</code></td>
+<td>The id was used before. Nothing ran again.</td>
+</tr>
+<tr>
+<td><code>500</code></td>
+<td><code>EXECUTION_RECORD_INCOMPLETE</code></td>
+<td>Released, but the signed record could not be produced. Do not retry as a new transaction.</td>
+</tr>
+<tr>
+<td><code>502</code></td>
+<td><code>EXECUTION_OUTCOME_UNKNOWN</code></td>
+<td>Released, and the connector call failed. Reconcile.</td>
+</tr>
+<tr>
+<td><code>429</code></td>
+<td>rate-limit body</td>
+<td>Too many requests. Honor <code>Retry-After</code>.</td>
+</tr>
+</tbody></table></div>
+<p>A refused execution (for example a policy rejection) is recorded as a refusal record. Verified: after a refused <code>POST /execute</code>, <code>GET /refusal/{businessTransactionId}</code> returned the refusal record, with its <code>decision</code>.</p>
+<p>Verified responses on this build: <code>200</code> (approved), <code>403</code> with <code>POLICY_DENIED</code>-style messages for the three limit cases, <code>404</code> for an unknown policy version, <code>409</code> for a repeated id, and <code>403</code> for an approval that does not verify. See <a href="../tutorials/transaction-limits.html">Transaction limits</a> and <a href="../troubleshooting/index.html#approval-failures">Troubleshooting</a>.</p>
+<p><strong>Execution Trust Record (the <code>200</code> body), abbreviated:</strong></p>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{
+  "trustRecordId": "06210f86-c28c-4226-aea3-acf45d7fed69",
+  "businessTransactionId": "66412b22-256e-4b81-b590-c37047ab6ba5",
+  "transaction": { "…": "the Business Transaction as stored" },
+  "authorization": { "…": "the signed authorization" },
+  "overrides": [],
+  "executions": [{ "decision": { "outcome": "APPROVED", "…": "…" }, "…": "…" }],
+  "verifications": [],
+  "receipts": [],
+  "evidenceAnchor": { "…": "…" },
+  "createdAt": "2026-11-20T05:05:33.907Z",
+  "updatedAt": "2026-11-20T05:05:33.907Z",
+  "trustRecordHash": "4e6acd511e9313727e90b21d73cda68b6aea07fb31352732f415298d06a0c578",
+  "signature": {
+    "algorithm": "ed25519",
+    "keyId": "default",
+    "value": "…",
+    "signedAt": "…"
+  }
+}</code></pre></div>
+<p>Verified: the fields above are present on the record that <code>POST /execute</code> returned in the governed run. The <code>…</code> values are omitted for length.</p>
+<p>JavaScript (Node.js 24, built-in <code>fetch</code>):</p>
+<div class="code"><div class="code-bar"><span>javascript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-javascript">const res = await fetch(`${process.env.PARMANA_API_URL}/execute`, {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.PARMANA_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(transaction), // built as in the request example above
+});
+const body = await res.json();
+if (res.status === 200) console.log("trust record", body.trustRecordId);
+else if (res.status === 202) console.log("reconcile", body.reconcile);
+else console.error(res.status, body.code ?? "", body.error);</code></pre></div>
+<p>SDK equivalents: <code>client.execute(transaction)</code> (TypeScript) and <code>client.execute(transaction)</code> (Python). See the <a href="../sdk/typescript.html">TypeScript SDK</a> and <a href="../sdk/python.html">Python SDK</a>.</p>
+<h3 id="post-transactions-declare"><code>POST /transactions</code> (declare)<a class="anchor" href="#post-transactions-declare" aria-label="Link to this section">#</a></h3>
+<p>Record a Business Transaction as <code>RECEIVED</code>. Nothing is decided, signed or released.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -X POST "$PARMANA_API_URL/transactions" \
+  -H "Authorization: Bearer $PARMANA_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data @transaction.json</code></pre></div>
+<p>Responses: <code>201</code> with <code>{&quot;businessTransactionId&quot;:&quot;…&quot;,&quot;status&quot;:&quot;RECEIVED&quot;,&quot;acceptedAt&quot;:&quot;…&quot;,&quot;transaction&quot;:{…}}</code>. Verified: <code>201</code>-equivalent acceptance returned <code>RECEIVED</code>. A repeat returns <code>409</code>: <code>{&quot;error&quot;:&quot;Business Transaction &#39;…&#39; already exists.&quot;}</code>. Verified.</p>
+<h3 id="post-transactionsbusinesstransactionidexecute"><code>POST /transactions/{businessTransactionId}/execute</code><a class="anchor" href="#post-transactionsbusinesstransactionidexecute" aria-label="Link to this section">#</a></h3>
+<p>Decide and release a transaction that was declared. No body.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -X POST "$PARMANA_API_URL/transactions/$TXN_ID/execute" \
+  -H "Authorization: Bearer $PARMANA_API_KEY"</code></pre></div>
+<p>Responses: <code>200</code> with the record; <code>202</code> for an <code>EXECUTING</code> status; <code>404</code> if the policy version is not found; <code>403</code> as for <code>/execute</code>; <code>409</code> if the status does not allow execution (for example <code>VERIFIED</code>), or the outcome is pending. Verified: <code>200</code> with <code>APPROVED</code> for a transaction declared with <code>2.1.1</code> in effect, where the approval was in the transaction at declaration. A transaction declared without its approval was refused on execution. An approval cannot be added to a declared transaction. Verified: a declared transaction whose policy version had been superseded was refused with <code>ExecutionRejectedError</code>: <code>policy &quot;vendor-payment&quot;@&quot;2.1.0&quot; was superseded</code>.</p>
+<h3 id="get-transactionsbusinesstransactionidstatus"><code>GET /transactions/{businessTransactionId}/status</code><a class="anchor" href="#get-transactionsbusinesstransactionidstatus" aria-label="Link to this section">#</a></h3>
+<p>The current status and, with <code>?history=true</code>, the history.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -H "Authorization: Bearer $PARMANA_API_KEY" \
+  "$PARMANA_API_URL/transactions/$TXN_ID/status?history=true"</code></pre></div>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{
+  "businessTransactionId": "66412b22-256e-4b81-b590-c37047ab6ba5",
+  "current": {
+    "eventId": "0ecffa23-…",
+    "businessTransactionId": "66412b22-…",
+    "sequence": 6,
+    "status": "VERIFIED",
+    "stage": "verify",
+    "occurredAt": "2026-11-20T05:05:33.907Z",
+    "legacy": false
+  },
+  "history": [
+    {
+      "eventId": "f9b212ce-…",
+      "sequence": 1,
+      "status": "RECEIVED",
+      "stage": "declare",
+      "…": "…"
+    }
+  ]
+}</code></pre></div>
+<p>Verified: <code>200</code>. A transaction that is not found returns <code>404</code>.</p>
+<h3 id="post-transactionsbusinesstransactionidreconcile"><code>POST /transactions/{businessTransactionId}/reconcile</code><a class="anchor" href="#post-transactionsbusinesstransactionidreconcile" aria-label="Link to this section">#</a></h3>
+<p>Compare a transaction whose status is <code>EXECUTING</code> (or whose outcome is unknown) with the connector and the audit events, and set its status. No body. Use it after a <code>202</code> or a <code>500</code>/<code>502</code>. <strong>Not run in this verification</strong>; the request and status codes are from the OpenAPI document and the SDK source.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -X POST "$PARMANA_API_URL/transactions/$TXN_ID/reconcile" \
+  -H "Authorization: Bearer $PARMANA_API_KEY"</code></pre></div>
+<h3 id="get-transactions-and-get-transactionsbusinesstransactionid"><code>GET /transactions</code> and <code>GET /transactions/{businessTransactionId}</code><a class="anchor" href="#get-transactions-and-get-transactionsbusinesstransactionid" aria-label="Link to this section">#</a></h3>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -H "Authorization: Bearer $PARMANA_API_KEY" "$PARMANA_API_URL/transactions?page=1&amp;pageSize=2"
+curl -s -H "Authorization: Bearer $PARMANA_API_KEY" "$PARMANA_API_URL/transactions/$TXN_ID"</code></pre></div>
+<p>The list returns a bare JSON array of the Business Transactions your key submitted, with no paging metadata. <strong>A page can hold fewer than <code>pageSize</code> items, or none, when items belonging to other callers are filtered out (the OpenAPI description says so).</strong> Do not treat a short or empty page as the end of the list. The single read returns the transaction; <code>404</code> if it does not exist for this caller. Verified: <code>200</code> with the array, and <code>404</code> for an unknown id.</p>
+<hr>
+<h2 id="verify-replay-and-receipts">Verify, replay and receipts<a class="anchor" href="#verify-replay-and-receipts" aria-label="Link to this section">#</a></h2>
+<h3 id="post-verify"><code>POST /verify</code><a class="anchor" href="#post-verify" aria-label="Link to this section">#</a></h3>
+<p>Check a stored record. The result is in the body. A <code>200</code> does not mean the record is valid: read <code>status</code>.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -X POST "$PARMANA_API_URL/verify" \
+  -H "Authorization: Bearer $PARMANA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"businessTransactionId\":\"$TXN_ID\"}"</code></pre></div>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{
+  "verificationId": "b61d0fa7-742a-4a26-b535-a79b3674b51d",
+  "businessTransactionId": "66412b22-256e-4b81-b590-c37047ab6ba5",
+  "status": "VERIFIED",
+  "message": "Execution Trust Record verified successfully.",
+  "verifiedAt": "2026-11-20T05:10:41.286Z",
+  "trustRecordHash": "4e6acd511e9313727e90b21d73cda68b6aea07fb31352732f415298d06a0c578"
+}</code></pre></div>
+<p>Verified: <code>200</code>, <code>VERIFIED</code>. <code>400</code> if the id is not a UUID. <code>404</code> with <code>code: VERIFICATION_FAILED</code> if the key has no record with that id.</p>
+<h3 id="get-verificationbusinesstransactionid"><code>GET /verification/{businessTransactionId}</code><a class="anchor" href="#get-verificationbusinesstransactionid" aria-label="Link to this section">#</a></h3>
+<p>The latest verification for the transaction. Same shape as <code>POST /verify</code>. Requires a key.</p>
+<h3 id="post-replay"><code>POST /replay</code><a class="anchor" href="#post-replay" aria-label="Link to this section">#</a></h3>
+<p>Check the stored record&#39;s hash and signature again. Does not run the policy and executes nothing.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -X POST "$PARMANA_API_URL/replay" \
+  -H "Authorization: Bearer $PARMANA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"businessTransactionId\":\"$TXN_ID\"}"</code></pre></div>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{
+  "businessTransactionId": "66412b22-256e-4b81-b590-c37047ab6ba5",
+  "trustRecordHash": "4e6acd51…",
+  "verified": true
+}</code></pre></div>
+<p>Verified: <code>200</code>, <code>verified: true</code>. Read <code>verified</code>; a <code>200</code> alone does not mean the signature verified.</p>
+<h3 id="post-receipt"><code>POST /receipt</code><a class="anchor" href="#post-receipt" aria-label="Link to this section">#</a></h3>
+<p>Issue a signed receipt for a record. The record&#39;s latest verification must be <code>VERIFIED</code>; run <code>POST /verify</code> first.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -X POST "$PARMANA_API_URL/receipt" \
+  -H "Authorization: Bearer $PARMANA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"businessTransactionId\":\"$TXN_ID\"}"</code></pre></div>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{
+  "receiptId": "a89d0054-…",
+  "businessTransactionId": "66412b22-…",
+  "trustRecordHash": "4e6acd51…",
+  "receiptHash": "e05feb67…",
+  "issuedAt": "2026-11-20T05:10:47.207Z",
+  "algorithm": "ed25519",
+  "signature": "…"
+}</code></pre></div>
+<p>Verified: <code>200</code> after a <code>VERIFIED</code> result. <code>409</code> if the latest verification is not <code>VERIFIED</code>.</p>
+<h3 id="get-receiptlatestbusinesstransactionid"><code>GET /receipt/latest/{businessTransactionId}</code><a class="anchor" href="#get-receiptlatestbusinesstransactionid" aria-label="Link to this section">#</a></h3>
+<p>The most recent receipt for the transaction. Verified: <code>200</code>, returning the receipt above.</p>
+<hr>
+<h2 id="trust-records-and-refusals">Trust records and refusals<a class="anchor" href="#trust-records-and-refusals" aria-label="Link to this section">#</a></h2>
+<h3 id="get-trust-recordsbusinesstransactionid"><code>GET /trust-records/{businessTransactionId}</code><a class="anchor" href="#get-trust-recordsbusinesstransactionid" aria-label="Link to this section">#</a></h3>
+<p>The full stored Execution Trust Record.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -H "Authorization: Bearer $PARMANA_API_KEY" "$PARMANA_API_URL/trust-records/$TXN_ID"</code></pre></div>
+<p>Verified: <code>200</code>, the record with <code>trustRecordId</code>, <code>transaction</code>, <code>executions</code>, <code>trustRecordHash</code> and <code>signature</code>. <code>404</code> with <code>{&quot;error&quot;:&quot;Execution Trust Record not found.&quot;}</code> for an unknown id.</p>
+<h3 id="get-trust-records"><code>GET /trust-records</code><a class="anchor" href="#get-trust-records" aria-label="Link to this section">#</a></h3>
+<p>A bulk export of your signed Trust Records (transaction, decision, executions, verifications, receipts), a page at a time, for audit and compliance. Filter by date with <code>since</code> and <code>until</code>. Like <code>GET /transactions</code>, it returns a bare array with no paging metadata, and a short or empty page does not mean the end. Requires a key.</p>
+<h3 id="get-refusalbusinesstransactionid"><code>GET /refusal/{businessTransactionId}</code><a class="anchor" href="#get-refusalbusinesstransactionid" aria-label="Link to this section">#</a></h3>
+<p>The refusal record for a transaction that was refused. Requires a key.</p>
+<h3 id="post-refusalverify"><code>POST /refusal/verify</code><a class="anchor" href="#post-refusalverify" aria-label="Link to this section">#</a></h3>
+<p>Check a refusal record you hold. No key. The body must be a refusal record with <code>refusalRecordId</code>, <code>businessTransactionId</code>, <code>decision</code>, <code>refusalRecordHash</code> and <code>signature</code>. A body missing these returns <code>400</code>, and the message names them. Verified: <code>400</code> on an empty body.</p>
+<hr>
+<h2 id="policy">Policy<a class="anchor" href="#policy" aria-label="Link to this section">#</a></h2>
+<h3 id="get-policiesin-effectcapabilityaction"><code>GET /policies/in-effect?capability=&lt;action&gt;</code><a class="anchor" href="#get-policiesin-effectcapabilityaction" aria-label="Link to this section">#</a></h3>
+<p>The policy bound to a capability. <code>capability</code> is required.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -H "Authorization: Bearer $PARMANA_API_KEY" "$PARMANA_API_URL/policies/in-effect?capability=payments:refund"</code></pre></div>
+<p>Verified: <code>400</code> with <code>capability is required, for example ?capability=erp:invoice-pay.</code> when the parameter is missing. For a capability with no binding on this build, the response is <code>404</code> with <code>{&quot;error&quot;:&quot;No policy is bound to capability \&quot;test:fixture-execute\&quot;.&quot;,&quot;code&quot;:&quot;CAPABILITY_NOT_BOUND&quot;}</code>. Verified.</p>
+<h3 id="post-policiesvalidate"><code>POST /policies/validate</code><a class="anchor" href="#post-policiesvalidate" aria-label="Link to this section">#</a></h3>
+<p>Check that a policy version can be loaded by the server, by name and version. It does not take a document.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -X POST "$PARMANA_API_URL/policies/validate" \
+  -H "Authorization: Bearer $PARMANA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"policyId":"vendor-payment","policyVersion":"2.1.0"}'</code></pre></div>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{ "valid": true, "errors": [] }</code></pre></div>
+<p>Verified: <code>200</code>, <code>valid: true</code>, for <code>vendor-payment</code> <code>2.1.0</code> and <code>payment-refund</code> <code>1.0.0</code>.</p>
+<h3 id="post-policiesnameversionpending-changes"><code>POST /policies/{name}/{version}/pending-changes</code><a class="anchor" href="#post-policiesnameversionpending-changes" aria-label="Link to this section">#</a></h3>
+<p>Propose a policy version (maker). Operator route: requires a human caller (<code>USER</code>). The body is the policy document and a reason.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -X POST "$PARMANA_API_URL/policies/vendor-payment/2.1.1/pending-changes" \
+  -H "Authorization: Bearer $MAKER_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"proposedContent\": $(cat vendor-payment-2.1.1.json), \"reason\": \"Limit change\"}"</code></pre></div>
+<p>Responses: <code>201</code> with <code>pendingPolicyChangeId</code> and the proposal (status <code>PENDING_APPROVAL</code>). <code>403 NON_HUMAN_CALLER_DENIED</code> for a service caller. Verified: <code>201</code> and <code>403</code> for the service caller, in the maker-checker tutorial.</p>
+<h3 id="get-policiespending-changesstatus"><code>GET /policies/pending-changes?status=</code><a class="anchor" href="#get-policiespending-changesstatus" aria-label="Link to this section">#</a></h3>
+<p>List changes. <code>status</code> filters the list. Operator route.</p>
+<h3 id="post-policiespending-changespendingpolicychangeidapprove"><code>POST /policies/pending-changes/{pendingPolicyChangeId}/approve</code><a class="anchor" href="#post-policiespending-changespendingpolicychangeidapprove" aria-label="Link to this section">#</a></h3>
+<p>Approve (checker). Body: <code>{&quot;stepUpAuthorization&quot;: { … }}</code>, the envelope from <code>signPolicyChangeStepUp()</code> or <code>parmana-ops approval sign</code>. The checker must be listed for the policy in <code>POLICY_CHANGE_CHECKERS</code>, must be a different caller from the maker, and must be a human.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>200</code></td>
+<td>none</td>
+<td>Approved. The approval record is stored and the policy file is written.</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td><code>SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE</code></td>
+<td>The maker tried to approve its own change.</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td><code>STEP_UP_AUTHORIZATION_INVALID</code></td>
+<td>No envelope, or it does not verify, or it is expired.</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td><code>NON_HUMAN_CALLER_DENIED</code></td>
+<td>A service caller.</td>
+</tr>
+</tbody></table></div>
+<p>Verified: all four outcomes in the maker-checker tutorial and in the governed flow.</p>
+<h3 id="post-policiespending-changespendingpolicychangeidreject"><code>POST /policies/pending-changes/{pendingPolicyChangeId}/reject</code><a class="anchor" href="#post-policiespending-changespendingpolicychangeidreject" aria-label="Link to this section">#</a></h3>
+<p>Reject (checker). Body: <code>{&quot;rejectionReason&quot;: &quot;…&quot;, &quot;stepUpAuthorization&quot;: { … }}</code>. Same checks as approval.</p>
+<hr>
+<h2 id="other-governance-changes">Other governance changes<a class="anchor" href="#other-governance-changes" aria-label="Link to this section">#</a></h2>
+<p>Approver keys (<code>/approval-issuers/...</code>), external connectors (<code>/external-connectors/...</code>), business signal sources (<code>/business-signal-sources/...</code>) and authority grants (<code>/authority-grants/...</code>) each follow the same pattern as policy changes: a <code>GET</code> list, a <code>POST .../changes</code> to propose, <code>GET .../changes</code> to list, and <code>POST .../changes/{id}/approve</code> and <code>/reject</code>. They are all operator routes. See the <a href="endpoint-index.html">endpoint index</a> for the full set.</p>
+<hr>
+<h2 id="experimental-routes">Experimental routes<a class="anchor" href="#experimental-routes" aria-label="Link to this section">#</a></h2>
+<p><code>/execution-intents/*</code>, <code>/kill-switch/*</code>, <code>/v2/*</code> and <code>/v1/inbound/*</code> are described in the <a href="index.html#experimental-and-opt-in-routes">API overview</a>. Their availability depends on the deployment&#39;s configuration.</p>
+<h2 id="every-other-operation">Every other operation<a class="anchor" href="#every-other-operation" aria-label="Link to this section">#</a></h2>
+<p>The operations below are in the OpenAPI document and are not described in the sections above. Each row gives the method, path, operation id and summary from <code>openapi/openapi.yaml</code>. The <a href="endpoint-index.html">endpoint index</a> lists all 66 with their authentication requirement and SDK method.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>operationId</th>
+<th>Summary (from the OpenAPI document)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GET</td>
+<td><code>/handbook/download-leads</code></td>
+<td><code>getHandbookDownloadLead</code></td>
+<td>Capture an email address, then redirect straight to the handbook PDF</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/handbook/download-leads</code></td>
+<td><code>createHandbookDownloadLead</code></td>
+<td>Capture an email address before unlocking the handbook PDF download</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/execution-intents/unfinalized</code></td>
+<td><code>listUnfinalizedExecutionIntents</code></td>
+<td>List Execution Intents that never reached a signed Trust Record</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/kill-switch/trip</code></td>
+<td><code>tripKillSwitch</code></td>
+<td>Trip the operator kill switch</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/kill-switch/reset</code></td>
+<td><code>resetKillSwitch</code></td>
+<td>Reset the operator kill switch</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/kill-switch/probes</code></td>
+<td><code>recordKillSwitchProbe</code></td>
+<td>Record a kill switch probe result</td>
+</tr>
+</tbody></table></div>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/api/endpoints.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="index.html"><span>Previous</span>REST API reference</a><a class="pn next" href="endpoint-index.html"><span>Next</span>Endpoint index</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#health-and-identity">Health and identity</a></li><li class="d3"><a href="#get-health">GET /health</a></li><li class="d3"><a href="#get-ready">GET /ready</a></li><li class="d3"><a href="#get-version">GET /version</a></li><li class="d3"><a href="#get-callersme">GET /callers/me</a></li><li class="d3"><a href="#get-keyskeyid">GET /keys/{keyId}</a></li><li class="d3"><a href="#get-well-knownjwksjson">GET /.well-known/jwks.json</a></li><li class="d2"><a href="#execute-and-declare">Execute and declare</a></li><li class="d3"><a href="#post-execute">POST /execute</a></li><li class="d3"><a href="#post-transactions-declare">POST /transactions (declare)</a></li><li class="d3"><a href="#post-transactionsbusinesstransactionidexecute">POST /transactions/{businessTransactionId}/execute</a></li><li class="d3"><a href="#get-transactionsbusinesstransactionidstatus">GET /transactions/{businessTransactionId}/status</a></li><li class="d3"><a href="#post-transactionsbusinesstransactionidreconcile">POST /transactions/{businessTransactionId}/reconcile</a></li><li class="d3"><a href="#get-transactions-and-get-transactionsbusinesstransactionid">GET /transactions and GET /transactions/{businessTransactionId}</a></li><li class="d2"><a href="#verify-replay-and-receipts">Verify, replay and receipts</a></li><li class="d3"><a href="#post-verify">POST /verify</a></li><li class="d3"><a href="#get-verificationbusinesstransactionid">GET /verification/{businessTransactionId}</a></li><li class="d3"><a href="#post-replay">POST /replay</a></li><li class="d3"><a href="#post-receipt">POST /receipt</a></li><li class="d3"><a href="#get-receiptlatestbusinesstransactionid">GET /receipt/latest/{businessTransactionId}</a></li><li class="d2"><a href="#trust-records-and-refusals">Trust records and refusals</a></li><li class="d3"><a href="#get-trust-recordsbusinesstransactionid">GET /trust-records/{businessTransactionId}</a></li><li class="d3"><a href="#get-trust-records">GET /trust-records</a></li><li class="d3"><a href="#get-refusalbusinesstransactionid">GET /refusal/{businessTransactionId}</a></li><li class="d3"><a href="#post-refusalverify">POST /refusal/verify</a></li><li class="d2"><a href="#policy">Policy</a></li><li class="d3"><a href="#get-policiesin-effectcapabilityaction">GET /policies/in-effect?capability=&lt;action&gt;</a></li><li class="d3"><a href="#post-policiesvalidate">POST /policies/validate</a></li><li class="d3"><a href="#post-policiesnameversionpending-changes">POST /policies/{name}/{version}/pending-changes</a></li><li class="d3"><a href="#get-policiespending-changesstatus">GET /policies/pending-changes?status=</a></li><li class="d3"><a href="#post-policiespending-changespendingpolicychangeidapprove">POST /policies/pending-changes/{pendingPolicyChangeId}/approve</a></li><li class="d3"><a href="#post-policiespending-changespendingpolicychangeidreject">POST /policies/pending-changes/{pendingPolicyChangeId}/reject</a></li><li class="d2"><a href="#other-governance-changes">Other governance changes</a></li><li class="d2"><a href="#experimental-routes">Experimental routes</a></li><li class="d2"><a href="#every-other-operation">Every other operation</a></li></ul></nav>
+</div>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

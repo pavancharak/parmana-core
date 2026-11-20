@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en" data-root="">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glossary · Parmana developer docs</title>
+<meta name="description" content="Glossary Portal home · Overview · Reference Terms are in alphabetical order. Where a term has a page with more detail, the entry links to it. Approval artifact The signed JSON that a human approver produces with signApproval() (TypeScript) ">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="index.html">Parmana developer portal</a></li><li><a href="overview.html">Overview</a></li><li><a href="getting-started.html">Getting started</a></li><li><a href="faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="architecture.html">Architecture</a></li><li><a href="glossary.html" aria-current="page">Glossary</a></li><li><a href="policies/index.html">Policy management</a></li><li><a href="security/index.html">Security and cryptographic verification</a></li><li><a href="security/evidence-verification.html">Evidence verification</a></li><li><a href="security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="tutorials/index.html">Tutorials</a></li><li><a href="tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="api/index.html">REST API reference</a></li><li><a href="api/endpoints.html">Core endpoints</a></li><li><a href="api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="sdk/index.html">SDKs and packages</a></li><li><a href="sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="sdk/python.html">Python SDK: parmana</a></li><li><a href="sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="sdk/python-method-index.html">Python SDK method index</a></li><li><a href="packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="deployment/index.html">Deployment and operations</a></li><li><a href="reference/index.html">Developer reference</a></li><li><a href="reference/environment-variables.html">Environment variable reference</a></li><li><a href="reference/error-codes.html">Error code catalogue</a></li><li><a href="reference/error-code-index.html">Error code index</a></li><li><a href="troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="CHANGELOG.html">Changelog</a></li><li><a href="COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Concepts</span><span class="sep">/</span><span>Glossary</span></div>
+    <article>
+<h1 id="glossary">Glossary<a class="anchor" href="#glossary" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">Portal home</a> · <a href="overview.html">Overview</a> · <a href="reference/index.html">Reference</a></p>
+<p>Terms are in alphabetical order. Where a term has a page with more detail, the entry links to it.</p>
+<h2 id="approval-artifact">Approval artifact<a class="anchor" href="#approval-artifact" aria-label="Link to this section">#</a></h2>
+<p>The signed JSON that a human approver produces with <code>signApproval()</code> (TypeScript) or <code>sign_approval()</code> (Python). It names the capability, the target (<code>resourceId</code>), an optional maximum amount (<code>maxAmount</code>), an expiry, and a nonce, and is signed with the approver&#39;s Ed25519 key. The agent or application attaches it to <code>signals.approvalArtifact</code>. See <a href="overview.html#core-concepts">Overview</a> and the <a href="sdk/typescript.html#human-approvals-signapproval">TypeScript SDK</a>.</p>
+<h2 id="authority">Authority<a class="anchor" href="#authority" aria-label="Link to this section">#</a></h2>
+<p>The party a Business Transaction acts for (<code>authority</code>): its id, its type (<code>USER</code>, <code>ROLE</code>, <code>SERVICE</code>, <code>ORGANIZATION</code>), and its principal id. The caller&#39;s key must be allowed to act for the principal.</p>
+<h2 id="authorization">Authorization<a class="anchor" href="#authorization" aria-label="Link to this section">#</a></h2>
+<p>The grant that makes the action allowed (<code>authorization</code>), linked to the authority by <code>authorityId</code>.</p>
+<h2 id="bound-signal">Bound signal<a class="anchor" href="#bound-signal" aria-label="Link to this section">#</a></h2>
+<p>A policy fact that must equal a field of the request, such as <code>paymentAmount</code> equals <code>parameters.amount</code>. The server checks the equality before the rules run. See <a href="policies/index.html#signals">Policy management</a>.</p>
+<h2 id="business-transaction">Business Transaction<a class="anchor" href="#business-transaction" aria-label="Link to this section">#</a></h2>
+<p>The declared request for one business action. It has a <code>businessTransactionId</code> (a UUID the caller chooses and which is single-use), <code>metadata</code>, <code>authority</code>, <code>authorization</code>, <code>intent</code>, <code>policy</code> and <code>signals</code>. See the <a href="https://github.com/pavancharak/parmana-core/blob/main/schemas/requests/transaction-create-request.schema.json">request schema</a>.</p>
+<h2 id="canonical-json">Canonical JSON<a class="anchor" href="#canonical-json" aria-label="Link to this section">#</a></h2>
+<p>The byte form of a JSON value that signatures and hashes are computed over: object keys sorted, no insignificant whitespace, non-ASCII characters as they are, UTF-8. The same rule holds in the server, both SDKs and the verifiers. See <a href="security/index.html#hashing-and-canonical-json">Security</a>.</p>
+<h2 id="checker">Checker<a class="anchor" href="#checker" aria-label="Link to this section">#</a></h2>
+<p>The second person in a maker-checker approval. A checker must be listed for the policy in <code>POLICY_CHANGE_CHECKERS</code>, must be a human, must not be the maker, and approves with a step-up envelope. See <a href="tutorials/maker-checker.html">Maker-checker</a>.</p>
+<h2 id="connector">Connector<a class="anchor" href="#connector" aria-label="Link to this section">#</a></h2>
+<p>The component that performs the business call (for example a payment), reached only through the execution gateway, with signed releases. Implementations are in the <code>parmana-connectors</code> repository. See <a href="architecture.html">Architecture</a> and the <a href="sdk/connector-sdk.html">connector SDK</a>.</p>
+<h2 id="coverage">Coverage<a class="anchor" href="#coverage" aria-label="Link to this section">#</a></h2>
+<p>What a record&#39;s signatures protect. <code>full</code> for a schema 3 record that verifies: every top-level field except the excluded lists. <code>legacy</code> for a schema 2 record: only the seven covered fields. See <a href="security/index.html#schema-versions-and-coverage">Security</a>.</p>
+<h2 id="declare">Declare<a class="anchor" href="#declare" aria-label="Link to this section">#</a></h2>
+<p>Record a Business Transaction as <code>RECEIVED</code> with <code>POST /transactions</code> (<code>declareTransaction()</code>). Nothing is decided or released. A declared transaction executes as declared, and its approval must be inside it when it is declared.</p>
+<h2 id="decision">Decision<a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<p>The outcome of evaluating a policy for a transaction: the rules that matched and the result. An approved request&#39;s record carries it at <code>executions[0].decision</code>. A refusal produces a refusal record with a <code>decision</code>.</p>
+<h2 id="execute">Execute<a class="anchor" href="#execute" aria-label="Link to this section">#</a></h2>
+<p>Decide and, if approved, release a transaction. <code>POST /execute</code> does it in one request. <code>POST /transactions/{id}/execute</code> executes a declared transaction. See <a href="api/endpoints.html#execute-and-declare">API: execute</a>.</p>
+<h2 id="execution-gateway">Execution gateway<a class="anchor" href="#execution-gateway" aria-label="Link to this section">#</a></h2>
+<p>The only path through which Parmana releases an approved request to a connector. It re-verifies the signed authorization before release. See <a href="architecture.html#components">Architecture</a>.</p>
+<h2 id="execution-trust-record">Execution Trust Record<a class="anchor" href="#execution-trust-record" aria-label="Link to this section">#</a></h2>
+<p>The signed evidence for one Business Transaction. It holds the transaction, the authorization, the overrides, the executions (with their decisions), the verifications, the receipts, an evidence anchor, timestamps, the <code>trustRecordHash</code>, and the signature. Verify it with the server or offline. See <a href="security/evidence-verification.html">Evidence verification</a>.</p>
+<h2 id="fail-closed">Fail closed<a class="anchor" href="#fail-closed" aria-label="Link to this section">#</a></h2>
+<p>Refuse rather than guess. When a fact cannot be verified, or a source does not answer, or signing is unavailable, Parmana refuses and does not execute. See <a href="security/index.html#fail-closed-behaviour">Security</a>.</p>
+<h2 id="gateway-attestation">Gateway attestation<a class="anchor" href="#gateway-attestation" aria-label="Link to this section">#</a></h2>
+<p>The gateway&#39;s signed statement about a release, made with the <code>gateway</code> key.</p>
+<h2 id="human-approval">Human approval<a class="anchor" href="#human-approval" aria-label="Link to this section">#</a></h2>
+<p>A signed approval from a person (see <a href="#approval-artifact">approval artifact</a>). The agent cannot create it. The server verifies it against the approvers it trusts. A declared <code>humanApproved: true</code> without a verified approval is refused.</p>
+<h2 id="intent">Intent<a class="anchor" href="#intent" aria-label="Link to this section">#</a></h2>
+<p>The action a Business Transaction asks for (<code>intent</code>): its <code>action</code> (a capability in the form <code>namespace:name</code>), its <code>target</code>, its <code>parameters</code>, and its id, linked to the authorization.</p>
+<h2 id="maker">Maker<a class="anchor" href="#maker" aria-label="Link to this section">#</a></h2>
+<p>The person who proposes a policy change. A maker cannot approve their own change. See <a href="tutorials/maker-checker.html">Maker-checker</a>.</p>
+<h2 id="maker-checker">Maker-checker<a class="anchor" href="#maker-checker" aria-label="Link to this section">#</a></h2>
+<p>Two-person governance for policy changes: a maker proposes a version, and a different, listed checker approves it with a step-up envelope. Only then does the version take effect. See <a href="policies/index.html#how-a-policy-version-is-approved">Policy management</a>.</p>
+<h2 id="offline-verification">Offline verification<a class="anchor" href="#offline-verification" aria-label="Link to this section">#</a></h2>
+<p>Checking an Execution Trust Record without contacting the server, against public keys you pin. The standalone verifier and the SDK functions both do it. See <a href="security/evidence-verification.html">Evidence verification</a>.</p>
+<h2 id="pinned-key">Pinned key<a class="anchor" href="#pinned-key" aria-label="Link to this section">#</a></h2>
+<p>A public key you trust, identified by its fingerprint, which you compared with a value from a second source before you accepted it. Verification uses only pinned keys. See <a href="security/evidence-verification.html#step-2-pin-the-keys-you-trust">Evidence verification</a>.</p>
+<h2 id="policy">Policy<a class="anchor" href="#policy" aria-label="Link to this section">#</a></h2>
+<p>A JSON document, named and versioned, that states the rules for one kind of action. The organization writes it and owns it. See <a href="policies/index.html">Policy management</a>.</p>
+<h2 id="policy-version-in-effect">Policy version in effect<a class="anchor" href="#policy-version-in-effect" aria-label="Link to this section">#</a></h2>
+<p>The most recently approved version for a policy name. The server executes only that version. A request that names an older version is refused as superseded. See <a href="policies/index.html#versions-and-the-version-in-effect">Policy management</a>.</p>
+<h2 id="principal">Principal<a class="anchor" href="#principal" aria-label="Link to this section">#</a></h2>
+<p>The party an action is for (<code>authority.principalId</code>), such as a person or a service account. A caller&#39;s key lists the principals it may act for.</p>
+<h2 id="receipt">Receipt<a class="anchor" href="#receipt" aria-label="Link to this section">#</a></h2>
+<p>A signed statement that a record was verified, with its hash. Issued by <code>POST /receipt</code>, which requires a <code>VERIFIED</code> record. See <a href="api/endpoints.html#verify-replay-and-receipts">API: receipts</a>.</p>
+<h2 id="refusal-record">Refusal record<a class="anchor" href="#refusal-record" aria-label="Link to this section">#</a></h2>
+<p>The signed record of a refused execution, retrievable by its business transaction id with <code>GET /refusal/{id}</code>.</p>
+<h2 id="replay">Replay<a class="anchor" href="#replay" aria-label="Link to this section">#</a></h2>
+<p>Checking a stored record&#39;s hash and signature again with <code>POST /replay</code>. It runs no policy and executes nothing.</p>
+<h2 id="reconcile">Reconcile<a class="anchor" href="#reconcile" aria-label="Link to this section">#</a></h2>
+<p>Comparing a transaction whose outcome is pending or unknown (a <code>202</code>, <code>500</code> or <code>502</code>) with the connector and the audit events, and setting its status. <code>POST /transactions/{id}/reconcile</code>. Do not resubmit the transaction instead.</p>
+<h2 id="schema-version">Schema version<a class="anchor" href="#schema-version" aria-label="Link to this section">#</a></h2>
+<p>The version of the record&#39;s signed structure. <code>2</code> (or none) signs seven top-level fields. <code>3</code> signs the whole record except the excluded lists. See <a href="security/index.html#schema-versions-and-coverage">Security</a>.</p>
+<h2 id="signals">Signals<a class="anchor" href="#signals" aria-label="Link to this section">#</a></h2>
+<p>The facts a policy reads, on the request (<code>signals</code>). Each fact is bound, sourced, approved, or declared. See <a href="policies/index.html#signals">Policy management</a>.</p>
+<h2 id="sourced-fact">Sourced fact<a class="anchor" href="#sourced-fact" aria-label="Link to this section">#</a></h2>
+<p>A policy fact that a registered source answers, not the caller. Parmana asks the source about a subject (the target, or a parameter), and the answer is valid for a freshness window (<code>maxAgeSeconds</code>). The caller&#39;s value is ignored. An example is <code>paymentRefundable</code> in the refund policy. See <a href="tutorials/refund-authorization.html">Refund authorization</a>.</p>
+<h2 id="step-up-envelope">Step-up envelope<a class="anchor" href="#step-up-envelope" aria-label="Link to this section">#</a></h2>
+<p>A short-lived signed statement, made with the checker&#39;s own step-up key, that approves or rejects one pending policy change. Valid for 120 seconds by default. See <a href="tutorials/maker-checker.html#step-4-the-checker-reviews-and-approves">Maker-checker</a>.</p>
+<h2 id="superseded">Superseded<a class="anchor" href="#superseded" aria-label="Link to this section">#</a></h2>
+<p>A policy version that is no longer the one in effect, because a later version was approved. Requests naming it are refused.</p>
+<h2 id="trust-set-trust-file">Trust set (trust file)<a class="anchor" href="#trust-set-trust-file" aria-label="Link to this section">#</a></h2>
+<p>The JSON list of public keys a verifier accepts, each with its fingerprint, validity window and compromise flag, and the optional legacy settings. See <a href="sdk/verifier.html#the-trust-file">Verifier</a>.</p>
+<h2 id="verification">Verification<a class="anchor" href="#verification" aria-label="Link to this section">#</a></h2>
+<p>Checking a record: on the server with <code>POST /verify</code> (the result is <code>VERIFIED</code> or <code>FAILED</code>), or offline with a pinned trust set. A <code>200</code> from the verify route is not the result: read the <code>status</code>.</p>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/glossary.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="architecture.html"><span>Previous</span>Architecture</a><a class="pn next" href="policies/index.html"><span>Next</span>Policy management</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#approval-artifact">Approval artifact</a></li><li class="d2"><a href="#authority">Authority</a></li><li class="d2"><a href="#authorization">Authorization</a></li><li class="d2"><a href="#bound-signal">Bound signal</a></li><li class="d2"><a href="#business-transaction">Business Transaction</a></li><li class="d2"><a href="#canonical-json">Canonical JSON</a></li><li class="d2"><a href="#checker">Checker</a></li><li class="d2"><a href="#connector">Connector</a></li><li class="d2"><a href="#coverage">Coverage</a></li><li class="d2"><a href="#declare">Declare</a></li><li class="d2"><a href="#decision">Decision</a></li><li class="d2"><a href="#execute">Execute</a></li><li class="d2"><a href="#execution-gateway">Execution gateway</a></li><li class="d2"><a href="#execution-trust-record">Execution Trust Record</a></li><li class="d2"><a href="#fail-closed">Fail closed</a></li><li class="d2"><a href="#gateway-attestation">Gateway attestation</a></li><li class="d2"><a href="#human-approval">Human approval</a></li><li class="d2"><a href="#intent">Intent</a></li><li class="d2"><a href="#maker">Maker</a></li><li class="d2"><a href="#maker-checker">Maker-checker</a></li><li class="d2"><a href="#offline-verification">Offline verification</a></li><li class="d2"><a href="#pinned-key">Pinned key</a></li><li class="d2"><a href="#policy">Policy</a></li><li class="d2"><a href="#policy-version-in-effect">Policy version in effect</a></li><li class="d2"><a href="#principal">Principal</a></li><li class="d2"><a href="#receipt">Receipt</a></li><li class="d2"><a href="#refusal-record">Refusal record</a></li><li class="d2"><a href="#replay">Replay</a></li><li class="d2"><a href="#reconcile">Reconcile</a></li><li class="d2"><a href="#schema-version">Schema version</a></li><li class="d2"><a href="#signals">Signals</a></li><li class="d2"><a href="#sourced-fact">Sourced fact</a></li><li class="d2"><a href="#step-up-envelope">Step-up envelope</a></li><li class="d2"><a href="#superseded">Superseded</a></li><li class="d2"><a href="#trust-set-trust-file">Trust set (trust file)</a></li><li class="d2"><a href="#verification">Verification</a></li></ul></nav>
+</div>
+<script src="search-index.js"></script>
+<script src="portal.js"></script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en" data-root="../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Policy management · Parmana developer docs</title>
+<meta name="description" content="Policy management Portal home · Maker-checker tutorial · Transaction limits · Policy writing guide A policy is the organization's rule for one kind of action. Parmana does not decide what your business allows. You write the policy, a second">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="index.html" aria-current="page">Policy management</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Concepts</span><span class="sep">/</span><span>Policy management</span></div>
+    <article>
+<h1 id="policy-management">Policy management<a class="anchor" href="#policy-management" aria-label="Link to this section">#</a></h1>
+<p><a href="../index.html">Portal home</a> · <a href="../tutorials/maker-checker.html">Maker-checker tutorial</a> · <a href="../tutorials/transaction-limits.html">Transaction limits</a> · <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/guides/policy-writing.md">Policy writing guide</a></p>
+<p>A <strong>policy</strong> is the organization&#39;s rule for one kind of action. Parmana does not decide what your business allows. You write the policy, a second person approves each version, and Parmana enforces it on every request. This page covers where policies live, how they are versioned and approved, how Parmana evaluates them, what the decision looks like, and how the organization keeps ownership.</p>
+<p>For a full guide to writing rules, read <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/guides/policy-writing.md">How to write a policy</a>. This page covers the parts the developer meets when integrating.</p>
+<h2 id="where-policies-live">Where policies live<a class="anchor" href="#where-policies-live" aria-label="Link to this section">#</a></h2>
+<p>Policies are JSON files in a <strong>policy directory</strong>. The server reads that directory, set with <code>PARMANA_POLICY_DIR</code>, which is required: the server refuses to start without it.</p>
+<div class="code"><div class="code-bar"><span>text</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-text">&lt;PARMANA_POLICY_DIR&gt;/
+  vendor-payment/
+    2.1.0/
+      policy.json
+    2.1.1/
+      policy.json
+  payment-refund/
+    1.0.0/
+      policy.json</code></pre></div>
+<ul>
+<li>The folder name is the policy <strong>name</strong>. The folder beneath it is the <strong>version</strong>.</li>
+<li>Each <code>policy.json</code> has a <code>policyId</code> that must equal the name, and a <code>policyVersion</code> that must equal the version folder.</li>
+<li>The repository&#39;s <code>policies/</code> directory holds the policies the project ships (for example <code>payment-refund/1.0.0</code>). The <code>fixtures/policies/</code> directory holds the policies the tests and tutorials use (for example <code>vendor-payment/2.1.0</code>). Your organization keeps its own directory.</li>
+</ul>
+<p>Approving a change through maker-checker writes its <code>policy.json</code> into this directory. Do not edit the directory by hand in production: a file that does not match its approval record is refused (see <a href="../troubleshooting/index.html#a-policy-file-does-not-match-its-approval-record">Troubleshooting</a>).</p>
+<h2 id="anatomy-of-a-policy">Anatomy of a policy<a class="anchor" href="#anatomy-of-a-policy" aria-label="Link to this section">#</a></h2>
+<p>The fields, as the policy-writing guide defines them:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>policyId</code></td>
+<td>yes</td>
+<td>The policy name, for example <code>vendor-payment</code>.</td>
+</tr>
+<tr>
+<td><code>policyVersion</code></td>
+<td>yes</td>
+<td>The version, for example <code>2.1.0</code>.</td>
+</tr>
+<tr>
+<td><code>schemaVersion</code></td>
+<td>yes</td>
+<td>The policy language version, <code>1.0.0</code>.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>no</td>
+<td>Plain words for a checker: what the policy approves, and why.</td>
+</tr>
+<tr>
+<td><code>signalsSchema</code></td>
+<td>recommended</td>
+<td>Each fact the rules read, with its type: <code>boolean</code>, <code>number</code> or <code>string</code>.</td>
+</tr>
+<tr>
+<td><code>boundSignals</code></td>
+<td>when a fact equals a request field</td>
+<td>A fact that must equal a field of the request, such as <code>paymentAmount</code> equals <code>parameters.amount</code>.</td>
+</tr>
+<tr>
+<td><code>signalSources</code></td>
+<td>when a fact comes from outside</td>
+<td>A fact a registered source answers, with a freshness limit (<code>maxAgeSeconds</code>).</td>
+</tr>
+<tr>
+<td><code>approvalSignals</code></td>
+<td>when a person must approve</td>
+<td>A fact that is true only when a signed human approval covers the request.</td>
+</tr>
+<tr>
+<td><code>requireAuthorityGrant</code></td>
+<td>no</td>
+<td><code>true</code> or <code>false</code>.</td>
+</tr>
+<tr>
+<td><code>rules</code></td>
+<td>yes</td>
+<td>The ordered rules. The first matching rule decides.</td>
+</tr>
+</tbody></table></div>
+<p>A rule has an <code>id</code>, a <code>condition</code>, and an <code>outcome</code> with an <code>action</code> (<code>approve</code> or <code>reject</code>) and a <code>reason</code>. A condition is a single test, an <code>all</code> list, an <code>any</code> list, or <code>always: true</code>. Operators include <code>is_true</code>, <code>is_false</code>, <code>eq</code>, <code>neq</code>, <code>gt</code>, <code>gte</code>, <code>lt</code>, <code>lte</code> and <code>between</code>.</p>
+<p>The repository&#39;s <code>vendor-payment@2.1.0</code> policy is the example used throughout this portal. Its approve rule reads:</p>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{
+  "id": "approve-payment",
+  "condition": {
+    "all": [
+      { "fact": "humanApproved", "operator": "is_true" },
+      { "fact": "vendorVerified", "operator": "eq", "value": true },
+      { "fact": "paymentAmount", "operator": "gt", "value": 0 },
+      { "fact": "riskScore", "operator": "lte", "value": 20 }
+    ]
+  },
+  "outcome": { "action": "approve", "reason": "Vendor payment authorized. …" }
+}</code></pre></div>
+<p>The complete file is <code>fixtures/policies/vendor-payment/2.1.0/policy.json</code>. This snippet is an excerpt, shown for its structure.</p>
+<h2 id="signals">Signals<a class="anchor" href="#signals" aria-label="Link to this section">#</a></h2>
+<p>Every fact a rule reads comes from one of four places. The place decides whether the caller can make the fact true.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Who provides it</th>
+<th>Can the caller make it true?</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Bound</strong></td>
+<td>The request. Must equal a request field.</td>
+<td>Only by sending the matching value, which is then checked.</td>
+<td><code>paymentAmount</code> equals <code>parameters.amount</code></td>
+</tr>
+<tr>
+<td><strong>Sourced</strong></td>
+<td>A registered source, asked by Parmana.</td>
+<td><strong>No.</strong> The caller&#39;s value is ignored.</td>
+<td><code>paymentRefundable</code>, from a payment provider</td>
+</tr>
+<tr>
+<td><strong>Approved</strong></td>
+<td>A signed human approval, verified by Parmana.</td>
+<td><strong>No.</strong> The caller&#39;s <code>true</code> is checked against the approval.</td>
+<td><code>humanApproved</code>, <code>managerApproved</code></td>
+</tr>
+<tr>
+<td><strong>Declared</strong></td>
+<td>The caller.</td>
+<td>Yes.</td>
+<td><code>vendorVerified</code> in <code>vendor-payment@2.1.0</code></td>
+</tr>
+</tbody></table></div>
+<p>The validator enforces the consequence that matters most: <strong>a declared fact can never be the only fact that approves.</strong> An approve rule must require an approval signal, as tutorial 120 Part 1 shows. Verified: five variants of an approve rule were refused at validation, including one that approved on declared facts alone.</p>
+<p>The declared facts in <code>vendor-payment@2.1.0</code> (<code>vendorVerified</code>, <code>invoiceVerified</code>, <code>paymentApproved</code>, <code>sufficientFunds</code>) are conditions the caller states. Parmana does not verify them, because that policy has no <code>signalSources</code>. If your organization needs Parmana to confirm one, the policy must bind it to a registered source. That is a policy change.</p>
+<h2 id="rules-are-checked-in-order">Rules are checked in order<a class="anchor" href="#rules-are-checked-in-order" aria-label="Link to this section">#</a></h2>
+<p>The first rule whose condition holds decides. Write the rules in this order, as the guide recommends:</p>
+<ol>
+<li><strong>Refuse rules first:</strong> a sourced fact that says no.</li>
+<li><strong>Approve rules,</strong> from the strictest to the loosest. Each requires an approval signal.</li>
+<li><strong>A final reject rule</strong> with <code>&quot;condition&quot;: { &quot;always&quot;: true }</code>, so every request gets a decision.</li>
+</ol>
+<p>The evaluation is a pure function of the policy and the signals. It does no I/O of its own. The same policy and the same signals give the same decision every time. The policy engine&#39;s description in the repository reads &quot;sequential rules with first-match semantics, as a pure function with no I/O&quot;.</p>
+<h2 id="versions-and-the-version-in-effect">Versions and the version in effect<a class="anchor" href="#versions-and-the-version-in-effect" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Several versions of one policy can exist on the server at once. Each is a separate file and a separate approval.</li>
+<li>For each policy name, <strong>the version in effect is the one most recently approved.</strong> Earlier versions are superseded.</li>
+<li>A request names the version it runs under (<code>policy.version</code>). If that version is not the one in effect, the server refuses it.</li>
+</ul>
+<p>Verified: after <code>vendor-payment@2.1.1</code> was approved through the CLI, a request naming <code>2.1.0</code> was refused:</p>
+<div class="code"><div class="code-bar"><span>text</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-text">Execution rejected: Rejected: policy "vendor-payment"@"2.1.0" was superseded: the version in effect is "2.1.1", the one most recently approved.</code></pre></div>
+<p>Choose the version your application names deliberately. A version rollout is an approval of the new version, followed by requests that name it. A superseded version is refused for new requests.</p>
+<p><code>POST /policies/validate</code> checks that a named version can be loaded. It is not a check that the version is in effect:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -X POST "$PARMANA_API_URL/policies/validate" \
+  -H "Authorization: Bearer $PARMANA_API_KEY" -H "Content-Type: application/json" \
+  -d '{"policyId":"vendor-payment","policyVersion":"2.1.0"}'
+# {"valid":true,"errors":[]}</code></pre></div>
+<h2 id="how-a-policy-version-is-approved">How a policy version is approved<a class="anchor" href="#how-a-policy-version-is-approved" aria-label="Link to this section">#</a></h2>
+<p>No version takes effect until a second person approves it. The flow, verified in <a href="https://github.com/pavancharak/parmana-core/blob/main/examples/tutorials/103-policy-governance-maker-checker/run.ts">tutorial 103</a> and the <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/typescript/governed-flow.ts">governed flow</a>:</p>
+<ol>
+<li>The <strong>maker</strong> proposes the version: the whole policy document and a reason. The change is <code>PENDING_APPROVAL</code>.</li>
+<li>The maker cannot approve it (<code>403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE</code>).</li>
+<li>A <strong>checker</strong> listed for this policy in <code>POLICY_CHANGE_CHECKERS</code> signs a step-up envelope on their own machine and submits it.</li>
+<li>The server stores a signed approval record, and writes <code>policy.json</code> for the version. The version is in effect from then on.</li>
+</ol>
+<p>Propose with <code>POST /policies/{name}/{version}/pending-changes</code>, and approve with <code>POST /policies/pending-changes/{id}/approve</code>. The SDK methods are <code>proposePolicyChange</code> and <code>approvePolicyChange</code> (TypeScript) or <code>propose_policy_change</code> and <code>approve_policy_change</code> (Python). The <a href="../tutorials/maker-checker.html">maker-checker tutorial</a> has the full steps and the refusals.</p>
+<p>Rejecting a proposal is the same flow with <code>reject</code>, and a reason is required.</p>
+<h2 id="what-the-decision-looks-like">What the decision looks like<a class="anchor" href="#what-the-decision-looks-like" aria-label="Link to this section">#</a></h2>
+<p>Every execution produces a decision, inside the record. An approved request&#39;s record carries the outcome at <code>executions[0].decision.outcome</code> (verified: <code>APPROVED</code>). A refusal by policy produces a refusal record, readable at <code>GET /refusal/{businessTransactionId}</code>. Its <code>decision</code> (verified) carries the fields below.</p>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{
+  "decision": {
+    "decisionId": "59b9c769-…",
+    "evaluationMethod": { "id": "deterministic-rules", "version": "2" },
+    "intentId": "i-1",
+    "policy": { "name": "vendor-payment", "version": "…" }
+  }
+}</code></pre></div>
+<p>This excerpt shows the fields observed in the refusal record. The record&#39;s schemas are in <code>schemas/common/</code> in the repository, and the complete set is there.</p>
+<p>When a request is refused before the rules run, the response is an HTTP error, not a decision record. Examples are <code>CAPABILITY_NOT_BOUND</code>, and a declared signal that does not match the request (<code>declared signal(s) do not match the executed intent</code>). These are in the <a href="../reference/error-codes.html">error catalogue</a>.</p>
+<h2 id="policy-changes-over-time">Policy changes over time<a class="anchor" href="#policy-changes-over-time" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>A change to a policy is a new version.</strong> The old version stays on the server and stays in the approval history.</li>
+<li><strong>Each approval supersedes the previous one.</strong> Requests must name the new version to run under it.</li>
+<li><strong>The record of each decision names the version it used.</strong> Verified: a record made under <code>2.1.0</code> still verified (<code>valid: true</code>) after <code>2.1.1</code> was approved and took effect, because the record&#39;s signature does not depend on the current version in effect.</li>
+<li><strong>A policy file that changes outside the approval flow is refused.</strong> At start-up the server checks each policy file against its approval record. The log line <code>policy_governance_integrity_check_passed</code> is what a healthy start printed in this verification. The existing <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/site/troubleshooting.mdx">troubleshooting guide</a> describes the refusal for a file that does not match its approval record.</li>
+</ul>
+<h2 id="keeping-ownership">Keeping ownership<a class="anchor" href="#keeping-ownership" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The organization writes the policy. Parmana does not supply business rules for you. The examples are examples.</li>
+<li>Approval is a human decision. Give checkers a named list (<code>POLICY_CHANGE_CHECKERS</code>) and keep their step-up keys with them.</li>
+<li>Every version is in the approval history, with its proposer, its checker, its reason, and its content hash.</li>
+<li>Changes to who may approve (approver keys, external connectors, business signal sources, authority grants) go through the same two-person governance. See the <a href="../api/endpoint-index.html">endpoint index</a>.</li>
+</ul>
+<h2 id="experimental-policy-v2">Experimental: policy v2<a class="anchor" href="#experimental-policy-v2" aria-label="Link to this section">#</a></h2>
+<p>A separate, experimental policy v2 surface exists, with decisions, registration, reviews and evidence replay under <code>/v2/…</code>. It is off unless <code>PARMANA_POLICY_V2_DECISIONS</code> and related settings are set, and it is in the OpenAPI document, marked experimental (<code>x-stability: experimental</code>). Do not build on it without a test against your deployment. See <a href="../api/index.html#experimental-and-opt-in-routes">API overview</a>.</p>
+<h2 id="checklist-for-a-new-policy-version">Checklist for a new policy version<a class="anchor" href="#checklist-for-a-new-policy-version" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"> Every approve rule requires an approval signal (<code>approvalSignals</code>) and does not rest on declared facts alone.</li>
+<li><input disabled="" type="checkbox"> <code>signalsSchema</code> lists every fact the rules read, with its type.</li>
+<li><input disabled="" type="checkbox"> Bound signals tie each amount and target to the request.</li>
+<li><input disabled="" type="checkbox"> Sourced facts name a registered source and a freshness window.</li>
+<li><input disabled="" type="checkbox"> Rules are ordered: refusals, then approvals, then a final reject.</li>
+<li><input disabled="" type="checkbox"> <code>POST /policies/validate</code> returns <code>valid: true</code> for the new version.</li>
+<li><input disabled="" type="checkbox"> A person other than the maker has reviewed the change, and approves it with a step-up envelope.</li>
+<li><input disabled="" type="checkbox"> Callers that will run under the new version name it in their requests.</li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/policies/README.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="../glossary.html"><span>Previous</span>Glossary</a><a class="pn next" href="../security/index.html"><span>Next</span>Security and cryptographic verification</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#where-policies-live">Where policies live</a></li><li class="d2"><a href="#anatomy-of-a-policy">Anatomy of a policy</a></li><li class="d2"><a href="#signals">Signals</a></li><li class="d2"><a href="#rules-are-checked-in-order">Rules are checked in order</a></li><li class="d2"><a href="#versions-and-the-version-in-effect">Versions and the version in effect</a></li><li class="d2"><a href="#how-a-policy-version-is-approved">How a policy version is approved</a></li><li class="d2"><a href="#what-the-decision-looks-like">What the decision looks like</a></li><li class="d2"><a href="#policy-changes-over-time">Policy changes over time</a></li><li class="d2"><a href="#keeping-ownership">Keeping ownership</a></li><li class="d2"><a href="#experimental-policy-v2">Experimental: policy v2</a></li><li class="d2"><a href="#checklist-for-a-new-policy-version">Checklist for a new policy version</a></li></ul></nav>
+</div>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

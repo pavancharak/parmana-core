@@ -59,6 +59,7 @@
     "policy-log:export": "tsx scripts/policy-approval-log.ts export",
     "policy-log:check-db": "tsx scripts/policy-approval-log.ts check-db",
     "loadtest": "tsx scripts/load-test.ts",
+    "docs:portal": "node docs/developer-portal/tools/build-portal.mjs",
     "doctor": "tsx scripts/doctor.ts",
     "doctor:production": "tsx scripts/doctor.ts --production --online",
     "generate:python-models": "tsx python/scripts/generate_models.ts",
