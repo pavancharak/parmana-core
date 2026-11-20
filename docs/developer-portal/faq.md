@@ -92,7 +92,7 @@ An approval counts only if Parmana can verify it for this request. The signature
 
 ### What does `coverage: legacy` mean?
 
-The record is schema version 2. Its signatures protect only seven top-level fields. A change to another field, such as `updatedAt`, is not detected. The default configuration of this build produces these records. Schema 3 with hybrid signatures gives `coverage: full`, and it is opt-in. See [Security: schema versions](security/README.md#schema-versions-and-coverage).
+The record is schema version 2. Its signatures protect only seven top-level fields. A change to another field, such as `updatedAt`, is not detected. A server in `CRYPTO_MODE=single` produces these records, and so does a server rolled back with `HYBRID_SCHEMA_VERSION=2`. Schema 3 is the default for hybrid signing, and it gives `coverage: full`. See [Security: schema versions](security/README.md#schema-versions-and-coverage).
 
 ### Does `valid: true` mean the business action happened?
 

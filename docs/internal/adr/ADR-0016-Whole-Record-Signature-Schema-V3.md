@@ -115,3 +115,11 @@ Option 2 required a verifier to reject a post-cutover record with no hybrid enve
 - **`docs/FORMAT.md` matches the signing code.** The verifier's FORMAT.md excludes `signature`, `signatures`, `schemaVersion`, `verifications` and `receipts` from v3 coverage. That is the same list as `WHOLE_RECORD_EXCLUDED_FIELDS` in `packages/crypto/src/ExecutionTrustRecordCanonicalView.ts`.
 
 The gate is open. Enabling v3 is still a per-deployment operational step: `HYBRID_SCHEMA_VERSION=3` with `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true`. The code default stays `2`. Changing the default is a separate decision, recorded as F1 in the developer portal.
+
+## Amendment (2026-11-20): schema 3 is the default
+
+The owner made schema 3 the default. An unset or blank `HYBRID_SCHEMA_VERSION` now means 3, and `2` remains the rollback. `HYBRID_SCHEMA_V3_ACKNOWLEDGED` is no longer read, so the issuance gate described above is retired. The sentences above that describe the default as 2 and the gate as open record the state before this amendment.
+
+This applies only to hybrid signing. A server in `CRYPTO_MODE=single` writes no hybrid envelope and so no schema 3 record. Receipts keep their own hybrid message version 2.
+
+The operational precondition in `docs/internal/runbooks/SCHEMA-V3-ROLLOUT.md` still applies: a hybrid server needs the ML-DSA-65 key, and that key must not be placed in an environment variable until one of the runbook's two conditions holds. The default change does not waive it.
