@@ -233,6 +233,7 @@ function renderPage(src, text) {
   const seen = new Map();
   const fromOut = outPathFor(src);
 
+  let hasMermaid = false;
   const marked = new Marked({
     gfm: true,
     renderer: {
@@ -259,6 +260,11 @@ function renderPage(src, text) {
       },
       code({ text: code, lang }) {
         const label = (lang || "text").split(/\s+/)[0];
+        if (label === "mermaid") {
+          // Rendered in the browser by the Mermaid script, which replaces this text with the diagram.
+          hasMermaid = true;
+          return `<pre class="mermaid">${escapeHtml(code)}</pre>\n`;
+        }
         return (
           `<div class="code">` +
           `<div class="code-bar"><span>${escapeHtml(label)}</span>` +
@@ -302,6 +308,7 @@ function renderPage(src, text) {
     html,
     excerpt: plain.slice(0, 240),
     summary,
+    hasMermaid,
     outRel: fromOut,
   };
 }
@@ -338,6 +345,19 @@ if (anchorProblems.length > 0) {
 // ---------------------------------------------------------------------------
 // Page chrome
 
+// Mermaid renders the diagrams in the browser. Pinned to a release that is well past the two-week
+// minimum age for new versions; the page loads it from cdnjs only where a diagram is present.
+const MERMAID_SCRIPT = `<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) {
+    window.mermaid.initialize({
+      startOnLoad: true,
+      securityLevel: "strict",
+      theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default",
+    });
+  }
+</script>
+`;
 const CSS = readFileSync(join(here, "portal-assets", "portal.css"), "utf8");
 const JS = readFileSync(join(here, "portal-assets", "portal.js"), "utf8");
 
@@ -436,7 +456,7 @@ ${page.html}
 </div>
 <script>window.PORTAL_ROOT = ${JSON.stringify(rootPrefix)};</script>
 <script src="${rootPrefix}search-index.js"></script>
-<script src="${rootPrefix}portal.js"></script>
+${page.hasMermaid ? MERMAID_SCRIPT : ""}<script src="${rootPrefix}portal.js"></script>
 </body>
 </html>
 `;
