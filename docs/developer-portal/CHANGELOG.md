@@ -6,6 +6,14 @@ This changelog records changes to the developer portal in `docs/developer-portal
 
 Versions follow the packages the portal documents: SDKs and server 4.1.1, offline verifier 2.0.3.
 
+## 2026-11-20: execution system defects fixed; publishing decided
+
+- The placeholder `DefaultExecutionSystem` is renamed `SimulatedExecutionSystem`, and documented as executing nothing. All references are updated. The name is kept only in historical records.
+- `HttpExecutionSystem` applies its `timeout` option with `AbortSignal.timeout`, and says the action may have run.
+- `HttpExecutionSystem` checks each response field before returning the result.
+- Both packages are decided public. `@parmana/envelope-verifier` is added to the release process; `@parmana/execution-system` is held until its receiving-system obligations are documented. Nothing is published.
+- New API references: `packages/envelope-verifier-api.md` and `packages/execution-system-api.md`.
+
 ## 2026-11-20: schema version 3 is the default
 
 The owner made schema 3 the default: an unset `HYBRID_SCHEMA_VERSION` now means 3, and `2` is the rollback. The acknowledgement gate (`HYBRID_SCHEMA_V3_ACKNOWLEDGED`) is no longer read. This applies only to hybrid signing: a server in `CRYPTO_MODE=single` issues no schema 3 records. Changed: the parser and the doctor check, the tests that encoded the old default (each now states the schema it signs), `.env.example`, the public environment table, and the portal pages. Receipts are unchanged. The owner reports no active consumer and no single-mode record.
