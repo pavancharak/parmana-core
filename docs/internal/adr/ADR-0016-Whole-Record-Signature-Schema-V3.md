@@ -102,6 +102,8 @@ Option 2 required a verifier to reject a post-cutover record with no hybrid enve
 
 **Precondition, before the cutover takes effect.** The server attaches a `signatures` array only when `CRYPTO_MODE=hybrid` (`packages/runtime/src/BusinessTrustRecordBuilder.ts`). `CRYPTO_MODE` defaults to `single` (`.env.example`). A server still in `single` mode issues records with no hybrid envelope, and a verifier configured with the cutover refuses all of them. So the cutover instant must be the moment every issuing server runs `CRYPTO_MODE=hybrid` with `SECONDARY_SIGNATURE_PROVIDER` set and `HYBRID_SIGNATURE_REQUIRED=true`. Nothing here sets that instant automatically.
 
-**Cutover instant:** to be recorded here once every issuing server is confirmed in hybrid mode.
+**Facts (owner, 2026-11-20).** No record has been issued in `single` mode, so no record predates the cutover, and the pre-cutover limit does not apply. The hybrid cutover instant has not been reached yet.
+
+**Cutover instant:** set to the moment every issuing server runs `CRYPTO_MODE=hybrid` with the secondary provider and `HYBRID_SIGNATURE_REQUIRED=true`. Record that instant here, and set `hybridRequiredFrom` to it in each verifier's trust file. Because no earlier record exists, any instant at or before the first hybrid record is also safe.
 
 **Still open for v3 issuance:** the other conditions in the issuance gate above (step 5 publication, and `docs/FORMAT.md`). Recording this option does not by itself open v3 issuance.
