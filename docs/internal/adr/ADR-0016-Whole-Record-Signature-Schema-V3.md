@@ -107,3 +107,11 @@ Option 2 required a verifier to reject a post-cutover record with no hybrid enve
 **Cutover instant (recorded 2026-11-20):** `2026-11-20T13:01:38Z`, the owner's instruction to set it now. Set `hybridRequiredFrom` to this value in each verifier trust file. The owner is responsible for the precondition below holding at this instant: every issuing server runs `CRYPTO_MODE=hybrid` with the secondary provider and `HYBRID_SIGNATURE_REQUIRED=true`. Record that instant here, and set `hybridRequiredFrom` to it in each verifier's trust file. Because no earlier record exists, any instant at or before the first hybrid record is also safe.
 
 **Still open for v3 issuance:** the other conditions in the issuance gate above (step 5 publication, and `docs/FORMAT.md`). Recording this option does not by itself open v3 issuance.
+
+## Issuance gate: status (2026-11-20)
+
+- **Downgrade gap closed as a decision.** Option 2 is recorded above, with the cutover instant `2026-11-20T13:01:38Z`.
+- **Step 5 published.** The verifier 2.0.3 is on npm (`@parmana/verifier`) and PyPI (`parmana-verifier`). The SDK `@parmana/sdk` 4.1.1 is on npm. Each reads v3 and reports `coverage`.
+- **`docs/FORMAT.md` matches the signing code.** The verifier's FORMAT.md excludes `signature`, `signatures`, `schemaVersion`, `verifications` and `receipts` from v3 coverage. That is the same list as `WHOLE_RECORD_EXCLUDED_FIELDS` in `packages/crypto/src/ExecutionTrustRecordCanonicalView.ts`.
+
+The gate is open. Enabling v3 is still a per-deployment operational step: `HYBRID_SCHEMA_VERSION=3` with `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true`. The code default stays `2`. Changing the default is a separate decision, recorded as F1 in the developer portal.
