@@ -220,7 +220,7 @@ export interface ExecutionGatewayOptions {
  *
  * Implements @parmana/execution-system's ExecutionSystem, so
  * it plugs into the existing RuntimeFactory.create() seam
- * exactly like DefaultExecutionSystem or HttpExecutionSystem —
+ * exactly like SimulatedExecutionSystem or HttpExecutionSystem —
  * no change to RuntimeEngine, RuntimePipeline, or any other
  * core decision-flow component is required.
  *

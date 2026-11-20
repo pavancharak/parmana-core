@@ -4,14 +4,15 @@ description: "The single interface every execution boundary implements: a no-op 
 ---
 
 <Info>
-  **[AVAILABLE]**. `packages/execution-system`. Note `DefaultExecutionSystem`'s
-  real scope below, it is a placeholder, not a verified boundary.
+  **[AVAILABLE]**. `packages/execution-system`. Note
+  `SimulatedExecutionSystem`'s real scope below, it is a placeholder, not a
+  verified boundary.
 </Info>
 
 ## Purpose
 
 Defines the one interface `RuntimeFactory.create()` needs to actually release an execution:
-`ExecutionSystem`. `DefaultExecutionSystem`, `HttpExecutionSystem`, and
+`ExecutionSystem`. `SimulatedExecutionSystem`, `HttpExecutionSystem`, and
 `@parmana/execution-gateway`'s `ExecutionGateway` are three different implementations of
 this exact interface, interchangeable without touching `RuntimeEngine` or
 `RuntimePipeline`.
@@ -25,16 +26,16 @@ Not published to npm. This is an internal package of this repository, used from 
 | Export                        | Signature / Stability                                                                                                                                                                                                                                                                                     |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ExecutionSystem` (interface) | `{ execute(request: ExecutionRequest): Promise<ExecutionResult> }`. [AVAILABLE]                                                                                                                                                                                                                           |
-| `DefaultExecutionSystem`      | [AVAILABLE], but a **placeholder**: `execute()` unconditionally returns `{ success: true,... }`, echoing the request back. No policy re-check, no content-binding, no connector. Many tutorials (1-13) use this for simplicity to demonstrate the Runtime in isolation, it performs no real verification. |
-| `HttpExecutionSystem`         | [AVAILABLE]. `new HttpExecutionSystem({ baseUrl })`, `execute()` POSTs to `${baseUrl}/execute` and returns the parsed response.                                                                                                                                                                           |
+| `SimulatedExecutionSystem`    | [AVAILABLE], but a **placeholder**: `execute()` unconditionally returns `{ success: true,... }`, echoing the request back. No policy re-check, no content-binding, no connector. Many tutorials (1-13) use this for simplicity to demonstrate the Runtime in isolation, it performs no real verification. |
+| `HttpExecutionSystem`         | [AVAILABLE]. `new HttpExecutionSystem({ baseUrl })`, `execute()` POSTs to `${baseUrl}/execute`, applies `timeout` (a timed-out request may still have run), checks the response fields, and returns the result.                                                                                           |
 | `ExecutionRequest`            | `{ businessTransactionId, action, target, parameters }`                                                                                                                                                                                                                                                   |
 
 <Warning>
-  **`DefaultExecutionSystem` is not a smaller version of the gateway, it is a
+  **`SimulatedExecutionSystem` is not a smaller version of the gateway, it is a
   stand-in that does nothing.** If you see it in a tutorial's source, that
   tutorial is deliberately demonstrating the Runtime, Policy Engine, or trust
   record shape in isolation, not the verified end-to-end pipeline. The default
-  `packages/api` server does **not** use `DefaultExecutionSystem`, it always
+  `packages/api` server does **not** use `SimulatedExecutionSystem`, it always
   constructs a real `ExecutionGateway`, see [The
   gateway](/concepts/the-gateway).
 </Warning>
@@ -43,13 +44,13 @@ Not published to npm. This is an internal package of this repository, used from 
 
 ```typescript
 import { RuntimeFactory } from "@parmana/runtime";
-import { DefaultExecutionSystem } from "@parmana/execution-system";
+import { SimulatedExecutionSystem } from "@parmana/execution-system";
 
 const application = RuntimeFactory.create(
   transactionRepository,
   trustRecordRepository,
   policyRepository,
-  new DefaultExecutionSystem(), // placeholder, always succeeds
+  new SimulatedExecutionSystem(), // placeholder, always succeeds
 );
 ```
 

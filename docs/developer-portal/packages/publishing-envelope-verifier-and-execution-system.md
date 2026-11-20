@@ -71,7 +71,7 @@ The owner decided both packages are public. The owner has agreed to publish in t
 ### API pages (written 2026-11-20)
 
 - [`@parmana/envelope-verifier` API](envelope-verifier-api.md): ready for the publish.
-- [`@parmana/execution-system` API](execution-system-api.md): documents the surface, and lists three defects that block publishing. The most serious is `DefaultExecutionSystem`, a placeholder that reports success without executing. Hold the package until those are fixed.
+- [`@parmana/execution-system` API](execution-system-api.md): the three defects recorded on 2026-11-20 are fixed, and the placeholder is renamed to `SimulatedExecutionSystem`. The package stays held until its receiving-system obligations are documented and the owner decides on the placeholder.
 
 ### Still needed before the owner publishes
 

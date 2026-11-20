@@ -26,7 +26,7 @@ import {
 } from "@parmana/policy";
 
 import {
-  DefaultExecutionSystem,
+  SimulatedExecutionSystem,
   type ExecutionRequest,
   type ExecutionResult,
   type ExecutionSystem,
@@ -138,13 +138,13 @@ class FixedPolicyRepository implements PolicyRepository {
 
 /**
  * Records the last ExecutionRequest forwarded downstream,
- * then delegates to DefaultExecutionSystem so the runtime
+ * then delegates to SimulatedExecutionSystem so the runtime
  * pipeline completes normally.
  */
 class RecordingExecutionSystem implements ExecutionSystem {
   public lastRequest: ExecutionRequest | undefined;
 
-  private readonly delegate = new DefaultExecutionSystem();
+  private readonly delegate = new SimulatedExecutionSystem();
 
   async execute(request: ExecutionRequest): Promise<ExecutionResult> {
     this.lastRequest = request;

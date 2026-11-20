@@ -393,7 +393,7 @@ handed to this session, and none of them are:
 - `HttpExecutionSystem`'s `timeout` option is declared
   (`ExecutionSystemClientOptions.ts`) but never referenced anywhere in the
   implementation — confirmed by grep: not enforced.
-- `DefaultExecutionSystem.execute()` unconditionally returns `success: true`
+- `SimulatedExecutionSystem.execute()` unconditionally returns `success: true`
   for any request — a no-op stub. Not used by any real connector path
   today, but would silently "succeed" everything if ever wired in by
   mistake.

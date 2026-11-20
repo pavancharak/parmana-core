@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { DefaultExecutionSystem } from "../../src/DefaultExecutionSystem.js";
+import { SimulatedExecutionSystem } from "../../src/SimulatedExecutionSystem.js";
 
-describe("DefaultExecutionSystem", () => {
+describe("SimulatedExecutionSystem", () => {
   it("should execute a request successfully", async () => {
-    const system = new DefaultExecutionSystem();
+    const system = new SimulatedExecutionSystem();
 
     const result = await system.execute({
       businessTransactionId: "tx-1",

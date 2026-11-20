@@ -27,14 +27,14 @@ approver is a person added through [Manage approvers](/guides/manage-approvers).
 | --- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 01  | Hello World              | Constructing a `BusinessTransaction`, no execution yet                                                                                            |
 | 02  | Policy Evaluation        | `PolicyEngine.evaluate()` in isolation                                                                                                            |
-| 03  | Runtime Execution        | First full `RuntimeFactory` execution, using the `DefaultExecutionSystem` placeholder                                                             |
+| 03  | Runtime Execution        | First full `RuntimeFactory` execution, using the `SimulatedExecutionSystem` placeholder                                                             |
 | 04  | Policy Router            | Resolving a `PolicyReference` to a loaded policy                                                                                                  |
 | 05  | Verification             | Fresh verification appended to a trust record's history                                                                                           |
 | 06  | Replay                   | `@parmana/replay`'s real, scoped policy re-evaluation, see [Replay](/replay/overview)                                                             |
 | 07  | Receipt Generation       | The real, wired `Receipt` (via `@parmana/crypto`'s `ReceiptCrypto`)                                                                               |
 | 08  | Human Approval           | An `Authority` / `Authorization` / `Intent` chain without executing                                                                               |
 | 09  | REST API                 | `POST /transactions` over HTTP, excluded from the unattended batch, needs a live server, see [REST API Introduction](/api-reference/introduction) |
-| 10  | End-to-End               | Execute, verify, and receipt in one run, still via `DefaultExecutionSystem`                                                                       |
+| 10  | End-to-End               | Execute, verify, and receipt in one run, still via `SimulatedExecutionSystem`                                                                       |
 | 11  | Execution Authorization  | The `SignedExecutionAuthorization` envelope itself, printed directly, see [Authorize and execute end to end](/guides/authorize-and-execute)       |
 | 12  | Envelope Verification    | `EnvelopeVerifier`'s per-check breakdown on a valid envelope                                                                                      |
 | 13  | Post-Quantum Signatures  | `config.crypto.primarySignatureProvider` read and printed                                                                                         |
