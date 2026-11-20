@@ -37,7 +37,7 @@ export const businessTransaction: BusinessTransaction = {
   intent: {
     intentId: "intent-001",
 
-    // test:fixture-execute (not payments:execute/vendor-payment, removed
+    // test:fixture-execute (not payments:execute/payment-limit, removed
     // per docs/internal/VERIFICATION-GAPS.md G-27) -- a generic, test-only
     // capability with no production implication, registered only when
     // NODE_ENV=test (packages/api/src/bootstrap/createTestFixtureConnector.ts).
@@ -49,7 +49,7 @@ export const businessTransaction: BusinessTransaction = {
   },
 
   policy: {
-    name: "vendor-payment",
+    name: "payment-limit",
     version: "2.0.0",
     schemaVersion: "1.0.0",
   },

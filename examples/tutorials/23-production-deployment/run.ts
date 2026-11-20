@@ -26,7 +26,7 @@ async function main(): Promise<void> {
 
   const trustRecords = new MemoryExecutionTrustRecordRepository();
 
-  const policyRepository = new FilePolicyRepository("policies");
+  const policyRepository = new FilePolicyRepository("fixtures/policies");
 
   console.log("✓ Policy Repository configured.");
 

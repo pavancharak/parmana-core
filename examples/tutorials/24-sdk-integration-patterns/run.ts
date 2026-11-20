@@ -23,7 +23,7 @@ async function main(): Promise<void> {
 
   const trustRecords = new MemoryExecutionTrustRecordRepository();
 
-  const policyRepository = new FilePolicyRepository("policies");
+  const policyRepository = new FilePolicyRepository("fixtures/policies");
 
   //
   // Parmana Runtime

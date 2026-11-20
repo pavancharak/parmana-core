@@ -43,7 +43,7 @@ import {
  * release must say so explicitly instead of surfacing a generic error.
  */
 const policyRepository = new FilePolicyRepository(
-  path.resolve(import.meta.dirname, "../../../../policies"),
+  path.resolve(import.meta.dirname, "../../../../fixtures/policies"),
 );
 
 function transaction(): Promise<BusinessTransaction> {
@@ -61,8 +61,8 @@ function transaction(): Promise<BusinessTransaction> {
       createdAt: new Date(),
     },
     policy: {
-      name: "vendor-payment",
-      version: "2.1.0",
+      name: "payment-limit",
+      version: "1.0.0",
       schemaVersion: "1.0.0",
     },
     signals: {

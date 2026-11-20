@@ -1,5 +1,8 @@
 {
   "default": [
     "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA5/PeaOdJ4vDHyDJLs/iWkWQb/nWcpd7NqIr/rxhg37w=\n-----END PUBLIC KEY-----\n"
+  ],
+  "alias/parmana-prod": [
+    "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAMEVLc85qBUiOWQelvmkrHnH243O1j5SE+pkBWE9LL1U=\n-----END PUBLIC KEY-----\n"
   ]
 }

@@ -388,7 +388,7 @@ describe("PostgresExecutionTrustRecordRepository", () => {
         nonce: "nonce-1",
         decisionId: "decision-1",
         businessTransactionId: "txn-4",
-        policyName: "vendor-payment",
+        policyName: "payment-limit",
         policyVersion: "1.0.0",
         authorizedAt: "2026-09-07T00:00:00.000Z",
         expiresAt: "2026-09-07T00:05:00.000Z",

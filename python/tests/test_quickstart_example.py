@@ -64,7 +64,7 @@ def quickstart_server() -> str:
             # Trusts the local test approver (tests/local_approver.py).
             **local_approver_env(),
             "PARMANA_STORAGE": "memory",
-            "PARMANA_POLICY_DIR": str(REPO_ROOT / "policies"),
+            "PARMANA_POLICY_DIR": str(REPO_ROOT / "fixtures" / "policies"),
             "PARMANA_KEY_DIR": key_dir,
             # No PARMANA_API_KEYS: this fixture matches the README's
             # documented local server, which runs with auth disabled --

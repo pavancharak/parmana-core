@@ -22,7 +22,7 @@ import {
 describe("Runtime release refused by a kill switch", () => {
   it("does not release an action when a pre-release hook refuses it", async () => {
     const policyRepository = new FilePolicyRepository(
-      path.resolve(import.meta.dirname, "../../../../policies"),
+      path.resolve(import.meta.dirname, "../../../../fixtures/policies"),
     );
 
     const runtime = new RuntimeBuilder()
@@ -38,8 +38,8 @@ describe("Runtime release refused by a kill switch", () => {
     const attempt = runtime.execute(
       await withTestApproval({
         policy: {
-          name: "vendor-payment",
-          version: "2.1.0",
+          name: "payment-limit",
+          version: "1.0.0",
           schemaVersion: "1.0.0",
         },
         signals: {

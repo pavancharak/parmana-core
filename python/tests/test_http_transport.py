@@ -129,7 +129,7 @@ def test_403_policy_denied_raises_execution_rejected_error():
     special-case via a message-prefix sniff (see build_http_error's own
     docstring, and typescript/src/transport/mapHttpErrorResponse.ts's
     identical, identically-ordered check). Confirmed live against a real
-    risk-rejected vendor-payment transaction.
+    risk-rejected payment-limit transaction.
     """
     responses.add(
         responses.POST,

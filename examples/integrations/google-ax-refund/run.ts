@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { StaticApprovalIssuerRegistry } from "@parmana/approval";
 import { ApprovalArtifactSigner } from "@parmana/crypto";
+import type { BusinessSignalSource } from "@parmana/runtime";
 
 import {
   REFUND_ACTION,
@@ -17,17 +18,43 @@ import {
  * Google AX refund, end to end through the Parmana gate.
  *
  * An agent (running in Google AX in production; here a plain function) proposes
- * a refund. The gate runs the real customer-refund 1.2.0 policy and the approval
- * check at authorize, then again at release, just before the connector would run.
- * The release check uses the trust list as it stands at that moment, so a
- * manager revoked between the two stages is refused at release.
+ * a refund of a payment. The gate runs the live payment-refund policy: the
+ * payment source must confirm the payment is refundable, the policy must
+ * approve, and a signed manager approval must cover the payment and amount.
+ * The approval is checked again at release, just before the connector would
+ * run, against the trust list as it stands then.
  *
+ * The payment source is a stand-in (an in-process table), as in tutorial 129.
  * Hermetic: the manager key is generated here, and nonces are in memory.
  */
 
 const repoRoot = dirname(
   dirname(dirname(dirname(fileURLToPath(import.meta.url)))),
 );
+
+// Stand-in payment source. Production: the payment provider's signal service.
+const PAYMENTS: Record<string, boolean> = {
+  "payments/pay_ABC123": true,
+  "payments/pay_XYZ789": true,
+  "payments/pay_DEF456": false,
+};
+const now = new Date();
+const paymentSource: BusinessSignalSource = {
+  name: "razorpay",
+  resolve: async (query) => {
+    if (!(query.subject in PAYMENTS)) {
+      return { kind: "not_found", reason: "no such payment" };
+    }
+    return {
+      kind: "observed",
+      value: PAYMENTS[query.subject] ?? false,
+      sourceIdentity: "razorpay:stand-in",
+      observedAt: now,
+      validUntil: new Date(now.getTime() + 60_000),
+    };
+  },
+};
+
 const policy = loadRefundPolicy(repoRoot);
 
 const manager = generateKeyPairSync("ed25519");
@@ -53,14 +80,14 @@ const revoked = new StaticApprovalIssuerRegistry([
   },
 ]);
 
-const gate = new RefundGate(policy);
+const gate = new RefundGate(policy, paymentSource);
 
-async function managerSigns(orderId: string, maxAmount: number) {
+async function managerSigns(target: string, maxAmount: number) {
   return new ApprovalArtifactSigner().sign(
     {
       ...MANAGER,
       capability: REFUND_ACTION,
-      resourceId: orderId,
+      resourceId: target,
       scope: { field: "value", comparator: "lte", value: maxAmount },
       ttlSeconds: 900,
     },
@@ -102,10 +129,10 @@ console.log();
 
 // 1. No approval: refused at authorize, the connector never runs.
 record(
-  "1. Refund of 5000 with no manager approval: refused",
+  "1. Refund of 5000 on a refundable payment, no manager approval: refused",
   false,
   await gate.authorize(
-    { orderId: "ORD-1001", amount: 5_000, managerApproved: false },
+    { target: "payments/pay_ABC123", amount: 5_000 },
     trusted,
     nextId(),
   ),
@@ -113,10 +140,9 @@ record(
 
 // 2. Approved, then the manager is still trusted at release: the refund may run.
 const approvedRefund: RefundRequest = {
-  orderId: "ORD-1042",
+  target: "payments/pay_ABC123",
   amount: 75_000,
-  managerApproved: true,
-  approval: await managerSigns("ORD-1042", 75_000),
+  approval: await managerSigns("payments/pay_ABC123", 75_000),
 };
 record(
   "2. Refund of 75000 with a signed approval, trusted at authorize: approved",
@@ -131,10 +157,9 @@ record(
 
 // 3. Approved at authorize, then the manager is revoked before release.
 const revokedRefund: RefundRequest = {
-  orderId: "ORD-5000",
+  target: "payments/pay_XYZ789",
   amount: 60_000,
-  managerApproved: true,
-  approval: await managerSigns("ORD-5000", 60_000),
+  approval: await managerSigns("payments/pay_XYZ789", 60_000),
 };
 record(
   "3a. Refund of 60000 with a signed approval, trusted at authorize: approved",
@@ -156,30 +181,28 @@ record(
 
 // 5. An approval for 75000 cannot cover a 90000 refund.
 record(
-  "5. Approval up to 75000 used for 90000: refused",
+  "5. Approval up to 75000 used for 90000: refused, the amount comes from the request",
   false,
   await gate.authorize(
     {
-      orderId: "ORD-1042",
+      target: "payments/pay_ABC123",
       amount: 90_000,
-      managerApproved: true,
-      approval: await managerSigns("ORD-1042", 75_000),
+      approval: await managerSigns("payments/pay_ABC123", 75_000),
     },
     trusted,
     nextId(),
   ),
 );
 
-// 6. Above the policy maximum, even with an approval.
+// 6. The payment source says the payment is not refundable: refused, even with a valid approval.
 record(
-  "6. Refund of 150000 with an approval: refused by the policy maximum",
+  "6. Refund on a payment the source says is fully refunded, with a valid approval: refused",
   false,
   await gate.authorize(
     {
-      orderId: "ORD-3000",
-      amount: 150_000,
-      managerApproved: true,
-      approval: await managerSigns("ORD-3000", 150_000),
+      target: "payments/pay_DEF456",
+      amount: 5_000,
+      approval: await managerSigns("payments/pay_DEF456", 5_000),
     },
     trusted,
     nextId(),

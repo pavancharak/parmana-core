@@ -59,10 +59,10 @@ Parmana's process and exactly what the receiving side saw.
 
 ## Files
 
-| File               | Purpose                                                   |
-| ------------------ | --------------------------------------------------------- |
-| `transaction.json` | An approved `BusinessTransaction` (vendor-payment policy) |
-| `run.ts`           | Runs both roles end to end                                |
+| File               | Purpose                                                  |
+| ------------------ | -------------------------------------------------------- |
+| `transaction.json` | An approved `BusinessTransaction` (payment-limit policy) |
+| `run.ts`           | Runs both roles end to end                               |
 
 ---
 

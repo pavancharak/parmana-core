@@ -57,7 +57,7 @@ The Runtime generates the Execution Permit automatically.
 
 ```ts
 const runtime = new RuntimeBuilder()
-  .withPolicyRepository(new FilePolicyRepository("policies"))
+  .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
   .build(repository);
 ```
 
@@ -127,7 +127,7 @@ Executing transaction...
 Execution Permit
 Authorization ID : ...
 Decision ID      : ...
-Policy           : vendor-payment@2.1.0
+Policy           : payment-limit@2.1.0
 Issued At        : ...
 Expires At       : ...
 Permit Signature

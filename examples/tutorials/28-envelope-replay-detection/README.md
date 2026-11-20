@@ -58,7 +58,7 @@ Replay detection guarantees that every authorization can only be accepted once.
 
 ```ts
 const runtime = new RuntimeBuilder()
-  .withPolicyRepository(new FilePolicyRepository("policies"))
+  .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
   .build(new MemoryExecutionTrustRecordRepository());
 ```
 

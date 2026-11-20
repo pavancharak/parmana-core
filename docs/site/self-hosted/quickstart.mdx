@@ -6,11 +6,10 @@ description: "Start Parmana on your own machine with one command, approve a poli
 By the end of this page you will have:
 
 1. Parmana and its own Postgres running on your machine.
-2. The shipped `customer-refund` policy approved by two people, the way production requires.
+2. The shipped `payment-refund` policy approved by two people, the way production requires.
 3. A refund request refused by that policy, with a signed Refusal Record you can verify.
 
-No action goes ahead without a signed approval from a person, so a refund with no manager
-approval is refused. To see one authorized, add a manager through
+No action goes ahead without a signed approval from a person, and this quickstart has no payment source, so the refund is refused. To see one authorized, connect a payment source and add a manager through
 [Manage approvers](/guides/manage-approvers) and attach their signed approval, the way the
 [offline check](/self-hosted/offline-verification) does.
 
@@ -141,15 +140,15 @@ callerId=bob  credentialHolderType=USER  allowedCapabilities=(none)  allowedPrin
 [api-keys] 3 key(s)
 ```
 
-## Step 4: Approve the `customer-refund` policy
+## Step 4: Approve the `payment-refund` policy
 
-**4a. Alice proposes the policy** exactly as it ships in `policies/customer-refund/1.2.0/policy.json`:
+**4a. Alice proposes the policy** exactly as it ships in `policies/payment-refund/1.0.0/policy.json`:
 
 ```bash
-printf '{"reason":"Adopt the shipped customer-refund policy.","proposedContent":%s}' \
-  "$(cat policies/customer-refund/1.2.0/policy.json)" > proposal.json
+printf '{"reason":"Adopt the shipped payment-refund policy.","proposedContent":%s}' \
+  "$(cat policies/payment-refund/1.0.0/policy.json)" > proposal.json
 
-curl -s -X POST http://127.0.0.1:3000/policies/customer-refund/1.2.0/pending-changes \
+curl -s -X POST http://127.0.0.1:3000/policies/payment-refund/1.0.0/pending-changes \
   -H "Authorization: Bearer $ALICE_KEY" -H "Content-Type: application/json" \
   --data @proposal.json > proposed.json
 
@@ -185,7 +184,7 @@ Parmana refuses the approval if Alice sends it (`403 SAME_ACTOR_CANNOT_APPROVE_O
 
 ## Step 5: Get your first decision
 
-Build a request for a refund of 50,000. The policy authorizes a refund only with a signed manager approval for its order and amount, and this request has none:
+Build a request for a refund of 50,000. The policy authorizes a refund only when the payment source confirms the payment is refundable and a signed manager approval covers its order and amount. This quickstart has no payment source, and this request has no approval:
 
 ```bash
 docker compose run --rm --no-deps --entrypoint node setup \
@@ -204,11 +203,11 @@ curl -s -w '\nHTTP %{http_code}\n' -X POST http://127.0.0.1:3000/execute \
 Expected output:
 
 ```text
-{"error":"Execution rejected: Refund rejected. Every refund needs a signed manager approval for this order, covering this amount, in signals.approvalArtifact, with managerApproved true, and every other policy condition satisfied.","code":"POLICY_DENIED"}
+{"error":"Execution rejected: Rejected: business validation SOURCE_UNAVAILABLE. paymentRefundable: source \"razorpay\" is not registered.","code":"POLICY_DENIED"}
 HTTP 403
 ```
 
-Nothing was executed, and Parmana stored a signed Refusal Record of the decision. To let a refund like this run, a manager signs an approval for it; see [Human approval](/concepts/human-approval).
+Nothing was executed, and Parmana stored a signed Refusal Record of the decision. The policy refused because no payment source is registered to confirm the payment. Parmana refuses when a source it needs cannot answer; it never assumes the answer. To let a refund like this run, connect a payment source and have a manager sign an approval for it; see [Human approval](/concepts/human-approval) and [Connectors](/self-hosted/connectors).
 
 ## Step 6: Verify the Refusal Record
 
@@ -255,7 +254,7 @@ Expected output:
 - A policy approved by two people, recorded and signed.
 - A refused request with a signed Refusal Record.
 
-A refund of 500 without an approval is refused the same way: the agent's own claims that the order is eligible and passed the fraud check are not enough. A request the policy **authorizes**, here a refund with a signed manager approval, is released to a connector, the service that performs the action. Until one is configured, an authorized request returns `503 CONNECTOR_NOT_REGISTERED` and nothing is executed. To see the full authorized path, including a Trust Record verified with only the public keys, run the [offline check](/self-hosted/offline-verification). To connect your own system, see [Connectors](/self-hosted/connectors).
+A refund of 500 is refused the same way: the agent's own claims cannot authorize a refund, because the policy takes its facts from the payment source and from a signed approval. A request the policy **authorizes**, here a refund with a signed manager approval, is released to a connector, the service that performs the action. Until one is configured, an authorized request returns `503 CONNECTOR_NOT_REGISTERED` and nothing is executed. To see the full authorized path, including a Trust Record verified with only the public keys, run the [offline check](/self-hosted/offline-verification). To connect your own system, see [Connectors](/self-hosted/connectors).
 
 ## Clean up
 

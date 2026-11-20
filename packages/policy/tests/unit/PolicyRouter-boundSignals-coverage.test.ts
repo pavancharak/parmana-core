@@ -32,7 +32,7 @@ describe("PolicyRouter boundSignals coverage enforcement", () => {
   it("loads cleanly when every rule fact is bound", async () => {
     const router = new PolicyRouter(
       new FakePolicyRepository({
-        policyId: "vendor-payment",
+        policyId: "payment-limit",
         policyVersion: "2.0.0",
         schemaVersion: "1.0.0",
         boundSignals: { amount: "parameters.amount" },
@@ -46,13 +46,13 @@ describe("PolicyRouter boundSignals coverage enforcement", () => {
       }),
     );
 
-    await expect(router.load("vendor-payment", "2.0.0")).resolves.toBeDefined();
+    await expect(router.load("payment-limit", "2.0.0")).resolves.toBeDefined();
   });
 
   it("loads cleanly when an uncovered fact is explicitly acknowledged in unboundSignalReasons", async () => {
     const router = new PolicyRouter(
       new FakePolicyRepository({
-        policyId: "vendor-payment",
+        policyId: "payment-limit",
         policyVersion: "2.0.0",
         schemaVersion: "1.0.0",
         unboundSignalReasons: {
@@ -68,13 +68,13 @@ describe("PolicyRouter boundSignals coverage enforcement", () => {
       }),
     );
 
-    await expect(router.load("vendor-payment", "2.0.0")).resolves.toBeDefined();
+    await expect(router.load("payment-limit", "2.0.0")).resolves.toBeDefined();
   });
 
   it("fails closed -- throws naming the policy and the uncovered fact -- when coverage is incomplete and unacknowledged", async () => {
     const router = new PolicyRouter(
       new FakePolicyRepository({
-        policyId: "vendor-payment",
+        policyId: "payment-limit",
         policyVersion: "2.0.0",
         schemaVersion: "1.0.0",
         rules: [
@@ -87,10 +87,10 @@ describe("PolicyRouter boundSignals coverage enforcement", () => {
       }),
     );
 
-    await expect(router.load("vendor-payment", "2.0.0")).rejects.toThrow(
+    await expect(router.load("payment-limit", "2.0.0")).rejects.toThrow(
       PolicyValidationError,
     );
-    await expect(router.load("vendor-payment", "2.0.0")).rejects.toThrow(
+    await expect(router.load("payment-limit", "2.0.0")).rejects.toThrow(
       /'amount'/,
     );
   });

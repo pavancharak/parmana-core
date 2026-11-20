@@ -74,14 +74,14 @@ describe("apiClient", () => {
       const changes = [
         {
           pendingPolicyChangeId: "ppc-1",
-          policyName: "vendor-payment",
+          policyName: "payment-limit",
           policyVersion: "2.0.0",
-          proposedContent: { policyId: "vendor-payment" },
+          proposedContent: { policyId: "payment-limit" },
           proposedBy: "human-maker",
           proposedAt: "2026-08-01T00:00:00.000Z",
           status: "PENDING_APPROVAL",
           reason: "test",
-          diff: { current: null, proposed: { policyId: "vendor-payment" } },
+          diff: { current: null, proposed: { policyId: "payment-limit" } },
         },
       ];
 

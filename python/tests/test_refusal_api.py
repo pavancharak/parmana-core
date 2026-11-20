@@ -43,7 +43,7 @@ def _make_record() -> RefusalRecord:
             decision_id="decision-001",
             intent_id="intent-001",
             policy=PolicyReference(
-                name="vendor-payment", version="2.0.0", schema_version="1.0.0"
+                name="payment-limit", version="2.0.0", schema_version="1.0.0"
             ),
             signals={"riskScore": 999},
             outcome=DecisionOutcome.REJECTED,

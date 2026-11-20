@@ -1,5 +1,5 @@
 // Prints a complete POST /execute request body for an `erp:invoice-pay` under
-// the shipped `customer-refund` policy, with fresh UUIDs, for trying the self
+// the shipped `payment-refund` policy, with fresh UUIDs, for trying the self
 // hosted deployment. Runs inside the API image, so the host needs only
 // Docker:
 //
@@ -25,10 +25,12 @@
 //                                     act for its own caller ID unless it
 //                                     lists other principal IDs.
 //
-// With the shipped customer-refund 1.2.0 policy, every refund above 0 and
-// up to 100000 needs a signed manager approval for its order, covering its
-// amount (G-75), and anything else is refused. The eligibility and fraud
-// signals this script sends can only refuse a refund.
+// With the shipped payment-refund 1.0.0 policy, a refund needs two things:
+// the payment source confirms the payment is refundable (a signal this
+// script does not send; Parmana asks the source itself), and a signed
+// manager approval covering this exact amount (G-75). The script sends only
+// managerApproved and refundAmount, so the policy cannot approve from the
+// caller's claims alone.
 
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -101,12 +103,10 @@ const request = {
     parameters: { orderId, transactionId: `txn-${orderId}`, amount },
     createdAt: now,
   },
-  policy: { name: "customer-refund", version: "1.2.0", schemaVersion: "1.0.0" },
+  policy: { name: "payment-refund", version: "1.0.0", schemaVersion: "1.0.0" },
   signals: {
-    refundEligible: true,
     managerApproved:
       approvalArtifact !== undefined || managerApprovedOption === "true",
-    fraudCheckPassed: true,
     refundAmount: amount,
     ...(approvalArtifact !== undefined ? { approvalArtifact } : {}),
   },

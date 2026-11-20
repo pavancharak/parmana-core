@@ -52,7 +52,7 @@ const register: ValidationRegister = {
 };
 
 const vendorPayment = {
-  policyId: "vendor-payment",
+  policyId: "payment-limit",
   policyVersion: "2.0.0",
   schemaVersion: "2.0.0",
   capability: "erp:pay-invoice",

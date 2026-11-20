@@ -18,7 +18,7 @@ async function fixtureRecord(
   const draft: Omit<PolicyChangeApprovalRecord, "signature"> = {
     policyChangeApprovalRecordId: `pcar-${Math.random()}`,
     pendingPolicyChangeId: "ppc-1",
-    policyName: "vendor-payment",
+    policyName: "payment-limit",
     policyVersion: "1.0.0",
     proposedBy: "human-maker",
     approvedBy: "human-checker",
@@ -55,7 +55,7 @@ describe("PolicyGovernanceAnchorResolver", () => {
 
     const resolver = new PolicyGovernanceAnchorResolver(repository, crypto);
 
-    const anchor = await resolver.resolve("vendor-payment", "1.0.0", "hash123");
+    const anchor = await resolver.resolve("payment-limit", "1.0.0", "hash123");
 
     expect(anchor.status).toBe("SIGNATURE_INVALID");
     expect(anchor.approvalRecordId).toBe(record.policyChangeApprovalRecordId);
@@ -73,7 +73,7 @@ describe("PolicyGovernanceAnchorResolver", () => {
     const resolver = new PolicyGovernanceAnchorResolver(repository, crypto);
 
     const anchor = await resolver.resolve(
-      "vendor-payment",
+      "payment-limit",
       "1.0.0",
       "different-live-hash",
     );
@@ -94,7 +94,7 @@ describe("PolicyGovernanceAnchorResolver", () => {
     const resolver = new PolicyGovernanceAnchorResolver(repository, crypto);
 
     const anchor = await resolver.resolve(
-      "vendor-payment",
+      "payment-limit",
       "1.0.0",
       "matching-hash",
     );

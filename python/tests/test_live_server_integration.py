@@ -125,7 +125,7 @@ def live_server() -> str:
             # Trusts the local test approver (tests/local_approver.py).
             **local_approver_env(),
             "PARMANA_STORAGE": "memory",
-            "PARMANA_POLICY_DIR": str(REPO_ROOT / "policies"),
+            "PARMANA_POLICY_DIR": str(REPO_ROOT / "fixtures" / "policies"),
             "PARMANA_API_KEYS": api_keys,
             "PARMANA_KEY_DIR": key_dir,
             # Explicit, not inherited: this test exercises real caller-auth
@@ -220,7 +220,7 @@ def _transaction(
         intent=Intent(
             intent_id=intent_id,
             authorization_id=authorization_id,
-            # test:fixture-execute (not payments:execute/vendor-payment,
+            # test:fixture-execute (not payments:execute/payment-limit,
             # removed per docs/internal/VERIFICATION-GAPS.md G-27) -- mirrors
             # typescript/test/integration/parmana-client.integration.test.ts's
             # identical fixture update.
@@ -230,7 +230,7 @@ def _transaction(
             created_at=now,
         ),
         policy=PolicyReference(
-            name="vendor-payment", version="2.1.0", schema_version="1.0.0"
+            name="payment-limit", version="1.0.0", schema_version="1.0.0"
         ),
         signals={
             # Signed by the local test approver: no agent action is

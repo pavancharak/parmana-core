@@ -44,7 +44,7 @@ Each piece has a dedicated responsibility and can be reused across multiple Runt
 Responsible for loading the correct policy version.
 
 ```ts
-new FilePolicyRepository("policies");
+new FilePolicyRepository("fixtures/policies");
 ```
 
 ---
@@ -97,7 +97,7 @@ Hooks must never modify Runtime state.
 
 ```ts
 const runtime = new RuntimeBuilder()
-  .withPolicyRepository(new FilePolicyRepository("policies"))
+  .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
   .addStage(new CustomRuntimeComponent())
   .addHook(new LoggingHook())
   .addHook(new MetricsHook())

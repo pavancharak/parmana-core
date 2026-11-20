@@ -54,14 +54,14 @@ Policies evolve over time.
 For example:
 
 ```text
-vendor-payment
+payment-limit
 2.0.0
 ```
 
 may later become
 
 ```text
-vendor-payment
+payment-limit
 2.1.0
 ```
 
@@ -93,7 +93,7 @@ If verification succeeds, enterprise governance continues.
 The receiving system compares the expected policy version with the version contained inside the authorization.
 
 ```ts
-const expectedPolicyVersion = "2.1.0";
+const expectedPolicyVersion = "1.0.0";
 const actualPolicyVersion = authorization.payload.policyVersion;
 ```
 
@@ -112,8 +112,8 @@ Generating authorization...
 Verifying authorization...
 ✓ Authorization verified.
 Enterprise Policy Check
-Expected Policy : vendor-payment@2.1.0
-Authorization   : vendor-payment@2.1.0
+Expected Policy : payment-limit@2.1.0
+Authorization   : payment-limit@2.1.0
 ✗ Authorization rejected.
 Reason: Policy version mismatch.
 Tutorial completed successfully.

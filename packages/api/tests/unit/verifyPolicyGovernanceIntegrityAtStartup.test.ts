@@ -29,7 +29,7 @@ async function fixtureRecord(
     policyChangeApprovalRecordId: `pcar-${Math.random()}`,
     // One approval record per pending change, as the repositories enforce.
     pendingPolicyChangeId: `ppc-${Math.random()}`,
-    policyName: "vendor-payment",
+    policyName: "payment-limit",
     policyVersion: "1.0.0",
     proposedBy: "human-maker",
     approvedBy: "human-checker",
@@ -81,13 +81,13 @@ describe("verifyPolicyGovernanceIntegrityAtStartup", () => {
     const approvalRepository = new MemoryPolicyChangeApprovalRecordRepository();
 
     const content = {
-      policyId: "vendor-payment",
+      policyId: "payment-limit",
       policyVersion: "1.0.0",
       schemaVersion: "1.0.0",
       rules: [],
     };
 
-    await policyRepository.save("vendor-payment", "1.0.0", content as never);
+    await policyRepository.save("payment-limit", "1.0.0", content as never);
     const contentHashAfter = await crypto.hashPolicyContent(content);
 
     await approvalRepository.create(
@@ -118,7 +118,7 @@ describe("verifyPolicyGovernanceIntegrityAtStartup", () => {
     const approvalRepository = new MemoryPolicyChangeApprovalRecordRepository();
 
     const approvedContent = {
-      policyId: "vendor-payment",
+      policyId: "payment-limit",
       policyVersion: "1.0.0",
       schemaVersion: "1.0.0",
       rules: [],
@@ -133,7 +133,7 @@ describe("verifyPolicyGovernanceIntegrityAtStartup", () => {
     // going back through the pending-change API.
     const tamperedContent = { ...approvedContent, rules: [{ tampered: true }] };
     await policyRepository.save(
-      "vendor-payment",
+      "payment-limit",
       "1.0.0",
       tamperedContent as never,
     );
@@ -148,7 +148,7 @@ describe("verifyPolicyGovernanceIntegrityAtStartup", () => {
       checked: 1,
       mismatches: [
         {
-          policyName: "vendor-payment",
+          policyName: "payment-limit",
           policyVersion: "1.0.0",
           reason: "content-mismatch",
         },
@@ -202,13 +202,13 @@ describe("verifyPolicyGovernanceIntegrityAtStartup", () => {
     const approvalRepository = new MemoryPolicyChangeApprovalRecordRepository();
 
     const content = {
-      policyId: "vendor-payment",
+      policyId: "payment-limit",
       policyVersion: "1.0.0",
       schemaVersion: "1.0.0",
       rules: [],
     };
 
-    await policyRepository.save("vendor-payment", "1.0.0", content as never);
+    await policyRepository.save("payment-limit", "1.0.0", content as never);
     const contentHashAfter = await crypto.hashPolicyContent(content);
 
     const record = await fixtureRecord(crypto, { contentHashAfter });
@@ -228,7 +228,7 @@ describe("verifyPolicyGovernanceIntegrityAtStartup", () => {
       checked: 1,
       mismatches: [
         {
-          policyName: "vendor-payment",
+          policyName: "payment-limit",
           policyVersion: "1.0.0",
           reason: "signature-invalid",
         },
@@ -242,13 +242,13 @@ describe("verifyPolicyGovernanceIntegrityAtStartup", () => {
     const approvalRepository = new MemoryPolicyChangeApprovalRecordRepository();
 
     const content = {
-      policyId: "vendor-payment",
+      policyId: "payment-limit",
       policyVersion: "1.0.0",
       schemaVersion: "1.0.0",
       rules: [{ id: "v2" }],
     };
 
-    await policyRepository.save("vendor-payment", "1.0.0", content as never);
+    await policyRepository.save("payment-limit", "1.0.0", content as never);
 
     const oldRecord = await fixtureRecord(crypto, {
       policyChangeApprovalRecordId: "pcar-old",
@@ -273,7 +273,7 @@ describe("verifyPolicyGovernanceIntegrityAtStartup", () => {
     });
 
     expect(result.mismatches).toContainEqual({
-      policyName: "vendor-payment",
+      policyName: "payment-limit",
       policyVersion: "1.0.0",
       reason: "chain-broken",
     });
@@ -285,13 +285,13 @@ describe("verifyPolicyGovernanceIntegrityAtStartup", () => {
     const approvalRepository = new MemoryPolicyChangeApprovalRecordRepository();
 
     const firstContent = {
-      policyId: "vendor-payment",
+      policyId: "payment-limit",
       policyVersion: "1.0.0",
       schemaVersion: "1.0.0",
       rules: [{ id: "v1" }],
     };
     const secondContent = {
-      policyId: "vendor-payment",
+      policyId: "payment-limit",
       policyVersion: "1.0.0",
       schemaVersion: "1.0.0",
       rules: [{ id: "v2" }],
@@ -317,7 +317,7 @@ describe("verifyPolicyGovernanceIntegrityAtStartup", () => {
 
     // The live file matches the SECOND (most recent) approval only.
     await policyRepository.save(
-      "vendor-payment",
+      "payment-limit",
       "1.0.0",
       secondContent as never,
     );

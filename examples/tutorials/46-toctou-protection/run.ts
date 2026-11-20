@@ -28,7 +28,7 @@ async function main(): Promise<void> {
   //
   const runtime = new RuntimeBuilder()
     .withSignalStateVerifier(demoApprovalSignalVerifier())
-    .withPolicyRepository(new FilePolicyRepository("policies"))
+    .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
     .build(new MemoryExecutionTrustRecordRepository());
 
   const { context } = await runtime.execute(

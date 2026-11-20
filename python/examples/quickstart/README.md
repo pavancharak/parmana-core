@@ -41,7 +41,7 @@ Constructs a `ParmanaClient`, submits a Business Transaction through
   This example targets `test:fixture-execute`, a generic,
   `NODE_ENV=test`-only fixture connector (`createTestFixtureConnector.ts`)
   that needs no credential of its own -- the `payments:execute`/
-  `vendor-payment` connector and its `VENDOR_PAYMENT_TOKEN` this example
+  `payment-limit` connector and its `VENDOR_PAYMENT_TOKEN` this example
   originally targeted were removed from the repository entirely
   (docs/internal/VERIFICATION-GAPS.md G-27), not renamed.
 

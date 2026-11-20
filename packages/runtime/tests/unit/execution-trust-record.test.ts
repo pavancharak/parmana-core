@@ -50,7 +50,7 @@ describe("Runtime Engine", () => {
     };
 
     const policy: PolicyReference = {
-      name: "vendor-payment",
+      name: "payment-limit",
       version: "1.0.0",
       schemaVersion: "1.0.0",
     };

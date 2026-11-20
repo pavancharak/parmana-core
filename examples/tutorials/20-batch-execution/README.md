@@ -56,7 +56,7 @@ The Runtime is created once and reused throughout the batch.
 
 ```ts
 const runtime = new RuntimeBuilder()
-  .withPolicyRepository(new FilePolicyRepository("policies"))
+  .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
   .build(repository);
 ```
 

@@ -36,7 +36,7 @@ import {
  */
 describe("RuntimeEngine E2E", () => {
   const policyRepository = new FilePolicyRepository(
-    path.resolve(import.meta.dirname, "../../../../policies"),
+    path.resolve(import.meta.dirname, "../../../../fixtures/policies"),
   );
 
   const router = new PolicyRouter(policyRepository);
@@ -79,8 +79,8 @@ describe("RuntimeEngine E2E", () => {
       },
 
       policy: {
-        name: "vendor-payment",
-        version: "2.1.0",
+        name: "payment-limit",
+        version: "1.0.0",
         schemaVersion: "1.0.0",
       },
 
@@ -91,7 +91,7 @@ describe("RuntimeEngine E2E", () => {
         sufficientFunds: true,
         paymentAmount: 100,
         riskScore: 10,
-        // Must match intent.target exactly: vendor-payment/2.1.0 now
+        // Must match intent.target exactly: payment-limit/1.0.0 now
         // declares boundSignals requiring vendorId === intent.target.
         vendorId: "vendor://payments",
       },
@@ -172,8 +172,8 @@ describe("RuntimeEngine E2E", () => {
       // Caller-declared PolicyReference never carries contentHash --
       // proof it's computed server-side, not merely passed through.
       policy: {
-        name: "vendor-payment",
-        version: "2.1.0",
+        name: "payment-limit",
+        version: "1.0.0",
         schemaVersion: "1.0.0",
       },
 
@@ -194,7 +194,7 @@ describe("RuntimeEngine E2E", () => {
 
     const result = await runtime.execute(await withTestApproval(transaction));
 
-    const loadedPolicy = await policyRepository.load("vendor-payment", "2.1.0");
+    const loadedPolicy = await policyRepository.load("payment-limit", "1.0.0");
 
     const expectedContentHash = await new TrustRecordHasher(
       CryptoBootstrap.create(),
@@ -257,8 +257,8 @@ describe("RuntimeEngine E2E", () => {
       },
 
       policy: {
-        name: "vendor-payment",
-        version: "2.1.0",
+        name: "payment-limit",
+        version: "1.0.0",
         schemaVersion: "1.0.0",
       },
 
@@ -335,8 +335,8 @@ describe("RuntimeEngine E2E", () => {
       },
 
       policy: {
-        name: "vendor-payment",
-        version: "2.1.0",
+        name: "payment-limit",
+        version: "1.0.0",
         schemaVersion: "1.0.0",
       },
 
@@ -407,8 +407,8 @@ describe("RuntimeEngine E2E", () => {
       },
 
       policy: {
-        name: "vendor-payment",
-        version: "2.1.0",
+        name: "payment-limit",
+        version: "1.0.0",
         schemaVersion: "1.0.0",
       },
 
@@ -493,8 +493,8 @@ describe("RuntimeEngine E2E", () => {
       },
 
       policy: {
-        name: "vendor-payment",
-        version: "2.1.0",
+        name: "payment-limit",
+        version: "1.0.0",
         schemaVersion: "1.0.0",
       },
 
@@ -519,8 +519,8 @@ describe("RuntimeEngine E2E", () => {
     // evidence, not enforcement.
     expect(result.trustRecord.executions[0]?.decision.outcome).toBe("APPROVED");
 
-    expect(resolveCalledWith?.[0]).toBe("vendor-payment");
-    expect(resolveCalledWith?.[1]).toBe("2.1.0");
+    expect(resolveCalledWith?.[0]).toBe("payment-limit");
+    expect(resolveCalledWith?.[1]).toBe("1.0.0");
     // Resolved with the same content hash G-24 stamps alongside it.
     expect(resolveCalledWith?.[2]).toBe(
       result.trustRecord.transaction.policy.contentHash,
@@ -581,8 +581,8 @@ describe("RuntimeEngine E2E", () => {
       },
 
       policy: {
-        name: "vendor-payment",
-        version: "2.1.0",
+        name: "payment-limit",
+        version: "1.0.0",
         schemaVersion: "1.0.0",
       },
 

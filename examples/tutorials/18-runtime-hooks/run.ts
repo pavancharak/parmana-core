@@ -33,7 +33,7 @@ async function main(): Promise<void> {
 
   const runtime = new RuntimeBuilder()
     .withSignalStateVerifier(demoApprovalSignalVerifier())
-    .withPolicyRepository(new FilePolicyRepository("policies"))
+    .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
     .addHook(new LoggingHook())
     .addHook(new MetricsHook())
     .build(repository);

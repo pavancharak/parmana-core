@@ -148,7 +148,7 @@ tryLoad(
 console.log("Part 2. Every policy shipped in policies/");
 console.log();
 
-const policiesDir = join(repoRoot, "policies");
+const policiesDir = join(repoRoot, "fixtures", "policies");
 let newestLoad = 0;
 let olderRefused = 0;
 const problems: string[] = [];

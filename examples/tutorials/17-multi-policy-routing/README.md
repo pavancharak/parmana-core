@@ -67,7 +67,7 @@ Every Business Transaction specifies the exact policy to execute.
 ```json
 {
   "policy": {
-    "name": "vendor-payment",
+    "name": "payment-limit",
     "version": "2.0.0",
     "schemaVersion": "1.0.0"
   }

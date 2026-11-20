@@ -17,7 +17,7 @@ async function main(): Promise<void> {
   // Build Runtime
   //
   const runtime = new RuntimeBuilder()
-    .withPolicyRepository(new FilePolicyRepository("policies"))
+    .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
     .build(new MemoryExecutionTrustRecordRepository());
 
   console.log("Executing Business Transaction...");

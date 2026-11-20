@@ -32,7 +32,7 @@ async function main(): Promise<void> {
   //
   const runtime = new RuntimeBuilder()
     .withSignalStateVerifier(demoApprovalSignalVerifier())
-    .withPolicyRepository(new FilePolicyRepository("policies"))
+    .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
     .addStage(new CustomRuntimeComponent())
     .addHook(new LoggingHook())
     .addHook(new MetricsHook())

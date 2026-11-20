@@ -5,7 +5,7 @@
 // rule-conflict checker (G-39) -- rather than a policy that needed
 // retrofitting, like the 10 pre-existing ones did.
 //
-// policies/api-key-issuance/1.1.0/policy.json:
+// fixtures/policies/api-key-issuance/1.1.0/policy.json:
 //   - keyLifetimeDays has a genuine Intent-side equivalent (an amount-like
 //     field) and is bound via boundSignals -> parameters.lifetimeDays, so
 //     SignalIntentBinder catches a caller declaring one lifetime while the
@@ -35,7 +35,7 @@ import {
 const root = path.resolve(import.meta.dirname);
 
 const policyRepository = new FilePolicyRepository(
-  path.resolve(root, "../../../policies"),
+  path.resolve(root, "../../../fixtures/policies"),
 );
 
 const trustRecords = new MemoryExecutionTrustRecordRepository();
