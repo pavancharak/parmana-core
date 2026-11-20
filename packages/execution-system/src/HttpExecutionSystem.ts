@@ -44,6 +44,7 @@ export class HttpExecutionSystem implements ExecutionSystem {
       if (error instanceof Error && error.name === "TimeoutError") {
         throw new Error(
           `Execution System did not respond within ${timeout} ms. The action may have run; reconcile it.`,
+          { cause: error },
         );
       }
       throw error;
