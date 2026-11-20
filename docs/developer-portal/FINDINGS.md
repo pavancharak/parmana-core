@@ -10,6 +10,8 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 
 ### F0. Production with memory storage is now refused (a reversal to confirm)
 
+**Confirmed by the owner (2026-11-20): no deployment intentionally runs production on memory storage.** The start-up refusal stays in place and is covered by tests.
+
 - **Evidence.** Before this pass, `NODE_ENV=production` with memory storage started silently, and the `doctor` reported it as a failure. An existing unit test (`assert-storage-configured.test.ts`) asserted the start-up was a no-op. This pass changes the server to refuse it, and changes that test.
 - **Why.** Memory loses every transaction, record and approval on restart. A production process must not run that way by default.
 - **Owner to confirm.** That no deployment intentionally runs production mode on memory storage. The sandbox refuses production mode (`createSandboxOptions`), so no sandbox path was found that depends on it.
