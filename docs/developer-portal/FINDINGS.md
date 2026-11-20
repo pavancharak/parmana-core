@@ -48,6 +48,8 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 
 ### F5. Two packages are on npm at `0.1.0` while the repository is `4.1.1`
 
+**Owner answer (2026-11-20): both packages are meant to be public.** Checked: both manifests are at `4.1.1` and not private; both pack cleanly (`npm pack --dry-run` lists only their built `dist` files). The registry has `0.1.0` and `0.0.0-stage`. **Not yet published.** Publishing `4.1.1` is irreversible on npm, so it waits for an explicit go-ahead.
+
 - **Evidence.** `@parmana/envelope-verifier` and `@parmana/execution-system` are `0.1.0` on the registry.
 - **Why not changed.** Publishing is an owner decision.
 - **Recommendation.** Publish both at `4.1.1`, or confirm they are internal and remove the `public` flag from their manifests.
