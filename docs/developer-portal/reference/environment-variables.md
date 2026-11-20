@@ -1,6 +1,6 @@
 # Environment variable reference
 
-[Reference](README.md) · [Deployment](../deployment/README.md) · [Security](../security/README.md) · [Repository example file](../../../.env.example)
+[Reference](README.md) · [Deployment](../deployment/README.md) · [Security](../security/README.md) · [Repository example file](https://github.com/pavancharak/parmana-core/blob/main/.env.example)
 
 Parmana is configured through environment variables. The server reads them at start-up and refuses to start when a required one is missing or invalid. The SDKs and the CLI read a few more, listed at the end.
 
@@ -8,7 +8,7 @@ Parmana is configured through environment variables. The server reads them at st
 
 - **Default** is the value used when the variable is unset, as the code defines it.
 - **Status**: _Implemented_ (in the code and exercised here), _Implemented, not exercised here_, _Experimental_ (opt-in; marked experimental in the OpenAPI document), or _Test only_.
-- Where the repository's [example file](../../../.env.example) and the code disagree, this table follows the code, and says so.
+- Where the repository's [example file](https://github.com/pavancharak/parmana-core/blob/main/.env.example) and the code disagree, this table follows the code, and says so.
 
 ## Server: essentials
 
@@ -119,7 +119,7 @@ These are read by the repository's scripts and tests, not by the server or the S
 
 ## Variables the example file lists that were not checked
 
-The repository's [example file](../../../.env.example) documents more variables than this table. Each one in the table above was matched to the code. Variables that appear in the example file but not in this table were not checked against the code in this verification, and should be read there with that caveat.
+The repository's [example file](https://github.com/pavancharak/parmana-core/blob/main/.env.example) documents more variables than this table. Each one in the table above was matched to the code. Variables that appear in the example file but not in this table were not checked against the code in this verification, and should be read there with that caveat.
 
 ## Minimum set for a deployment
 

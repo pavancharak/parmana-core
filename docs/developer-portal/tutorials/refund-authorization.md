@@ -7,7 +7,7 @@
 1. **A payment source confirms the payment is refundable.** Parmana asks the source itself, through a registered business signal source.
 2. **A manager signs an approval** for this payment, for at least this amount, used once.
 
-**Verification.** The live `policies/payment-refund/1.0.0/policy.json` decides every case below. Tutorial 129 ([`examples/tutorials/129-payment-refund-stand-in-source/run.ts`](../../../examples/tutorials/129-payment-refund-stand-in-source/run.ts)) ran all six cases in the examples runner, and every case behaved as the policy requires. That tutorial uses an in-process stand-in for the payment source. **This portal did not run a refund against a live server with a payment source.** The refund flow on a server needs a registered source and a capability binding, which this portal did not set up.
+**Verification.** The live `policies/payment-refund/1.0.0/policy.json` decides every case below. Tutorial 129 ([`examples/tutorials/129-payment-refund-stand-in-source/run.ts`](https://github.com/pavancharak/parmana-core/blob/main/examples/tutorials/129-payment-refund-stand-in-source/run.ts)) ran all six cases in the examples runner, and every case behaved as the policy requires. That tutorial uses an in-process stand-in for the payment source. **This portal did not run a refund against a live server with a payment source.** The refund flow on a server needs a registered source and a capability binding, which this portal did not set up.
 
 ## Who does what
 

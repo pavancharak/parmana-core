@@ -1,6 +1,6 @@
 # `@parmana/envelope-verifier`: API reference
 
-[Portal home](../README.md) · [Publishing decision](publishing-envelope-verifier-and-execution-system.md) · [Package README](../../../packages/envelope-verifier/README.md)
+[Portal home](../README.md) · [Publishing decision](publishing-envelope-verifier-and-execution-system.md) · [Package README](https://github.com/pavancharak/parmana-core/blob/main/packages/envelope-verifier/README.md)
 
 This page describes the package's public API, as it is exported from `packages/envelope-verifier/src` at version 4.1.1. The package's own README states exactly what a passing verification proves. This page does not repeat those claims; read the README first.
 

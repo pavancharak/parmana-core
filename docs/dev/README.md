@@ -1,6 +1,6 @@
 # Developer documentation
 
-Start here. The [README](../../README.md) has the one-minute version; these files have the detail.
+Start here. The [README](https://github.com/pavancharak/parmana-core/blob/main/README.md) has the one-minute version; these files have the detail.
 
 | I want to                                              | Read                                             |
 | ------------------------------------------------------ | ------------------------------------------------ |

@@ -112,4 +112,4 @@ Not in this repository. The API manifest lists `go` and `java` as `null`. Use th
 
 ### Where do I report a security issue?
 
-Through [SECURITY.md](../../SECURITY.md), not in a public issue. The repository's [THREAT-MODEL.md](../../THREAT-MODEL.md) describes what Parmana is designed to resist, and where its limits are.
+Through [SECURITY.md](https://github.com/pavancharak/parmana-core/blob/main/SECURITY.md), not in a public issue. The repository's [THREAT-MODEL.md](https://github.com/pavancharak/parmana-core/blob/main/THREAT-MODEL.md) describes what Parmana is designed to resist, and where its limits are.

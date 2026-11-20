@@ -22,7 +22,7 @@ A policy fact that must equal a field of the request, such as `paymentAmount` eq
 
 ## Business Transaction
 
-The declared request for one business action. It has a `businessTransactionId` (a UUID the caller chooses and which is single-use), `metadata`, `authority`, `authorization`, `intent`, `policy` and `signals`. See the [request schema](../../schemas/requests/transaction-create-request.schema.json).
+The declared request for one business action. It has a `businessTransactionId` (a UUID the caller chooses and which is single-use), `metadata`, `authority`, `authorization`, `intent`, `policy` and `signals`. See the [request schema](https://github.com/pavancharak/parmana-core/blob/main/schemas/requests/transaction-create-request.schema.json).
 
 ## Canonical JSON
 

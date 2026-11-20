@@ -1,10 +1,10 @@
 # Security and cryptographic verification
 
-[Portal home](../README.md) · [Evidence verification](evidence-verification.md) · [Architecture](../architecture.md) · [Repository threat model](../../../THREAT-MODEL.md) · [Security policy](../../../SECURITY.md)
+[Portal home](../README.md) · [Evidence verification](evidence-verification.md) · [Architecture](../architecture.md) · [Repository threat model](https://github.com/pavancharak/parmana-core/blob/main/THREAT-MODEL.md) · [Security policy](https://github.com/pavancharak/parmana-core/blob/main/SECURITY.md)
 
 This page explains what Parmana signs, what the signatures cover, how the keys are trusted, and what happens when something goes wrong. The claims are checked against the code and against tests run for this portal. Where the protection has a limit, the limit is stated next to the claim.
 
-For the full threat model, read [THREAT-MODEL.md](../../../THREAT-MODEL.md). For how to report a vulnerability, read [SECURITY.md](../../../SECURITY.md).
+For the full threat model, read [THREAT-MODEL.md](https://github.com/pavancharak/parmana-core/blob/main/THREAT-MODEL.md). For how to report a vulnerability, read [SECURITY.md](https://github.com/pavancharak/parmana-core/blob/main/SECURITY.md).
 
 ## What is signed
 
