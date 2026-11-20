@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Key management · Parmana developer docs</title>
+<meta name="description" content="Key management Portal home · Security · Schema version 3 · Verifier This page sets out how the keys that sign Execution Trust Records are held, rotated and retired. It describes what the code does today. Where a practice needs something the">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="key-management.html" aria-current="page">Key management</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="index.html">Security and cryptographic verification</a></li><li><a href="evidence-verification.html">Evidence verification</a></li><li><a href="schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Concepts</span><span class="sep">/</span><span>Key management</span></div>
+    <article>
+<h1 id="key-management">Key management<a class="anchor" href="#key-management" aria-label="Link to this section">#</a></h1>
+<p><a href="../index.html">Portal home</a> · <a href="index.html">Security</a> · <a href="schema-v3.html">Schema version 3</a> · <a href="../sdk/verifier.html">Verifier</a></p>
+<p>This page sets out how the keys that sign Execution Trust Records are held, rotated and retired. It describes what the code does today. Where a practice needs something the code does not do, the page says so.</p>
+<h2 id="what-the-code-supports">What the code supports<a class="anchor" href="#what-the-code-supports" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Need</th>
+<th>Supported today</th>
+<th>How</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Classical signing key in a cloud key service</td>
+<td>Yes, in <code>CRYPTO_MODE=single</code> only</td>
+<td><code>KEY_PROVIDER=aws-kms</code>. The Doctor check refuses <code>CRYPTO_MODE=hybrid</code> with <code>aws-kms</code>.</td>
+</tr>
+<tr>
+<td>Hybrid signing (ed25519 plus dilithium3)</td>
+<td>Yes, with file keys</td>
+<td><code>CRYPTO_MODE=hybrid</code> with <code>KEY_PROVIDER=local</code>. Key files are read from <code>PARMANA_KEY_DIR</code>.</td>
+</tr>
+<tr>
+<td>Signing keys read from a secrets manager</td>
+<td><strong>No</strong></td>
+<td>The secrets manager setting (<code>aws-secrets-manager</code>) resolves connector credentials, not signing keys. A deployment must put signing key files into <code>PARMANA_KEY_DIR</code> itself.</td>
+</tr>
+<tr>
+<td>Pinned fingerprints and validity windows</td>
+<td>Yes, in the verifier</td>
+<td>The trust file lists each key with <code>keyId</code>, <code>algorithm</code>, <code>fingerprint</code>, <code>validFrom</code>, <code>validUntil</code> and <code>compromised</code>.</td>
+</tr>
+</tbody></table></div>
+<h2 id="interim-policy">Interim policy<a class="anchor" href="#interim-policy" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><strong>Single-mode signing:</strong> keep the classical key in the cloud key service, with <code>KEY_PROVIDER=aws-kms</code> and <code>AWS_REGION</code> set. Do not set <code>CRYPTO_MODE=hybrid</code> with it.</li>
+<li><strong>Hybrid signing:</strong> keep both key files in <code>PARMANA_KEY_DIR</code> with <code>KEY_PROVIDER=local</code>. The deployment writes them there at start-up from a secrets manager. The secrets manager holds the files; it is not the server&#39;s signing-key source. Restrict who can read the folder, and make the files readable only by the server&#39;s user.</li>
+<li><strong>Pinning:</strong> every verifier pins each key by fingerprint. Obtain a fingerprint with <code>parmana-verify key-fingerprint &lt;public-key.pem&gt;</code>, and check it out of band before adding it to a trust file.</li>
+</ol>
+<h2 id="rotation">Rotation<a class="anchor" href="#rotation" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>Generate the new key with a new <code>keyId</code>. Do not reuse an old <code>keyId</code>.</li>
+<li>Add the new key to each trust file with its fingerprint and a <code>validFrom</code> at or before the first record it will sign.</li>
+<li>Point the server at the new key, and keep the old key in the trust file until its records are no longer needed.</li>
+</ol>
+<h2 id="retirement">Retirement<a class="anchor" href="#retirement" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Routine retirement:</strong> set the key&#39;s <code>validUntil</code> in the trust file. The window excludes that instant, so records created at or after it are not accepted under that key.</li>
+<li><strong>Compromise:</strong> set <code>compromised: true</code> in the trust file. Verifiers then refuse that key for every record. Records signed before the compromise are refused too, so decide before doing this whether those records need re-issuing.</li>
+</ul>
+<h2 id="what-this-policy-does-not-cover-yet">What this policy does not cover yet<a class="anchor" href="#what-this-policy-does-not-cover-yet" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The server does not read signing keys from a secrets manager. Until it does, the step that puts the key files in place is an operator procedure, and it needs its own audit.</li>
+<li>Hybrid signing cannot use a cloud key service. A dilithium3 key has no managed service in this code, so it stays a file.</li>
+<li>Rotation is not automated, and the server does not check the trust file. Each verifier must be updated by hand.</li>
+</ul>
+<p>The decision to change any of these belongs to the owner.</p>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/security/key-management.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="../glossary.html"><span>Previous</span>Glossary</a><a class="pn next" href="../policies/index.html"><span>Next</span>Policy management</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#what-the-code-supports">What the code supports</a></li><li class="d2"><a href="#interim-policy">Interim policy</a></li><li class="d2"><a href="#rotation">Rotation</a></li><li class="d2"><a href="#retirement">Retirement</a></li><li class="d2"><a href="#what-this-policy-does-not-cover-yet">What this policy does not cover yet</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>
