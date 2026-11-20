@@ -114,11 +114,21 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Evidence.** The register's change responses (sources, thresholds, actions, approver keys, policy versions, role grants) are documented as `type: object` with `additionalProperties: true`. The record types are defined in `packages/policy/src/v2/register.ts`, and the sample responses are illustrative, not captured.
 - **Recommendation.** Give each record its own schema, and capture a real response from a deployment with policy version 2 enabled to replace the illustrative example.
 
-### F17. Policy v2 is partly exercised against a live server
+### F17. Policy v2 run live, from setup to a finished review (fixed: the run is recorded)
 
-- **Evidence.** A server ran with `PARMANA_POLICY_V2_DECISIONS=true`, a durable PostgreSQL database (the local 16.16 cluster, migrated), and a bootstrap owner. Against it: a decision request was answered and recorded (`REJECT`, `NO_APPROVED_POLICY`, evidence `ev-1`); the evidence replay reproduced the decision with no differences; the register read and the audit trail answered; and a caller without a role was refused with `403`. The first run, before the fix below, failed with a `TypeError` on the review state.
-- **Not exercised.** A decision that goes to human review, the review decision and its grant, the alert board, the sweeps, and the full register setup (actions, sources, thresholds, approvals and go-live). The decision in this run had no approved policy, so no approval path was reached.
-- **Recommendation.** Set up one approved policy version and a reviewer grant, then record an approve path, a review path and a refusal, and replay each. Record the run here before the owner promotes the contract.
+- **Evidence.** A fresh local database (PostgreSQL 16, migrated), a server with `PARMANA_POLICY_V2_DECISIONS=true` and the owner set by `PARMANA_POLICY_V2_BOOTSTRAP_OWNER`, and 39 requests in order. The steps and their results:
+  1. Roles: the checker is `reviewer` and `second-approver`; the reviewer-2 caller is `reviewer`; the maker is `action-owner`, `operator` and `gate-owner` (an operator must exist before `gate-owner`, and the server refused the grant in the wrong order); two gate owners are `operator` then `gate-owner`.
+  2. Action `erp:pay-invoice`, owner `maker`, successor `successor-1`, reviewers `checker` and `reviewer-2`. A reviewer cannot be added later unless it was named at registration, and the successor cannot review. The approval validity is at most 60 minutes.
+  3. Thresholds `maxAmount` (1000 USD) and `reviewRiskScoreAbove` (50): proposed by the maker and approved by the checker. The policy must declare each threshold, or it is refused.
+  4. Policy `2.0.0` proposed by the maker and approved by the checker.
+  5. Tier tests for `refuse`, `review` and `reject`, run by a gate owner. The go-live check then lists nothing missing.
+  6. Go-live by both gate owners. The action is live. Until it is, the decision path reports `NO_APPROVED_POLICY`, even with an approved policy.
+  7. Decisions: a high-risk request is `REVIEW` with review `review-1`; an over-limit request is `REJECT` at the `refuse` tier; a low-risk request is `REJECT` at the `reject` tier. None is released.
+  8. Review: the requester is refused (`The requester cannot review their own request`). The checker's decision is recorded as `assigned`, and the second reviewer's makes it final: `APPROVED`, two decisions. A second decision by the same reviewer is refused.
+  9. Evidence replay of `ev-1` reproduces the decision with no differences.
+- **Defect found and fixed in this run.** Before the fix, a partial stored review state made every decision answer 500 (F20).
+- **Not exercised.** The alerts board, the sweeps (timed review reminders and expiry), the notifications and webhooks, and the console screens. The `release` of an approved review: after the review is approved, the record `ev-1` still says `REVIEW` and `released: false`. Whether an approved review should release the action is not answered by this run, and the owner should decide it before promotion.
+- **Recommendation.** Decide whether an approved review releases the action, and record a run of the alerts and sweeps before the owner promotes the contract.
 
 ### F20. A partial review state crashed the decision route, and a test left one behind (fixed)
 
