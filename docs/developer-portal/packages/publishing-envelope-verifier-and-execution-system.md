@@ -68,9 +68,14 @@ The owner decided both packages are public. The owner has agreed to publish in t
 - `docs/internal/runbooks/RELEASE-ALL-PACKAGES.md`: the package table names it, and the counts are ten files.
 - `tests/architecture/release-manifest.test.ts` passes (25 tests).
 
+### API pages (written 2026-11-20)
+
+- [`@parmana/envelope-verifier` API](envelope-verifier-api.md): ready for the publish.
+- [`@parmana/execution-system` API](execution-system-api.md): documents the surface, and lists three defects that block publishing. The most serious is `DefaultExecutionSystem`, a placeholder that reports success without executing. Hold the package until those are fixed.
+
 ### Still needed before the owner publishes
 
-1. Write the API page for `@parmana/envelope-verifier` in this portal.
+1. Confirm the envelope verifier API page matches the source at the release commit.
 2. Release through the runbook, from the owner's npm account, at `4.1.1`. The runbook's other steps (the version bump PR, provenance, registry checks) apply.
 3. Leave `@parmana/execution-system` out of the release until its API is documented.
 
