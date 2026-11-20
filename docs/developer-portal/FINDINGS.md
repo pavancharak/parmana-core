@@ -77,7 +77,11 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Evidence.** None measured. `npm run loadtest` was not run.
 - **Recommendation.** Run it on representative hardware before quoting any figure.
 
+**Update (2026-11-20).** `npm run loadtest` ran locally (20 connections, 15 s). The `/health` and `/ready` figures are valid: about 18,700 and 17,500 requests per second, p50 0 to 1 ms, p99 3 ms, no errors. The `POST /execute` figures are **not** a throughput result: all 60,025 requests were refused (non-2xx). The script signs a human approval for each request but does not create the policy's approval record, which governance requires, so each execution is refused. The refusal reason was not captured, so the cause is inferred from the code. Until the script seeds governance, do not quote an execute figure.
+
 ### F10. Python verifier test count differs from Node
+
+**Checked (2026-11-20), still open.** The two suites name their tests in different styles (Node uses descriptive sentences, Python uses snake_case functions), so the names cannot be diffed by script. Closing this needs each test mapped by hand. Not done.
 
 - **Evidence.** `parmana-verifier` (Python) passes 107 tests. `@parmana/verifier` (Node) passes 108. Verdicts agree on every record tried (v2 legacy, v2 covered-change, v3 full, v3 tampered, hybrid).
 - **Per-file counts.** Node: `correspondence` 12, `quickstart` 2, `parmana-core-records` 22, `verify` 21, `whole-record` 17, `trust` 14, `hybrid` 10, `vectors` 5, `timestamp` 3, `agentrust-fixture` 2. Python: `test_correspondence` 12, `test_quickstart` 2, `test_parmana_core_records` 44, `test_verifier` 49. Correspondence and quickstart match exactly. The one-test difference is not in a single file, and I did not map tests by name.
