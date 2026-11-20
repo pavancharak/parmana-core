@@ -4,18 +4,16 @@ import json
 import os
 import urllib.request
 
+BODY = r'{"name":"erp-ledger","dataOwner":"Finance","signer":{"kind":"system"},"keyId":"erp-2026-01","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA...\n-----END PUBLIC KEY-----","claims":{"invoiceAmount":"INR"},"canApprove":true}'
+
 
 def main() -> None:
     request = urllib.request.Request(
         "https://parmana-api-real.vercel.app/v2/register/sources",
-        data=json.dumps(
-            json.loads(
-                r'{"name":"erp-ledger","dataOwner":"Finance","signer":{"kind":"system"},"keyId":"erp-2026-01","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA...\n-----END PUBLIC KEY-----","claims":{"invoiceAmount":"INR"},"canApprove":true}'
-            )
-        ).encode("utf-8"),
+        data=json.dumps(json.loads(BODY)).encode("utf-8"),
         method="POST",
         headers={
-            "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+            "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
             "Content-Type": "application/json",
         },
     )

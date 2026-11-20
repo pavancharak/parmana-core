@@ -11352,31 +11352,23 @@ paths:
             console.log(response.status, await response.text());
         - lang: python
           label: Python
-          source: >-
-            # EXPERIMENTAL Policy version 2. Available only where the deployment
-            enables it.
-
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
             # Record a decision
-
             import json
-
             import os
-
             import urllib.request
 
+            BODY = r'{"capability":"erp:pay-invoice","transactionId":"txn-1001","target":"invoice-7781","parameters":{"amount":1200},"signals":{"vendorVerified":true}}'
 
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/decisions",
-                    data=json.dumps(
-                        json.loads(
-                            r'{"capability":"erp:pay-invoice","transactionId":"txn-1001","target":"invoice-7781","parameters":{"amount":1200},"signals":{"vendorVerified":true}}'
-                        )
-                    ).encode("utf-8"),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
                     headers={
-                        "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
                         "Content-Type": "application/json",
                     },
                 )
@@ -11467,7 +11459,9 @@ paths:
                     "https://parmana-api-real.vercel.app/v2/reviews/review-123",
                     data=None,
                     method="GET",
-                    headers={"Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}"},
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
                 )
                 with urllib.request.urlopen(request) as response:
                     print(response.status, response.read().decode("utf-8"))
@@ -11574,14 +11568,17 @@ paths:
             import urllib.request
 
 
+            BODY = r'{"decision":"approve"}'
+
+
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/reviews/review-123/decision",
-                    data=json.dumps(json.loads(r'{"decision":"approve"}')).encode("utf-8"),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
                     headers={
-                        "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
                         "Content-Type": "application/json",
                     },
                 )
@@ -11679,7 +11676,9 @@ paths:
                     "https://parmana-api-real.vercel.app/v2/evidence/record-123/replay",
                     data=None,
                     method="GET",
-                    headers={"Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}"},
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
                 )
                 with urllib.request.urlopen(request) as response:
                     print(response.status, response.read().decode("utf-8"))
@@ -11783,7 +11782,9 @@ paths:
                     "https://parmana-api-real.vercel.app/v2/console/home",
                     data=None,
                     method="GET",
-                    headers={"Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}"},
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
                 )
                 with urllib.request.urlopen(request) as response:
                     print(response.status, response.read().decode("utf-8"))
@@ -11874,15 +11875,18 @@ paths:
             import urllib.request
 
 
+            BODY = r'{"Type":"Notification","Message":"{}"}'
+
+
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/notifications/ses",
-                    data=json.dumps(json.loads(r'{"Type":"Notification","Message":"{}"}')).encode(
-                        "utf-8"
-                    ),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
-                    headers={"Content-Type": "application/json"},
+                    headers={
+                        "Content-Type": "application/json",
+                    },
                 )
                 with urllib.request.urlopen(request) as response:
                     print(response.status, response.read().decode("utf-8"))
@@ -11979,13 +11983,18 @@ paths:
             import urllib.request
 
 
+            BODY = r'[{"type":"Delivery"}]'
+
+
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/notifications/events",
-                    data=json.dumps(json.loads(r'[{"type":"Delivery"}]')).encode("utf-8"),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
-                    headers={"Content-Type": "application/json"},
+                    headers={
+                        "Content-Type": "application/json",
+                    },
                 )
                 with urllib.request.urlopen(request) as response:
                     print(response.status, response.read().decode("utf-8"))
@@ -12069,7 +12078,9 @@ paths:
                     "https://parmana-api-real.vercel.app/v2/register",
                     data=None,
                     method="GET",
-                    headers={"Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}"},
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
                 )
                 with urllib.request.urlopen(request) as response:
                     print(response.status, response.read().decode("utf-8"))
@@ -12177,7 +12188,9 @@ paths:
                     "https://parmana-api-real.vercel.app/v2/register/audit",
                     data=None,
                     method="GET",
-                    headers={"Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}"},
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
                 )
                 with urllib.request.urlopen(request) as response:
                     print(response.status, response.read().decode("utf-8"))
@@ -12261,16 +12274,17 @@ paths:
             import urllib.request
 
 
+            BODY = r'{"callerId":"caller-ops-1","role":"reviewer"}'
+
+
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/register/roles/grant",
-                    data=json.dumps(
-                        json.loads(r'{"callerId":"caller-ops-1","role":"reviewer"}')
-                    ).encode("utf-8"),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
                     headers={
-                        "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
                         "Content-Type": "application/json",
                     },
                 )
@@ -12356,16 +12370,17 @@ paths:
             import urllib.request
 
 
+            BODY = r'{"callerId":"caller-ops-1","role":"reviewer"}'
+
+
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/register/roles/revoke",
-                    data=json.dumps(
-                        json.loads(r'{"callerId":"caller-ops-1","role":"reviewer"}')
-                    ).encode("utf-8"),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
                     headers={
-                        "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
                         "Content-Type": "application/json",
                     },
                 )
@@ -12451,31 +12466,23 @@ paths:
             console.log(response.status, await response.text());
         - lang: python
           label: Python
-          source: >-
-            # EXPERIMENTAL Policy version 2. Available only where the deployment
-            enables it.
-
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
             # Propose a source
-
             import json
-
             import os
-
             import urllib.request
 
+            BODY = r'{"name":"erp-ledger","dataOwner":"Finance","signer":{"kind":"system"},"keyId":"erp-2026-01","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA...\n-----END PUBLIC KEY-----","claims":{"invoiceAmount":"INR"},"canApprove":true}'
 
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/register/sources",
-                    data=json.dumps(
-                        json.loads(
-                            r'{"name":"erp-ledger","dataOwner":"Finance","signer":{"kind":"system"},"keyId":"erp-2026-01","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA...\n-----END PUBLIC KEY-----","claims":{"invoiceAmount":"INR"},"canApprove":true}'
-                        )
-                    ).encode("utf-8"),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
                     headers={
-                        "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
                         "Content-Type": "application/json",
                     },
                 )
@@ -12553,7 +12560,9 @@ paths:
                     "https://parmana-api-real.vercel.app/v2/register/sources/erp-ledger/approve",
                     data=None,
                     method="POST",
-                    headers={"Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}"},
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
                 )
                 with urllib.request.urlopen(request) as response:
                     print(response.status, response.read().decode("utf-8"))
@@ -12635,14 +12644,17 @@ paths:
             import urllib.request
 
 
+            BODY = r'{"reason":"Key rotated"}'
+
+
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/register/sources/erp-ledger/revoke",
-                    data=json.dumps(json.loads(r'{"reason":"Key rotated"}')).encode("utf-8"),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
                     headers={
-                        "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
                         "Content-Type": "application/json",
                     },
                 )
@@ -12729,31 +12741,23 @@ paths:
             console.log(response.status, await response.text());
         - lang: python
           label: Python
-          source: >-
-            # EXPERIMENTAL Policy version 2. Available only where the deployment
-            enables it.
-
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
             # Propose a threshold
-
             import json
-
             import os
-
             import urllib.request
 
+            BODY = r'{"action":"erp:pay-invoice","name":"max-amount","value":5000,"unit":"INR","owner":"Finance","reason":"Limit payments without review","evidence":"Policy memo 2026-11","nextReview":"2027-05-01","highValue":true}'
 
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/register/thresholds",
-                    data=json.dumps(
-                        json.loads(
-                            r'{"action":"erp:pay-invoice","name":"max-amount","value":5000,"unit":"INR","owner":"Finance","reason":"Limit payments without review","evidence":"Policy memo 2026-11","nextReview":"2027-05-01","highValue":true}'
-                        )
-                    ).encode("utf-8"),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
                     headers={
-                        "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
                         "Content-Type": "application/json",
                     },
                 )
@@ -12836,7 +12840,9 @@ paths:
                     "https://parmana-api-real.vercel.app/v2/register/thresholds/erp:pay-invoice/max-amount/approve",
                     data=None,
                     method="POST",
-                    headers={"Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}"},
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
                 )
                 with urllib.request.urlopen(request) as response:
                     print(response.status, response.read().decode("utf-8"))
@@ -12917,31 +12923,23 @@ paths:
             console.log(response.status, await response.text());
         - lang: python
           label: Python
-          source: >-
-            # EXPERIMENTAL Policy version 2. Available only where the deployment
-            enables it.
-
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
             # Register an action
-
             import json
-
             import os
-
             import urllib.request
 
+            BODY = r'{"capability":"erp:pay-invoice","owner":"Finance","successor":"Finance Controller","reviewers":["reviewer-1"],"review":{"reviewWindowBusinessDays":2,"approvalValidityMinutes":120}}'
 
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/register/actions",
-                    data=json.dumps(
-                        json.loads(
-                            r'{"capability":"erp:pay-invoice","owner":"Finance","successor":"Finance Controller","reviewers":["reviewer-1"],"review":{"reviewWindowBusinessDays":2,"approvalValidityMinutes":120}}'
-                        )
-                    ).encode("utf-8"),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
                     headers={
-                        "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
                         "Content-Type": "application/json",
                     },
                 )
@@ -13029,16 +13027,17 @@ paths:
             import urllib.request
 
 
+            BODY = r'{"reviewerId":"reviewer-1","maxAmount":10000}'
+
+
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/reviewers",
-                    data=json.dumps(
-                        json.loads(r'{"reviewerId":"reviewer-1","maxAmount":10000}')
-                    ).encode("utf-8"),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
                     headers={
-                        "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
                         "Content-Type": "application/json",
                     },
                 )
@@ -13127,14 +13126,17 @@ paths:
             import urllib.request
 
 
+            BODY = r'{"reason":"Left the team"}'
+
+
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/reviewers/reviewer-1/revoke",
-                    data=json.dumps(json.loads(r'{"reason":"Left the team"}')).encode("utf-8"),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
                     headers={
-                        "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
                         "Content-Type": "application/json",
                     },
                 )
@@ -13228,14 +13230,17 @@ paths:
             import urllib.request
 
 
+            BODY = r'{"tier":"tier-1"}'
+
+
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/tests",
-                    data=json.dumps(json.loads(r'{"tier":"tier-1"}')).encode("utf-8"),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
                     headers={
-                        "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
                         "Content-Type": "application/json",
                     },
                 )
@@ -13321,7 +13326,9 @@ paths:
                     "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/go-live",
                     data=None,
                     method="GET",
-                    headers={"Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}"},
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
                 )
                 with urllib.request.urlopen(request) as response:
                     print(response.status, response.read().decode("utf-8"))
@@ -13409,7 +13416,9 @@ paths:
                     "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/go-live",
                     data=None,
                     method="POST",
-                    headers={"Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}"},
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
                 )
                 with urllib.request.urlopen(request) as response:
                     print(response.status, response.read().decode("utf-8"))
@@ -13507,16 +13516,17 @@ paths:
             import urllib.request
 
 
+            BODY = r'{"personId":"person-1","email":"ops@example.com"}'
+
+
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/register/contacts",
-                    data=json.dumps(
-                        json.loads(r'{"personId":"person-1","email":"ops@example.com"}')
-                    ).encode("utf-8"),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
                     headers={
-                        "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
                         "Content-Type": "application/json",
                     },
                 )
@@ -13612,14 +13622,17 @@ paths:
             import urllib.request
 
 
+            BODY = r"{}"
+
+
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/register/policies",
-                    data=json.dumps(json.loads(r"{}")).encode("utf-8"),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
                     headers={
-                        "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
                         "Content-Type": "application/json",
                     },
                 )
@@ -13702,7 +13715,9 @@ paths:
                     "https://parmana-api-real.vercel.app/v2/register/policies/erp:pay-invoice/2.0.0/approve",
                     data=None,
                     method="POST",
-                    headers={"Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}"},
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
                 )
                 with urllib.request.urlopen(request) as response:
                     print(response.status, response.read().decode("utf-8"))
@@ -13782,31 +13797,23 @@ paths:
             console.log(response.status, await response.text());
         - lang: python
           label: Python
-          source: >-
-            # EXPERIMENTAL Policy version 2. Available only where the deployment
-            enables it.
-
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
             # Propose an approver key
-
             import json
-
             import os
-
             import urllib.request
 
+            BODY = r'{"approverId":"approver-7","keyId":"key-2026-01","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA...\n-----END PUBLIC KEY-----"}'
 
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/register/approver-keys",
-                    data=json.dumps(
-                        json.loads(
-                            r'{"approverId":"approver-7","keyId":"key-2026-01","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA...\n-----END PUBLIC KEY-----"}'
-                        )
-                    ).encode("utf-8"),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
                     headers={
-                        "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
                         "Content-Type": "application/json",
                     },
                 )
@@ -13893,7 +13900,9 @@ paths:
                     "https://parmana-api-real.vercel.app/v2/register/approver-keys/approver-7/key-2026-01/approve",
                     data=None,
                     method="POST",
-                    headers={"Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}"},
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
                 )
                 with urllib.request.urlopen(request) as response:
                     print(response.status, response.read().decode("utf-8"))
@@ -13984,14 +13993,17 @@ paths:
             import urllib.request
 
 
+            BODY = r'{"reason":"Key compromised"}'
+
+
 
             def main() -> None:
                 request = urllib.request.Request(
                     "https://parmana-api-real.vercel.app/v2/register/approver-keys/approver-7/key-2026-01/revoke",
-                    data=json.dumps(json.loads(r'{"reason":"Key compromised"}')).encode("utf-8"),
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
                     method="POST",
                     headers={
-                        "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
                         "Content-Type": "application/json",
                     },
                 )

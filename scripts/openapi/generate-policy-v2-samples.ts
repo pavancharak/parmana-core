@@ -260,37 +260,40 @@ function typescript(op: Operation): string {
 }
 
 function python(op: Operation): string {
-  const headers: string[] = [];
-  if (op.auth !== false) {
-    headers.push(
-      `"Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}"`,
-    );
-  }
-  if (op.body !== undefined) headers.push('"Content-Type": "application/json"');
-  const payload =
-    op.body === undefined
-      ? "None"
-      : "json.dumps(json.loads(r'" + op.body + "')).encode('utf-8')";
-  // Sorted, as ruff's import rule requires: json, os, urllib.request.
+  // Written in the layout black produces, so black --check and ruff pass
+  // without a formatting step. Python 3.11 is supported, so no f-string
+  // nests quotes (that needs 3.12). The JSON body is a module-level raw
+  // string, which black leaves alone.
+  const lines: string[] = [`# ${NOTE}`, `# ${op.comment}`];
   const imports: string[] = [];
   if (op.body !== undefined) imports.push("import json");
   if (op.auth !== false) imports.push("import os");
   imports.push("import urllib.request");
-  // The request runs only as a script. Pytest collects files named *_test.py,
-  // and an import-time request would hit the network during collection.
-  return [
-    `# ${NOTE}`,
-    `# ${op.comment}`,
-    ...imports,
-    "",
-    "",
-    "def main() -> None:",
-    `    request = urllib.request.Request(`,
-    `        "${ENDPOINT}${op.route}",`,
-    `        data=${payload},`,
-    `        method="${op.method}",`,
-    `        headers={${headers.join(", ")}},`,
-    `    )`,
+  lines.push(...imports, "");
+  if (op.body !== undefined) {
+    // black prefers double quotes unless the string contains one.
+    const q = op.body.includes('"') ? "'" : '"';
+    lines.push(`BODY = r${q}${op.body}${q}`, "");
+  }
+  lines.push("", "def main() -> None:", "    request = urllib.request.Request(");
+  lines.push(`        "${ENDPOINT}${op.route}",`);
+  if (op.body !== undefined) {
+    lines.push(`        data=json.dumps(json.loads(BODY)).encode("utf-8"),`);
+  } else {
+    lines.push("        data=None,");
+  }
+  lines.push(`        method="${op.method}",`);
+  lines.push("        headers={");
+  if (op.auth !== false) {
+    lines.push(
+      `            "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),`,
+    );
+  }
+  if (op.body !== undefined) {
+    lines.push(`            "Content-Type": "application/json",`);
+  }
+  lines.push("        },", "    )");
+  lines.push(
     "    with urllib.request.urlopen(request) as response:",
     `        print(response.status, response.read().decode("utf-8"))`,
     "",
@@ -298,7 +301,8 @@ function python(op: Operation): string {
     `if __name__ == "__main__":`,
     "    main()",
     "",
-  ].join("\n");
+  );
+  return lines.join("\n");
 }
 
 function main(): void {

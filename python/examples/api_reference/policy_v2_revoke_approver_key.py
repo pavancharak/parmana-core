@@ -4,14 +4,16 @@ import json
 import os
 import urllib.request
 
+BODY = r'{"reason":"Key compromised"}'
+
 
 def main() -> None:
     request = urllib.request.Request(
         "https://parmana-api-real.vercel.app/v2/register/approver-keys/approver-7/key-2026-01/revoke",
-        data=json.dumps(json.loads(r'{"reason":"Key compromised"}')).encode("utf-8"),
+        data=json.dumps(json.loads(BODY)).encode("utf-8"),
         method="POST",
         headers={
-            "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+            "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
             "Content-Type": "application/json",
         },
     )

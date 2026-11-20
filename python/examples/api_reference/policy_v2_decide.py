@@ -4,18 +4,16 @@ import json
 import os
 import urllib.request
 
+BODY = r'{"capability":"erp:pay-invoice","transactionId":"txn-1001","target":"invoice-7781","parameters":{"amount":1200},"signals":{"vendorVerified":true}}'
+
 
 def main() -> None:
     request = urllib.request.Request(
         "https://parmana-api-real.vercel.app/v2/decisions",
-        data=json.dumps(
-            json.loads(
-                r'{"capability":"erp:pay-invoice","transactionId":"txn-1001","target":"invoice-7781","parameters":{"amount":1200},"signals":{"vendorVerified":true}}'
-            )
-        ).encode("utf-8"),
+        data=json.dumps(json.loads(BODY)).encode("utf-8"),
         method="POST",
         headers={
-            "Authorization": f"Bearer {os.environ.get('PARMANA_API_KEY', '')}",
+            "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
             "Content-Type": "application/json",
         },
     )
