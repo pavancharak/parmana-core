@@ -16,7 +16,7 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 
 ### F1. Records are signed with schema version 2 by default (signature covers 7 fields)
 
-**Decision recorded (2026-11-20), instant pending.** The owner chose the verifier-pinned cutover (ADR-0016, option 2). The default schema is unchanged. The cutover instant is set once every issuing server runs `CRYPTO_MODE=hybrid` with a secondary provider. The owner confirmed on 2026-11-20 that no record was issued in `single` mode, so no record predates the cutover and the pre-cutover limit does not apply.
+**Decision recorded (2026-11-20), instant pending.** The owner chose the verifier-pinned cutover (ADR-0016, option 2). The default schema is unchanged. The cutover instant is `2026-11-20T13:01:38Z` (set by the owner on 2026-11-20). It holds only if every issuing server runs `CRYPTO_MODE=hybrid` with a secondary provider. The owner confirmed on 2026-11-20 that no record was issued in `single` mode, so no record predates the cutover and the pre-cutover limit does not apply.
 
 - **Evidence.** A schema 2 record's `updatedAt` can be changed with `valid: true` (reproduced with `parmana-verify`). Schema 3 detects the same change. The default `HYBRID_SCHEMA_VERSION` is `2`.
 - **Why not changed.** Changing the default changes what every new record contains. Verifiers that do not yet accept schema 3 would reject them. That is a rollout decision.

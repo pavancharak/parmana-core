@@ -104,6 +104,6 @@ Option 2 required a verifier to reject a post-cutover record with no hybrid enve
 
 **Facts (owner, 2026-11-20).** No record has been issued in `single` mode, so no record predates the cutover, and the pre-cutover limit does not apply. The hybrid cutover instant has not been reached yet.
 
-**Cutover instant:** set to the moment every issuing server runs `CRYPTO_MODE=hybrid` with the secondary provider and `HYBRID_SIGNATURE_REQUIRED=true`. Record that instant here, and set `hybridRequiredFrom` to it in each verifier's trust file. Because no earlier record exists, any instant at or before the first hybrid record is also safe.
+**Cutover instant (recorded 2026-11-20):** `2026-11-20T13:01:38Z`, the owner's instruction to set it now. Set `hybridRequiredFrom` to this value in each verifier trust file. The owner is responsible for the precondition below holding at this instant: every issuing server runs `CRYPTO_MODE=hybrid` with the secondary provider and `HYBRID_SIGNATURE_REQUIRED=true`. Record that instant here, and set `hybridRequiredFrom` to it in each verifier's trust file. Because no earlier record exists, any instant at or before the first hybrid record is also safe.
 
 **Still open for v3 issuance:** the other conditions in the issuance gate above (step 5 publication, and `docs/FORMAT.md`). Recording this option does not by itself open v3 issuance.
