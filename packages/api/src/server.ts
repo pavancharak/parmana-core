@@ -8,6 +8,7 @@ import { loadConfig } from "@parmana/shared";
 import { assertStorageConfigured } from "./bootstrap/assertStorageConfigured.js";
 import {
   assertKmsSigningKeyReachable,
+  assertSecondaryKeySecretReachable,
   assertSigningKeyMaterialConfigured,
 } from "./bootstrap/assertSigningKeyMaterialConfigured.js";
 import { loadKeyMaterialFromSecretsManager } from "./bootstrap/loadKeyMaterialFromSecretsManager.js";
@@ -67,6 +68,7 @@ assertStorageConfigured();
 await loadKeyMaterialFromSecretsManager(loadConfig().keys.keyDirectory);
 assertSigningKeyMaterialConfigured();
 await assertKmsSigningKeyReachable();
+await assertSecondaryKeySecretReachable();
 
 // ADR-0014: PARMANA_CORS_ORIGINS and sandbox mode, refused at startup
 // when unsafe (see createSandboxOptions).

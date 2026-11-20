@@ -183,11 +183,15 @@ function assertHybridKeyMaterialConfigured(
     );
   }
 
+  // With PARMANA_SECONDARY_KEY_SECRET_ID, the secondary key is read from the secret at startup
+  // (assertSecondaryKeySecretReachable), so its file is not required here.
+  const secretSecondary = loadConfig().keys.secondaryKeySecretId !== undefined;
   const keyIds = new Set([
     DEFAULT_KEY_ID,
     currentVerificationKeyId(),
-    DEFAULT_SECONDARY_KEY_ID,
-    currentVerificationSecondaryKeyId(),
+    ...(secretSecondary
+      ? []
+      : [DEFAULT_SECONDARY_KEY_ID, currentVerificationSecondaryKeyId()]),
   ]);
 
   const missing = [...keyIds].filter(
@@ -265,4 +269,20 @@ export function writeKeyMaterialJson(
       writeFileSync(publicPath, entry.publicKeyPem, { mode: 0o644 });
     }
   }
+}
+
+/**
+ * With PARMANA_SECONDARY_KEY_SECRET_ID set, reads the secondary key from the secret and parses it,
+ * so a missing or malformed secret stops the server at startup instead of on the first record.
+ * Does nothing when no secret is configured.
+ */
+export async function assertSecondaryKeySecretReachable(): Promise<void> {
+  const config = loadConfig();
+  const secretId = config.keys.secondaryKeySecretId;
+  if (secretId === undefined) return;
+
+  const { readSecretFromAws } = await import("@parmana/crypto");
+  const { createPrivateKey } = await import("node:crypto");
+  const pem = await readSecretFromAws(secretId);
+  createPrivateKey(pem);
 }

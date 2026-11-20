@@ -19,7 +19,12 @@ import { ArtifactSigner } from "./ArtifactSigner.js";
 import { SignatureVerifier } from "./SignatureVerifier.js";
 import type { Signer } from "./Signer.js";
 import { SignerBootstrap } from "./SignerBootstrap.js";
+import type { KeyProvider } from "./KeyProvider.js";
 import { FileKeyProvider } from "./providers/key/FileKeyProvider.js";
+import {
+  readSecretFromAws,
+  SecretSecondaryKeyProvider,
+} from "./providers/key/SecretSecondaryKeyProvider.js";
 import {
   currentVerificationKeyId,
   currentVerificationSecondaryKeyId,
@@ -65,7 +70,29 @@ export class VerificationCrypto {
    * CRYPTO_MODE defaults to "single", so this does not affect a
    * deployment that hasn't opted into hybrid.
    */
-  private readonly hybridKeys = new FileKeyProvider();
+  private hybridKeysInstance?: KeyProvider;
+
+  /**
+   * The key provider for hybrid signing. With PARMANA_SECONDARY_KEY_SECRET_ID set, the secondary
+   * key comes from that secret and everything else from the key directory. Built once, so the
+   * secret's cache is kept between requests.
+   */
+  private get hybridKeys(): KeyProvider {
+    if (this.hybridKeysInstance === undefined) {
+      const files = new FileKeyProvider();
+      const secretId = this.config.keys.secondaryKeySecretId;
+      this.hybridKeysInstance =
+        secretId === undefined
+          ? files
+          : new SecretSecondaryKeyProvider(
+              currentVerificationSecondaryKeyId(),
+              secretId,
+              readSecretFromAws,
+              files,
+            );
+    }
+    return this.hybridKeysInstance;
+  }
 
   private readonly hasher = new TrustRecordHasher(this.crypto);
 

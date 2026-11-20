@@ -164,6 +164,12 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Not verified.** Against a real AWS KMS key. The signer was tested with a fake. The Doctor check still refuses `hybrid` with `aws-kms` unless `PARMANA_HYBRID_KMS=true`, and the flag is off by default.
 - **Decision for the owner.** Whether to lift the refusal after a real KMS run. That needs an AWS sandbox account and a KMS ed25519 key; I have neither here.
 
+### F26. The dilithium3 secondary key can come from AWS Secrets Manager, so it never has to be a file (built, not verified against real Secrets Manager)
+
+- **Evidence.** `PARMANA_SECONDARY_KEY_SECRET_ID` names a Secrets Manager secret that holds the secondary private key as PEM. `SecretSecondaryKeyProvider` serves only the secondary key from the secret, caches it for five minutes, and passes every other key to the file provider. The secondary key's files are not required when the secret is set. At startup, `assertSecondaryKeySecretReachable` reads and parses the secret, so a bad secret stops the server before the first record. Tests (with an injected reader, no AWS): the key comes from the secret and its public key is derived from it; the secondary key is never asked of the fallback; the secret is read once within the cache window and again after it; a failed read is not cached; a hybrid record signed with it verifies.
+- **Not verified.** Against a real AWS Secrets Manager secret. The startup check has no unit test of its own; it is covered by the build and by the server's own startup. The secret's value is trusted to be a valid PKCS#8 PEM key.
+- **Decision for the owner.** Who may read the secret (IAM policy), and whether the same secret store should hold the classical key. This change does not read the classical key from a secret.
+
 ### F20. A partial review state crashed the decision route, and a test left one behind (fixed)
 
 - **Evidence.** The integration test `packages/policy/tests/integration/policy-v2-commit.integration.test.ts` saved `{ items: [] }` as the review state. It truncated the tables before each test but not after the last one, so the row stayed in the shared database. The next server start that read it failed: `ReviewQueue.load` read `snapshot.results` of an undefined value, and each decision answered `500`.
