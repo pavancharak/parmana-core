@@ -110,6 +110,9 @@ step "Migrations and policies"
 PGDATABASE=postgres ROLES_FILE="$ROOT/docker/local/postgres-roles.sql" \
   MIGRATIONS_DIR="$ROOT/supabase/migrations" bash docker/local/migrate.sh
 node docker/local/seed-policies.mjs
+# The drill's transaction names payment-limit 1.0.0, which is a fixture, not a
+# live policy. Seed the fixtures too, so the baseline finds the policy it names.
+PARMANA_POLICY_DIR="$ROOT/fixtures/policies" node docker/local/seed-policies.mjs
 
 # Signing keys, generated for the drill only.
 mkdir -p "$WORK/keys"
