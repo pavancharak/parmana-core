@@ -10,6 +10,14 @@ product version). The SDKs are versioned independently on their own registries, 
 and per-version notes. This page covers changes that affect what you can build against, not
 every commit, run `git log` in the repository for the complete record.
 
+## 2026-11-20 (4.1.2)
+
+**Released: version 4.1.2 of every Parmana package in this repository**
+
+- **Changed in the Python SDK: `approvers.propose_add` now requires `capabilities`.** Pass a list of 1 to 50 capability names that the approver may approve, for example `capabilities=["erp:pay-invoice"]`. The server has always required this list for an approver key. In earlier releases the method did not send it, so every call was refused with HTTP 400. Code that called `propose_add` without `capabilities` must add it; it fails with a `TypeError` until it does.
+- The approver change request and response schemas, and the OpenAPI document, list `capabilities` for an add and forbid it for a revoke. The server behaviour is unchanged.
+- The published versions named in the docs remain 4.1.1 until 4.1.2 is published on npm and PyPI.
+
 ## 2026-11-18 (4.1.1)
 
 **Released: version 4.1.1 of every Parmana package in this repository**
