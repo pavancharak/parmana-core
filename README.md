@@ -1,6 +1,6 @@
 # Parmana
 
-> **Under intense development. Not ready for public use.** Interfaces, policies and storage formats may change without notice.
+> Interfaces, policies and storage formats may change without notice.
 
 [![CI](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml/badge.svg)](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/pavancharak/parmana-core/actions/workflows/codeql.yml/badge.svg)](https://github.com/pavancharak/parmana-core/actions/workflows/codeql.yml)
@@ -95,7 +95,7 @@ Hosted docs: [docs.parmanasystems.com](https://docs.parmanasystems.com).
 
 ## Status and limits
 
-Parmana is a prototype. Its limits are stated up front:
+Its limits are stated up front:
 
 - It checks only actions that leave through its gateway. It does not yet check an agent that calls one of your systems directly.
 - It does not read or judge the text a model produces. It limits what an agent can do, not what it says.
