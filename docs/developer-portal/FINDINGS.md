@@ -89,6 +89,8 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 
 ### F11. Schema 3 reading by third-party tools
 
+**Answered by the owner (2026-11-20): no third-party consumer is active.** Verified readers are still only the TypeScript and Python SDKs and `parmana-verifier` 2.0.3. Any consumer added later must read schema 3 before it receives records. Re-check this before each new consumer.
+
 - **Evidence.** Verified with the TypeScript and Python SDKs and `parmana-verifier` 2.0.3 only.
 - **Not known.** Whether tools outside this repository read schema 3.
 - **Recommendation.** Ask each consumer before F1 changes the default.
