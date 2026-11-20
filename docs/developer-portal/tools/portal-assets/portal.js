@@ -1,4 +1,4 @@
-/* global window, document, navigator, setTimeout, IntersectionObserver */
+/* global window, document, navigator, setTimeout, IntersectionObserver, MutationObserver */
 // Parmana developer docs: search, copy buttons, the mobile navigation and the "On this page" highlight.
 // Everything here is progressive: the pages read fully without it.
 (function () {
@@ -154,6 +154,37 @@
     Object.keys(byId).forEach(function (id) {
       var el = document.getElementById(id);
       if (el) observer.observe(el);
+    });
+  }
+
+  // ---- zoom for diagrams ----
+  // Mermaid renders asynchronously, so each diagram gets its button once its SVG exists.
+  function addZoomButtons() {
+    document.querySelectorAll("pre.mermaid").forEach(function (block) {
+      if (
+        block.getAttribute("data-zoom") === "ready" ||
+        !block.querySelector("svg")
+      )
+        return;
+      block.setAttribute("data-zoom", "ready");
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "zoom-toggle";
+      button.textContent = "Zoom in";
+      button.setAttribute("aria-pressed", "false");
+      button.addEventListener("click", function () {
+        var zoomed = block.classList.toggle("zoomed");
+        button.textContent = zoomed ? "Zoom out" : "Zoom in";
+        button.setAttribute("aria-pressed", zoomed ? "true" : "false");
+      });
+      block.parentNode.insertBefore(button, block);
+    });
+  }
+  addZoomButtons();
+  if ("MutationObserver" in window) {
+    new MutationObserver(addZoomButtons).observe(document.body, {
+      childList: true,
+      subtree: true,
     });
   }
 })();
