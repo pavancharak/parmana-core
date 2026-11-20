@@ -48,6 +48,7 @@ const NAV = [
     pages: [
       "architecture.md",
       "glossary.md",
+      "security/key-management.md",
       "policies/README.md",
       "security/README.md",
       "security/evidence-verification.md",
