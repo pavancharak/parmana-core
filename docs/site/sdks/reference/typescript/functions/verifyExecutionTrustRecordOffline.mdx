@@ -2,10 +2,8 @@
 title: "Function: verifyExecutionTrustRecordOffline"
 ---
 
-Verifies an Execution Trust Record with only public keys.
-
 ## Signature
 
 ```ts
-(trustRecord: unknown, publicKeys: Readonly<Record<string, string>>): OfflineVerificationResult
+(trustRecord: unknown, publicKeys: Readonly<Record<string, string>>, options?: VerifyTrustRecordOptions): OfflineVerificationResult
 ```

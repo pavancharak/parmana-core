@@ -127,6 +127,8 @@ export class PolicyV2DecisionService {
     const approvers = approverKeysFrom(register);
     const decision = await policyV2.decision.decide(request, {
       policies: approvedPolicyFrom(register),
+      approvedButNotLive: (capability: string) =>
+        register.approvedButNotLive(capability),
       register,
       sources: this.options.sources,
       nonces: this.nonces,

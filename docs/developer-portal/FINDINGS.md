@@ -114,6 +114,11 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Evidence.** The register's change responses (sources, thresholds, actions, approver keys, policy versions, role grants) are documented as `type: object` with `additionalProperties: true`. The record types are defined in `packages/policy/src/v2/register.ts`, and the sample responses are illustrative, not captured.
 - **Recommendation.** Give each record its own schema, and capture a real response from a deployment with policy version 2 enabled to replace the illustrative example.
 
+### F21. An approved version that is not live was refused as "no approved policy" (fixed)
+
+- **Evidence.** During the live run, a decision for an action whose go-live gate had not passed was refused with `NO_APPROVED_POLICY` ("No approved policy is in force"), although a version was approved. The message sent the caller to approve a policy, which had already been done.
+- **Fix.** A new refusal code, `ACTION_NOT_LIVE`, with a detail that names the go-live gate. The register reports whether a version is approved and its action is not live; the decision service uses that only to choose the refusal, and never to allow a decision. `NO_APPROVED_POLICY` is unchanged when nothing is approved. The code is added to the OpenAPI enum, the TypeScript type, the Python docstring, and the error-code index. The unit test for the new refusal passes; the Policy v2 API and integration tests (137) pass against local PostgreSQL; the Python suite (212) passes. The live server was not re-run after this change.
+
 ### F17. Policy v2 run live, from setup to a finished review (fixed: the run is recorded)
 
 - **Evidence.** A fresh local database (PostgreSQL 16, migrated), a server with `PARMANA_POLICY_V2_DECISIONS=true` and the owner set by `PARMANA_POLICY_V2_BOOTSTRAP_OWNER`, and 39 requests in order. The steps and their results:
@@ -129,6 +134,7 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Defect found and fixed in this run.** Before the fix, a partial stored review state made every decision answer 500 (F20).
 - **Not exercised.** The alerts board, the sweeps (timed review reminders and expiry), the notifications and webhooks, and the console screens. The `release` of an approved review: after the review is approved, the record `ev-1` still says `REVIEW` and `released: false`. Whether an approved review should release the action is not answered by this run, and the owner should decide it before promotion.
 - **Recommendation.** Decide whether an approved review releases the action, and record a run of the alerts and sweeps before the owner promotes the contract.
+- **Update.** The design (`docs/internal/design/POLICY-V2-SPEC.md`, section on the review outcome) says the final approval or refusal is a further separate record that refers back to the decision. The review route writes no evidence record at all, so an approved review leaves nothing in the log. That is a gap against the design. Fixing it changes the evidence chain, so it needs the owner's decision: which record format, and whether an approved review should release the action through the execution path or stay a record only.
 
 ### F20. A partial review state crashed the decision route, and a test left one behind (fixed)
 

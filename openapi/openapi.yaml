@@ -8663,6 +8663,7 @@ components:
           enum:
             [
               NO_APPROVED_POLICY,
+              ACTION_NOT_LIVE,
               POLICY_INVALID,
               SOURCE_UNAVAILABLE,
               SOURCE_NOT_VERIFIED,

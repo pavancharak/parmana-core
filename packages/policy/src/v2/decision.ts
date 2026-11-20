@@ -34,6 +34,7 @@ export type Outcome = "APPROVE" | "REJECT" | "REVIEW";
 /** Refusals that happen before any rule runs. Each refuses the request. */
 export type RefusalCode =
   | "NO_APPROVED_POLICY"
+  | "ACTION_NOT_LIVE"
   | "POLICY_INVALID"
   | "SOURCE_UNAVAILABLE"
   | "SOURCE_NOT_VERIFIED"
@@ -128,6 +129,11 @@ export type ApprovalChecker = (
 
 export interface DecisionDeps {
   readonly policies: (capability: string) => ApprovedPolicy | undefined;
+  /**
+   * True when a version is approved for the capability but its action has not passed the
+   * go-live gate. Used only to say why no policy is in force; it never allows a decision.
+   */
+  readonly approvedButNotLive?: (capability: string) => boolean;
   readonly register: DecisionRegister;
   readonly sources: SourceClient;
   readonly nonces: NonceStore;
@@ -319,12 +325,19 @@ async function decideCore(
   const now = deps.now();
   const approved = deps.policies(request.capability);
   const bare = { capability: request.capability, hash: "" };
-  if (approved === undefined)
+  if (approved === undefined) {
+    if (deps.approvedButNotLive?.(request.capability) === true)
+      return refuse(
+        bare,
+        "ACTION_NOT_LIVE",
+        `A policy version is approved for "${request.capability}", but its action is not live: the go-live gate has not passed, so no decision is made.`,
+      );
     return refuse(
       bare,
       "NO_APPROVED_POLICY",
       `No approved policy is in force for "${request.capability}".`,
     );
+  }
 
   const hash = hashOf(approved.policy);
   const policyRef = { capability: request.capability, hash };

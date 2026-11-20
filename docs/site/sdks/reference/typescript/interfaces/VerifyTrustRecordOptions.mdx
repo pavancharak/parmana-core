@@ -1,0 +1,11 @@
+---
+title: "Interface: VerifyTrustRecordOptions"
+---
+
+Options for verifyExecutionTrustRecordOffline. Each defaults to off.
+
+## Members
+
+| Name                   | Kind     | Type                   | Description                                                                                                                                                                                                                                                  |
+| ---------------------- | -------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `requireFullCoverage?` | Property | `boolean \| undefined` | Fail closed on legacy coverage. When true, a record is valid only when it is schema 3 with a verified hybrid signature (coverage "full"). Schema 2 records, which sign seven fields, are refused. Default false, which keeps the result of earlier releases. |

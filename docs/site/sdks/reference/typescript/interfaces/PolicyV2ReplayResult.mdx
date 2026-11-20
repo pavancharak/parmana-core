@@ -1,0 +1,16 @@
+---
+title: "Interface: PolicyV2ReplayResult"
+---
+
+The result of replaying a recorded decision from its evidence record. reproduced is true when the
+replay gives the same outcome and inputs. differences lists what did not match. replayed is the
+decision the replay produced; its fields are those of the evidence record, which the SDK does not
+type further.
+
+## Members
+
+| Name          | Kind     | Type                                             | Description |
+| ------------- | -------- | ------------------------------------------------ | ----------- |
+| `reproduced`  | Property | `boolean`                                        |             |
+| `differences` | Property | `readonly string[]`                              |             |
+| `replayed?`   | Property | `Readonly<Record<string, unknown>> \| undefined` |             |
