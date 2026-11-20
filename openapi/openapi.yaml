@@ -7659,7 +7659,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PolicyV2Decision"
-              example: {"outcome": "APPROVE", "reason": "The policy approves this request.", "tier": "tier-1", "recordId": "record-123", "released": false}
+              example:
+                {
+                  "outcome": "APPROVE",
+                  "reason": "The policy approves this request.",
+                  "tier": "tier-1",
+                  "recordId": "record-123",
+                  "released": false,
+                }
         "400":
           $ref: "#/components/responses/PolicyV2InvalidRequest"
         "401":
@@ -7697,7 +7704,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PolicyV2ReviewView"
-              example: {"status": "pending", "reasonCode": "UNDER_REVIEW"}
+              example: { "status": "pending", "reasonCode": "UNDER_REVIEW" }
         "401":
           $ref: "#/components/responses/PolicyV2Unauthenticated"
         "404":
@@ -7737,7 +7744,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PolicyV2ReviewDecision"
-              example: {"itemId": "review-123", "status": "approved", "final": true, "outcome": "APPROVED", "decisionsRecorded": 1}
+              example:
+                {
+                  "itemId": "review-123",
+                  "status": "approved",
+                  "final": true,
+                  "outcome": "APPROVED",
+                  "decisionsRecorded": 1,
+                }
         "400":
           $ref: "#/components/responses/PolicyV2InvalidRequest"
         "401":
@@ -7775,7 +7789,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PolicyV2ReplayResult"
-              example: {"reproduced": true, "differences": [], "replayed": {"outcome": "APPROVE"}}
+              example:
+                {
+                  "reproduced": true,
+                  "differences": [],
+                  "replayed": { "outcome": "APPROVE" },
+                }
         "401":
           $ref: "#/components/responses/PolicyV2Unauthenticated"
         "403":
@@ -7803,7 +7822,17 @@ paths:
           required: true
           schema:
             type: string
-            enum: [home, register, changes, reviews, approvals, gate, decisions, audit]
+            enum:
+              [
+                home,
+                register,
+                changes,
+                reviews,
+                approvals,
+                gate,
+                decisions,
+                audit,
+              ]
         - name: capability
           in: query
           required: false
@@ -7856,14 +7885,14 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
-              example: {"handled": true}
+              example: { "handled": true }
         "403":
           description: The notification did not verify.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/PolicyV2Error"
-              example: {"error": "not_verified"}
+              example: { "error": "not_verified" }
       security: []
 
   /v2/notifications/events:
@@ -7897,7 +7926,7 @@ paths:
                   recorded:
                     type: integer
                     minimum: 0
-              example: {"recorded": 1}
+              example: { "recorded": 1 }
         "400":
           $ref: "#/components/responses/PolicyV2InvalidRequest"
         "403":
@@ -7906,7 +7935,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PolicyV2Error"
-              example: {"error": "not_verified"}
+              example: { "error": "not_verified" }
       security: []
 
   /v2/register:
@@ -7927,7 +7956,8 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
-              example: {"sources": [], "thresholds": [], "actions": [], "roles": []}
+              example:
+                { "sources": [], "thresholds": [], "actions": [], "roles": [] }
         "401":
           $ref: "#/components/responses/PolicyV2Unauthenticated"
         "429":
@@ -7972,7 +8002,7 @@ paths:
                       additionalProperties: true
                   next:
                     type: [integer, "null"]
-              example: {"events": [], "next": null}
+              example: { "events": [], "next": null }
         "400":
           $ref: "#/components/responses/PolicyV2InvalidRequest"
         "401":
@@ -8340,7 +8370,7 @@ paths:
                     type: array
                     items:
                       type: string
-              example: {"missing": ["an approved threshold"]}
+              example: { "missing": ["an approved threshold"] }
         "401":
           $ref: "#/components/responses/PolicyV2Unauthenticated"
         "429":
@@ -8369,7 +8399,7 @@ paths:
                   live:
                     type: boolean
                     enum: [true]
-              example: {"live": true}
+              example: { "live": true }
         "401":
           $ref: "#/components/responses/PolicyV2Unauthenticated"
         "403":
@@ -8629,7 +8659,17 @@ components:
       properties:
         code:
           type: string
-          enum: [NO_APPROVED_POLICY, POLICY_INVALID, SOURCE_UNAVAILABLE, SOURCE_NOT_VERIFIED, STALE, INVALID, MISSING_VALUE, THRESHOLD_NOT_APPROVED]
+          enum:
+            [
+              NO_APPROVED_POLICY,
+              POLICY_INVALID,
+              SOURCE_UNAVAILABLE,
+              SOURCE_NOT_VERIFIED,
+              STALE,
+              INVALID,
+              MISSING_VALUE,
+              THRESHOLD_NOT_APPROVED,
+            ]
         detail:
           type: string
         errors:
@@ -8728,7 +8768,8 @@ components:
           type: string
     PolicyV2SourceInput:
       type: object
-      required: [name, dataOwner, signer, keyId, publicKeyPem, claims, canApprove]
+      required:
+        [name, dataOwner, signer, keyId, publicKeyPem, claims, canApprove]
       properties:
         name:
           type: string
@@ -8760,7 +8801,18 @@ components:
           description: True if any policy uses this source to approve.
     PolicyV2ThresholdInput:
       type: object
-      required: [action, name, value, unit, owner, reason, evidence, nextReview, highValue]
+      required:
+        [
+          action,
+          name,
+          value,
+          unit,
+          owner,
+          reason,
+          evidence,
+          nextReview,
+          highValue,
+        ]
       properties:
         action:
           type: string
@@ -8890,7 +8942,17 @@ components:
                 type: string
               role:
                 type: string
-                enum: [second-approver, risk-function, parmana-owner, source-owner, action-owner, gate-owner, reviewer, operator]
+                enum:
+                  [
+                    second-approver,
+                    risk-function,
+                    parmana-owner,
+                    source-owner,
+                    action-owner,
+                    gate-owner,
+                    reviewer,
+                    operator,
+                  ]
     PolicyV2Reason:
       required: true
       content:
@@ -8944,42 +9006,54 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/PolicyV2Error"
-          example: {"error": "unauthenticated"}
+          example: { "error": "unauthenticated" }
     PolicyV2InvalidRequest:
       description: "The body or a parameter is not valid. The message names the field (EXPERIMENTAL Policy v2 route)."
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/PolicyV2Error"
-          example: {"error": "invalid_request", "message": "capability must look like namespace:verb."}
+          example:
+            {
+              "error": "invalid_request",
+              "message": "capability must look like namespace:verb.",
+            }
     PolicyV2Forbidden:
       description: "The caller's role does not allow this change or screen (EXPERIMENTAL Policy v2 route)."
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/PolicyV2Error"
-          example: {"error": "forbidden", "message": "The caller does not hold a role that allows this change."}
+          example:
+            {
+              "error": "forbidden",
+              "message": "The caller does not hold a role that allows this change.",
+            }
     PolicyV2NotFound:
       description: "No such item for this caller (EXPERIMENTAL Policy v2 route)."
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/PolicyV2Error"
-          example: {"error": "not_found"}
+          example: { "error": "not_found" }
     PolicyV2NotEnabled:
       description: "This capability is not enabled on this deployment (EXPERIMENTAL Policy v2 route)."
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/PolicyV2Error"
-          example: {"error": "not_enabled"}
+          example: { "error": "not_enabled" }
     PolicyV2Conflict:
       description: "The state changed while it was being saved. Read it again and retry (EXPERIMENTAL Policy v2 route)."
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/PolicyV2Error"
-          example: {"error": "conflict", "message": "The register changed while it was being saved. Read it again and retry."}
+          example:
+            {
+              "error": "conflict",
+              "message": "The register changed while it was being saved. Read it again and retry.",
+            }
     PolicyV2Refused:
       description: "The change is refused by a rule of the register or the review. The message says why. A go-live refusal also lists `missing` (EXPERIMENTAL Policy v2 route)."
       content:
@@ -8993,7 +9067,12 @@ components:
                     type: array
                     items:
                       type: string
-          example: {"error": "refused", "message": "The action has no approved threshold.", "missing": ["an approved threshold"]}
+          example:
+            {
+              "error": "refused",
+              "message": "The action has no approved threshold.",
+              "missing": ["an approved threshold"],
+            }
     PolicyV2RegisterChange:
       description: "The register record the change produced (for example a source, threshold, action, policy version, approver key or role grant). The shape depends on the change (EXPERIMENTAL Policy v2 route)."
       content:
@@ -9001,7 +9080,13 @@ components:
           schema:
             type: object
             additionalProperties: true
-          example: {"name": "erp-ledger", "status": "proposed", "proposedBy": "caller-ops-1", "approvals": []}
+          example:
+            {
+              "name": "erp-ledger",
+              "status": "proposed",
+              "proposedBy": "caller-ops-1",
+              "approvals": [],
+            }
     Unauthorized:
       description: "The `Authorization` header is missing, is not a bearer key, or names a key the server does not know. Nothing ran. Send a valid key."
       content:

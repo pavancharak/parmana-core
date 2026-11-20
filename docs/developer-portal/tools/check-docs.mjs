@@ -105,12 +105,16 @@ const tsIndex = readFileSync(
   join(portal, "sdk/typescript-method-index.md"),
   "utf8",
 );
-const tsMethods = [...tsIndex.matchAll(/^\|\s*`(\w+)`\s*\|/gm)].map((m) => m[1]);
+const tsMethods = [...tsIndex.matchAll(/^\|\s*`(\w+)`\s*\|/gm)].map(
+  (m) => m[1],
+);
 const pyIndex = readFileSync(
   join(portal, "sdk/python-method-index.md"),
   "utf8",
 );
-const pyMethods = [...pyIndex.matchAll(/^\|\s*`(\w+)`\s*\|/gm)].map((m) => m[1]);
+const pyMethods = [...pyIndex.matchAll(/^\|\s*`(\w+)`\s*\|/gm)].map(
+  (m) => m[1],
+);
 const toSnake = (s) => s.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
 
 const undocumentedTs = tsMethods.filter(

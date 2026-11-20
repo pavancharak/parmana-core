@@ -275,7 +275,11 @@ function python(op: Operation): string {
     const q = op.body.includes('"') ? "'" : '"';
     lines.push(`BODY = r${q}${op.body}${q}`, "");
   }
-  lines.push("", "def main() -> None:", "    request = urllib.request.Request(");
+  lines.push(
+    "",
+    "def main() -> None:",
+    "    request = urllib.request.Request(",
+  );
   lines.push(`        "${ENDPOINT}${op.route}",`);
   if (op.body !== undefined) {
     lines.push(`        data=json.dumps(json.loads(BODY)).encode("utf-8"),`);
