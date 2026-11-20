@@ -1,10 +1,10 @@
 # Parmana overview
 
-[Back to the README](../../README.md) · [Developer docs index](README.md)
+[Back to the README](https://github.com/pavancharak/parmana-core/blob/main/README.md) · [Developer docs index](README.md)
 
 ## Research
 
-- **[The Authority Gap: Why Autonomous AI Needs Deterministic Execution Boundaries](../../authority-gap.md)** (discussion draft, November 2026). The paper's architecture diagram is in [`authority-gap.md`](../../authority-gap.md).
+- **[The Authority Gap: Why Autonomous AI Needs Deterministic Execution Boundaries](https://github.com/pavancharak/parmana-core/blob/main/authority-gap.md)** (discussion draft, November 2026). The paper's architecture diagram is in [`authority-gap.md`](https://github.com/pavancharak/parmana-core/blob/main/authority-gap.md).
 
 ## The problem
 

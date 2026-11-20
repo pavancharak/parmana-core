@@ -6,7 +6,7 @@
 
 **Verification.**
 
-- The refusals and the approval path were checked by tutorial 120 ([`examples/tutorials/120-no-action-without-approval/run.ts`](../../../examples/tutorials/120-no-action-without-approval/run.ts)), which passed in the examples runner. Its Part 3 cases are quoted below.
+- The refusals and the approval path were checked by tutorial 120 ([`examples/tutorials/120-no-action-without-approval/run.ts`](https://github.com/pavancharak/parmana-core/blob/main/examples/tutorials/120-no-action-without-approval/run.ts)), which passed in the examples runner. Its Part 3 cases are quoted below.
 - The agent pattern (an SDK caller that declares, then executes with an attached approval) was run as [`declare-then-execute.ts`](../examples/governed-quickstart/typescript/declare-then-execute.ts) and [`governed-flow.ts`](../examples/governed-quickstart/typescript/governed-flow.ts). The approval cases, including the declared-without-approval refusal, were run as [`approval-cases.ts`](../examples/governed-quickstart/typescript/approval-cases.ts): A, B, C and D refused, E approved.
 - The Python example `python/examples/10_llm_tool_call.py` is in the repository. **It was not run in this verification.**
 

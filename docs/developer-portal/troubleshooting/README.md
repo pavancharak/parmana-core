@@ -142,4 +142,4 @@ The server refuses a policy whose file was changed outside the approval flow. Th
 ## Getting more help
 
 - Open an issue in the repository with the status, the code, the request id if the server gave one, and the output of the debugging checklist. Do not include raw keys, approver private keys or step-up private keys.
-- Report a security issue through [SECURITY.md](../../../SECURITY.md), not in a public issue.
+- Report a security issue through [SECURITY.md](https://github.com/pavancharak/parmana-core/blob/main/SECURITY.md), not in a public issue.

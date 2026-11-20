@@ -38,7 +38,7 @@ The reader site (concepts, guides, and the same API and SDK material, rendered w
   operator, and ideas considered but not built.
 - **[CURRENT-STATE.md](internal/project/CURRENT-STATE.md)**: a short description of the system as it stands.
 - **[adr/](internal/adr)**: architecture decision records.
-- **[../04-INCIDENTS-LOG.md](../04-INCIDENTS-LOG.md)**: security and release incidents and
+- **[../04-INCIDENTS-LOG.md](https://github.com/pavancharak/parmana-core/blob/main/04-INCIDENTS-LOG.md)**: security and release incidents and
   their resolutions.
 
 ## Engineering references
@@ -58,20 +58,20 @@ The reader site (concepts, guides, and the same API and SDK material, rendered w
 
 ## Package documentation
 
-- [../packages/api/README.md](../packages/api/README.md): the REST API package.
-- [../packages/envelope-verifier/README.md](../packages/envelope-verifier/README.md):
+- [../packages/api/README.md](https://github.com/pavancharak/parmana-core/blob/main/packages/api/README.md): the REST API package.
+- [../packages/envelope-verifier/README.md](https://github.com/pavancharak/parmana-core/blob/main/packages/envelope-verifier/README.md):
   verifying a Parmana authorization without trusting Parmana's runtime or database.
-- [../typescript/README.md](../typescript/README.md) and [../python/README.md](../python/README.md):
+- [../typescript/README.md](https://github.com/pavancharak/parmana-core/blob/main/typescript/README.md) and [../python/README.md](https://github.com/pavancharak/parmana-core/blob/main/python/README.md):
   the SDKs.
 
 ## License and security
 
-- [../LICENSE](../LICENSE): Apache License 2.0.
-- [../SECURITY.md](../SECURITY.md): reporting a vulnerability.
-- [../THREAT-MODEL.md](../THREAT-MODEL.md): threats, controls, evidence and residual risk.
+- [../LICENSE](https://github.com/pavancharak/parmana-core/blob/main/LICENSE): Apache License 2.0.
+- [../SECURITY.md](https://github.com/pavancharak/parmana-core/blob/main/SECURITY.md): reporting a vulnerability.
+- [../THREAT-MODEL.md](https://github.com/pavancharak/parmana-core/blob/main/THREAT-MODEL.md): threats, controls, evidence and residual risk.
 - [MUTATION-TESTING.md](internal/testing/MUTATION-TESTING.md): mutation scores for the security packages, the
   gaps they showed and what was fixed.
-- [../governance/README.md](../governance/README.md): the public, hash chained log of policy
+- [../governance/README.md](https://github.com/pavancharak/parmana-core/blob/main/governance/README.md): the public, hash chained log of policy
   change approvals, and how to verify it.
-- [../SECURITY-CHALLENGE.md](../SECURITY-CHALLENGE.md): what counts as breaking Parmana on a
+- [../SECURITY-CHALLENGE.md](https://github.com/pavancharak/parmana-core/blob/main/SECURITY-CHALLENGE.md): what counts as breaking Parmana on a
   local copy.

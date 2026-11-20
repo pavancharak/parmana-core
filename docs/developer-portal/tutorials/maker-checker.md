@@ -6,7 +6,7 @@
 
 **Verification.** Three runs, all against this repository:
 
-- Tutorial 103 ([`examples/tutorials/103-policy-governance-maker-checker/run.ts`](../../../examples/tutorials/103-policy-governance-maker-checker/run.ts)) runs the four refusals and the approval over real HTTP. Its outputs: propose `201`; a service caller `403 NON_HUMAN_CALLER_DENIED`; the maker's approval `403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE`; a checker without an envelope `403 STEP_UP_AUTHORIZATION_INVALID`; the checker with the envelope `200`, approved, with the policy file written.
+- Tutorial 103 ([`examples/tutorials/103-policy-governance-maker-checker/run.ts`](https://github.com/pavancharak/parmana-core/blob/main/examples/tutorials/103-policy-governance-maker-checker/run.ts)) runs the four refusals and the approval over real HTTP. Its outputs: propose `201`; a service caller `403 NON_HUMAN_CALLER_DENIED`; the maker's approval `403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE`; a checker without an envelope `403 STEP_UP_AUTHORIZATION_INVALID`; the checker with the envelope `200`, approved, with the policy file written.
 - [`governed-flow.ts`](../examples/governed-quickstart/typescript/governed-flow.ts) and [`governed_flow.py`](../examples/governed-quickstart/python/governed_flow.py) run the same flow with the public SDKs against a local server.
 - The `parmana-ops` CLI flow ran against a local server (see [CLI](../sdk/cli.md#the-maker-checker-flow-with-the-cli)).
 

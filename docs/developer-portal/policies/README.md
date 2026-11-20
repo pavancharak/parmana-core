@@ -116,7 +116,7 @@ curl -s -X POST "$PARMANA_API_URL/policies/validate" \
 
 ## How a policy version is approved
 
-No version takes effect until a second person approves it. The flow, verified in [tutorial 103](../../../examples/tutorials/103-policy-governance-maker-checker/run.ts) and the [governed flow](../examples/governed-quickstart/typescript/governed-flow.ts):
+No version takes effect until a second person approves it. The flow, verified in [tutorial 103](https://github.com/pavancharak/parmana-core/blob/main/examples/tutorials/103-policy-governance-maker-checker/run.ts) and the [governed flow](../examples/governed-quickstart/typescript/governed-flow.ts):
 
 1. The **maker** proposes the version: the whole policy document and a reason. The change is `PENDING_APPROVAL`.
 2. The maker cannot approve it (`403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE`).

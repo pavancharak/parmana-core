@@ -288,10 +288,10 @@ except ParmanaHttpError as error:
 
 ## Examples
 
-| Example                                                                                                  | What it shows                                                                                          | Status                                                                           |
-| -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| [`governed-quickstart/python/governed_flow.py`](../examples/governed-quickstart/python/governed_flow.py) | Propose, refused self-approval, checker approval, execute, verify (server and offline), replay refused | Run; passed                                                                      |
-| [`python/examples/`](../../../python/examples/README.md) in the repository                               | Health, execute, verify, replay, receipts, custom policy, end-to-end                                   | Part of the repository's test suite (`pytest`); the full suite passed 208 of 208 |
+| Example                                                                                                                 | What it shows                                                                                          | Status                                                                           |
+| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| [`governed-quickstart/python/governed_flow.py`](../examples/governed-quickstart/python/governed_flow.py)                | Propose, refused self-approval, checker approval, execute, verify (server and offline), replay refused | Run; passed                                                                      |
+| [`python/examples/`](https://github.com/pavancharak/parmana-core/blob/main/python/examples/README.md) in the repository | Health, execute, verify, replay, receipts, custom policy, end-to-end                                   | Part of the repository's test suite (`pytest`); the full suite passed 208 of 208 |
 
 ## Best practices
 
