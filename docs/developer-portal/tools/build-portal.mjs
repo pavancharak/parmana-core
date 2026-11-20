@@ -25,7 +25,7 @@ import {
 } from "node:fs";
 import { dirname, join, posix, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { Marked, Lexer } from "marked";
+import { Marked } from "marked";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "..", "..", "..");
@@ -327,7 +327,7 @@ if (anchorProblems.length > 0) {
 const CSS = readFileSync(join(here, "portal-assets", "portal.css"), "utf8");
 const JS = readFileSync(join(here, "portal-assets", "portal.js"), "utf8");
 
-function navHtml(currentSrc, rootPrefix) {
+function navHtml(currentSrc) {
   return navGroups
     .map((g) => {
       const items = g.pages
@@ -407,7 +407,7 @@ function layout(page) {
 </header>
 <div class="shell">
   <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
-${navHtml(page.src, rootPrefix)}
+${navHtml(page.src)}
   </aside>
   <main class="content">
     ${crumb}
