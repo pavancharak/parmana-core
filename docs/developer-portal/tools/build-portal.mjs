@@ -14,7 +14,15 @@
 // reported and does not fail the run. Generated files are written to docs/portal/, which GitHub Pages
 // publishes from the docs folder.
 
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join, posix, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Marked, Lexer } from "marked";
@@ -138,7 +146,8 @@ function listMarkdown(dir, prefix = "") {
 function outPathFor(src) {
   let base = src.slice(0, -3);
   if (base === "README") base = "index";
-  else if (base.endsWith("/README")) base = `${base.slice(0, -"/README".length)}/index`;
+  else if (base.endsWith("/README"))
+    base = `${base.slice(0, -"/README".length)}/index`;
   return `${base}.html`;
 }
 
@@ -150,16 +159,22 @@ const navPages = NAV.flatMap((g) => g.pages);
 const unlisted = allMarkdown.filter((p) => !navPages.includes(p));
 const missingFromDisk = navPages.filter((p) => !allMarkdown.includes(p));
 if (missingFromDisk.length > 0) {
-  console.error(`build-portal: navigation names pages that do not exist: ${missingFromDisk.join(", ")}`);
+  console.error(
+    `build-portal: navigation names pages that do not exist: ${missingFromDisk.join(", ")}`,
+  );
   process.exit(1);
 }
 const navGroups = [...NAV];
 if (unlisted.length > 0) {
-  console.warn(`build-portal: pages not in the navigation, listed under "More": ${unlisted.join(", ")}`);
+  console.warn(
+    `build-portal: pages not in the navigation, listed under "More": ${unlisted.join(", ")}`,
+  );
   navGroups.push({ group: "More", pages: unlisted });
 }
 
-const flatOrder = navGroups.flatMap((g) => g.pages.map((p) => ({ src: p, group: g.group })));
+const flatOrder = navGroups.flatMap((g) =>
+  g.pages.map((p) => ({ src: p, group: g.group })),
+);
 const pageSet = new Set(allMarkdown);
 
 // ---------------------------------------------------------------------------
@@ -229,7 +244,8 @@ function renderPage(src, text) {
       link({ href, title, tokens }) {
         const body = this.parser.parseInline(tokens);
         const target = rewriteHref(href, src, fromOut);
-        const external = /^https?:/i.test(target) && !target.startsWith(repoUrl);
+        const external =
+          /^https?:/i.test(target) && !target.startsWith(repoUrl);
         const attrs = [
           `href="${escapeAttr(target)}"`,
           title ? `title="${escapeAttr(title)}"` : "",
@@ -253,7 +269,9 @@ function renderPage(src, text) {
   });
 
   let html = marked.parse(text);
-  html = html.replace(/<table>/g, '<div class="table-wrap"><table>').replace(/<\/table>/g, "</table></div>");
+  html = html
+    .replace(/<table>/g, '<div class="table-wrap"><table>')
+    .replace(/<\/table>/g, "</table></div>");
 
   const h1 = headings.find((h) => h.depth === 1);
   const title = h1 ? h1.text : src.replace(/\.md$/, "");
@@ -264,7 +282,14 @@ function renderPage(src, text) {
     .replace(/[`*_>#|]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  return { src, title, headings, html, excerpt: plain.slice(0, 240), outRel: fromOut };
+  return {
+    src,
+    title,
+    headings,
+    html,
+    excerpt: plain.slice(0, 240),
+    outRel: fromOut,
+  };
 }
 
 const rendered = new Map();
@@ -290,7 +315,9 @@ if (brokenLinks.length > 0) {
   process.exit(1);
 }
 if (anchorProblems.length > 0) {
-  console.warn(`build-portal: ${anchorProblems.length} link(s) name a #section that is not a heading in the target:`);
+  console.warn(
+    `build-portal: ${anchorProblems.length} link(s) name a #section that is not a heading in the target:`,
+  );
   for (const p of anchorProblems) console.warn(`  ${p}`);
 }
 
@@ -306,7 +333,11 @@ function navHtml(currentSrc, rootPrefix) {
       const items = g.pages
         .map((p) => {
           const page = rendered.get(p);
-          const href = posix.relative(posix.dirname(outPathFor(currentSrc)), outPathFor(p)) || "index.html";
+          const href =
+            posix.relative(
+              posix.dirname(outPathFor(currentSrc)),
+              outPathFor(p),
+            ) || "index.html";
           const active = p === currentSrc ? ' aria-current="page"' : "";
           return `<li><a href="${href}"${active}>${escapeHtml(page.title)}</a></li>`;
         })
@@ -320,7 +351,10 @@ function tocHtml(page) {
   const items = page.headings.filter((h) => h.depth === 2 || h.depth === 3);
   if (items.length === 0) return "";
   const list = items
-    .map((h) => `<li class="d${h.depth}"><a href="#${h.id}">${escapeHtml(h.text)}</a></li>`)
+    .map(
+      (h) =>
+        `<li class="d${h.depth}"><a href="#${h.id}">${escapeHtml(h.text)}</a></li>`,
+    )
     .join("");
   return `<nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul>${list}</ul></nav>`;
 }
@@ -418,11 +452,16 @@ const index = flatOrder.map((p) => {
     t: page.title,
     p: page.outRel,
     g: p.group,
-    h: page.headings.filter((h) => h.depth === 2 || h.depth === 3).map((h) => h.text),
+    h: page.headings
+      .filter((h) => h.depth === 2 || h.depth === 3)
+      .map((h) => h.text),
     x: page.excerpt,
   };
 });
-writeFileSync(join(outDir, "search-index.js"), `/* global window */\nwindow.PORTAL_INDEX = ${JSON.stringify(index)};\n`);
+writeFileSync(
+  join(outDir, "search-index.js"),
+  `/* global window */\nwindow.PORTAL_INDEX = ${JSON.stringify(index)};\n`,
+);
 
 const sep2 = sep;
 console.log(

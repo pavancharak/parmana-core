@@ -41,12 +41,20 @@
       return;
     }
     var hits = index
-      .map(function (e) { return { e: e, s: score(e, terms) }; })
-      .filter(function (h) { return h.s > 0; })
-      .sort(function (a, b) { return b.s - a.s; })
+      .map(function (e) {
+        return { e: e, s: score(e, terms) };
+      })
+      .filter(function (h) {
+        return h.s > 0;
+      })
+      .sort(function (a, b) {
+        return b.s - a.s;
+      })
       .slice(0, 10);
     if (hits.length === 0) {
-      box.appendChild(el("div", "none", "No pages match \u201c" + q + "\u201d."));
+      box.appendChild(
+        el("div", "none", "No pages match \u201c" + q + "\u201d."),
+      );
     } else {
       hits.forEach(function (h, i) {
         var a = el("a");
@@ -63,21 +71,32 @@
   }
 
   if (input && box) {
-    input.addEventListener("input", function () { render(input.value); });
+    input.addEventListener("input", function () {
+      render(input.value);
+    });
     input.addEventListener("keydown", function (ev) {
-      if (ev.key === "Escape") { input.value = ""; render(""); input.blur(); }
+      if (ev.key === "Escape") {
+        input.value = "";
+        render("");
+        input.blur();
+      }
       if (ev.key === "Enter") {
         var first = box.querySelector("a");
         if (first) window.location.href = first.getAttribute("href");
       }
     });
-    input.addEventListener("focus", function () { if (input.value) render(input.value); });
+    input.addEventListener("focus", function () {
+      if (input.value) render(input.value);
+    });
     document.addEventListener("click", function (ev) {
       if (!box.contains(ev.target) && ev.target !== input) box.hidden = true;
     });
     document.addEventListener("keydown", function (ev) {
-      if (ev.key === "/" && document.activeElement !== input &&
-          !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) {
+      if (
+        ev.key === "/" &&
+        document.activeElement !== input &&
+        !/INPUT|TEXTAREA/.test(document.activeElement.tagName)
+      ) {
         ev.preventDefault();
         input.focus();
       }
@@ -91,7 +110,9 @@
       var text = code ? code.innerText : "";
       var done = function () {
         btn.textContent = "Copied";
-        setTimeout(function () { btn.textContent = "Copy"; }, 1400);
+        setTimeout(function () {
+          btn.textContent = "Copy";
+        }, 1400);
       };
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(done, function () {});
@@ -113,15 +134,22 @@
   var links = Array.prototype.slice.call(document.querySelectorAll(".toc a"));
   if (links.length && "IntersectionObserver" in window) {
     var byId = {};
-    links.forEach(function (a) { byId[a.getAttribute("href").slice(1)] = a; });
-    var observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) {
-        if (en.isIntersecting && byId[en.target.id]) {
-          links.forEach(function (a) { a.classList.remove("on"); });
-          byId[en.target.id].classList.add("on");
-        }
-      });
-    }, { rootMargin: "0px 0px -70% 0px" });
+    links.forEach(function (a) {
+      byId[a.getAttribute("href").slice(1)] = a;
+    });
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting && byId[en.target.id]) {
+            links.forEach(function (a) {
+              a.classList.remove("on");
+            });
+            byId[en.target.id].classList.add("on");
+          }
+        });
+      },
+      { rootMargin: "0px 0px -70% 0px" },
+    );
     Object.keys(byId).forEach(function (id) {
       var el = document.getElementById(id);
       if (el) observer.observe(el);
