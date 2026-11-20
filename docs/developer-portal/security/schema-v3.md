@@ -136,7 +136,7 @@ What this means:
 
 ## Known limits and open items
 
-- **The default was changed on 2026-11-20** by the owner's decision, recorded in [FINDINGS F1](../FINDINGS.md#f1-records-are-signed-with-schema-version-2-by-default-signature-covers-7-fields). Changing it again is a new decision.
+- **The default was changed on 2026-11-20** by the owner's decision, recorded in [FINDINGS F1](../FINDINGS.md#f1-default-record-schema-version-3-since-2026-11-20-was-version-2-signing-7-fields). Changing it again is a new decision.
 - **Third-party readers are unknown, and the owner reports no active consumer.** Only the TypeScript and Python SDKs and `parmana-verifier` 2.0.3 have been checked to read v3. Whether other tools do is not known (F11). Any consumer added later must read v3 before it receives records.
 - **Size and speed were measured** (see [Cost](#cost-size-and-speed)). Re-measure on the deployment's own hardware before sizing storage or latency budgets.
 - **The cutover and the default rest on owner statements.** The owner reports that no `single`-mode record exists and that no consumer is active. The repository cannot confirm either, or that every issuing server is in hybrid mode.

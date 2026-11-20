@@ -14,7 +14,7 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Why.** Memory loses every transaction, record and approval on restart. A production process must not run that way by default.
 - **Owner to confirm.** That no deployment intentionally runs production mode on memory storage. The sandbox refuses production mode (`createSandboxOptions`), so no sandbox path was found that depends on it.
 
-### F1. Records are signed with schema version 2 by default (signature covers 7 fields)
+### F1. Default record schema: version 3 since 2026-11-20 (was version 2, signing 7 fields)
 
 **Resolved (2026-11-20).** Full reference: [Schema version 3](security/schema-v3.md). The owner chose the verifier-pinned cutover (ADR-0016, option 2), and made schema 3 the default: an unset `HYBRID_SCHEMA_VERSION` now means 3, and the acknowledgement gate is removed. No active consumer and no single-mode record exist, per the owner. The cutover instant is `2026-11-20T13:01:38Z` (set by the owner on 2026-11-20). It holds only if every issuing server runs `CRYPTO_MODE=hybrid` with a secondary provider. The owner confirmed on 2026-11-20 that no record was issued in `single` mode, so no record predates the cutover and the pre-cutover limit does not apply.
 
