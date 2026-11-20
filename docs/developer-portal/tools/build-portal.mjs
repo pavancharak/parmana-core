@@ -31,6 +31,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "..", "..", "..");
 const portalDir = resolve(here, "..");
 const outDir = resolve(repo, "docs", "portal");
+// Where the portal is published. Absolute links in the discovery files use this.
+const siteBase = "https://pavancharak.github.io/parmana-core/portal/";
 const repoUrl = "https://github.com/pavancharak/parmana-core";
 const branch = "main";
 const PORTAL_IN_REPO = "docs/developer-portal";
@@ -282,12 +284,24 @@ function renderPage(src, text) {
     .replace(/[`*_>#|]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+  // The first real sentence of prose: skip headings, lists, tables, quotes, code and navigation links.
+  const prose = text
+    .split(/\n\s*\n/)
+    .map((b) => b.trim())
+    .find((b) => b.length > 40 && !/^(#|\[|>|-|\*|\d+\.|\||```|<)/.test(b));
+  const summary = (prose ?? plain)
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/[`*_]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 200);
   return {
     src,
     title,
     headings,
     html,
     excerpt: plain.slice(0, 240),
+    summary,
     outRel: fromOut,
   };
 }
@@ -462,6 +476,70 @@ const index = flatOrder.map((p) => {
 writeFileSync(
   join(outDir, "search-index.js"),
   `/* global window */\nwindow.PORTAL_INDEX = ${JSON.stringify(index)};\n`,
+);
+
+// ---------------------------------------------------------------------------
+// Discovery files for crawlers and AI agents.
+//   docs/portal/sitemap.xml   every page, for search engines
+//   docs/portal/llms.txt      an index of the pages, with a one-line summary each
+//   docs/portal/llms-full.txt the full text of every page, in reading order
+//   docs/robots.txt           allows crawling and points to the sitemap (site root)
+
+const absolute = (outRel) => siteBase + outRel;
+
+writeFileSync(
+  join(outDir, "sitemap.xml"),
+  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+    flatOrder
+      .map(
+        (p) =>
+          `  <url><loc>${escapeHtml(absolute(rendered.get(p.src).outRel))}</loc></url>`,
+      )
+      .join("\n") +
+    `\n</urlset>\n`,
+);
+
+const llmsLines = [
+  "# Parmana developer docs",
+  "",
+  "> Parmana sets clear limits on what AI agents and business systems may do, checks every action against those limits, and records each decision as a verifiable Execution Trust Record. These pages document the API, the SDKs, the policy model and the operations.",
+  "",
+  "The API is described by an OpenAPI document at https://pavancharak.github.io/parmana-core/site/openapi.bundled.yaml. Experimental Policy version 2 operations are marked as such in that document.",
+];
+for (const g of navGroups) {
+  llmsLines.push("", `## ${g.group}`, "");
+  for (const src of g.pages) {
+    const page = rendered.get(src);
+    llmsLines.push(
+      `- [${page.title}](${absolute(page.outRel)}): ${page.summary}`,
+    );
+  }
+}
+writeFileSync(join(outDir, "llms.txt"), llmsLines.join("\n") + "\n");
+
+const fullParts = [
+  "# Parmana developer docs: full text",
+  "",
+  "Every page of the developer portal, in reading order. Source: docs/developer-portal/ in https://github.com/pavancharak/parmana-core.",
+];
+for (const p of flatOrder) {
+  const page = rendered.get(p.src);
+  const text = readFileSync(join(portalDir, p.src), "utf8").trimEnd();
+  fullParts.push(
+    "",
+    "---",
+    "",
+    `Page: ${absolute(page.outRel)}`,
+    `Source: docs/developer-portal/${p.src}`,
+    "",
+    text,
+  );
+}
+writeFileSync(join(outDir, "llms-full.txt"), fullParts.join("\n") + "\n");
+
+writeFileSync(
+  resolve(repo, "docs", "robots.txt"),
+  `User-agent: *\nAllow: /\n\nSitemap: ${siteBase}sitemap.xml\n`,
 );
 
 const sep2 = sep;
