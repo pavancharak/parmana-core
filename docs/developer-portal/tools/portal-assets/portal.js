@@ -1,3 +1,4 @@
+/* global window, document, navigator, setTimeout, IntersectionObserver */
 // Parmana developer docs: search, copy buttons, the mobile navigation and the "On this page" highlight.
 // Everything here is progressive: the pages read fully without it.
 (function () {
@@ -9,12 +10,6 @@
   // ---- search ----
   var input = document.getElementById("search");
   var box = document.getElementById("results");
-
-  function esc(s) {
-    return String(s).replace(/[&<>"]/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
-    });
-  }
 
   function score(entry, terms) {
     var title = entry.t.toLowerCase();
@@ -31,11 +26,18 @@
     return total;
   }
 
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
   function render(q) {
     var terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+    box.textContent = "";
     if (terms.length === 0) {
       box.hidden = true;
-      box.innerHTML = "";
       return;
     }
     var hits = index
@@ -44,18 +46,18 @@
       .sort(function (a, b) { return b.s - a.s; })
       .slice(0, 10);
     if (hits.length === 0) {
-      box.innerHTML = '<div class="none">No pages match “' + esc(q) + "”.</div>";
+      box.appendChild(el("div", "none", "No pages match \u201c" + q + "\u201d."));
     } else {
-      box.innerHTML = hits
-        .map(function (h, i) {
-          return (
-            '<a href="' + root + esc(h.e.p) + '" role="option"' + (i === 0 ? ' class="on"' : "") + ">" +
-            '<div class="r-g">' + esc(h.e.g) + "</div>" +
-            '<div class="r-t">' + esc(h.e.t) + "</div>" +
-            '<div class="r-x">' + esc(h.e.x.slice(0, 120)) + "…</div></a>"
-          );
-        })
-        .join("");
+      hits.forEach(function (h, i) {
+        var a = el("a");
+        a.href = root + h.e.p;
+        a.setAttribute("role", "option");
+        if (i === 0) a.className = "on";
+        a.appendChild(el("div", "r-g", h.e.g));
+        a.appendChild(el("div", "r-t", h.e.t));
+        a.appendChild(el("div", "r-x", h.e.x.slice(0, 120) + "\u2026"));
+        box.appendChild(a);
+      });
     }
     box.hidden = false;
   }

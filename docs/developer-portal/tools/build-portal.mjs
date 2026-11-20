@@ -422,7 +422,7 @@ const index = flatOrder.map((p) => {
     x: page.excerpt,
   };
 });
-writeFileSync(join(outDir, "search-index.js"), `window.PORTAL_INDEX = ${JSON.stringify(index)};\n`);
+writeFileSync(join(outDir, "search-index.js"), `/* global window */\nwindow.PORTAL_INDEX = ${JSON.stringify(index)};\n`);
 
 const sep2 = sep;
 console.log(
