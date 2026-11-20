@@ -67,7 +67,8 @@ describe("the live policies folder is read only for policies in use", () => {
       const dir = path.join(root, scanned);
       if (!statSync(dir, { throwIfNoEntry: false })?.isDirectory()) continue;
       for (const file of files(dir)) {
-        if (ALLOWED_FILES.has(path.relative(root, file))) continue;
+        const relative = path.relative(root, file).split(path.sep).join("/");
+        if (ALLOWED_FILES.has(relative)) continue;
         const text = readFileSync(file, "utf8");
         const lines = text.split("\n");
         lines.forEach((line, index) => {
