@@ -3,6 +3,7 @@ import type { SignatureEntry } from "@parmana/shared";
 import { ArtifactSigner } from "./ArtifactSigner.js";
 import { CanonicalSerializer } from "./CanonicalSerializer.js";
 import type { KeyProvider } from "./KeyProvider.js";
+import type { Signer } from "./Signer.js";
 import type { HybridCryptoProvider } from "./models/HybridCryptoProvider.js";
 import { SignatureVerifier } from "./SignatureVerifier.js";
 
@@ -24,10 +25,16 @@ import { SignatureVerifier } from "./SignatureVerifier.js";
  * than requiring callers to pre-fetch raw KeyObjects.
  */
 export class HybridSignatureProvider {
+  /**
+   * primarySigner, when given, makes the primary signature through a Signer (ADR-0009), so the
+   * primary private key is never read into this process. Used with KEY_PROVIDER=aws-kms. Without
+   * it, the primary private key is read from the KeyProvider, as before.
+   */
   constructor(
     private readonly crypto: HybridCryptoProvider,
     private readonly keys: KeyProvider,
     private readonly serializer = new CanonicalSerializer(),
+    private readonly primarySigner?: Signer,
   ) {}
 
   /**
@@ -39,7 +46,7 @@ export class HybridSignatureProvider {
     primaryKeyId: string,
     secondaryKeyId: string,
   ): Promise<readonly SignatureEntry[]> {
-    const primarySigner = new ArtifactSigner(
+    const primaryArtifactSigner = new ArtifactSigner(
       this.crypto.primary,
       this.serializer,
     );
@@ -48,11 +55,21 @@ export class HybridSignatureProvider {
       this.serializer,
     );
 
-    const primaryPrivateKey = await this.keys.getPrivateKey(primaryKeyId);
     const secondaryPrivateKey = await this.keys.getPrivateKey(secondaryKeyId);
 
+    const primaryPromise =
+      this.primarySigner === undefined
+        ? this.keys
+            .getPrivateKey(primaryKeyId)
+            .then((key) => primaryArtifactSigner.sign(artifact, key))
+        : primaryArtifactSigner.signWithSigner(
+            artifact,
+            primaryKeyId,
+            this.primarySigner,
+          );
+
     const [primarySignature, secondarySignature] = await Promise.all([
-      primarySigner.sign(artifact, primaryPrivateKey),
+      primaryPromise,
       secondarySigner.sign(artifact, secondaryPrivateKey),
     ]);
 

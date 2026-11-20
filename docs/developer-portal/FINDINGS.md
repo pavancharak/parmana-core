@@ -151,6 +151,12 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Decision on the legacy refusal.** Legacy single-mode records stay refused by default. Their signed fields are fixed, so adding a schema version to them would change what the signature covers. Production signs hybrid records as schema 3, which the default verifier accepts. The quickstart records are test-only. This decision follows the existing design; it was not re-run live.
 - **Recommendation.** Decide whether the verifier should check the Policy v2 evidence chain and review outcomes, which needs its own format document and a verifier release. Until then, the verifier documentation should say that it does not read them. Decide also whether single-mode records should carry `schemaVersion`, so that the default verifier accepts them without `allowLegacyV2`.
 
+### F25. Hybrid signing with a KMS primary key: built behind a flag, not verified against real KMS
+
+- **Evidence.** The hybrid provider can take its primary (ed25519) signature from a `Signer` instead of reading the primary private key, and `VerificationCrypto.signHybrid` passes the KMS signer when `KEY_PROVIDER=aws-kms` and `PARMANA_HYBRID_KMS=true`. The signer is the existing KMS signer, which signs the same bytes as the file path. Tests: a fake KMS signer shows that the primary signature goes through the signer and the primary private key is never read, and that the primary signature is byte-identical to the file-key path (ed25519 signatures are deterministic). The crypto and shared suites and the architecture tests pass (1170 tests).
+- **Not verified.** Against a real AWS KMS key. The signer was tested with a fake. The Doctor check still refuses `hybrid` with `aws-kms` unless `PARMANA_HYBRID_KMS=true`, and the flag is off by default.
+- **Decision for the owner.** Whether to lift the refusal after a real KMS run. That needs an AWS sandbox account and a KMS ed25519 key; I have neither here.
+
 ### F20. A partial review state crashed the decision route, and a test left one behind (fixed)
 
 - **Evidence.** The integration test `packages/policy/tests/integration/policy-v2-commit.integration.test.ts` saved `{ items: [] }` as the review state. It truncated the tables before each test but not after the last one, so the row stayed in the shared database. The next server start that read it failed: `ReviewQueue.load` read `snapshot.results` of an undefined value, and each decision answered `500`.

@@ -240,6 +240,14 @@ export interface KeyConfig {
    * Root directory containing all Parmana keys.
    */
   readonly keyDirectory: string;
+
+  /**
+   * PARMANA_HYBRID_KMS=true. With KEY_PROVIDER=aws-kms and CRYPTO_MODE=hybrid, the primary
+   * (ed25519) signature is made by the KMS key, and the primary private key is never read into the
+   * process. Off by default: the hybrid-with-KMS combination is refused at startup until it has
+   * been verified against a real KMS key (F25).
+   */
+  readonly hybridKmsPrimary: boolean;
 }
 /**
  * Secrets backend configuration (ADR-0009). Selects where connector
@@ -441,6 +449,8 @@ export function loadConfig(): Readonly<Config> {
       provider: parseKeyProvider(process.env.KEY_PROVIDER),
 
       keyDirectory: process.env.PARMANA_KEY_DIR!,
+
+      hybridKmsPrimary: process.env.PARMANA_HYBRID_KMS === "true",
     }),
 
     secrets: Object.freeze({
