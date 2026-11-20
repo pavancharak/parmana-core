@@ -116,7 +116,7 @@ const tsTable = [
   "| Method | Signature (from `dist/client/ParmanaClient.d.ts`) | HTTP | Path |",
   "| --- | --- | --- | --- |",
   ...tsRows.map((r) => {
-    const sig = r.signature.replace(/\|/g, "\\|");
+    const sig = r.signature.replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
     const path = r.path
       ? r.path.includes("→")
         ? r.path
@@ -247,7 +247,7 @@ const pyTable = [
   "| Method | Signature (from `python/parmana/client.py`) | HTTP | Path |",
   "| --- | --- | --- | --- |",
   ...pyRows.map((r) => {
-    const sig = r.signature.replace(/\|/g, "\\|");
+    const sig = r.signature.replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
     return `| \`${r.name}\` | \`${sig}\` | ${r.httpMethod ?? "—"} | ${r.path ? `\`${r.path}\`` : "—"} |`;
   }),
 ].join("\n");
@@ -279,6 +279,7 @@ for (const [p, ops] of Object.entries(spec.paths)) {
           ? "none"
           : op.security.map((s) => Object.keys(s)[0]).join(", ");
     const summary = (op.summary ?? "")
+      .replace(/\\/g, "\\\\")
       .replace(/\|/g, "\\|")
       .replace(/\s+/g, " ")
       .trim();

@@ -41,7 +41,7 @@ function walk(dir) {
 // GitHub-style heading slug.
 const slug = (text) =>
   text
-    .replace(/<[^>]+>/g, "")
+    .replace(/[<>]/g, "")
     .replace(/`/g, "")
     .trim()
     .toLowerCase()
