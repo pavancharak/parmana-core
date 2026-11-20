@@ -54,24 +54,25 @@ Do this through the release runbook, not by hand, unless you decide otherwise.
 6. **Publish with the owner account,** then confirm with `npm view <name> version` that the registry shows `4.1.1`.
 7. **Update this page and the SDK index.** Replace "registry version differs" with the published version.
 
-## Decision (2026-11-20): public, released through the process
+## Decision (2026-11-20): public, in two steps
 
-The owner has said both packages are meant to be public. So the permanent answer is:
+The owner decided both packages are public. The owner has agreed to publish in two steps, to limit the version promise:
 
-- **Both stay public.** Their manifests stay as they are, at `4.1.1`, and are not private.
-- **They are released through the release process, not by hand.** The steps are below.
-- **The release is owner-run.** It uses the owner's npm account. This environment has no npm credentials and does not publish.
+1. **`@parmana/envelope-verifier` first.** It verifies that an execution request was authorized, and a third party may need that check alone. Before its first publish, write a short API page for it in this portal.
+2. **`@parmana/execution-system` held.** It is a protocol, with no documented public surface. Publish it only after its API is written down, in a later release.
 
-### The release change, not yet applied
+### Done on the branch (not published)
 
-Adding the two packages changes the next release, so it waits for an explicit go-ahead. What it needs:
+- `.github/release/release-manifest.json`: `@parmana/envelope-verifier` added to the `npm` list.
+- `.github/workflows/release.yml`: both `npm pack` command lists include `--workspace=packages/envelope-verifier`.
+- `docs/internal/runbooks/RELEASE-ALL-PACKAGES.md`: the package table names it, and the counts are ten files.
+- `tests/architecture/release-manifest.test.ts` passes (25 tests).
 
-1. `.github/release/release-manifest.json`: add `@parmana/envelope-verifier` and `@parmana/execution-system` to the `npm` list. The list then has seven entries.
-2. `docs/internal/runbooks/RELEASE-ALL-PACKAGES.md`: add both to the package table, with the `sdk-v<version>` tag, and update the `All 9 registry files match` check to 11.
-3. `tests/architecture/release-manifest.test.ts` and `.github/workflows/release.yml`: check that they read the manifest and do not hard-code nine packages, and update any count that does.
-4. Document the public surface of `@parmana/execution-system` before its first publish, because a public package is a version promise.
+### Still needed before the owner publishes
 
-Until that change is made, the packages stay unpublished. That is the state recorded in FINDINGS F5.
+1. Write the API page for `@parmana/envelope-verifier` in this portal.
+2. Release through the runbook, from the owner's npm account, at `4.1.1`. The runbook's other steps (the version bump PR, provenance, registry checks) apply.
+3. Leave `@parmana/execution-system` out of the release until its API is documented.
 
 ## Recommendation
 
