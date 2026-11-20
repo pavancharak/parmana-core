@@ -164,7 +164,7 @@ The maker-checker flow, with the step-up signature, is in the [maker-checker tut
 
 ### Policy v2 (experimental, opt-in)
 
-`decidePolicyV2`, `policyV2Review`, `decidePolicyV2Review` and `policyV2Replay` call `/v2/...` routes. These routes are not in the OpenAPI document. The server mounts them only when `PARMANA_POLICY_V2_DECISIONS` and its related settings are set (see [Environment variables](../reference/environment-variables.md)). Without them the routes return `404`. Status: **Experimental**.
+`decidePolicyV2`, `policyV2Review`, `decidePolicyV2Review` and `policyV2Replay` call `/v2/...` routes. These routes are in the OpenAPI document, marked `x-stability: experimental`. The server mounts them only when `PARMANA_POLICY_V2_DECISIONS` and its related settings are set (see [Environment variables](../reference/environment-variables.md)). Without them the routes return `404`. Status: **Experimental**.
 
 ## Governance changes: every method
 

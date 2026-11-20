@@ -81,6 +81,9 @@ tags:
   - name: External Connectors
     description: Maker-checker for binding a capability to an operator's HTTPS endpoint and its policy, without a deploy (ADR-0013)
 
+  - name: Policy v2 (experimental)
+    description: "EXPERIMENTAL. Policy version 2 decisions, reviews, the register, console and notification endpoints. Mounted only when the deployment enables policy version 2. Shapes may change in a minor release until promoted."
+
   - name: Business Signal Sources
     description: Maker-checker for the business systems Parmana asks for the facts a policy needs, without a deploy (RFC-0023)
 
@@ -7624,8 +7627,1202 @@ paths:
         "429":
           $ref: "#/components/responses/RateLimited"
 
+  # ---------------------------------------------------------------------------
+  # Policy version 2 (EXPERIMENTAL). Mounted only when the server is configured
+  # for policy version 2 (PARMANA_POLICY_V2_* settings; see the server's
+  # createPolicyV2Runtime). A deployment without it answers these paths with
+  # ROUTE_NOT_FOUND (404). Each operation is marked x-stability: experimental:
+  # its shape may change in a minor release until the owner promotes it.
+  # ---------------------------------------------------------------------------
+  /v2/decisions:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Record a policy version 2 decision
+      operationId: policyV2Decide
+      description: >-
+        Evaluates the approved policy version 2 for the capability and records the decision as
+        evidence. The decision never releases anything by itself (`released` is always `false`).
+        A `REVIEW` outcome carries a `reviewId`; read it with `GET /v2/reviews/{id}`. Signals are
+        caller values, untrusted unless a registered source signed them.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyV2DecisionRequest"
+      responses:
+        "200":
+          description: The recorded decision.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyV2Decision"
+              example: {"outcome": "APPROVE", "reason": "The policy approves this request.", "tier": "tier-1", "recordId": "record-123", "released": false}
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "404":
+          $ref: "#/components/responses/PolicyV2NotEnabled"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/reviews/{id}:
+    get:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Read a policy version 2 review as its requester sees it
+      operationId: policyV2GetReview
+      description: >-
+        Returns the status of a review item. Only the requester of the decision may read it; any other
+        caller gets `404`.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The review item id, from the `reviewId` of a `REVIEW` decision.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The review, as its requester sees it.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyV2ReviewView"
+              example: {"status": "pending", "reasonCode": "UNDER_REVIEW"}
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "404":
+          $ref: "#/components/responses/PolicyV2NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/reviews/{id}/decision:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Record a reviewer's decision on a review item
+      operationId: policyV2DecideReview
+      description: >-
+        The reviewer must hold an active reviewer grant for the action. The result is final once the
+        review's decisions are complete (`final: true`, with `outcome`).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The review item id.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyV2ReviewDecisionRequest"
+      responses:
+        "200":
+          description: The result of the reviewer's decision.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyV2ReviewDecision"
+              example: {"itemId": "review-123", "status": "approved", "final": true, "outcome": "APPROVED", "decisionsRecorded": 1}
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/evidence/{recordId}/replay:
+    get:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Replay a recorded policy version 2 decision from its evidence
+      operationId: policyV2Replay
+      description: >-
+        Re-runs the recorded decision and reports whether it reproduces. The caller must hold a register
+        role. The replay changes nothing.
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          description: The evidence record id returned as `recordId` by `POST /v2/decisions`.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The replay result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyV2ReplayResult"
+              example: {"reproduced": true, "differences": [], "replayed": {"outcome": "APPROVE"}}
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "404":
+          $ref: "#/components/responses/PolicyV2NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/console/{screen}:
+    get:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Read a read-only Policy v2 console screen
+      operationId: policyV2Console
+      description: >-
+        Returns one console screen as HTML. The screens are read-only. The caller's role decides which
+        screens it may see; a role without the screen gets `403`.
+      parameters:
+        - name: screen
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [home, register, changes, reviews, approvals, gate, decisions, audit]
+        - name: capability
+          in: query
+          required: false
+          description: The capability to show, for screens that are per capability.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The screen, as HTML.
+          content:
+            text/html:
+              schema:
+                type: string
+              example: "<h1>Policy v2 console: home</h1>"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "404":
+          $ref: "#/components/responses/PolicyV2NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/notifications/ses:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Receive an SES delivery notification (bounces and complaints)
+      operationId: policyV2SesNotification
+      description: >-
+        Receives the delivery notification that Amazon SES posts for an approval email. The notification must
+        verify (its signature and topic) or the request is refused with `403 not_verified`. Not called by
+        clients; it is the notification endpoint for the email channel.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: The SES notification, as posted by Amazon SES. Its signature is checked by the server.
+      responses:
+        "200":
+          description: The notification was handled.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              example: {"handled": true}
+        "403":
+          description: The notification did not verify.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyV2Error"
+              example: {"error": "not_verified"}
+      security: []
+
+  /v2/notifications/events:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Receive delivery events for approval notifications
+      operationId: policyV2NotificationEvents
+      description: >-
+        Receives delivery events for policy version 2 notifications. The events are verified with the events
+        secret, or refused with `403 not_verified`. Not called by clients.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+      responses:
+        "200":
+          description: The number of events recorded.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [recorded]
+                properties:
+                  recorded:
+                    type: integer
+                    minimum: 0
+              example: {"recorded": 1}
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "403":
+          description: The events did not verify.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyV2Error"
+              example: {"error": "not_verified"}
+      security: []
+
+  /v2/register:
+    get:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Read the Policy v2 register
+      operationId: policyV2RegisterRead
+      description: >-
+        Returns the register's contents as plain data: sources, thresholds, actions, roles, approver keys,
+        policy versions and reviewer grants.
+      responses:
+        "200":
+          description: The register.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              example: {"sources": [], "thresholds": [], "actions": [], "roles": []}
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/audit:
+    get:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Read the register's audit log, page by page
+      operationId: policyV2RegisterAudit
+      parameters:
+        - name: after
+          in: query
+          required: false
+          description: The sequence number to read after. Defaults to 0.
+          schema:
+            type: integer
+            minimum: 0
+        - name: limit
+          in: query
+          required: false
+          description: The page size.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: A page of audit events. `next` is the sequence to pass as `after` for the next page, or null at the end.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [events, next]
+                properties:
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  next:
+                    type: [integer, "null"]
+              example: {"events": [], "next": null}
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/roles/grant:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Grant a register role to a caller
+      operationId: policyV2GrantRole
+      requestBody:
+        $ref: "#/components/requestBodies/PolicyV2RoleGrant"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/roles/revoke:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Revoke a register role from a caller
+      operationId: policyV2RevokeRole
+      requestBody:
+        $ref: "#/components/requestBodies/PolicyV2RoleGrant"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/sources:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Propose a business-signal source
+      operationId: policyV2ProposeSource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyV2SourceInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/sources/{name}/approve:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Approve a proposed source
+      operationId: policyV2ApproveSource
+      parameters:
+        - $ref: "#/components/parameters/PolicyV2Name"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/sources/{name}/revoke:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Revoke a source
+      operationId: policyV2RevokeSource
+      parameters:
+        - $ref: "#/components/parameters/PolicyV2Name"
+      requestBody:
+        $ref: "#/components/requestBodies/PolicyV2Reason"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/thresholds:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Propose a threshold for an action
+      operationId: policyV2ProposeThreshold
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyV2ThresholdInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/thresholds/{action}/{name}/approve:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Approve a proposed threshold
+      operationId: policyV2ApproveThreshold
+      parameters:
+        - name: action
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/PolicyV2Name"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/actions:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Register an action (a capability with its owner and reviewers)
+      operationId: policyV2RegisterAction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyV2ActionInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/actions/{capability}/reviewers:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Grant a reviewer on an action
+      operationId: policyV2AddReviewer
+      parameters:
+        - $ref: "#/components/parameters/PolicyV2Capability"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyV2ReviewerGrant"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/actions/{capability}/reviewers/{reviewerId}/revoke:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Revoke a reviewer's grant on an action
+      operationId: policyV2RevokeReviewer
+      parameters:
+        - $ref: "#/components/parameters/PolicyV2Capability"
+        - name: reviewerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/PolicyV2Reason"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/actions/{capability}/tests:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Record that an action passed a test tier
+      operationId: policyV2RecordTest
+      parameters:
+        - $ref: "#/components/parameters/PolicyV2Capability"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tier]
+              properties:
+                tier:
+                  type: string
+                  minLength: 1
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/actions/{capability}/go-live:
+    get:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: List what is still missing before an action can go live
+      operationId: policyV2GoLiveGate
+      parameters:
+        - $ref: "#/components/parameters/PolicyV2Capability"
+      responses:
+        "200":
+          description: The missing requirements. An empty list means the gate is met.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [missing]
+                properties:
+                  missing:
+                    type: array
+                    items:
+                      type: string
+              example: {"missing": ["an approved threshold"]}
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Take an action live, if its gate is met
+      operationId: policyV2GoLive
+      description: Refused with `422 refused` and the `missing` list while any requirement is unmet.
+      parameters:
+        - $ref: "#/components/parameters/PolicyV2Capability"
+      responses:
+        "200":
+          description: The action is live.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [live]
+                properties:
+                  live:
+                    type: boolean
+                    enum: [true]
+              example: {"live": true}
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/contacts:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Set how to reach a person about an alert
+      operationId: policyV2SetContact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [personId]
+              properties:
+                personId:
+                  type: string
+                  minLength: 1
+                email:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/policies:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Propose a new version of a policy
+      operationId: policyV2ProposePolicy
+      description: >-
+        Proposes a policy version. Only the action owner may propose it. A proposed version cannot change;
+        a change is a new version. Approving a version supersedes the one approved before it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: The policy document, in the policy version 2 format. Its checks are the validator's (see PolicyV2ValidationError).
+              additionalProperties: true
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/policies/{capability}/{policyVersion}/approve:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Approve a proposed policy version
+      operationId: policyV2ApprovePolicy
+      parameters:
+        - $ref: "#/components/parameters/PolicyV2Capability"
+        - name: policyVersion
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/approver-keys:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Propose an approver's public key
+      operationId: policyV2ProposeApproverKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyV2ApproverKeyInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/approver-keys/{approverId}/{keyId}/approve:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Approve a proposed approver key
+      operationId: policyV2ApproveApproverKey
+      parameters:
+        - name: approverId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
+  /v2/register/approver-keys/{approverId}/{keyId}/revoke:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Revoke an approver key
+      operationId: policyV2RevokeApproverKey
+      parameters:
+        - name: approverId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/PolicyV2Reason"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+
 components:
   schemas:
+    # ----- Policy version 2 (EXPERIMENTAL). Shapes from typescript/src/models/policy-v2.ts
+    # and packages/policy/src/v2/register.ts; the server validates them in
+    # packages/api/src/routes/policy-v2-*.ts.
+    PolicyV2DecisionRequest:
+      type: object
+      required: [capability, transactionId, target]
+      properties:
+        capability:
+          type: string
+          pattern: "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$"
+          description: The capability, as namespace:verb, for example erp:pay-invoice.
+          example: erp:pay-invoice
+        transactionId:
+          type: string
+          minLength: 1
+          description: The caller's id for this decision. Must not be blank.
+        target:
+          type: string
+          description: The target of the action.
+        parameters:
+          type: object
+          additionalProperties: true
+          description: The action's parameters. Defaults to {}.
+        signals:
+          type: object
+          additionalProperties: true
+          description: Caller values, untrusted unless a registered source signed them. Defaults to {}.
+        approvals:
+          type: object
+          additionalProperties: true
+          description: Approval artifacts, checked by the server.
+    PolicyV2Refusal:
+      type: object
+      required: [code, detail]
+      properties:
+        code:
+          type: string
+          enum: [NO_APPROVED_POLICY, POLICY_INVALID, SOURCE_UNAVAILABLE, SOURCE_NOT_VERIFIED, STALE, INVALID, MISSING_VALUE, THRESHOLD_NOT_APPROVED]
+        detail:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            required: [check, path, message]
+            properties:
+              check:
+                type: integer
+                description: The check number in the policy version 2 specification. 0 means structure.
+              path:
+                type: string
+              message:
+                type: string
+    PolicyV2Decision:
+      type: object
+      required: [outcome, reason, recordId, released]
+      properties:
+        outcome:
+          type: string
+          enum: [APPROVE, REJECT, REVIEW]
+        reason:
+          type: string
+        tier:
+          type: string
+        refusal:
+          $ref: "#/components/schemas/PolicyV2Refusal"
+        recordId:
+          type: string
+          description: The evidence record. Replay it with GET /v2/evidence/{recordId}/replay.
+        released:
+          type: boolean
+          enum: [false]
+          description: Always false. A policy version 2 decision never releases an action by itself.
+        reviewId:
+          type: string
+          description: Present for a REVIEW outcome. Read it with GET /v2/reviews/{id}.
+    PolicyV2ReviewView:
+      type: object
+      required: [status, reasonCode]
+      properties:
+        status:
+          type: string
+          enum: [pending, approved, refused, expired]
+        reasonCode:
+          type: string
+          enum: [UNDER_REVIEW, REVIEW_APPROVED, REVIEW_REFUSED, REVIEW_EXPIRED]
+    PolicyV2ReviewDecisionRequest:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          type: string
+          enum: [approve, reject]
+    PolicyV2ReviewDecision:
+      type: object
+      required: [itemId, status, final, decisionsRecorded]
+      properties:
+        itemId:
+          type: string
+        status:
+          type: string
+        final:
+          type: boolean
+          description: True once the review is finished. outcome is set then.
+        outcome:
+          type: string
+          enum: [APPROVED, REFUSED]
+        decisionsRecorded:
+          type: integer
+          minimum: 0
+    PolicyV2ReplayResult:
+      type: object
+      required: [reproduced, differences]
+      properties:
+        reproduced:
+          type: boolean
+          description: True when the replay gives the same outcome and inputs.
+        differences:
+          type: array
+          items:
+            type: string
+        replayed:
+          type: object
+          additionalProperties: true
+          description: The decision the replay produced, in the evidence record's fields.
+    PolicyV2Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: A stable machine code, for example forbidden, refused, invalid_request, conflict, not_found, not_enabled, not_verified, or unauthenticated.
+        message:
+          type: string
+    PolicyV2SourceInput:
+      type: object
+      required: [name, dataOwner, signer, keyId, publicKeyPem, claims, canApprove]
+      properties:
+        name:
+          type: string
+        dataOwner:
+          type: string
+        signer:
+          type: object
+          required: [kind]
+          properties:
+            kind:
+              type: string
+              enum: [system, intermediary]
+            operator:
+              type: string
+            reviewDate:
+              type: string
+        keyId:
+          type: string
+        publicKeyPem:
+          type: string
+          description: The Ed25519 public key (PEM) the source signs its answers with.
+        claims:
+          type: object
+          additionalProperties:
+            type: string
+          description: Claim name to the unit the source states for it.
+        canApprove:
+          type: boolean
+          description: True if any policy uses this source to approve.
+    PolicyV2ThresholdInput:
+      type: object
+      required: [action, name, value, unit, owner, reason, evidence, nextReview, highValue]
+      properties:
+        action:
+          type: string
+        name:
+          type: string
+        value:
+          type: number
+        unit:
+          type: string
+        owner:
+          type: string
+        reason:
+          type: string
+        evidence:
+          type: string
+        nextReview:
+          type: string
+        highValue:
+          type: boolean
+    PolicyV2ActionInput:
+      type: object
+      required: [capability, owner, successor, reviewers, review]
+      properties:
+        capability:
+          type: string
+        owner:
+          type: string
+        successor:
+          type: string
+        reviewers:
+          type: array
+          items:
+            type: string
+        review:
+          type: object
+          required: [reviewWindowBusinessDays, approvalValidityMinutes]
+          properties:
+            reviewWindowBusinessDays:
+              type: number
+            approvalValidityMinutes:
+              type: number
+    PolicyV2ReviewerGrant:
+      type: object
+      required: [reviewerId]
+      properties:
+        reviewerId:
+          type: string
+          minLength: 1
+        maxAmount:
+          type: number
+          description: The largest amount this reviewer may decide. Absent means no amount limit.
+    PolicyV2ApproverKeyInput:
+      type: object
+      required: [approverId, keyId, publicKeyPem]
+      properties:
+        approverId:
+          type: string
+        keyId:
+          type: string
+        publicKeyPem:
+          type: string
+          description: The approver's Ed25519 public key (PEM). Approvals signed with it count only while the key is active.
     TransactionStatusEvent:
       type: object
       description: One append-only status event of a Business Transaction (decision D23).
@@ -7680,6 +8877,46 @@ components:
     Error:
       $ref: "../schemas/common/error.schema.json"
 
+  requestBodies:
+    PolicyV2RoleGrant:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [callerId, role]
+            properties:
+              callerId:
+                type: string
+              role:
+                type: string
+                enum: [second-approver, risk-function, parmana-owner, source-owner, action-owner, gate-owner, reviewer, operator]
+    PolicyV2Reason:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [reason]
+            properties:
+              reason:
+                type: string
+                minLength: 1
+  parameters:
+    PolicyV2Name:
+      name: name
+      in: path
+      required: true
+      schema:
+        type: string
+    PolicyV2Capability:
+      name: capability
+      in: path
+      required: true
+      description: The capability, as namespace:verb.
+      schema:
+        type: string
+        pattern: "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$"
   securitySchemes:
     operatorBearer:
       type: apiKey
@@ -7701,6 +8938,70 @@ components:
         top-level description. See /api-reference/authentication.
 
   responses:
+    PolicyV2Unauthenticated:
+      description: "No key, or an unknown key (EXPERIMENTAL Policy v2 route)."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PolicyV2Error"
+          example: {"error": "unauthenticated"}
+    PolicyV2InvalidRequest:
+      description: "The body or a parameter is not valid. The message names the field (EXPERIMENTAL Policy v2 route)."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PolicyV2Error"
+          example: {"error": "invalid_request", "message": "capability must look like namespace:verb."}
+    PolicyV2Forbidden:
+      description: "The caller's role does not allow this change or screen (EXPERIMENTAL Policy v2 route)."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PolicyV2Error"
+          example: {"error": "forbidden", "message": "The caller does not hold a role that allows this change."}
+    PolicyV2NotFound:
+      description: "No such item for this caller (EXPERIMENTAL Policy v2 route)."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PolicyV2Error"
+          example: {"error": "not_found"}
+    PolicyV2NotEnabled:
+      description: "This capability is not enabled on this deployment (EXPERIMENTAL Policy v2 route)."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PolicyV2Error"
+          example: {"error": "not_enabled"}
+    PolicyV2Conflict:
+      description: "The state changed while it was being saved. Read it again and retry (EXPERIMENTAL Policy v2 route)."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PolicyV2Error"
+          example: {"error": "conflict", "message": "The register changed while it was being saved. Read it again and retry."}
+    PolicyV2Refused:
+      description: "The change is refused by a rule of the register or the review. The message says why. A go-live refusal also lists `missing` (EXPERIMENTAL Policy v2 route)."
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/PolicyV2Error"
+              - type: object
+                properties:
+                  missing:
+                    type: array
+                    items:
+                      type: string
+          example: {"error": "refused", "message": "The action has no approved threshold.", "missing": ["an approved threshold"]}
+    PolicyV2RegisterChange:
+      description: "The register record the change produced (for example a source, threshold, action, policy version, approver key or role grant). The shape depends on the change (EXPERIMENTAL Policy v2 route)."
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
+          example: {"name": "erp-ledger", "status": "proposed", "proposedBy": "caller-ops-1", "approvals": []}
     Unauthorized:
       description: "The `Authorization` header is missing, is not a bearer key, or names a key the server does not know. Nothing ran. Send a valid key."
       content:

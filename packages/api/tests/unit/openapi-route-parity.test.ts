@@ -62,6 +62,17 @@ const app = createApp(createApplication(await createExecutionSystem()), {
     keyId: "parity-sandbox-approver-key",
     privateKey: generateKeyPairSync("ed25519").privateKey,
   },
+  // Policy version 2 (EXPERIMENTAL) routes are mounted only when a service is
+  // supplied. The routers register their handlers at mount time and call the
+  // service only when a request arrives, so inert placeholders are enough for
+  // this check, which compares paths and methods and never sends a request.
+  policyV2Decisions: {} as never,
+  policyV2Register: {} as never,
+  policyV2Reviews: {} as never,
+  policyV2Replay: {} as never,
+  policyV2Console: {} as never,
+  policyV2Bounces: {} as never,
+  policyV2Events: {} as never,
 });
 
 const __filename = fileURLToPath(import.meta.url);

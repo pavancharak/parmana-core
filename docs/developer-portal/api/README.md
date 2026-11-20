@@ -110,13 +110,48 @@ List routes take `page` (from 1) and `pageSize`. `GET /transactions` defaults to
 
 ## Experimental and opt-in routes
 
-| Route family                                                         | Status               | Notes                                                                                                                                                                           |
-| -------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/execution-intents/*`                                               | Experimental         | Enabled by the deployment's execution-intent settings. `executionIntentsConfigured: false` in the dev server.                                                                   |
-| `/kill-switch/*`                                                     | Experimental, opt-in | Mounted only when `KILL_SWITCH_ENABLED=true`. Not mounted in the verified configuration: it returns a JSON `404` with `ROUTE_NOT_FOUND`.                                        |
-| `/v2/*` (policy v2: decisions, register, reviews, evidence, console) | Experimental, opt-in | Not in the OpenAPI document. Mounted only when `PARMANA_POLICY_V2_DECISIONS` and related settings are set.                                                                      |
-| `/v1/inbound/*`                                                      | Experimental, opt-in | Inbound refund decision and outcome routes (RFC-0025). Mounted only when `INBOUND_AUDIENCE` is set, and the server fails closed if the gateway's private key is not configured. |
-| `/sandbox/approvals`                                                 | Demo, sandbox only   | Returns an approval signed by the sandbox's demo approver, and only for `sandbox:receipt`. The OpenAPI document says that in a production deployment this route does not exist. |
+| Route family                                                                        | Status               | Notes                                                                                                                                                                                                                                                                   |
+| ----------------------------------------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/execution-intents/*`                                                              | Experimental         | Enabled by the deployment's execution-intent settings. `executionIntentsConfigured: false` in the dev server.                                                                                                                                                           |
+| `/kill-switch/*`                                                                    | Experimental, opt-in | Mounted only when `KILL_SWITCH_ENABLED=true`. Not mounted in the verified configuration: it returns a JSON `404` with `ROUTE_NOT_FOUND`.                                                                                                                                |
+| `/v2/*` (policy v2: decisions, register, reviews, evidence, console, notifications) | Experimental, opt-in | Documented in the OpenAPI document, marked `x-stability: experimental` (tag "Policy v2 (experimental)", listed below). Mounted only when `PARMANA_POLICY_V2_DECISIONS` and related settings are set. Without them each path returns `404` with `code: ROUTE_NOT_FOUND`. |
+| `/v1/inbound/*`                                                                     | Experimental, opt-in | Inbound refund decision and outcome routes (RFC-0025). Mounted only when `INBOUND_AUDIENCE` is set, and the server fails closed if the gateway's private key is not configured.                                                                                         |
+| `/sandbox/approvals`                                                                | Demo, sandbox only   | Returns an approval signed by the sandbox's demo approver, and only for `sandbox:receipt`. The OpenAPI document says that in a production deployment this route does not exist.                                                                                         |
+
+### Policy version 2 operations (experimental)
+
+These 28 operations are in the OpenAPI document. Their shapes come from the server's routers and the SDK's policy version 2 models. The TypeScript SDK calls four of them (`decidePolicyV2`, `policyV2Review`, `decidePolicyV2Review` and `policyV2Replay`). The two notification endpoints are called by Amazon SES and the email channel, not by clients. Each is marked `x-stability: experimental`, and its shape may change in a minor release until the owner promotes it.
+
+| Operation ID                 | Method | Path                                                              |
+| ---------------------------- | ------ | ----------------------------------------------------------------- |
+| `policyV2Console`            | GET    | `/v2/console/{screen}`                                            |
+| `policyV2Decide`             | POST   | `/v2/decisions`                                                   |
+| `policyV2Replay`             | GET    | `/v2/evidence/{recordId}/replay`                                  |
+| `policyV2NotificationEvents` | POST   | `/v2/notifications/events`                                        |
+| `policyV2SesNotification`    | POST   | `/v2/notifications/ses`                                           |
+| `policyV2GoLiveGate`         | GET    | `/v2/register/actions/{capability}/go-live`                       |
+| `policyV2GoLive`             | POST   | `/v2/register/actions/{capability}/go-live`                       |
+| `policyV2RevokeReviewer`     | POST   | `/v2/register/actions/{capability}/reviewers/{reviewerId}/revoke` |
+| `policyV2AddReviewer`        | POST   | `/v2/register/actions/{capability}/reviewers`                     |
+| `policyV2RecordTest`         | POST   | `/v2/register/actions/{capability}/tests`                         |
+| `policyV2RegisterAction`     | POST   | `/v2/register/actions`                                            |
+| `policyV2ApproveApproverKey` | POST   | `/v2/register/approver-keys/{approverId}/{keyId}/approve`         |
+| `policyV2RevokeApproverKey`  | POST   | `/v2/register/approver-keys/{approverId}/{keyId}/revoke`          |
+| `policyV2ProposeApproverKey` | POST   | `/v2/register/approver-keys`                                      |
+| `policyV2RegisterAudit`      | GET    | `/v2/register/audit`                                              |
+| `policyV2SetContact`         | POST   | `/v2/register/contacts`                                           |
+| `policyV2ApprovePolicy`      | POST   | `/v2/register/policies/{capability}/{policyVersion}/approve`      |
+| `policyV2ProposePolicy`      | POST   | `/v2/register/policies`                                           |
+| `policyV2GrantRole`          | POST   | `/v2/register/roles/grant`                                        |
+| `policyV2RevokeRole`         | POST   | `/v2/register/roles/revoke`                                       |
+| `policyV2ApproveSource`      | POST   | `/v2/register/sources/{name}/approve`                             |
+| `policyV2RevokeSource`       | POST   | `/v2/register/sources/{name}/revoke`                              |
+| `policyV2ProposeSource`      | POST   | `/v2/register/sources`                                            |
+| `policyV2ApproveThreshold`   | POST   | `/v2/register/thresholds/{action}/{name}/approve`                 |
+| `policyV2ProposeThreshold`   | POST   | `/v2/register/thresholds`                                         |
+| `policyV2RegisterRead`       | GET    | `/v2/register`                                                    |
+| `policyV2DecideReview`       | POST   | `/v2/reviews/{id}/decision`                                       |
+| `policyV2GetReview`          | GET    | `/v2/reviews/{id}`                                                |
 
 ## The endpoint index
 

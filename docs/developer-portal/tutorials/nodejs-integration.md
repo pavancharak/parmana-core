@@ -164,7 +164,7 @@ export async function authorizeAndRun(
 }
 ```
 
-Verified outcomes on this build: `200` for an approved request, `403` (`ExecutionRejectedError`) for the three limit cases, `409` (`ConflictError`) for a repeated id. The `202`, `500` and `502` branches were described from the OpenAPI document and the SDK source; they were not triggered in this verification.
+Verified outcomes on this build: `200` for an approved request, `403` (`ExecutionRejectedError`) for the three limit cases, `409` (`ConflictError`) for a repeated id. The `502` (`EXECUTION_OUTCOME_UNKNOWN`) and `500` (`EXECUTION_RECORD_INCOMPLETE`) branches, and the `202` (`EXECUTION_STATUS_PENDING`) branch, are each checked by an automated test in the server's suite (see [Error codes](../reference/error-codes.md)). This tutorial did not trigger them.
 
 ## Step 5: verify the evidence
 

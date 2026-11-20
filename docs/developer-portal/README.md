@@ -10,12 +10,12 @@ This portal documents the SDKs, the REST API, the policy and governance model, d
 
 Each feature carries one of these labels:
 
-| Label            | Meaning                                                                                                         |
-| ---------------- | --------------------------------------------------------------------------------------------------------------- |
-| **Implemented**  | In the code, and exercised by a test, example or live run recorded in [COVERAGE.md](COVERAGE.md).               |
-| **Experimental** | In the code and reachable, but opt-in, not in the OpenAPI document, or not yet covered by a production runbook. |
-| **Test only**    | Works only with `NODE_ENV=test` or a test fixture. Never use it in a deployment.                                |
-| **Planned**      | Named in the design documents, not in the code. Not documented as usable.                                       |
+| Label            | Meaning                                                                                                                                                                    |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Implemented**  | In the code, and exercised by a test, example or live run recorded in [COVERAGE.md](COVERAGE.md).                                                                          |
+| **Experimental** | In the code and reachable, but opt-in, or not yet covered by a production runbook. Experimental operations are marked `x-stability: experimental` in the OpenAPI document. |
+| **Test only**    | Works only with `NODE_ENV=test` or a test fixture. Never use it in a deployment.                                                                                           |
+| **Planned**      | Named in the design documents, not in the code. Not documented as usable.                                                                                                  |
 
 ## Versions covered
 

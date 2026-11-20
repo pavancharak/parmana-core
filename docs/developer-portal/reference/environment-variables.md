@@ -7,7 +7,7 @@ Parmana is configured through environment variables. The server reads them at st
 **How to read this table.**
 
 - **Default** is the value used when the variable is unset, as the code defines it.
-- **Status**: _Implemented_ (in the code and exercised here), _Implemented, not exercised here_, _Experimental_ (opt-in, not in the OpenAPI document), or _Test only_.
+- **Status**: _Implemented_ (in the code and exercised here), _Implemented, not exercised here_, _Experimental_ (opt-in; marked experimental in the OpenAPI document), or _Test only_.
 - Where the repository's [example file](../../../.env.example) and the code disagree, this table follows the code, and says so.
 
 ## Server: essentials

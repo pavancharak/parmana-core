@@ -162,7 +162,7 @@ When a request is refused before the rules run, the response is an HTTP error, n
 
 ## Experimental: policy v2
 
-A separate, experimental policy v2 surface exists, with decisions, registration, reviews and evidence replay under `/v2/…`. It is off unless `PARMANA_POLICY_V2_DECISIONS` and related settings are set, and it is not in the OpenAPI document. Do not build on it without a test against your deployment. See [API overview](../api/README.md#experimental-and-opt-in-routes).
+A separate, experimental policy v2 surface exists, with decisions, registration, reviews and evidence replay under `/v2/…`. It is off unless `PARMANA_POLICY_V2_DECISIONS` and related settings are set, and it is in the OpenAPI document, marked experimental (`x-stability: experimental`). Do not build on it without a test against your deployment. See [API overview](../api/README.md#experimental-and-opt-in-routes).
 
 ## Checklist for a new policy version
 

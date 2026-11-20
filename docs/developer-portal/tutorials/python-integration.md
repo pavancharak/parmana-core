@@ -118,7 +118,7 @@ def authorize_and_run(transaction):
         return {"status": "unknown", "current": status.current.status, "error": str(error)}
 ```
 
-Verified outcomes on this build: approved (`200`), refused for the limit cases (`ExecutionRejectedError`), and a repeated id (`ConflictError`). The `ExecutionPendingError` (`202`) path is described in the [Python SDK errors](../sdk/python.md#errors); it was not triggered in this verification.
+Verified outcomes on this build: approved (`200`), refused for the limit cases (`ExecutionRejectedError`), and a repeated id (`ConflictError`). The `ExecutionPendingError` (`202`) path is described in the [Python SDK errors](../sdk/python.md#errors); it is checked by an automated test in the server's suite (see [Error codes](../reference/error-codes.md)); this tutorial did not trigger it.
 
 Check `status.current.status` against the enumeration by value. `TransactionStatusResult` reports statuses as plain strings in this build.
 
