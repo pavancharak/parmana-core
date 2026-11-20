@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Getting started · Parmana developer docs</title>
+<meta name="description" content="Getting started Portal home · Overview · Tutorials This guide takes you from nothing to a verified execution on your own machine. Every command below was run in the verification for this portal. The steps are in order, and each one ends wit">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="index.html">Parmana developer portal</a></li><li><a href="overview.html">Overview</a></li><li><a href="getting-started.html" aria-current="page">Getting started</a></li><li><a href="faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="architecture.html">Architecture</a></li><li><a href="glossary.html">Glossary</a></li><li><a href="policies/index.html">Policy management</a></li><li><a href="security/index.html">Security and cryptographic verification</a></li><li><a href="security/evidence-verification.html">Evidence verification</a></li><li><a href="security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="tutorials/index.html">Tutorials</a></li><li><a href="tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="api/index.html">REST API reference</a></li><li><a href="api/endpoints.html">Core endpoints</a></li><li><a href="api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="sdk/index.html">SDKs and packages</a></li><li><a href="sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="sdk/python.html">Python SDK: parmana</a></li><li><a href="sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="sdk/python-method-index.html">Python SDK method index</a></li><li><a href="packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="deployment/index.html">Deployment and operations</a></li><li><a href="reference/index.html">Developer reference</a></li><li><a href="reference/environment-variables.html">Environment variable reference</a></li><li><a href="reference/error-codes.html">Error code catalogue</a></li><li><a href="reference/error-code-index.html">Error code index</a></li><li><a href="troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="CHANGELOG.html">Changelog</a></li><li><a href="COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Get started</span><span class="sep">/</span><span>Getting started</span></div>
+    <article>
+<h1 id="getting-started">Getting started<a class="anchor" href="#getting-started" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">Portal home</a> · <a href="overview.html">Overview</a> · <a href="tutorials/index.html">Tutorials</a></p>
+<p>This guide takes you from nothing to a verified execution on your own machine. Every command below was run in the verification for this portal. The steps are in order, and each one ends with something you can check.</p>
+<p>You will:</p>
+<ol>
+<li>install an SDK,</li>
+<li>start a local Parmana server with test configuration,</li>
+<li>connect and confirm the caller,</li>
+<li>make a maker-checker approval of a policy version,</li>
+<li>submit a Business Transaction, declare it, and execute it,</li>
+<li>verify the resulting evidence, by the server and offline.</li>
+</ol>
+<blockquote>
+<p><strong>Local only.</strong> The steps use test configuration (<code>NODE_ENV=test</code>, in-memory storage, a test approver key, a test connector). They prove the flow works. They are not a production setup. See <a href="deployment/index.html">Deployment</a> for production.</p>
+</blockquote>
+<h2 id="1-prerequisites">1. Prerequisites<a class="anchor" href="#1-prerequisites" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Need</th>
+<th>Version</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Node.js</td>
+<td>24.x (the repository&#39;s <code>.nvmrc</code> pins a 24.x release; <code>engines</code> requires 24)</td>
+<td><code>node --version</code></td>
+</tr>
+<tr>
+<td>npm</td>
+<td>10 or later (ships with Node 24)</td>
+<td><code>npm --version</code></td>
+</tr>
+<tr>
+<td>Python, for the Python SDK</td>
+<td>3.10 or later</td>
+<td><code>python3 --version</code></td>
+</tr>
+<tr>
+<td>Git</td>
+<td>any recent version</td>
+<td><code>git --version</code></td>
+</tr>
+<tr>
+<td>Docker with Compose, for the container path</td>
+<td>optional</td>
+<td><code>docker compose version</code></td>
+</tr>
+</tbody></table></div>
+<p>The verification ran on Linux with Node 24.22.3 and Python 3.13. Windows is not verified; the repository notes that WSL 2 is the safer route on Windows.</p>
+<h2 id="2-install-an-sdk">2. Install an SDK<a class="anchor" href="#2-install-an-sdk" aria-label="Link to this section">#</a></h2>
+<p>Pick the language of your application. You can use both.</p>
+<p><strong>TypeScript or JavaScript (Node.js 24 or later):</strong></p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">npm install @parmana/sdk@4.1.1</code></pre></div>
+<p><strong>Python (3.10 or later):</strong></p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">pip install "parmana==4.1.1"
+# Add the verification extra if you will sign approvals or step-up envelopes in Python:
+pip install "parmana[verify]==4.1.1"</code></pre></div>
+<p><strong>Check the install:</strong></p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">node -e "import('@parmana/sdk').then(m =&gt; console.log(m.VERSION))"
+python3 -c "import parmana; print(parmana.__version__)"</code></pre></div>
+<p>Both print <code>4.1.1</code>. These packages are on the public registries, and the install was checked in a fresh directory. The full reference for each is in <a href="sdk/index.html">SDKs</a>.</p>
+<h2 id="3-start-a-local-server">3. Start a local server<a class="anchor" href="#3-start-a-local-server" aria-label="Link to this section">#</a></h2>
+<p>The API server is not published as a package. You run it from a checkout of this repository (or with Docker, see <a href="deployment/index.html">Deployment</a>).</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">git clone https://github.com/pavancharak/parmana-core.git
+cd parmana-core
+npm ci
+npm run build</code></pre></div>
+<p>Create the local configuration. This writes a signing key, a gateway key, a test approver key, a copy of the example policies, and two caller keys, all into <code>~/.parmana/governed-quickstart</code>, outside the repository:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">node docs/developer-portal/examples/governed-quickstart/setup.mjs</code></pre></div>
+<p>The script prints the exact start command. Start the server in its own terminal and leave it running:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">bash ~/.parmana/governed-quickstart/start-server.sh</code></pre></div>
+<p>You should see <code>API running on http://0.0.0.0:3000</code>.</p>
+<p><strong>Check that it is up.</strong> This needs no key:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s http://localhost:3000/health
+# {"status":"UP"}</code></pre></div>
+<blockquote>
+<p><strong>Why the script?</strong> The existing <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/site/quickstart.mdx">quickstart</a> needed several fixes to run: the policy and key directories are now in its command, the approver generator creates its folder, and its warning explains the approval step. The governed setup here still does more: it creates a second caller and a checker, so the approval flow runs end to end without the quickstart&#39;s manual steps. The gaps and their status are in <a href="troubleshooting/index.html#the-existing-quickstart-did-not-run-as-written-now-corrected">Troubleshooting</a>.</p>
+</blockquote>
+<h2 id="4-connect-and-confirm-your-caller">4. Connect and confirm your caller<a class="anchor" href="#4-connect-and-confirm-your-caller" aria-label="Link to this section">#</a></h2>
+<p>Every route except <code>/health</code>, <code>/ready</code> and the OpenAPI and documentation routes requires a bearer key. The key is in <code>raw-keys.json</code> in the configuration directory. Send it as <code>Authorization: Bearer &lt;key&gt;</code>. The server stores only a SHA-256 hash of each key.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">RAW_DEMO=$(node -e "console.log(require(process.env.HOME + '/.parmana/governed-quickstart/raw-keys.json').demo)")
+curl -s -H "Authorization: Bearer $RAW_DEMO" http://localhost:3000/callers/me
+# {"callerId":"demo","allowedPrincipalIds":["demo"],"allowedCapabilities":["test:fixture-execute"],"unrestrictedCapabilities":false}</code></pre></div>
+<p><code>allowedCapabilities</code> lists the actions this key may request. <code>allowedPrincipalIds</code> lists the principals it may act for. A request outside either list is refused.</p>
+<p>Now connect from code. The SDK sends the key on every call.</p>
+<p><strong>TypeScript:</strong></p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import { ParmanaClient } from "@parmana/sdk";
+
+const client = new ParmanaClient({
+  endpoint: "http://localhost:3000", // https:// is required for any host except localhost
+  apiKey: process.env.PARMANA_API_KEY,
+});
+
+const caller = await client.caller();
+console.log(caller.callerId, caller.allowedCapabilities);</code></pre></div>
+<p><strong>Python:</strong></p>
+<div class="code"><div class="code-bar"><span>python</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-python">import os
+from parmana import ParmanaClient
+
+client = ParmanaClient(
+    endpoint="http://localhost:3000",  # https:// is required for any host except localhost
+    api_key=os.environ["PARMANA_API_KEY"],
+)
+
+caller = client.caller()
+print(caller.caller_id, caller.allowed_capabilities)</code></pre></div>
+<p>The SDKs refuse an endpoint that is not <code>https://</code>, except <code>localhost</code>, <code>127.0.0.1</code> and <code>[::1]</code>. The TypeScript SDK also refuses credentials embedded in the URL (<code>assertSafeEndpoint</code>).</p>
+<h2 id="5-approve-a-policy-version-maker-checker">5. Approve a policy version (maker-checker)<a class="anchor" href="#5-approve-a-policy-version-maker-checker" aria-label="Link to this section">#</a></h2>
+<p>A policy version does not take effect until a second person approves it. The server will not execute against a version that has no approval record. This is the rule that makes the policy an organizational decision and not a developer&#39;s.</p>
+<p>This step is performed by the example. Run it once from the repository root:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">npx tsx docs/developer-portal/examples/governed-quickstart/typescript/governed-flow.ts</code></pre></div>
+<p>Its output, in order:</p>
+<div class="code"><div class="code-bar"><span>text</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-text">1. maker proposes vendor-payment@2.1.0
+   pending change: &lt;id&gt;
+2. maker tries to approve its own change (expected to be refused)
+   refused as expected: AuthorizationError (HTTP 403): ... may not also approve or reject it (checker).
+3. checker approves with a step-up signature
+   status: APPROVED
+4. demo caller executes an approved action
+   trust record: &lt;id&gt;
+   outcome: APPROVED
+5. verification
+   server verification: VERIFIED
+   offline (SDK): valid=true coverage=legacy hashValid=true legacySignatureValid=true
+6. the same transaction is submitted again (expected to be refused)
+   refused as expected: ConflictError (HTTP 409): ... already exists.</code></pre></div>
+<p>The same flow in Python is <code>python3 docs/developer-portal/examples/governed-quickstart/python/governed_flow.py</code>. The maker, checker and demo keys are separate, and each can do only what its role allows. The step is explained in full in the <a href="tutorials/maker-checker.html">maker-checker tutorial</a>.</p>
+<h2 id="6-submit-a-business-transaction">6. Submit a Business Transaction<a class="anchor" href="#6-submit-a-business-transaction" aria-label="Link to this section">#</a></h2>
+<p>There are two ways to ask Parmana to act. Both go through the same checks.</p>
+<ul>
+<li><strong>Execute in one call</strong> with <code>execute()</code> (<code>POST /execute</code>). The decision and the release happen in that call.</li>
+<li><strong>Declare, then execute.</strong> <code>declareTransaction()</code> records the request as <code>RECEIVED</code> and decides nothing. <code>executeTransaction()</code> then decides and releases. Use this when the application must record the request before anything runs.</li>
+</ul>
+<p><code>governed-flow.ts</code> used the one-call form. This example uses the two-step form:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">GOVERNED_POLICY_VERSION=2.1.0 npx tsx docs/developer-portal/examples/governed-quickstart/typescript/declare-then-execute.ts</code></pre></div>
+<div class="code"><div class="code-bar"><span>text</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-text">1. declare &lt;businessTransactionId&gt;
+   status: RECEIVED
+2. status
+   current: RECEIVED (stage declare)
+3. execute
+   trust record: &lt;id&gt;
+   outcome: APPROVED
+4. status after execution: VERIFIED (6 events in history)</code></pre></div>
+<p>The request in <code>declare-then-execute.ts</code> is built with the public helper and is the shape you will use in your own code:</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import { randomUUID } from "node:crypto";
+import {
+  ParmanaClient,
+  createBusinessTransaction,
+  signApproval,
+} from "@parmana/sdk";
+
+const client = new ParmanaClient({
+  endpoint: "http://localhost:3000",
+  apiKey: process.env.PARMANA_API_KEY,
+});
+
+// The human approver signs, on the approver's own machine. The agent never holds this key.
+const approval = signApproval({
+  privateKeyPem: approverPrivatePem, // the approver's Ed25519 private key (PEM); read from a file, as in declare-then-execute.ts
+  approverId: "local-test-approver",
+  keyId: "local-test-approver-key-1",
+  capability: "test:fixture-execute", // the action this approval covers
+  resourceId: "vendor://payments", // the target this approval covers
+  maxAmount: 250, // the largest amount this approval covers
+});
+
+const transaction = createBusinessTransaction({
+  businessTransactionId: randomUUID(),
+  principalId: "demo",
+  purpose: "Declare then execute",
+  action: "test:fixture-execute",
+  target: "vendor://payments",
+  parameters: { amount: 250, currency: "USD" },
+  policy: { name: "vendor-payment", version: "2.1.1", schemaVersion: "1.0.0" },
+  signals: {
+    humanApproved: true,
+    approvalArtifact: approval,
+    vendorVerified: true,
+    invoiceVerified: true,
+    paymentApproved: true,
+    sufficientFunds: true,
+    paymentAmount: 250, // must equal parameters.amount
+    riskScore: 5,
+    vendorId: "vendor://payments", // must equal target
+  },
+});
+
+const declared = await client.declareTransaction(transaction);
+const record = await client.executeTransaction(declared.businessTransactionId);</code></pre></div>
+<p>Two things to note:</p>
+<ul>
+<li><strong>The policy version must be the one in effect.</strong> This server executes only the most recently approved version of a policy. If you approve <code>2.1.1</code> after <code>2.1.0</code>, a request naming <code>2.1.0</code> is refused with <code>was superseded</code>. That is intended. See <a href="policies/index.html#versions-and-the-version-in-effect">Policy management</a>.</li>
+<li><strong>The business transaction id is single-use.</strong> Submitting the same id again returns <code>409 Conflict</code>, and nothing runs again.</li>
+</ul>
+<h2 id="7-verify-the-evidence">7. Verify the evidence<a class="anchor" href="#7-verify-the-evidence" aria-label="Link to this section">#</a></h2>
+<p>Every execution produces an Execution Trust Record. Verify it in two ways.</p>
+<p><strong>a) By the server.</strong> The server re-checks the stored record:</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">const verification = await client.verify(record.businessTransactionId);
+console.log(verification.status); // VERIFIED</code></pre></div>
+<p><strong>b) Offline, without the server.</strong> Pin the deployment&#39;s public key, then check the record against it. The SDK does this with no network access:</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import { verifyExecutionTrustRecordOffline } from "@parmana/sdk";
+
+const published = await client.publicKey("default"); // the key you pin, out of band in production
+const offline = verifyExecutionTrustRecordOffline(record, {
+  default: published.pem,
+});
+console.log(offline.valid, offline.coverage, offline.errors);
+// true "legacy" []</code></pre></div>
+<p><strong>c) With the standalone verifier,</strong> which has no dependency on the Parmana SDK:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">bash docs/developer-portal/examples/governed-quickstart/verify-standalone.sh</code></pre></div>
+<p>The script pins the key by its fingerprint, verifies the record it saved, then verifies a copy with one amount changed:</p>
+<div class="code"><div class="code-bar"><span>text</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-text">== record as written (expect valid: true, exit 0)
+{"valid":true,"coverage":"legacy","errors":[],...}
+exit 0
+
+== record with the amount changed (expect valid: false, exit 1)
+{"valid":false,"coverage":"legacy","errors":["trustRecordHash mismatch: ...", ...],...}
+exit 1 (rejected, as expected)</code></pre></div>
+<p><strong>Read the <code>coverage</code> field.</strong> <code>legacy</code> means the record is a schema version 2 record, which signs only seven top-level fields. The default configuration produces that version, and the hybrid configuration with schema version 3 produces <code>full</code> (see <a href="security/index.html#schema-versions-and-coverage">Security</a>). The standalone verifier refuses it unless you set <code>allowLegacyV2</code> and <code>allowLegacyOnly</code> in the trust file, and the script does that deliberately. The SDK&#39;s offline check reports <code>valid: true</code> for it, so your code must check <code>coverage</code> itself if it needs every field covered. The full rules are in <a href="security/evidence-verification.html">Evidence verification</a>.</p>
+<h2 id="8-where-to-go-next">8. Where to go next<a class="anchor" href="#8-where-to-go-next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Build an integration: <a href="tutorials/nodejs-integration.html">Node.js</a>, <a href="tutorials/python-integration.html">Python</a>, or <a href="tutorials/fintech-integration.html">Fintech</a>.</li>
+<li>Learn the limits: <a href="tutorials/transaction-limits.html">Transaction limits</a> and <a href="tutorials/refund-authorization.html">Refund authorization</a>.</li>
+<li>Give an agent a bounded capability: <a href="tutorials/ai-agents.html">AI agents</a>.</li>
+<li>Understand what to expect on failure: <a href="troubleshooting/index.html">Troubleshooting</a>.</li>
+<li>Run it for real: <a href="deployment/index.html">Deployment</a> and <a href="security/index.html">Security</a>.</li>
+</ul>
+<h2 id="stopping-the-server">Stopping the server<a class="anchor" href="#stopping-the-server" aria-label="Link to this section">#</a></h2>
+<p>Press Ctrl+C in the terminal that runs <code>start-server.sh</code>. Delete <code>~/.parmana/governed-quickstart</code> to start from clean keys and an empty approval state. The state is in memory, so restarting the server also clears it.</p>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/getting-started.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="overview.html"><span>Previous</span>Overview</a><a class="pn next" href="faq.html"><span>Next</span>Frequently asked questions</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#1-prerequisites">1. Prerequisites</a></li><li class="d2"><a href="#2-install-an-sdk">2. Install an SDK</a></li><li class="d2"><a href="#3-start-a-local-server">3. Start a local server</a></li><li class="d2"><a href="#4-connect-and-confirm-your-caller">4. Connect and confirm your caller</a></li><li class="d2"><a href="#5-approve-a-policy-version-maker-checker">5. Approve a policy version (maker-checker)</a></li><li class="d2"><a href="#6-submit-a-business-transaction">6. Submit a Business Transaction</a></li><li class="d2"><a href="#7-verify-the-evidence">7. Verify the evidence</a></li><li class="d2"><a href="#8-where-to-go-next">8. Where to go next</a></li><li class="d2"><a href="#stopping-the-server">Stopping the server</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "";</script>
+<script src="search-index.js"></script>
+<script src="portal.js"></script>
+</body>
+</html>

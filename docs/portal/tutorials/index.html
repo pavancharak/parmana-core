@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tutorials · Parmana developer docs</title>
+<meta name="description" content="Tutorials Portal home · Getting started · SDKs Each tutorial follows one integration from start to finish. For each one it says who does what: your application, the SDK, the Parmana service, and the business system. Every tutorial links to ">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="index.html" aria-current="page">Tutorials</a></li><li><a href="maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Tutorials</span><span class="sep">/</span><span>Tutorials</span></div>
+    <article>
+<h1 id="tutorials">Tutorials<a class="anchor" href="#tutorials" aria-label="Link to this section">#</a></h1>
+<p><a href="../index.html">Portal home</a> · <a href="../getting-started.html">Getting started</a> · <a href="../sdk/index.html">SDKs</a></p>
+<p>Each tutorial follows one integration from start to finish. For each one it says who does what: your application, the SDK, the Parmana service, and the business system. Every tutorial links to code in <a href="../examples/index.html"><code>../examples/</code></a>, and says how that code was verified.</p>
+<p>Start with <a href="../getting-started.html">Getting started</a> so you have a running local server. Then pick the tutorial that matches your task.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tutorial</th>
+<th>You will</th>
+<th>Verification</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="nodejs-integration.html">Node.js integration</a></td>
+<td>Add Parmana to an existing Node.js service: install, sign an approval, execute, verify.</td>
+<td>Run: <code>governed-flow.ts</code>, <code>declare-then-execute.ts</code></td>
+</tr>
+<tr>
+<td><a href="python-integration.html">Python integration</a></td>
+<td>The same integration in Python.</td>
+<td>Run: <code>governed_flow.py</code>. Python test suite: 208 of 208 passed</td>
+</tr>
+<tr>
+<td><a href="fintech-integration.html">Fintech integration</a></td>
+<td>Gate vendor payments on verified facts, a limit, and a human approval.</td>
+<td>Run: <code>governed-flow.ts</code>, <code>limits.ts</code></td>
+</tr>
+<tr>
+<td><a href="refund-authorization.html">Refund authorization</a></td>
+<td>Refuse refunds the payment source does not confirm, and require a manager&#39;s approval for the exact amount.</td>
+<td>Decision logic run in tutorial 129 (examples runner, passed). Not run against a live server with a payment source.</td>
+</tr>
+<tr>
+<td><a href="maker-checker.html">Maker-checker approval</a></td>
+<td>Require a second person to approve each policy change, with a step-up signature.</td>
+<td>Run: tutorial 103 (HTTP), <code>governed-flow.ts</code>, and the <code>parmana-ops</code> CLI flow</td>
+</tr>
+<tr>
+<td><a href="transaction-limits.html">Transaction limit enforcement</a></td>
+<td>Refuse any execution above the approved amount, or above the policy&#39;s risk threshold.</td>
+<td>Run: <code>limits.ts</code>, all three cases refused</td>
+</tr>
+<tr>
+<td><a href="ai-agents.html">AI agents</a></td>
+<td>Let an agent request actions, with the policy and a human approver deciding.</td>
+<td>Refusal without approval run (tutorial 120, examples runner). Agent pattern run with the SDK (<code>governed-flow.ts</code>).</td>
+</tr>
+<tr>
+<td><a href="../security/evidence-verification.html">Evidence verification</a></td>
+<td>Generate an Execution Trust Record and verify it, by the server, with the SDK offline, and with the standalone verifier.</td>
+<td>Run: <code>governed-flow.ts</code>, <code>verify-standalone.sh</code>, <code>rest-smoke.sh</code></td>
+</tr>
+</tbody></table></div>
+<h2 id="how-the-tutorials-are-verified">How the tutorials are verified<a class="anchor" href="#how-the-tutorials-are-verified" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Run</strong> means the code was executed against a local server started from this repository, and the output is recorded in <a href="../COVERAGE.html">COVERAGE.md</a>.</li>
+<li><strong>Examples runner</strong> means <code>npm run examples</code> in the repository, which ran 116 examples and exited 0.</li>
+<li><strong>Test suite</strong> means the named repository tests. The Python suite passed 208 of 208. The TypeScript SDK&#39;s own examples integration test passed 3 of 3.</li>
+</ul>
+<p>Where a tutorial describes something that was not run, the tutorial says so in its verification line.</p>
+<h2 id="before-you-start">Before you start<a class="anchor" href="#before-you-start" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The server must be running. Start it with the <a href="../getting-started.html#3-start-a-local-server">setup script</a>.</li>
+<li>The policy version in effect must be the one your request names. A version that has been superseded is refused. See <a href="../policies/index.html#versions-and-the-version-in-effect">Policy management</a>.</li>
+<li>Each tutorial that uses an approval assumes the approver&#39;s key exists locally. The setup script creates a test key. In production, the approver is a different person with their own key.</li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/tutorials/README.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="../security/schema-v3.html"><span>Previous</span>Schema version 3: whole-record signatures, the cutover and the rollout</a><a class="pn next" href="maker-checker.html"><span>Next</span>Tutorial: maker-checker approval of a policy change</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#how-the-tutorials-are-verified">How the tutorials are verified</a></li><li class="d2"><a href="#before-you-start">Before you start</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

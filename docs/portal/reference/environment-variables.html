@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Environment variable reference · Parmana developer docs</title>
+<meta name="description" content="Environment variable reference Reference · Deployment · Security · Repository example file Parmana is configured through environment variables. The server reads them at start-up and refuses to start when a required one is missing or invalid">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="index.html">Developer reference</a></li><li><a href="environment-variables.html" aria-current="page">Environment variable reference</a></li><li><a href="error-codes.html">Error code catalogue</a></li><li><a href="error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Operate</span><span class="sep">/</span><span>Environment variable reference</span></div>
+    <article>
+<h1 id="environment-variable-reference">Environment variable reference<a class="anchor" href="#environment-variable-reference" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">Reference</a> · <a href="../deployment/index.html">Deployment</a> · <a href="../security/index.html">Security</a> · <a href="https://github.com/pavancharak/parmana-core/blob/main/.env.example">Repository example file</a></p>
+<p>Parmana is configured through environment variables. The server reads them at start-up and refuses to start when a required one is missing or invalid. The SDKs and the CLI read a few more, listed at the end.</p>
+<p><strong>How to read this table.</strong></p>
+<ul>
+<li><strong>Default</strong> is the value used when the variable is unset, as the code defines it.</li>
+<li><strong>Status</strong>: <em>Implemented</em> (in the code and exercised here), <em>Implemented, not exercised here</em>, <em>Experimental</em> (opt-in; marked experimental in the OpenAPI document), or <em>Test only</em>.</li>
+<li>Where the repository&#39;s <a href="https://github.com/pavancharak/parmana-core/blob/main/.env.example">example file</a> and the code disagree, this table follows the code, and says so.</li>
+</ul>
+<h2 id="server-essentials">Server: essentials<a class="anchor" href="#server-essentials" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Accepted values</th>
+<th>Required</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>NODE_ENV</code></td>
+<td>unset</td>
+<td><code>development</code>, <code>test</code>, <code>production</code></td>
+<td>No</td>
+<td>Implemented</td>
+<td>Only <code>test</code> changes behaviour in a way the code checks for. <code>PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE</code> requires <code>test</code>. Use <code>production</code> in a deployment.</td>
+</tr>
+<tr>
+<td><code>PORT</code></td>
+<td><code>3000</code></td>
+<td>A port number</td>
+<td>No</td>
+<td>Implemented</td>
+<td>The port the API binds to.</td>
+</tr>
+<tr>
+<td><code>HOST</code></td>
+<td><code>0.0.0.0</code></td>
+<td>An interface address</td>
+<td>No</td>
+<td>Implemented</td>
+<td>The interface the API binds to.</td>
+</tr>
+<tr>
+<td><code>PARMANA_POLICY_DIR</code></td>
+<td>none</td>
+<td>A directory path</td>
+<td><strong>Yes</strong></td>
+<td>Implemented</td>
+<td>Holds <code>&lt;name&gt;/&lt;version&gt;/policy.json</code>. The server refuses to start without it: <code>PARMANA_POLICY_DIR is not set.</code> (observed).</td>
+</tr>
+<tr>
+<td><code>PARMANA_KEY_DIR</code></td>
+<td>none</td>
+<td>A directory path</td>
+<td><strong>Yes</strong></td>
+<td>Implemented</td>
+<td>Holds the signing key pairs (<code>default</code>, <code>gateway</code>, and others). The server refused to start without it under <code>NODE_ENV=test</code> as well (observed: <code>PARMANA_KEY_DIR is not configured.</code>).</td>
+</tr>
+<tr>
+<td><code>PARMANA_STORAGE</code></td>
+<td><code>memory</code></td>
+<td><code>memory</code>, <code>postgres</code>, <code>supabase</code></td>
+<td>No</td>
+<td>Implemented</td>
+<td><code>supabase</code> is an alias for <code>postgres</code>. <code>memory</code> loses all state on restart (observed).</td>
+</tr>
+<tr>
+<td><code>DATABASE_URL</code></td>
+<td>none</td>
+<td>A PostgreSQL connection URL</td>
+<td>Yes with <code>postgres</code>/<code>supabase</code></td>
+<td>Implemented</td>
+<td>The server refuses to start with PostgreSQL storage without it. The example file also says other stores use it, regardless of storage mode.</td>
+</tr>
+<tr>
+<td><code>DATABASE_PROVIDER</code></td>
+<td>none</td>
+<td>(removed)</td>
+<td>No</td>
+<td>Implemented</td>
+<td>Setting it refuses start: <code>DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead.</code></td>
+</tr>
+<tr>
+<td><code>PARMANA_DB_SCHEMA</code></td>
+<td><code>public</code></td>
+<td>A schema name</td>
+<td>No</td>
+<td>Implemented</td>
+<td>Puts this process&#39;s tables in another schema of the same database.</td>
+</tr>
+<tr>
+<td><code>SHUTDOWN_TIMEOUT_MS</code></td>
+<td><code>10000</code></td>
+<td>Milliseconds</td>
+<td>No</td>
+<td>Implemented</td>
+<td>How long a graceful shutdown waits for in-flight requests.</td>
+</tr>
+<tr>
+<td><code>LOG_LEVEL</code></td>
+<td><code>info</code></td>
+<td>Any string (not validated)</td>
+<td>No</td>
+<td>Implemented</td>
+<td>Conventionally <code>debug</code>, <code>info</code>, <code>warn</code> or <code>error</code>.</td>
+</tr>
+</tbody></table></div>
+<h2 id="caller-authentication-and-governance">Caller authentication and governance<a class="anchor" href="#caller-authentication-and-governance" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Accepted values</th>
+<th>Required</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PARMANA_API_KEYS</code></td>
+<td>none</td>
+<td>JSON array</td>
+<td>Yes, unless auth is disabled</td>
+<td>Implemented</td>
+<td>Each entry: <code>callerId</code>, <code>keyHash</code> (SHA-256 hex of the raw key), and optionally <code>allowedCapabilities</code>, <code>allowedPrincipalIds</code>, <code>credentialHolderType</code> (<code>USER</code>, <code>SERVICE</code>, <code>ROLE</code>, <code>ORGANIZATION</code>), <code>stepUpPublicKey</code> (PEM). Generate entries with <code>parmana-ops keys generate-api-key</code>.</td>
+</tr>
+<tr>
+<td><code>PARMANA_AUTH_DISABLED</code></td>
+<td><code>false</code></td>
+<td><code>true</code> disables authentication</td>
+<td>No</td>
+<td>Implemented</td>
+<td><strong>Never in a deployment.</strong> <code>/ready</code> reports <code>authDisabled: true</code>. Also used by the sandbox options.</td>
+</tr>
+<tr>
+<td><code>POLICY_CHANGE_CHECKERS</code></td>
+<td>empty (nobody may approve)</td>
+<td>JSON object: policy name to an array of caller ids</td>
+<td>No</td>
+<td>Implemented</td>
+<td>Which callers may approve a change to each policy. Empty approves nothing.</td>
+</tr>
+<tr>
+<td><code>PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE</code></td>
+<td>none</td>
+<td>A PEM file path</td>
+<td>No</td>
+<td><strong>Test only</strong></td>
+<td>Trusts a local test approver. The server refuses it unless <code>NODE_ENV=test</code>.</td>
+</tr>
+<tr>
+<td><code>POLICY_GOVERNANCE_INTEGRITY_CHECK_INTERVAL_MS</code></td>
+<td><code>300000</code></td>
+<td>Milliseconds; <code>0</code> or less means start-up only</td>
+<td>No</td>
+<td>Implemented</td>
+<td>How often the server re-checks each live policy file against its approval record (per the example file).</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_AUTH_FAILURE_PER_MINUTE</code></td>
+<td><code>30</code></td>
+<td>Integer</td>
+<td>No</td>
+<td>Implemented</td>
+<td>Failed authentications (<code>401</code>) per IP. Verified: two <code>401</code>s, then <code>429</code>, in the examples runner.</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_EXECUTE_PER_MINUTE</code></td>
+<td><code>30</code></td>
+<td>Integer</td>
+<td>No</td>
+<td>Implemented</td>
+<td><code>POST /execute</code>, per authenticated caller.</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_PUBLIC_PER_MINUTE</code></td>
+<td><code>60</code></td>
+<td>Integer</td>
+<td>No</td>
+<td>Implemented</td>
+<td>Unauthenticated work routes (verification, handbook), per IP.</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_HEALTH_PER_MINUTE</code></td>
+<td><code>300</code></td>
+<td>Integer</td>
+<td>No</td>
+<td>Implemented</td>
+<td><code>/health</code> and <code>/ready</code>, per IP.</td>
+</tr>
+</tbody></table></div>
+<h2 id="keys-and-cryptography">Keys and cryptography<a class="anchor" href="#keys-and-cryptography" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Accepted values</th>
+<th>Required</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>KEY_PROVIDER</code></td>
+<td><code>local</code></td>
+<td><code>local</code>, <code>aws-kms</code></td>
+<td>No</td>
+<td>Implemented (<code>local</code>); <code>aws-kms</code> checked at start-up</td>
+<td>The code refuses any other value as not implemented (<code>IMPLEMENTED_KEY_PROVIDERS</code>). <code>aws-kms</code> restricts the primary signature to Ed25519.</td>
+</tr>
+<tr>
+<td><code>PARMANA_SIGNING_KEY_ID</code></td>
+<td><code>default</code></td>
+<td>Key id</td>
+<td>No</td>
+<td>Implemented</td>
+<td>The key that signs trust records and approvals.</td>
+</tr>
+<tr>
+<td><code>PARMANA_GATEWAY_KEY_ID</code></td>
+<td><code>gateway</code></td>
+<td>Key id</td>
+<td>No</td>
+<td>Implemented</td>
+<td>The gateway&#39;s attestation key, in the key directory.</td>
+</tr>
+<tr>
+<td><code>PARMANA_GATEWAY_ID</code></td>
+<td><code>parmana-gateway</code></td>
+<td>Letters, digits, <code>.</code>, <code>_</code>, <code>-</code></td>
+<td>No</td>
+<td>Implemented</td>
+<td>The gateway&#39;s logical identity.</td>
+</tr>
+<tr>
+<td><code>PARMANA_VERIFICATION_KEY_ID</code></td>
+<td><code>default</code></td>
+<td>Key id</td>
+<td>No</td>
+<td>Implemented</td>
+<td>The key id records are signed with. Change only when rotating.</td>
+</tr>
+<tr>
+<td><code>PARMANA_VERIFICATION_SECONDARY_KEY_ID</code></td>
+<td><code>default-secondary</code></td>
+<td>Key id</td>
+<td>No</td>
+<td>Implemented</td>
+<td>The secondary key id for hybrid records.</td>
+</tr>
+<tr>
+<td><code>PARMANA_VERIFIER_KEY_ID</code></td>
+<td><code>signal-verifier</code></td>
+<td>Key id</td>
+<td>No</td>
+<td>Implemented</td>
+<td>Signs the verifier&#39;s read-only fetches.</td>
+</tr>
+<tr>
+<td><code>PARMANA_KEY_MATERIAL_JSON</code></td>
+<td>none</td>
+<td>JSON</td>
+<td>No</td>
+<td>Implemented</td>
+<td>Key material written into the key directory at boot, for files that do not exist there. Treat as a secret.</td>
+</tr>
+<tr>
+<td><code>PARMANA_KEY_MATERIAL_SECRET</code></td>
+<td>none</td>
+<td>A secret name or ARN</td>
+<td>No</td>
+<td>Implemented</td>
+<td>The same JSON, held in a secrets manager. Needs <code>PARMANA_SECRETS_PROVIDER=aws-secrets-manager</code>.</td>
+</tr>
+<tr>
+<td><code>PARMANA_SECRETS_PROVIDER</code></td>
+<td>none</td>
+<td><code>aws-secrets-manager</code></td>
+<td>No</td>
+<td>Implemented</td>
+<td>Where to read <code>PARMANA_KEY_MATERIAL_SECRET</code>.</td>
+</tr>
+<tr>
+<td><code>AWS_REGION</code>, <code>AWS_ROLE_ARN</code></td>
+<td>none</td>
+<td>AWS values</td>
+<td>With <code>aws-kms</code> or the secrets provider</td>
+<td>Implemented, not exercised here</td>
+<td>The server assumes the role with the platform&#39;s OIDC token, per the example file.</td>
+</tr>
+<tr>
+<td><code>CRYPTO_MODE</code></td>
+<td><code>single</code></td>
+<td><code>single</code>, <code>hybrid</code></td>
+<td>No</td>
+<td>Implemented</td>
+<td><code>hybrid</code> also signs with the secondary provider. Verified with <code>dilithium3</code>.</td>
+</tr>
+<tr>
+<td><code>PRIMARY_SIGNATURE_PROVIDER</code></td>
+<td><code>ed25519</code></td>
+<td><code>ed25519</code>, <code>ecdsa-p256</code>, <code>dilithium3</code>, <code>dilithium5</code>, <code>sphincs-plus</code></td>
+<td>No</td>
+<td>Implemented (<code>ed25519</code> exercised)</td>
+<td>The primary signing algorithm.</td>
+</tr>
+<tr>
+<td><code>SECONDARY_SIGNATURE_PROVIDER</code></td>
+<td>none</td>
+<td>Same list, must differ from the primary</td>
+<td>Yes with <code>CRYPTO_MODE=hybrid</code></td>
+<td>Implemented (<code>dilithium3</code> exercised)</td>
+<td>Without it, hybrid execution releases the action and then fails to record it (observed: <code>500</code>).</td>
+</tr>
+<tr>
+<td><code>HASH_PROVIDER</code></td>
+<td><code>sha256</code></td>
+<td><code>sha256</code>, <code>sha3-512</code>, <code>blake3</code></td>
+<td>No</td>
+<td>Implemented</td>
+<td>Hash algorithm, per the example file.</td>
+</tr>
+<tr>
+<td><code>HYBRID_SIGNATURE_REQUIRED</code></td>
+<td><code>false</code></td>
+<td><code>true</code></td>
+<td>No</td>
+<td>Implemented</td>
+<td>Requires a hybrid envelope on records.</td>
+</tr>
+<tr>
+<td><code>HYBRID_REQUIRED_FROM</code></td>
+<td>none</td>
+<td>UTC ISO-8601 ending in <code>Z</code></td>
+<td>No</td>
+<td>Implemented</td>
+<td>Records created at or after this instant must be hybrid-signed.</td>
+</tr>
+<tr>
+<td><code>HYBRID_SCHEMA_VERSION</code></td>
+<td><code>3</code> (unset)</td>
+<td><code>2</code>, <code>3</code></td>
+<td>No</td>
+<td>Implemented (<code>3</code> exercised)</td>
+<td><code>3</code> covers the whole record (see <a href="../security/index.html#schema-versions-and-coverage">Security</a>).</td>
+</tr>
+<tr>
+<td><code>HYBRID_SCHEMA_V3_ACKNOWLEDGED</code></td>
+<td>not read</td>
+<td>Ignored. Retired when schema 3 became the default (2026-11-20). Remove it from environment files.</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>TRUST_PROFILE</code></td>
+<td><code>v1</code></td>
+<td><code>v1</code></td>
+<td>No</td>
+<td>Implemented</td>
+<td>The trust record schema profile.</td>
+</tr>
+<tr>
+<td><code>RECEIPT_VERSION</code></td>
+<td><code>1</code></td>
+<td>Free text (only <code>1</code> is meaningful)</td>
+<td>No</td>
+<td>Implemented</td>
+<td>The receipt schema version.</td>
+</tr>
+<tr>
+<td><code>EXECUTION_AUTHORIZATION_TTL_SECONDS</code></td>
+<td><code>120</code></td>
+<td>Seconds</td>
+<td>No</td>
+<td>Implemented</td>
+<td>How long a signed execution authorization is valid, when the caller does not set one.</td>
+</tr>
+</tbody></table></div>
+<h2 id="experimental-and-opt-in">Experimental and opt-in<a class="anchor" href="#experimental-and-opt-in" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PARMANA_POLICY_V2_DECISIONS</code></td>
+<td>off</td>
+<td>Experimental</td>
+<td>Mounts the policy v2 decision routes (<code>/v2/...</code>). Read with <code>PARMANA_POLICY_V2_CAPABILITIES</code>, <code>PARMANA_POLICY_V2_SOURCE_URL</code> and <code>PARMANA_POLICY_V2_SOURCE_TOKEN</code> (the source token is required when the URL is set).</td>
+</tr>
+<tr>
+<td><code>PARMANA_POLICY_V2_SNS_EVENTS</code>, <code>PARMANA_POLICY_V2_EVENTS_SECRET</code></td>
+<td>off</td>
+<td>Experimental</td>
+<td>Event channels for the v2 surface.</td>
+</tr>
+<tr>
+<td><code>EXECUTION_INTENTS_CHECK</code></td>
+<td>per the example file</td>
+<td>Experimental</td>
+<td>Execution intents (ADR-0012). The example file says it is ignored in production, where the gate is always on.</td>
+</tr>
+<tr>
+<td><code>SIGNING_READINESS_CHECK</code></td>
+<td>per the example file</td>
+<td>Implemented</td>
+<td>Readiness check of the signing setup. The example file says it is relaxed only under <code>test</code> or <code>development</code>.</td>
+</tr>
+<tr>
+<td><code>KILL_SWITCH_ENABLED</code></td>
+<td><code>false</code></td>
+<td>Experimental</td>
+<td>Mounts the kill-switch routes (ADR-0017). Needs <code>DATABASE_URL</code>. Not mounted in the verified configuration: <code>/kill-switch/status</code> returned a JSON <code>404</code> with <code>ROUTE_NOT_FOUND</code> (earlier builds returned an HTML page).</td>
+</tr>
+<tr>
+<td><code>KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR</code></td>
+<td>per the example file (<code>true</code> in production)</td>
+<td>Experimental</td>
+<td>A reset needs two different operators.</td>
+</tr>
+<tr>
+<td><code>INBOUND_AUDIENCE</code></td>
+<td>off</td>
+<td>Experimental</td>
+<td>Enables the inbound refund decision routes (RFC-0025). The server refuses to start without the gateway&#39;s private key.</td>
+</tr>
+<tr>
+<td><code>ALERT_WEBHOOK_URL</code>, <code>ALERT_WEBHOOK_SECRET</code></td>
+<td>none</td>
+<td>Implemented, delivery not exercised here</td>
+<td>An alert webhook and its signing secret.</td>
+</tr>
+<tr>
+<td><code>PARMANA_SKIP_DOTENV</code></td>
+<td>unset</td>
+<td>Implemented</td>
+<td><code>1</code> stops the loaders from reading a <code>.env</code> file. The test suite sets it.</td>
+</tr>
+</tbody></table></div>
+<h2 id="test-and-example-variables">Test and example variables<a class="anchor" href="#test-and-example-variables" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Used by</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>TEST_DATABASE_URL</code></td>
+<td>Integration tests</td>
+<td>Test only</td>
+<td>Must differ from <code>DATABASE_URL</code>. The tests refuse hosted databases unless listed in <code>PARMANA_TEST_PROJECT_REFS</code> and <code>ALLOW_LIVE_SUPABASE=1</code>.</td>
+</tr>
+<tr>
+<td><code>PARMANA_ALLOW_UNGOVERNED_POLICY</code></td>
+<td>Was set by the examples runner, the load test and tutorial 81</td>
+<td>Removed</td>
+<td><strong>Retired and removed.</strong> It was set by the examples runner, the load test and one tutorial, but no server code read it. Governance is enforced in every environment; the version in effect comes only from an approval record. Remove it from any environment file.</td>
+</tr>
+<tr>
+<td><code>PARMANA_PRODUCTION_PROJECT_REFS</code>, <code>PARMANA_TEST_PROJECT_REFS</code>, <code>ALLOW_LIVE_SUPABASE</code></td>
+<td>Test-database guard</td>
+<td>Test only</td>
+<td>Guard rails so tests never reach a production database.</td>
+</tr>
+<tr>
+<td><code>GOVERNED_CONFIG_DIR</code>, <code>GOVERNED_POLICY_VERSION</code>, <code>PARMANA_ENDPOINT</code></td>
+<td>This portal&#39;s examples</td>
+<td>Example only</td>
+<td>Read by the scripts in <code>docs/developer-portal/examples/</code>.</td>
+</tr>
+</tbody></table></div>
+<h2 id="sdk-cli-and-client-variables">SDK, CLI and client variables<a class="anchor" href="#sdk-cli-and-client-variables" aria-label="Link to this section">#</a></h2>
+<p>These are read by the client tools, not by the server.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Read by</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PARMANA_TOKEN</code></td>
+<td><code>parmana-ops</code></td>
+<td>The caller&#39;s bearer token. Read from the environment only.</td>
+</tr>
+<tr>
+<td><code>PARMANA_API_URL</code></td>
+<td><code>parmana-ops</code></td>
+<td>The API address. A <code>--api-url</code> flag overrides it.</td>
+</tr>
+<tr>
+<td><code>PARMANA_PROFILE</code></td>
+<td><code>parmana-ops</code></td>
+<td>A named API address from the config file.</td>
+</tr>
+<tr>
+<td><code>PARMANA_CONFIG</code></td>
+<td><code>parmana-ops</code></td>
+<td>Path to the CLI config file.</td>
+</tr>
+</tbody></table></div>
+<p>The TypeScript and Python SDKs take the endpoint and key as constructor arguments. They do not read these variables themselves. Read the key from your own environment, as the examples do.</p>
+<h2 id="script-test-and-tooling-variables">Script, test and tooling variables<a class="anchor" href="#script-test-and-tooling-variables" aria-label="Link to this section">#</a></h2>
+<p>These are read by the repository&#39;s scripts and tests, not by the server or the SDKs. They are listed so that the reference is complete.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Read by</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PARMANA_API_KEY</code></td>
+<td><code>scripts/list-approval-refusals.mjs</code></td>
+<td>A caller key for the script&#39;s read-only listing. Not read by the SDKs.</td>
+</tr>
+<tr>
+<td><code>PARMANA_BASE_URL</code></td>
+<td><code>scripts/list-approval-refusals.mjs</code></td>
+<td>The API address for that script. Default <code>http://localhost:3000</code>.</td>
+</tr>
+<tr>
+<td><code>PROPOSER_KEY</code>, <code>REVIEWER_KEY</code></td>
+<td><code>scripts/refresh-approved-policy-content.ts</code>, <code>scripts/local-review-action.ts</code></td>
+<td>The maker&#39;s and checker&#39;s keys for the one-shot governance scripts. Tutorial 117 describes them.</td>
+</tr>
+<tr>
+<td><code>AWS_PROFILE</code></td>
+<td><code>scripts/verify-kms-signing.ts</code></td>
+<td>The AWS profile for the KMS check (<code>npm run verify:kms</code>). The standard AWS chain applies otherwise.</td>
+</tr>
+<tr>
+<td><code>CI_DATABASE_URL</code></td>
+<td>Continuous integration</td>
+<td>A database for CI runs. Not used by the server.</td>
+</tr>
+<tr>
+<td><code>CONTROL_PORT</code>, <code>LISTEN_PORT</code>, <code>TARGET_PORT</code></td>
+<td>Load and proxy test scripts</td>
+<td>Ports for test harnesses.</td>
+</tr>
+<tr>
+<td><code>VITEST</code>, <code>STRYKER_REPORT_NAME</code></td>
+<td>Test and mutation tooling</td>
+<td>Set by the test runners.</td>
+</tr>
+</tbody></table></div>
+<h2 id="variables-the-example-file-lists-that-were-not-checked">Variables the example file lists that were not checked<a class="anchor" href="#variables-the-example-file-lists-that-were-not-checked" aria-label="Link to this section">#</a></h2>
+<p>The repository&#39;s <a href="https://github.com/pavancharak/parmana-core/blob/main/.env.example">example file</a> documents more variables than this table. Each one in the table above was matched to the code. Variables that appear in the example file but not in this table were not checked against the code in this verification, and should be read there with that caveat.</p>
+<h2 id="minimum-set-for-a-deployment">Minimum set for a deployment<a class="anchor" href="#minimum-set-for-a-deployment" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">NODE_ENV=production
+PARMANA_STORAGE=postgres
+DATABASE_URL=postgresql://…                      # a secret
+PARMANA_POLICY_DIR=/srv/parmana/policies
+PARMANA_KEY_DIR=/srv/parmana/keys                # or KEY_PROVIDER=aws-kms with its settings
+PARMANA_API_KEYS='[{"callerId":"…","keyHash":"…","allowedCapabilities":["…"]}]'
+POLICY_CHANGE_CHECKERS='{"vendor-payment":["…"]}'
+CRYPTO_MODE=hybrid
+SECONDARY_SIGNATURE_PROVIDER=dilithium3
+# HYBRID_SCHEMA_VERSION defaults to 3. Set 2 only to roll back.</code></pre></div>
+<p>This is an illustrative set. The values are placeholders. Check each one against your deployment before you use it.</p>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/reference/environment-variables.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="index.html"><span>Previous</span>Developer reference</a><a class="pn next" href="error-codes.html"><span>Next</span>Error code catalogue</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#server-essentials">Server: essentials</a></li><li class="d2"><a href="#caller-authentication-and-governance">Caller authentication and governance</a></li><li class="d2"><a href="#keys-and-cryptography">Keys and cryptography</a></li><li class="d2"><a href="#experimental-and-opt-in">Experimental and opt-in</a></li><li class="d2"><a href="#test-and-example-variables">Test and example variables</a></li><li class="d2"><a href="#sdk-cli-and-client-variables">SDK, CLI and client variables</a></li><li class="d2"><a href="#script-test-and-tooling-variables">Script, test and tooling variables</a></li><li class="d2"><a href="#variables-the-example-file-lists-that-were-not-checked">Variables the example file lists that were not checked</a></li><li class="d2"><a href="#minimum-set-for-a-deployment">Minimum set for a deployment</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tutorial: integrate Parmana into a Python application · Parmana developer docs</title>
+<meta name="description" content="Tutorial: integrate Parmana into a Python application Tutorials · Python SDK · Node.js integration Goal. Your Python application or agent calls a business system. Parmana checks the policy and a signed human approval before the call runs, a">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="index.html">Tutorials</a></li><li><a href="maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="python-integration.html" aria-current="page">Tutorial: integrate Parmana into a Python application</a></li><li><a href="ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Tutorials</span><span class="sep">/</span><span>Tutorial: integrate Parmana into a Python application</span></div>
+    <article>
+<h1 id="tutorial-integrate-parmana-into-a-python-application">Tutorial: integrate Parmana into a Python application<a class="anchor" href="#tutorial-integrate-parmana-into-a-python-application" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">Tutorials</a> · <a href="../sdk/python.html">Python SDK</a> · <a href="nodejs-integration.html">Node.js integration</a></p>
+<p><strong>Goal.</strong> Your Python application or agent calls a business system. Parmana checks the policy and a signed human approval before the call runs, and gives your application signed evidence afterward.</p>
+<p><strong>Verification.</strong> Run against a local server from this repository: <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/python/governed_flow.py"><code>governed_flow.py</code></a> passed all six steps. The repository&#39;s Python test suite (<code>pytest</code>) passed 208 of 208. Output from the flow is in <a href="../getting-started.html#5-approve-a-policy-version-maker-checker">Getting started</a>.</p>
+<p>The Python SDK is <strong>synchronous only</strong>. Call it from a worker, a request handler, or a script. There is no <code>async</code> client.</p>
+<h2 id="who-does-what">Who does what<a class="anchor" href="#who-does-what" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Party</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Your application</strong></td>
+<td>Builds the request, asks the approver through your workflow, calls Parmana, and calls the business system only when Parmana approves.</td>
+</tr>
+<tr>
+<td><strong>The approver</strong> (a person)</td>
+<td>Signs an approval with their own key, on their own machine.</td>
+</tr>
+<tr>
+<td><strong><code>parmana</code></strong> (the SDK)</td>
+<td>Builds and sends the request with the caller&#39;s key, checks the endpoint is <code>https</code>, and raises a typed error for each refusal. It decides nothing.</td>
+</tr>
+<tr>
+<td><strong>The Parmana service</strong></td>
+<td>Checks the caller and the request, loads the policy version in effect, verifies the approval, decides, releases through the gateway, and writes and signs the record.</td>
+</tr>
+<tr>
+<td><strong>The business system</strong></td>
+<td>Performs the action when the connector calls it.</td>
+</tr>
+</tbody></table></div>
+<h2 id="step-1-install">Step 1: install<a class="anchor" href="#step-1-install" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">pip install "parmana==4.1.1"
+pip install "parmana[verify]==4.1.1"   # for signing approvals and offline verification</code></pre></div>
+<h2 id="step-2-create-the-client">Step 2: create the client<a class="anchor" href="#step-2-create-the-client" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>python</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-python">import os
+from parmana import ParmanaClient
+
+parmana = ParmanaClient(
+    endpoint=os.environ.get("PARMANA_ENDPOINT", "http://localhost:3000"),
+    api_key=os.environ["PARMANA_API_KEY"],
+)
+
+me = parmana.caller()
+print(me.caller_id, me.allowed_capabilities)   # check the actions this key may invoke</code></pre></div>
+<h2 id="step-3-build-the-transaction">Step 3: build the transaction<a class="anchor" href="#step-3-build-the-transaction" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>python</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-python">import uuid
+from parmana import PolicyReference, create_business_transaction
+
+def build_transaction(order_id: str, vendor_id: str, amount: float, risk_score: int, approval: dict | None):
+    signals = {
+        "humanApproved": approval is not None,
+        "vendorVerified": True,       # declared by the caller in this policy (a condition, not a verified fact)
+        "invoiceVerified": True,
+        "paymentApproved": True,
+        "sufficientFunds": True,
+        "paymentAmount": amount,      # bound: must equal parameters.amount
+        "riskScore": risk_score,
+        "vendorId": vendor_id,        # bound: must equal the target
+    }
+    if approval is not None:
+        signals["approvalArtifact"] = approval
+    return create_business_transaction(
+        business_transaction_id=str(uuid.uuid4()),  # single-use: a new id for each new action
+        principal_id="ap-automation-svc",
+        purpose=f"Pay vendor for order {order_id}",
+        action="test:fixture-execute",              # a capability your key is allowed to invoke
+        target=vendor_id,
+        parameters={"amount": amount, "currency": "USD"},
+        policy=PolicyReference(name="vendor-payment", version="2.1.0", schema_version="1.0.0"),
+        signals=signals,
+        correlation_id=order_id,
+        source_system="order-service",
+    )</code></pre></div>
+<p>Read what the policy verifies before you rely on it. In <code>vendor-payment</code>, the <code>vendorVerified</code>, <code>invoiceVerified</code>, <code>paymentApproved</code> and <code>sufficientFunds</code> values are declared by the caller. Parmana does not confirm them. The decision rests on the signed human approval. See the <a href="nodejs-integration.html#step-2-build-the-business-transaction">Node.js tutorial</a> and <a href="../policies/index.html#signals">Policy management</a>.</p>
+<h2 id="step-4-obtain-the-approval">Step 4: obtain the approval<a class="anchor" href="#step-4-obtain-the-approval" aria-label="Link to this section">#</a></h2>
+<p>The approver signs on their machine, and the application receives the result as data:</p>
+<div class="code"><div class="code-bar"><span>python</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-python"># On the approver's machine, or in the approver's own tool.
+from pathlib import Path
+from parmana.crypto import sign_approval
+
+approval = sign_approval(
+    private_key_pem=Path("approver.private.pem").read_text(),
+    approver_id="finance-approver-1",
+    key_id="finance-approver-key-1",
+    capability="test:fixture-execute",
+    resource_id="vendor://payments",
+    max_amount=1000,
+    ttl_seconds=900,
+)</code></pre></div>
+<p>Your application stores the approval JSON with the order, and never holds the approver&#39;s private key.</p>
+<h2 id="step-5-execute-and-handle-the-outcome">Step 5: execute and handle the outcome<a class="anchor" href="#step-5-execute-and-handle-the-outcome" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>python</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-python">from parmana import ConflictError, ExecutionRejectedError, ParmanaHttpError
+
+def authorize_and_run(transaction):
+    try:
+        record = parmana.execute(transaction)
+        return {"status": "approved", "trust_record_id": record.trust_record_id, "record": record}
+    except ExecutionRejectedError as error:
+        # Policy refused. Show the reason. Do not retry this transaction.
+        return {"status": "refused", "reason": str(error)}
+    except ConflictError:
+        # The id was used. Read the outcome that already exists.
+        return {"status": "already-recorded", "record": parmana.trust_record(transaction.business_transaction_id)}
+    except ParmanaHttpError as error:
+        # Other HTTP failures. Read the status before doing anything else.
+        status = parmana.transaction_status(transaction.business_transaction_id)
+        return {"status": "unknown", "current": status.current.status, "error": str(error)}</code></pre></div>
+<p>Verified outcomes on this build: approved (<code>200</code>), refused for the limit cases (<code>ExecutionRejectedError</code>), and a repeated id (<code>ConflictError</code>). The <code>ExecutionPendingError</code> (<code>202</code>) path is described in the <a href="../sdk/python.html#errors">Python SDK errors</a>; it is checked by an automated test in the server&#39;s suite (see <a href="../reference/error-codes.html">Error codes</a>); this tutorial did not trigger it.</p>
+<p>Check <code>status.current.status</code> against the enumeration by value. <code>TransactionStatusResult</code> reports statuses as plain strings in this build.</p>
+<h2 id="step-6-verify-the-evidence-offline">Step 6: verify the evidence offline<a class="anchor" href="#step-6-verify-the-evidence-offline" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>python</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-python">import json
+from parmana.crypto import verify_execution_trust_record_offline
+
+published = parmana.public_key("default")          # pin this out of band in production
+result = verify_execution_trust_record_offline(record, {"default": published.pem})
+if not result.valid:
+    raise RuntimeError(f"record did not verify: {result.errors}")
+print("coverage:", result.coverage)                # "legacy" on this build</code></pre></div>
+<p><code>record</code> is the <code>ExecutionTrustRecord</code> the SDK returned. You can also verify a record saved as JSON, by passing the dict from <code>json.load()</code>. See <a href="../security/evidence-verification.html">Evidence verification</a>.</p>
+<h2 id="what-happens-in-the-business-application">What happens in the business application<a class="anchor" href="#what-happens-in-the-business-application" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>The application asks for an approval through its own workflow and gets the approval JSON back.</li>
+<li>It builds the transaction and calls Parmana. If Parmana approves, the connector performs the action in the business system.</li>
+<li>The application stores the record. The record&#39;s <code>trust_record_id</code> is the reference for the action.</li>
+<li>If Parmana refuses, nothing reached the business system. The application shows the reason.</li>
+</ol>
+<h2 id="run-it">Run it<a class="anchor" href="#run-it" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash"># From the repository root, with the server running and the Python SDK installed:
+python3 docs/developer-portal/examples/governed-quickstart/python/governed_flow.py</code></pre></div>
+<h2 id="production-checklist">Production checklist<a class="anchor" href="#production-checklist" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Use <code>https://</code> and a caller key issued for this application only.</li>
+<li>Keep the approver&#39;s private key with the approver. Register the approver&#39;s public key through approval-issuer governance.</li>
+<li>Do not put secrets in <code>parameters</code>. The transaction is retained in the record.</li>
+<li>Do not retry <code>execute</code> in a loop. Read the status instead.</li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/tutorials/python-integration.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="nodejs-integration.html"><span>Previous</span>Tutorial: integrate Parmana into a Node.js service</a><a class="pn next" href="ai-agents.html"><span>Next</span>Tutorial: let an AI agent act through Parmana</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#who-does-what">Who does what</a></li><li class="d2"><a href="#step-1-install">Step 1: install</a></li><li class="d2"><a href="#step-2-create-the-client">Step 2: create the client</a></li><li class="d2"><a href="#step-3-build-the-transaction">Step 3: build the transaction</a></li><li class="d2"><a href="#step-4-obtain-the-approval">Step 4: obtain the approval</a></li><li class="d2"><a href="#step-5-execute-and-handle-the-outcome">Step 5: execute and handle the outcome</a></li><li class="d2"><a href="#step-6-verify-the-evidence-offline">Step 6: verify the evidence offline</a></li><li class="d2"><a href="#what-happens-in-the-business-application">What happens in the business application</a></li><li class="d2"><a href="#run-it">Run it</a></li><li class="d2"><a href="#production-checklist">Production checklist</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

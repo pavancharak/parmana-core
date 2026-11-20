@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tutorial: integrate Parmana into a Node.js service · Parmana developer docs</title>
+<meta name="description" content="Tutorial: integrate Parmana into a Node.js service Tutorials · TypeScript SDK · Python integration Goal. Your Node.js service calls a business system (here, a payment-like action). Before the call runs, Parmana checks the policy and a signe">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="index.html">Tutorials</a></li><li><a href="maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="nodejs-integration.html" aria-current="page">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Tutorials</span><span class="sep">/</span><span>Tutorial: integrate Parmana into a Node.js service</span></div>
+    <article>
+<h1 id="tutorial-integrate-parmana-into-a-nodejs-service">Tutorial: integrate Parmana into a Node.js service<a class="anchor" href="#tutorial-integrate-parmana-into-a-nodejs-service" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">Tutorials</a> · <a href="../sdk/typescript.html">TypeScript SDK</a> · <a href="python-integration.html">Python integration</a></p>
+<p><strong>Goal.</strong> Your Node.js service calls a business system (here, a payment-like action). Before the call runs, Parmana checks the policy and a signed human approval. Afterward, your service holds signed evidence of what was authorized and what ran.</p>
+<p><strong>Verification.</strong> Run against a local server from this repository. <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/typescript/governed-flow.ts"><code>governed-flow.ts</code></a> and <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/typescript/declare-then-execute.ts"><code>declare-then-execute.ts</code></a> both passed. Their output is in <a href="../getting-started.html">Getting started</a>.</p>
+<h2 id="who-does-what">Who does what<a class="anchor" href="#who-does-what" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Party</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Your service</strong></td>
+<td>Builds the Business Transaction from the request. Asks for an approval when the policy needs one. Calls Parmana. Calls the business system only when Parmana approves. Stores the record.</td>
+</tr>
+<tr>
+<td><strong>The approver</strong> (a person)</td>
+<td>Reviews the request outside Parmana and signs an approval with their own key, on their own machine.</td>
+</tr>
+<tr>
+<td><strong><code>@parmana/sdk</code></strong></td>
+<td>Builds the request, checks the endpoint is <code>https</code>, sends the caller&#39;s key, decodes the response, and raises a typed error for each refusal. It does not decide anything.</td>
+</tr>
+<tr>
+<td><strong>The Parmana service</strong></td>
+<td>Authenticates the caller, checks the request, loads the policy version in effect, verifies the approval, decides, releases through the gateway to a connector, and writes and signs the record.</td>
+</tr>
+<tr>
+<td><strong>The business system</strong></td>
+<td>Performs the action when the connector calls it. It should accept calls only from Parmana&#39;s connector.</td>
+</tr>
+</tbody></table></div>
+<h2 id="step-1-install-and-configure">Step 1: install and configure<a class="anchor" href="#step-1-install-and-configure" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">npm install @parmana/sdk@4.1.1</code></pre></div>
+<p>Configure the client from the environment. The endpoint must be <code>https://</code> except on your own machine.</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">// parmana.ts
+import { ParmanaClient } from "@parmana/sdk";
+
+export const parmana = new ParmanaClient({
+  endpoint: process.env.PARMANA_ENDPOINT ?? "http://localhost:3000",
+  apiKey: process.env.PARMANA_API_KEY,
+});</code></pre></div>
+<p>The caller key is issued to your service. Its allowed capabilities and principals are set by the operator (see <a href="../reference/environment-variables.html">Environment variables</a> for <code>PARMANA_API_KEYS</code>). Check them at start-up:</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">const me = await parmana.caller();
+if (!me.allowedCapabilities.includes("test:fixture-execute")) {
+  throw new Error(
+    `this key may not invoke test:fixture-execute; allowed: ${me.allowedCapabilities}`,
+  );
+}</code></pre></div>
+<h2 id="step-2-build-the-business-transaction">Step 2: build the Business Transaction<a class="anchor" href="#step-2-build-the-business-transaction" aria-label="Link to this section">#</a></h2>
+<p>Use the builder. It keeps the ids consistent. The signal names are the ones the policy reads; each policy declares its own (see <a href="../policies/index.html">Policy management</a>).</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import { randomUUID } from "node:crypto";
+import { createBusinessTransaction } from "@parmana/sdk";
+
+export function buildTransaction(
+  order: { id: string; vendorId: string; amount: number; riskScore: number },
+  approval: unknown,
+) {
+  return createBusinessTransaction({
+    businessTransactionId: randomUUID(), // single-use: a new id for each new action
+    principalId: "ap-automation-svc", // the principal this action is for
+    purpose: `Pay vendor for order ${order.id}`,
+    action: "test:fixture-execute", // a capability your key is allowed to invoke
+    target: order.vendorId, // what the action acts on
+    parameters: { amount: order.amount, currency: "USD" },
+    policy: {
+      name: "vendor-payment",
+      version: "2.1.0",
+      schemaVersion: "1.0.0",
+    },
+    signals: {
+      humanApproved: approval !== undefined,
+      ...(approval !== undefined &amp;&amp; { approvalArtifact: approval }),
+      vendorVerified: true, // declared by the caller in this policy: a condition, not a fact Parmana verifies
+      invoiceVerified: true,
+      paymentApproved: true,
+      sufficientFunds: true,
+      paymentAmount: order.amount, // bound: must equal parameters.amount
+      riskScore: order.riskScore,
+      vendorId: order.vendorId, // bound: must equal target
+    },
+    correlationId: order.id,
+    sourceSystem: "order-service",
+  });
+}</code></pre></div>
+<p><strong>Read what your policy actually verifies.</strong> In the <code>vendor-payment</code> policy used here, <code>vendorVerified</code>, <code>invoiceVerified</code>, <code>paymentApproved</code> and <code>sufficientFunds</code> are declared by the caller. The policy has no signal source for them, so Parmana does not confirm them. They are conditions the approve rule reads, and the policy&#39;s decision rests on the signed human approval. If your organization needs Parmana to confirm vendor verification, the policy must bind that fact to a registered source. That is a decision for the policy&#39;s owner, made in the policy file and approved through maker-checker. See <a href="../policies/index.html#signals">Policy management</a>.</p>
+<h2 id="step-3-ask-a-human-then-attach-the-approval">Step 3: ask a human, then attach the approval<a class="anchor" href="#step-3-ask-a-human-then-attach-the-approval" aria-label="Link to this section">#</a></h2>
+<p>A policy whose approve rule needs a human approval cannot be satisfied by your service alone. Ask the approver through your own workflow, for example a review queue. The approver signs on their machine:</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">// Runs on the approver's machine, or in the approver's own tool. Never in the service.
+import { readFileSync } from "node:fs";
+import { signApproval } from "@parmana/sdk";
+
+const approval = signApproval({
+  privateKeyPem: readFileSync("approver.private.pem", "utf8"),
+  approverId: "finance-approver-1",
+  keyId: "finance-approver-key-1",
+  capability: "test:fixture-execute",
+  resourceId: "vendor://payments", // the target this approval covers
+  maxAmount: 1000, // the largest amount this approval covers
+  ttlSeconds: 900,
+});
+// The approver returns the JSON of `approval` to your service through the workflow.</code></pre></div>
+<p>Your service receives the approval as data and attaches it. It never holds the approver&#39;s private key.</p>
+<h2 id="step-4-execute-and-handle-each-outcome">Step 4: execute, and handle each outcome<a class="anchor" href="#step-4-execute-and-handle-each-outcome" aria-label="Link to this section">#</a></h2>
+<p>The one-call form (<code>execute</code>) decides and releases in one request. Use <a href="../getting-started.html#6-submit-a-business-transaction">declare then execute</a> when you need to record the request first.</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import {
+  ConflictError,
+  ExecutionPendingError,
+  ExecutionRejectedError,
+  ParmanaError,
+} from "@parmana/sdk";
+
+export async function authorizeAndRun(
+  transaction: ReturnType&lt;typeof buildTransaction&gt;,
+) {
+  try {
+    const record = await parmana.execute(transaction);
+    // Approved and released. Store the record: it is your evidence.
+    return { status: "approved" as const, record };
+  } catch (error) {
+    if (error instanceof ExecutionRejectedError) {
+      // Policy refused. Show the reason. Do not retry this transaction.
+      return { status: "refused" as const, reason: error.message };
+    }
+    if (error instanceof ConflictError) {
+      // The id was used. Read the outcome that already exists.
+      const existing = await parmana.trustRecord(
+        transaction.businessTransactionId,
+      );
+      return { status: "already-recorded" as const, record: existing };
+    }
+    if (error instanceof ExecutionPendingError) {
+      // Released; the status is not yet final. Reconcile. Do not resubmit.
+      await parmana.reconcileTransaction(transaction.businessTransactionId);
+      return { status: "reconciling" as const };
+    }
+    if (error instanceof ParmanaError) {
+      // Other failures: rate limit, unavailable, or an outcome that may be unknown.
+      // Read the status before doing anything else.
+      const status = await parmana.transactionStatus(
+        transaction.businessTransactionId,
+      );
+      return {
+        status: "unknown" as const,
+        current: status.current.status,
+        error: error.message,
+      };
+    }
+    throw error;
+  }
+}</code></pre></div>
+<p>Verified outcomes on this build: <code>200</code> for an approved request, <code>403</code> (<code>ExecutionRejectedError</code>) for the three limit cases, <code>409</code> (<code>ConflictError</code>) for a repeated id. The <code>502</code> (<code>EXECUTION_OUTCOME_UNKNOWN</code>) and <code>500</code> (<code>EXECUTION_RECORD_INCOMPLETE</code>) branches, and the <code>202</code> (<code>EXECUTION_STATUS_PENDING</code>) branch, are each checked by an automated test in the server&#39;s suite (see <a href="../reference/error-codes.html">Error codes</a>). This tutorial did not trigger them.</p>
+<h2 id="step-5-verify-the-evidence">Step 5: verify the evidence<a class="anchor" href="#step-5-verify-the-evidence" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import { verifyExecutionTrustRecordOffline } from "@parmana/sdk";
+
+const published = await parmana.publicKey("default");
+const check = verifyExecutionTrustRecordOffline(record, {
+  default: published.pem,
+});
+if (!check.valid)
+  throw new Error(`record did not verify: ${check.errors.join("; ")}`);
+console.log("coverage:", check.coverage); // "legacy" on this build: see Evidence verification</code></pre></div>
+<p>Store the record and the verification result together. An auditor can repeat the check later with the pinned key. <a href="../security/evidence-verification.html">Evidence verification</a> explains coverage and pinning.</p>
+<h2 id="what-happens-in-the-business-application">What happens in the business application<a class="anchor" href="#what-happens-in-the-business-application" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>Your service asks the approver, gets the approval, and builds the transaction.</li>
+<li>Parmana approves. The connector calls the payment system. The payment system performs the action.</li>
+<li>Your service receives the record. Only now does it mark the order paid, using the record&#39;s <code>trustRecordId</code> as the reference.</li>
+<li>If Parmana refuses, nothing reached the payment system. Your service shows the refusal and leaves the order unpaid.</li>
+</ol>
+<p>The business system never has to know about Parmana, provided it accepts calls only from the connector. If it accepts calls from anywhere, an agent can still bypass Parmana with its own credentials.</p>
+<h2 id="run-it">Run it<a class="anchor" href="#run-it" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash"># From the repository root, with the server running:
+npx tsx docs/developer-portal/examples/governed-quickstart/typescript/governed-flow.ts
+npx tsx docs/developer-portal/examples/governed-quickstart/typescript/declare-then-execute.ts</code></pre></div>
+<h2 id="production-checklist">Production checklist<a class="anchor" href="#production-checklist" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Use <code>https://</code> and a caller key issued for this service only. Restrict its <code>allowedCapabilities</code> and <code>allowedPrincipalIds</code>.</li>
+<li>Keep approver keys with the approvers. Register approver public keys through approval-issuer governance.</li>
+<li>Do not enable the test approver (<code>PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE</code>) outside <code>NODE_ENV=test</code>. The server refuses to start if you do.</li>
+<li>Keep the connector&#39;s business call behind Parmana&#39;s gateway. Do not give the service direct credentials for the payment system.</li>
+<li>Store the record with the order. Verify it when you need proof.</li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/tutorials/nodejs-integration.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="refund-authorization.html"><span>Previous</span>Tutorial: authorize a refund</a><a class="pn next" href="python-integration.html"><span>Next</span>Tutorial: integrate Parmana into a Python application</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#who-does-what">Who does what</a></li><li class="d2"><a href="#step-1-install-and-configure">Step 1: install and configure</a></li><li class="d2"><a href="#step-2-build-the-business-transaction">Step 2: build the Business Transaction</a></li><li class="d2"><a href="#step-3-ask-a-human-then-attach-the-approval">Step 3: ask a human, then attach the approval</a></li><li class="d2"><a href="#step-4-execute-and-handle-each-outcome">Step 4: execute, and handle each outcome</a></li><li class="d2"><a href="#step-5-verify-the-evidence">Step 5: verify the evidence</a></li><li class="d2"><a href="#what-happens-in-the-business-application">What happens in the business application</a></li><li class="d2"><a href="#run-it">Run it</a></li><li class="d2"><a href="#production-checklist">Production checklist</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

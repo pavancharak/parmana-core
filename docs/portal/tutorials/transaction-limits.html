@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tutorial: enforce transaction limits · Parmana developer docs</title>
+<meta name="description" content="Tutorial: enforce transaction limits Tutorials · Fintech integration · Policy management Goal. Make sure no execution goes above what was approved, or above the policy's risk threshold, whatever the application asks for. Parmana enforces th">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="index.html">Tutorials</a></li><li><a href="maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="transaction-limits.html" aria-current="page">Tutorial: enforce transaction limits</a></li><li><a href="refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Tutorials</span><span class="sep">/</span><span>Tutorial: enforce transaction limits</span></div>
+    <article>
+<h1 id="tutorial-enforce-transaction-limits">Tutorial: enforce transaction limits<a class="anchor" href="#tutorial-enforce-transaction-limits" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">Tutorials</a> · <a href="fintech-integration.html">Fintech integration</a> · <a href="../policies/index.html">Policy management</a></p>
+<p><strong>Goal.</strong> Make sure no execution goes above what was approved, or above the policy&#39;s risk threshold, whatever the application asks for. Parmana enforces three kinds of limit: the <strong>approved amount</strong> (through the human approval), the <strong>bound amount</strong> (the request&#39;s two amounts must agree), and the <strong>policy threshold</strong> (a fact the policy compares, such as a risk score).</p>
+<p><strong>Verification.</strong> <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/typescript/limits.ts"><code>limits.ts</code></a> ran against a local server. All three cases were refused with the expected reason, and the script exits non-zero if any of them is approved. Output is in the <a href="fintech-integration.html#step-2-refuse-the-payments-that-should-not-go-through">fintech tutorial</a>.</p>
+<h2 id="three-kinds-of-limit">Three kinds of limit<a class="anchor" href="#three-kinds-of-limit" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Limit</th>
+<th>Set by</th>
+<th>Enforced by</th>
+<th>Example refusal</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Approved amount</strong> (<code>maxAmount</code> on the approval)</td>
+<td>The human approver, when they sign</td>
+<td>The server verifies the approval&#39;s scope against <code>parameters.amount</code></td>
+<td>The approval covers 1000; the payment asks for 5000</td>
+</tr>
+<tr>
+<td><strong>Bound amount</strong> (<code>paymentAmount</code> must equal <code>parameters.amount</code>)</td>
+<td>The policy (<code>boundSignals</code>)</td>
+<td>The server, before the rules run</td>
+<td><code>paymentAmount=999</code> but <code>parameters.amount=1000</code></td>
+</tr>
+<tr>
+<td><strong>Policy threshold</strong> (<code>riskScore</code> at most 20)</td>
+<td>The policy owner (in the rule)</td>
+<td>The policy rules, in order</td>
+<td><code>riskScore=25</code>: &quot;exceeds the maximum permitted threshold&quot;</td>
+</tr>
+</tbody></table></div>
+<p>Each is independent. A payment must pass all three. Meeting one does not waive another.</p>
+<h2 id="what-the-policy-says">What the policy says<a class="anchor" href="#what-the-policy-says" aria-label="Link to this section">#</a></h2>
+<p>From <code>vendor-payment@2.1.0</code>:</p>
+<ul>
+<li><code>boundSignals</code>: <code>paymentAmount</code> is bound to <code>parameters.amount</code>; <code>vendorId</code> is bound to <code>target</code>.</li>
+<li><code>approvalSignals</code>: <code>humanApproved</code> is approved by a signed approval for <code>target</code>, with the value <code>parameters.amount</code>.</li>
+<li>A rule approves only when <code>riskScore</code> is at most 20, and <code>paymentAmount</code> is greater than zero.</li>
+<li>A rule rejects when <code>riskScore</code> is above 20.</li>
+</ul>
+<p>The approval&#39;s scope is the part a developer most often gets wrong. The approval is not &quot;the payment is approved&quot;. It is &quot;this approver approves up to this amount, on this target, for this window&quot;.</p>
+<h2 id="step-1-sign-the-approval-for-the-amount-you-intend-to-pay">Step 1: sign the approval for the amount you intend to pay<a class="anchor" href="#step-1-sign-the-approval-for-the-amount-you-intend-to-pay" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import { signApproval } from "@parmana/sdk";
+
+const approval = signApproval({
+  privateKeyPem: approverPrivatePem,
+  approverId: "finance-approver-1",
+  keyId: "finance-approver-key-1",
+  capability: "test:fixture-execute",
+  resourceId: "vendor://payments",
+  maxAmount: 1000, // the largest amount this approval covers
+  ttlSeconds: 900,
+});</code></pre></div>
+<p>Give the approver the amount they are approving, and sign a <code>maxAmount</code> equal to it, not a round, larger number. A larger ceiling lets the same approval cover a larger payment. An approval stays usable until its <code>ttlSeconds</code> run out, and it is usable once.</p>
+<h2 id="step-2-send-the-amount-the-approval-covers">Step 2: send the amount the approval covers<a class="anchor" href="#step-2-send-the-amount-the-approval-covers" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">const transaction = createBusinessTransaction({
+  // ...
+  parameters: { amount: 1000, currency: "USD" },
+  signals: {
+    humanApproved: true,
+    approvalArtifact: approval,
+    // ...
+    paymentAmount: 1000, // must equal parameters.amount
+    riskScore: 5, // the policy's threshold is 20
+    vendorId: "vendor://payments",
+  },
+});</code></pre></div>
+<h2 id="the-three-refusals">The three refusals<a class="anchor" href="#the-three-refusals" aria-label="Link to this section">#</a></h2>
+<p>These are the three cases <code>limits.ts</code> runs. Each should be refused. Each was refused on the server, with <code>ExecutionRejectedError</code> (HTTP 403):</p>
+<p><strong>1. The payment is above the approval.</strong> The approval covers 1000. The request asks for 5000.</p>
+<div class="code"><div class="code-bar"><span>text</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-text">refused: amount above the human approval
+   ExecutionRejectedError HTTP 403
+   Execution rejected: Rejected: declared signal(s) do not match independently verified state (humanApproved=true != verified humanApproved=false).</code></pre></div>
+<p>The server verifies the approval against the request. The check fails, and the verified value of <code>humanApproved</code> is false.</p>
+<p><strong>2. The risk score is above the threshold.</strong> The approval is valid, and the amount is right. The score is 25.</p>
+<div class="code"><div class="code-bar"><span>text</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-text">refused: risk score above the policy limit
+   ExecutionRejectedError HTTP 403
+   Execution rejected: Vendor payment rejected because the assessed payment risk exceeds the maximum permitted threshold.</code></pre></div>
+<p><strong>3. The bound amount does not match the request.</strong> <code>paymentAmount</code> says 999; <code>parameters.amount</code> says 1000.</p>
+<div class="code"><div class="code-bar"><span>text</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-text">refused: bound paymentAmount differs from amount
+   ExecutionRejectedError HTTP 403
+   Execution rejected: Rejected: declared signal(s) do not match the executed intent (paymentAmount=999 != intent.parameters.amount=1000).</code></pre></div>
+<h2 id="run-it">Run it<a class="anchor" href="#run-it" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash"># With the server running and vendor-payment approved (see the fintech tutorial):
+GOVERNED_POLICY_VERSION=2.1.0 npx tsx docs/developer-portal/examples/governed-quickstart/typescript/limits.ts</code></pre></div>
+<p>If any case is approved, the script prints <code>UNEXPECTED</code> and exits with code 1. If you change the policy or the approval, run it again: the refusals are the test.</p>
+<h2 id="handle-the-refusal">Handle the refusal<a class="anchor" href="#handle-the-refusal" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import { ExecutionRejectedError } from "@parmana/sdk";
+
+try {
+  await client.execute(transaction);
+} catch (error) {
+  if (error instanceof ExecutionRejectedError) {
+    // The payment is not authorized. Do not retry it with a larger approval or a changed amount
+    // on your own. Return the reason to the approver, who may sign a new approval for the right amount.
+    return { authorized: false, reason: error.message };
+  }
+  throw error;
+}</code></pre></div>
+<h2 id="what-to-do-when-a-limit-is-reached">What to do when a limit is reached<a class="anchor" href="#what-to-do-when-a-limit-is-reached" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>An approver needs a larger amount.</strong> A new approval, for the new amount, signed by the approver. The application does not change the amount on its own.</li>
+<li><strong>The risk threshold is too strict for your business.</strong> Change the policy. Changes are made through maker-checker, and the change is in effect only once approved.</li>
+<li><strong>The bound amount is wrong in your code.</strong> Build <code>paymentAmount</code> and <code>parameters.amount</code> from the same variable. The builder does not do this for you, because the policy chooses which signals to bind.</li>
+</ul>
+<h2 id="production-notes">Production notes<a class="anchor" href="#production-notes" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Make the approval&#39;s <code>maxAmount</code> a value the approver saw. The approval scope has no currency, and the example policy&#39;s rules compare amounts only, so check the currency in your own code and policy.</li>
+<li>Keep approvals short-lived. The default is 900 seconds. A longer validity is longer exposure for an approval that has not been used.</li>
+<li>Log every refusal. A refused execution is recorded as a refusal record, readable at <code>GET /refusal/{businessTransactionId}</code>. This was verified for a refusal caused by a missing approval; check the limit cases in your deployment the same way.</li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/tutorials/transaction-limits.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="maker-checker.html"><span>Previous</span>Tutorial: maker-checker approval of a policy change</a><a class="pn next" href="refund-authorization.html"><span>Next</span>Tutorial: authorize a refund</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#three-kinds-of-limit">Three kinds of limit</a></li><li class="d2"><a href="#what-the-policy-says">What the policy says</a></li><li class="d2"><a href="#step-1-sign-the-approval-for-the-amount-you-intend-to-pay">Step 1: sign the approval for the amount you intend to pay</a></li><li class="d2"><a href="#step-2-send-the-amount-the-approval-covers">Step 2: send the amount the approval covers</a></li><li class="d2"><a href="#the-three-refusals">The three refusals</a></li><li class="d2"><a href="#run-it">Run it</a></li><li class="d2"><a href="#handle-the-refusal">Handle the refusal</a></li><li class="d2"><a href="#what-to-do-when-a-limit-is-reached">What to do when a limit is reached</a></li><li class="d2"><a href="#production-notes">Production notes</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

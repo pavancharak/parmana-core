@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>@parmana/execution-system: API reference · Parmana developer docs</title>
+<meta name="description" content="@parmana/execution-system : API reference Portal home · Publishing decision · Envelope verifier API Status: the three defects recorded on 2026-11-20 are fixed; the package is still held. This page documents the public surface, so the owner ">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="execution-system-api.html" aria-current="page">@parmana/execution-system: API reference</a></li><li><a href="publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>SDKs and packages</span><span class="sep">/</span><span>@parmana/execution-system: API reference</span></div>
+    <article>
+<h1 id="parmanaexecution-system-api-reference"><code>@parmana/execution-system</code>: API reference<a class="anchor" href="#parmanaexecution-system-api-reference" aria-label="Link to this section">#</a></h1>
+<p><a href="../index.html">Portal home</a> · <a href="publishing-envelope-verifier-and-execution-system.html">Publishing decision</a> · <a href="envelope-verifier-api.html">Envelope verifier API</a></p>
+<p><strong>Status: the three defects recorded on 2026-11-20 are fixed; the package is still held.</strong> This page documents the public surface, so the owner can decide what to publish. The placeholder is renamed to <code>SimulatedExecutionSystem</code>, the timeout is applied, and responses are validated. The package still needs its receiving-system obligations documented, and an owner decision, before it is published.</p>
+<p><strong>Requirements:</strong> Node.js 24 or later. One entry point: <code>@parmana/execution-system</code>.</p>
+<h2 id="what-it-is">What it is<a class="anchor" href="#what-it-is" aria-label="Link to this section">#</a></h2>
+<p>The package defines the request Parmana sends to an execution system once an action is authorized, and a client that sends it over HTTP. It does not authorize anything itself. The receiving system must verify the authorization before it executes (see the <a href="envelope-verifier-api.html">envelope verifier</a>).</p>
+<h2 id="types">Types<a class="anchor" href="#types" aria-label="Link to this section">#</a></h2>
+<h3 id="executionrequest"><code>ExecutionRequest</code><a class="anchor" href="#executionrequest" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>businessTransactionId</code></td>
+<td><code>string</code></td>
+<td>The Business Transaction identifier.</td>
+</tr>
+<tr>
+<td><code>action</code></td>
+<td><code>string</code></td>
+<td>The approved action.</td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>string</code></td>
+<td>The approved target.</td>
+</tr>
+<tr>
+<td><code>parameters</code></td>
+<td><code>Record&lt;string, unknown&gt;</code></td>
+<td>The approved parameters.</td>
+</tr>
+<tr>
+<td><code>signals</code></td>
+<td><code>Record&lt;string, unknown&gt;</code>, optional</td>
+<td>The runtime signals the decision was evaluated against. A receiving gateway can recompute their hash against the authorization&#39;s <code>signalsHash</code>.</td>
+</tr>
+<tr>
+<td><code>authorization</code></td>
+<td><code>SignedExecutionAuthorization</code></td>
+<td>The signed proof that Parmana authorized the execution. The receiving system must verify its signature and expiry before executing.</td>
+</tr>
+</tbody></table></div>
+<h3 id="executionsystemclientoptions"><code>ExecutionSystemClientOptions</code><a class="anchor" href="#executionsystemclientoptions" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>baseUrl</code></td>
+<td>Yes</td>
+<td>The base URL of the execution system.</td>
+</tr>
+<tr>
+<td><code>headers</code></td>
+<td>No</td>
+<td>HTTP headers sent with each request, for example an authorization header for the system.</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>No</td>
+<td>Declared, but <strong>not applied</strong> by the client. See defect 2.</td>
+</tr>
+</tbody></table></div>
+<h3 id="executionsystem"><code>ExecutionSystem</code><a class="anchor" href="#executionsystem" aria-label="Link to this section">#</a></h3>
+<div class="code"><div class="code-bar"><span>ts</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-ts">interface ExecutionSystem {
+  execute(request: ExecutionRequest): Promise&lt;ExecutionResult&gt;;
+}</code></pre></div>
+<p>Any execution system implements this interface. <code>ExecutionResult</code> comes from <code>@parmana/shared</code>.</p>
+<h2 id="implementations">Implementations<a class="anchor" href="#implementations" aria-label="Link to this section">#</a></h2>
+<h3 id="httpexecutionsystem"><code>HttpExecutionSystem</code><a class="anchor" href="#httpexecutionsystem" aria-label="Link to this section">#</a></h3>
+<p>Sends <code>POST {baseUrl}/execute</code> with the request as JSON. It applies the <code>timeout</code> option: a request that does not finish in time throws <code>Execution System did not respond within &lt;n&gt; ms. The action may have run; reconcile it.</code>, so a timed-out request must be reconciled, not resent. A non-2xx response throws <code>Error(&quot;Execution System returned HTTP &lt;status&gt;.&quot;)</code>.</p>
+<p>The response is checked before it is returned. It must be an object with string <code>businessTransactionId</code>, <code>action</code> and <code>target</code>, a boolean <code>success</code>, an object <code>parameters</code>, and an <code>executedAt</code> timestamp string. Anything else throws <code>Execution System response: ... </code>. <code>executedAt</code> is returned as a <code>Date</code>.</p>
+<p>The constructor refuses a <code>timeout</code> that is not a positive number.</p>
+<h3 id="simulatedexecutionsystem"><code>SimulatedExecutionSystem</code><a class="anchor" href="#simulatedexecutionsystem" aria-label="Link to this section">#</a></h3>
+<p><strong>Executes nothing.</strong> It returns <code>success: true</code> for any request. It is for tests and examples only. Anyone who uses it as a real execution system will record actions that never happened. It was named <code>DefaultExecutionSystem</code> until 2026-11-20, when it was renamed so its behaviour is clear.</p>
+<h2 id="defects-recorded-2026-11-20-fixed-the-same-day">Defects (recorded 2026-11-20, fixed the same day)<a class="anchor" href="#defects-recorded-2026-11-20-fixed-the-same-day" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><strong>The placeholder reported success without executing.</strong> Renamed to <code>SimulatedExecutionSystem</code>, with a documentation comment that says it executes nothing. The name was not changed for its behaviour, which is the same as before.</li>
+<li><strong><code>timeout</code> was declared but not applied.</strong> Now applied with <code>AbortSignal.timeout</code>, with tests.</li>
+<li><strong>The response was not validated.</strong> Now checked field by field, with tests for each case.</li>
+</ol>
+<p>Tests: <code>packages/execution-system/tests/unit/http-execution-system.test.ts</code> and <code>simulated-execution-system.test.ts</code>.</p>
+<h2 id="what-is-not-in-this-package">What is not in this package<a class="anchor" href="#what-is-not-in-this-package" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>No authorization check. The receiving system must verify the envelope itself.</li>
+<li>No connector. The execution system is the caller&#39;s integration point.</li>
+<li>No retry or idempotency. A request that times out or fails after the action ran must be reconciled by the caller.</li>
+</ul>
+<h2 id="before-the-package-can-be-published">Before the package can be published<a class="anchor" href="#before-the-package-can-be-published" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>Document the receiving system&#39;s obligations: verify the envelope, and handle the signals.</li>
+<li>Decide whether to publish with <code>SimulatedExecutionSystem</code> in the public surface. Its name now says it executes nothing, but the owner should confirm it belongs in a published package.</li>
+<li>Publish through the release process, as set out in the <a href="publishing-envelope-verifier-and-execution-system.html">publishing page</a>.</li>
+</ol>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/packages/execution-system-api.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="envelope-verifier-api.html"><span>Previous</span>@parmana/envelope-verifier: API reference</a><a class="pn next" href="publishing-envelope-verifier-and-execution-system.html"><span>Next</span>Publishing @parmana/envelope-verifier and @parmana/execution-system</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#what-it-is">What it is</a></li><li class="d2"><a href="#types">Types</a></li><li class="d3"><a href="#executionrequest">ExecutionRequest</a></li><li class="d3"><a href="#executionsystemclientoptions">ExecutionSystemClientOptions</a></li><li class="d3"><a href="#executionsystem">ExecutionSystem</a></li><li class="d2"><a href="#implementations">Implementations</a></li><li class="d3"><a href="#httpexecutionsystem">HttpExecutionSystem</a></li><li class="d3"><a href="#simulatedexecutionsystem">SimulatedExecutionSystem</a></li><li class="d2"><a href="#defects-recorded-2026-11-20-fixed-the-same-day">Defects (recorded 2026-11-20, fixed the same day)</a></li><li class="d2"><a href="#what-is-not-in-this-package">What is not in this package</a></li><li class="d2"><a href="#before-the-package-can-be-published">Before the package can be published</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>
