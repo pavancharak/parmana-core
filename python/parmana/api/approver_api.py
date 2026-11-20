@@ -53,7 +53,7 @@ class ApproverApi:
         approver_id: str,
         key_id: str,
         public_key_pem: str,
-        capabilities: list[str],
+        capabilities: builtins.list[str],
         reason: str,
     ) -> ApprovalIssuerChange:
         """
