@@ -13,7 +13,7 @@ The API is described by an OpenAPI document at https://pavancharak.github.io/par
 
 ## Concepts
 
-- [Architecture](https://pavancharak.github.io/parmana-core/portal/architecture.html): This page shows how a request moves through Parmana, where the trust boundaries are, which steps are synchronous, and where asynchronous work happens. The diagrams are Mermaid. They render on GitHub a
+- [Architecture](https://pavancharak.github.io/parmana-core/portal/architecture.html): This page shows how a request moves through Parmana, where the trust boundaries are, which steps are synchronous, and where asynchronous work happens. The request path is written as numbered steps. Th
 - [Glossary](https://pavancharak.github.io/parmana-core/portal/glossary.html): Terms are in alphabetical order. Where a term has a page with more detail, the entry links to it.
 - [Policy management](https://pavancharak.github.io/parmana-core/portal/policies/index.html): A policy is the organization's rule for one kind of action. Parmana does not decide what your business allows. You write the policy, a second person approves each version, and Parmana enforces it on e
 - [Security and cryptographic verification](https://pavancharak.github.io/parmana-core/portal/security/index.html): This page explains what Parmana signs, what the signatures cover, how the keys are trusted, and what happens when something goes wrong. The claims are checked against the code and against tests run fo
@@ -58,7 +58,7 @@ The API is described by an OpenAPI document at https://pavancharak.github.io/par
 - [Developer reference](https://pavancharak.github.io/parmana-core/portal/reference/index.html): This section is the lookup material: where each definition lives, the complete indexes, the configuration, and the error codes. Use it when you know the name of a thing and want its exact definition.
 - [Environment variable reference](https://pavancharak.github.io/parmana-core/portal/reference/environment-variables.html): Parmana is configured through environment variables. The server reads them at start-up and refuses to start when a required one is missing or invalid. The SDKs and the CLI read a few more, listed at t
 - [Error code catalogue](https://pavancharak.github.io/parmana-core/portal/reference/error-codes.html): A Parmana error is an HTTP status plus a body. The body has an error message and, for most refusals, a code. The SDKs turn the status into a class, and keep the server's code where one is sent.
-- [Error code index](https://pavancharak.github.io/parmana-core/portal/reference/error-code-index.html): 106 error code literals found in the server source. "Triggered in verification" means a request in this portal's runs produced the code. The others are defined in source and were not triggered; their 
+- [Error code index](https://pavancharak.github.io/parmana-core/portal/reference/error-code-index.html): 107 error code literals found in the server source. "Triggered in verification" means a request in this portal's runs produced the code. The others are defined in source and were not triggered; their 
 - [Troubleshooting](https://pavancharak.github.io/parmana-core/portal/troubleshooting/index.html): This page starts from what you see and works back to the cause. The messages quoted here were observed in this verification, unless a section says otherwise. For the full list of codes, read the error
 
 ## Project
