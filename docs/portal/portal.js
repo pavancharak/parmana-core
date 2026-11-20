@@ -4,7 +4,8 @@
 (function () {
   "use strict";
 
-  var root = document.documentElement.getAttribute("data-root") || "";
+  // The root is set by an inline script in each page, not read from the DOM.
+  var root = window.PORTAL_ROOT || "";
   var index = (window.PORTAL_INDEX || []).slice();
 
   // ---- search ----

@@ -379,7 +379,7 @@ function layout(page) {
   const crumb = `<div class="crumb"><span>${escapeHtml(group)}</span><span class="sep">/</span><span>${escapeHtml(page.title)}</span></div>`;
   const editUrl = `${repoUrl}/edit/${branch}/${PORTAL_IN_REPO}/${page.src}`;
   return `<!doctype html>
-<html lang="en" data-root="${rootPrefix}">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -420,6 +420,7 @@ ${page.html}
   </main>
   ${tocHtml(page)}
 </div>
+<script>window.PORTAL_ROOT = ${JSON.stringify(rootPrefix)};</script>
 <script src="${rootPrefix}search-index.js"></script>
 <script src="${rootPrefix}portal.js"></script>
 </body>
