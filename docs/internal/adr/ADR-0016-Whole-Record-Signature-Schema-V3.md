@@ -95,3 +95,13 @@ Until the gate opens, a deployment that sets `HYBRID_SCHEMA_VERSION=3` is runnin
 ## Addendum (2026-10-31): offline verifiers refuse legacy-only records by default
 
 Option 2 required a verifier to reject a post-cutover record with no hybrid envelope. Without a cutover date, the offline verifier also accepted a record with its envelope removed, because a missing envelope counted as a pass. That is fixed: a record with no envelope is accepted only if it predates a supplied `hybridRequiredFrom`, or if no cutover is set and the caller passes `allowLegacyOnly: true` (the `allowLegacyOnly` trust-file field in `parmana-verifier`). A cutover, when given, decides alone. Affected: `verifyExecutionTrustRecordOffline` in `packages/crypto`, and `parmana-verifier` (Node and Python). The in-browser verifier in `docs/site/snippets/record-verifier.jsx` applies the same default, with an explicit reader opt-in.
+
+## Decision recorded (2026-11-20): option 2, cutover
+
+**Chosen:** option 2, a verifier-pinned cutover. Verifiers reject any record created at or after the cutover that has no valid `signatures` array, whatever its `schemaVersion`. Records before the cutover keep their current rules. The verifier already implements this as `hybridRequiredFrom` in the trust file, in both the Node and Python verifiers, with tests.
+
+**Precondition, before the cutover takes effect.** The server attaches a `signatures` array only when `CRYPTO_MODE=hybrid` (`packages/runtime/src/BusinessTrustRecordBuilder.ts`). `CRYPTO_MODE` defaults to `single` (`.env.example`). A server still in `single` mode issues records with no hybrid envelope, and a verifier configured with the cutover refuses all of them. So the cutover instant must be the moment every issuing server runs `CRYPTO_MODE=hybrid` with `SECONDARY_SIGNATURE_PROVIDER` set and `HYBRID_SIGNATURE_REQUIRED=true`. Nothing here sets that instant automatically.
+
+**Cutover instant:** to be recorded here once every issuing server is confirmed in hybrid mode.
+
+**Still open for v3 issuance:** the other conditions in the issuance gate above (step 5 publication, and `docs/FORMAT.md`). Recording this option does not by itself open v3 issuance.
