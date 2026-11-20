@@ -77,6 +77,36 @@ bash ~/.parmana/governed-quickstart/start-server.sh                 # leave it r
 <td><strong>Yes, passed</strong></td>
 </tr>
 <tr>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/python/declare_then_execute.py"><code>governed-quickstart/python/declare_then_execute.py</code></a></td>
+<td>The declare-then-execute flow with the Python SDK: declare, read the status, execute, read the status with history.</td>
+<td><code>GOVERNED_POLICY_VERSION</code> (default <code>2.1.0</code>)</td>
+<td><strong>Yes, passed</strong> against a live server</td>
+</tr>
+<tr>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/python/approval_cases.py"><code>governed-quickstart/python/approval_cases.py</code></a></td>
+<td>The five approval cases with the Python SDK: A to D refused, E approved.</td>
+<td><code>GOVERNED_POLICY_VERSION</code></td>
+<td><strong>Yes, passed</strong>: A to D refused, E approved</td>
+</tr>
+<tr>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/python/maker_checker_cli.py"><code>governed-quickstart/python/maker_checker_cli.py</code></a></td>
+<td>The <code>parmana-ops</code> maker-checker steps with the Python SDK: propose a version from a file, a refused self-approval, a step-up envelope signed locally and written to a file, then the checker&#39;s approval. Approves <code>2.1.1</code>, which supersedes <code>2.1.0</code>: run it on a fresh setup.</td>
+<td>Approves <code>2.1.1</code></td>
+<td><strong>Yes, passed</strong> against a live server</td>
+</tr>
+<tr>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/python/governance_changes.py"><code>governed-quickstart/python/governance_changes.py</code></a></td>
+<td>Three governance changes with the Python SDK: an approver key, proposed by the maker and approved by the checker; an authority grant, approved the same way; and an external connector to a localhost endpoint, refused at proposal. Approving a connector is not shown.</td>
+<td>Not used</td>
+<td><strong>Yes, passed</strong> against a live server</td>
+</tr>
+<tr>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/python/connector_and_signal_source.py"><code>governed-quickstart/python/connector_and_signal_source.py</code></a></td>
+<td>An external connector to an https endpoint, and a business signal source. Each is proposed by the maker, refused when the maker tries to approve it, then approved by the checker. Approval checks that the endpoint resolves to public addresses; on the network this was run from, both were approved.</td>
+<td>Not used</td>
+<td><strong>Yes, passed</strong> against a live server</td>
+</tr>
+<tr>
 <td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/typescript/declare-then-execute.ts"><code>governed-quickstart/typescript/declare-then-execute.ts</code></a></td>
 <td>Declares a transaction, reads its status, executes it, and reads the status after.</td>
 <td>Set with <code>GOVERNED_POLICY_VERSION</code> (default <code>2.1.0</code>)</td>

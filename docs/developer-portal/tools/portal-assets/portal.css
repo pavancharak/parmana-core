@@ -589,3 +589,18 @@ tr:last-child td {
     display: none;
   }
 }
+
+/* ---- diagrams (Mermaid renders the <pre class="mermaid"> blocks) ---- */
+article pre.mermaid {
+  margin: 18px 0;
+  padding: 16px;
+  overflow-x: auto;
+  text-align: center;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+article pre.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
