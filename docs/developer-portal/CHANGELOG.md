@@ -6,6 +6,10 @@ This changelog records changes to the developer portal in `docs/developer-portal
 
 Versions follow the packages the portal documents: SDKs and server 4.1.1, offline verifier 2.0.3.
 
+## 2026-11-20: schema version 3 documented in full
+
+Added [Schema version 3](security/schema-v3.md): what v3 covers and what it does not, the server and verifier settings, the downgrade decision and its cutover instant (`2026-11-20T13:01:38Z`), the issuance gate with its evidence, and the rollout and rollback steps. The code default is unchanged.
+
 ## 2026-11-20: third pass: the review items with a non-breaking fix
 
 Applied the fixes the review asked for that do not change existing behaviour. Each has a test.

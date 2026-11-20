@@ -37,7 +37,7 @@ A signature proves only that the holder of a key made it. Whether to believe a r
 
 ## Schema versions and coverage
 
-The record's `schemaVersion` says which fields the signatures cover. The verifier reports this as `coverage`.
+The record's `schemaVersion` says which fields the signatures cover. The verifier reports this as `coverage`. The [complete schema 3 reference](schema-v3.md) covers the cutover, the configuration, the decision and the rollout.
 
 | Schema version         | What the signatures cover                                                                                                                                  | Coverage reported | Default on this build |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | --------------------- |
