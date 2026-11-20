@@ -68,3 +68,43 @@ describe("schema version 3 hybrid records, verified offline in the TypeScript SD
     expect(result.valid).toBe(false);
   });
 });
+
+describe("requireFullCoverage: fail closed on legacy coverage (findings F2)", () => {
+  it("accepts a full-coverage v3 record with the option set", () => {
+    const result = verifyExecutionTrustRecordOffline(
+      load("record.json"),
+      publicKeys(),
+      { requireFullCoverage: true },
+    );
+
+    expect(result.valid).toBe(true);
+    expect(result.coverage).toBe("full");
+  });
+
+  it("keeps the default result for a legacy record: valid, coverage legacy", () => {
+    // The record's own legacy signature still covers its seven fields, so
+    // without the hybrid array it is a genuine schema 2 record.
+    const { signatures: _omitted, ...legacy } = {
+      ...load("record.json"),
+      schemaVersion: 2,
+    };
+    const result = verifyExecutionTrustRecordOffline(legacy, publicKeys());
+
+    expect(result.valid).toBe(true);
+    expect(result.coverage).toBe("legacy");
+  });
+
+  it("refuses the same legacy record with requireFullCoverage, and says why", () => {
+    const { signatures: _omitted, ...legacy } = {
+      ...load("record.json"),
+      schemaVersion: 2,
+    };
+    const result = verifyExecutionTrustRecordOffline(legacy, publicKeys(), {
+      requireFullCoverage: true,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.coverage).toBe("legacy");
+    expect(result.errors.join(" ")).toMatch(/requireFullCoverage/);
+  });
+});

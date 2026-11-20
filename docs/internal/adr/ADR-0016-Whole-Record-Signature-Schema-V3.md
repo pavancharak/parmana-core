@@ -95,3 +95,31 @@ Until the gate opens, a deployment that sets `HYBRID_SCHEMA_VERSION=3` is runnin
 ## Addendum (2026-10-31): offline verifiers refuse legacy-only records by default
 
 Option 2 required a verifier to reject a post-cutover record with no hybrid envelope. Without a cutover date, the offline verifier also accepted a record with its envelope removed, because a missing envelope counted as a pass. That is fixed: a record with no envelope is accepted only if it predates a supplied `hybridRequiredFrom`, or if no cutover is set and the caller passes `allowLegacyOnly: true` (the `allowLegacyOnly` trust-file field in `parmana-verifier`). A cutover, when given, decides alone. Affected: `verifyExecutionTrustRecordOffline` in `packages/crypto`, and `parmana-verifier` (Node and Python). The in-browser verifier in `docs/site/snippets/record-verifier.jsx` applies the same default, with an explicit reader opt-in.
+
+## Decision recorded (2026-11-20): option 2, cutover
+
+**Chosen:** option 2, a verifier-pinned cutover. Verifiers reject any record created at or after the cutover that has no valid `signatures` array, whatever its `schemaVersion`. Records before the cutover keep their current rules. The verifier already implements this as `hybridRequiredFrom` in the trust file, in both the Node and Python verifiers, with tests.
+
+**Precondition, before the cutover takes effect.** The server attaches a `signatures` array only when `CRYPTO_MODE=hybrid` (`packages/runtime/src/BusinessTrustRecordBuilder.ts`). `CRYPTO_MODE` defaults to `single` (`.env.example`). A server still in `single` mode issues records with no hybrid envelope, and a verifier configured with the cutover refuses all of them. So the cutover instant must be the moment every issuing server runs `CRYPTO_MODE=hybrid` with `SECONDARY_SIGNATURE_PROVIDER` set and `HYBRID_SIGNATURE_REQUIRED=true`. Nothing here sets that instant automatically.
+
+**Facts (owner, 2026-11-20).** No record has been issued in `single` mode, so no record predates the cutover, and the pre-cutover limit does not apply. The hybrid cutover instant has not been reached yet.
+
+**Cutover instant (recorded 2026-11-20):** `2026-11-20T13:01:38Z`, the owner's instruction to set it now. Set `hybridRequiredFrom` to this value in each verifier trust file. The owner is responsible for the precondition below holding at this instant: every issuing server runs `CRYPTO_MODE=hybrid` with the secondary provider and `HYBRID_SIGNATURE_REQUIRED=true`. Record that instant here, and set `hybridRequiredFrom` to it in each verifier's trust file. Because no earlier record exists, any instant at or before the first hybrid record is also safe.
+
+**Still open for v3 issuance:** the other conditions in the issuance gate above (step 5 publication, and `docs/FORMAT.md`). Recording this option does not by itself open v3 issuance.
+
+## Issuance gate: status (2026-11-20)
+
+- **Downgrade gap closed as a decision.** Option 2 is recorded above, with the cutover instant `2026-11-20T13:01:38Z`.
+- **Step 5 published.** The verifier 2.0.3 is on npm (`@parmana/verifier`) and PyPI (`parmana-verifier`). The SDK `@parmana/sdk` 4.1.1 is on npm. Each reads v3 and reports `coverage`.
+- **`docs/FORMAT.md` matches the signing code.** The verifier's FORMAT.md excludes `signature`, `signatures`, `schemaVersion`, `verifications` and `receipts` from v3 coverage. That is the same list as `WHOLE_RECORD_EXCLUDED_FIELDS` in `packages/crypto/src/ExecutionTrustRecordCanonicalView.ts`.
+
+The gate is open. Enabling v3 is still a per-deployment operational step: `HYBRID_SCHEMA_VERSION=3` with `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true`. The code default stays `2`. Changing the default is a separate decision, recorded as F1 in the developer portal.
+
+## Amendment (2026-11-20): schema 3 is the default
+
+The owner made schema 3 the default. An unset or blank `HYBRID_SCHEMA_VERSION` now means 3, and `2` remains the rollback. `HYBRID_SCHEMA_V3_ACKNOWLEDGED` is no longer read, so the issuance gate described above is retired. The sentences above that describe the default as 2 and the gate as open record the state before this amendment.
+
+This applies only to hybrid signing. A server in `CRYPTO_MODE=single` writes no hybrid envelope and so no schema 3 record. Receipts keep their own hybrid message version 2.
+
+The operational precondition in `docs/internal/runbooks/SCHEMA-V3-ROLLOUT.md` still applies: a hybrid server needs the ML-DSA-65 key, and that key must not be placed in an environment variable until one of the runbook's two conditions holds. The default change does not waive it.

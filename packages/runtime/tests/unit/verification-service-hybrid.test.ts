@@ -182,10 +182,10 @@ describe.skipIf(!isMlDsa65Supported())(
       }
     });
 
-    it("builds and verifies a hybrid-signed record end to end", async () => {
+    it("builds and verifies a hybrid-signed record end to end, at the default schema 3", async () => {
       const trustRecord = await buildTrustRecord("txn-hybrid-valid");
 
-      expect(trustRecord.schemaVersion).toBe(2);
+      expect(trustRecord.schemaVersion).toBe(3);
       expect(trustRecord.signatures).toHaveLength(2);
       expect(
         trustRecord.signatures?.map((entry) => entry.algorithm).sort(),

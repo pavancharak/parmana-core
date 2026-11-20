@@ -151,11 +151,6 @@ const LOCAL_DEFAULTS: Record<string, string> = {
   PARMANA_STORAGE: "memory",
   KEY_PROVIDER: "local",
   PRIMARY_SIGNATURE_PROVIDER: "ed25519",
-  // Examples run hermetically and their policies have no maker-checker
-  // approval records in this tree. The opt-in is honoured only when NODE_ENV is
-  // "test" or "development" (examples set NODE_ENV=test), and never in a
-  // deployment. See policyGovernanceRelaxed.
-  PARMANA_ALLOW_UNGOVERNED_POLICY: "true",
 };
 
 // Examples that approve a fixture policy start with its folder, not the live one.

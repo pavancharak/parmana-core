@@ -1,5 +1,13 @@
 # Tutorial 60 — End-to-End Enterprise Execution
 
+> **Environment.** Run this tutorial with the server-side settings it needs. Without them it stops at start-up with `PARMANA_POLICY_DIR is not set` (and, for this one, `PARMANA_KEY_DIR`). From the repository root:
+>
+> ```bash
+> env -u DATABASE_URL PARMANA_POLICY_DIR=./policies PARMANA_STORAGE=memory npx tsx <this tutorial's run.ts>
+> ```
+>
+> `npm run examples` sets these defaults for you.
+
 ## Objective
 
 In this tutorial, you'll run the complete Parmana chain in one pass — policy evaluation, signed authorization, Gateway envelope verification, request-bound attestation, session credential issuance, connector execution, credential destruction, an audit record, and a final trust record — over a single mock SAP invoice-posting transaction.

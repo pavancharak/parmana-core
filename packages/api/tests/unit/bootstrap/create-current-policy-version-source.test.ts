@@ -7,6 +7,9 @@ import { GovernedPolicyVersionSource } from "../../../src/governance/GovernedPol
  * G-66 and D18: the version in effect comes from policy governance in every
  * environment. No NODE_ENV or override setting turns it off, and there is
  * no fallback to the canonical table.
+ *
+ * D19: PARMANA_ALLOW_UNGOVERNED_POLICY was retired and no code reads it. The
+ * cases below set it on purpose, to pin that it has no effect.
  */
 describe("createCurrentPolicyVersionSource", () => {
   const originalNodeEnv = process.env.NODE_ENV;
@@ -28,7 +31,7 @@ describe("createCurrentPolicyVersionSource", () => {
     ["development", "true", undefined],
     ["development", "TRUE", "true"],
   ])(
-    "is governed with NODE_ENV=%s, the ungoverned opt-in %s and enforcement %s",
+    "is governed with NODE_ENV=%s, the retired opt-in %s (no effect) and enforcement %s",
     (nodeEnv, allow, enforce) => {
       setOrDelete("NODE_ENV", nodeEnv);
       setOrDelete("PARMANA_ALLOW_UNGOVERNED_POLICY", allow);

@@ -31,6 +31,21 @@ export function assertStorageConfigured(): void {
 
   const config = loadConfig();
 
+  // Memory storage loses every transaction, record and approval when the
+  // process stops. The default is memory, so a production process that did
+  // not set PARMANA_STORAGE would run without durability. Refuse it here,
+  // before the port is bound (the doctor reported this; the server did not).
+  if (
+    process.env.NODE_ENV === "production" &&
+    config.storage.provider === "memory"
+  ) {
+    throw new Error(
+      "PARMANA_STORAGE is memory (the default when unset). Memory storage is not durable, " +
+        "so NODE_ENV=production refuses to start with it. Set PARMANA_STORAGE=postgres " +
+        "(or supabase) and DATABASE_URL.",
+    );
+  }
+
   if (isPostgresStorage(config.storage.provider)) {
     assertDatabaseUrlConfigured(
       "Storage (business transactions / trust records)",

@@ -187,6 +187,36 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [Propose registering or revoking an external connector](https://docs.parmanasystems.com/api-reference/endpoints/propose-external-connector-change): Proposes connecting your own system to Parmana with no Parmana code change: `register` names a capability, the HTTPS endpoint to release it to, the policy that governs it, the parameters to forward and optionally a timeout; `revoke` ends...
 * [Approve an external connector change](https://docs.parmanasystems.com/api-reference/endpoints/approve-external-connector-change): Approves an external connector change and applies it at once: `register` makes the registration active, `revoke` ends it.
 * [Reject an external connector change](https://docs.parmanasystems.com/api-reference/endpoints/reject-external-connector-change): Rejects an external connector change.
+## REST API: Policy v2 (experimental)
+
+* [Record a policy version 2 decision](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-decide): Evaluates the approved policy version 2 for the capability and records the decision as evidence.
+* [Read a policy version 2 review as its requester sees it](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-get-review): Returns the status of a review item.
+* [Record a reviewer's decision on a review item](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-decide-review): The reviewer must hold an active reviewer grant for the action.
+* [Replay a recorded policy version 2 decision from its evidence](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-replay): Re-runs the recorded decision and reports whether it reproduces.
+* [Read a read-only Policy v2 console screen](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-console): Returns one console screen as HTML.
+* [Receive an SES delivery notification (bounces and complaints)](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-ses-notification): Receives the delivery notification that Amazon SES posts for an approval email.
+* [Receive delivery events for approval notifications](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-notification-events): Receives delivery events for policy version 2 notifications.
+* [Read the Policy v2 register](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-register-read): Returns the register's contents as plain data: sources, thresholds, actions, roles, approver keys, policy versions and reviewer grants.
+* [Read the register's audit log, page by page](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-register-audit): Read the register's audit log, page by page
+* [Grant a register role to a caller](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-grant-role): Grant a register role to a caller
+* [Revoke a register role from a caller](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-revoke-role): Revoke a register role from a caller
+* [Propose a business-signal source](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-propose-source): Propose a business-signal source
+* [Approve a proposed source](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-approve-source): Approve a proposed source
+* [Revoke a source](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-revoke-source): Revoke a source
+* [Propose a threshold for an action](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-propose-threshold): Propose a threshold for an action
+* [Approve a proposed threshold](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-approve-threshold): Approve a proposed threshold
+* [Register an action (a capability with its owner and reviewers)](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-register-action): Register an action (a capability with its owner and reviewers)
+* [Grant a reviewer on an action](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-add-reviewer): Grant a reviewer on an action
+* [Revoke a reviewer's grant on an action](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-revoke-reviewer): Revoke a reviewer's grant on an action
+* [Record that an action passed a test tier](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-record-test): Record that an action passed a test tier
+* [List what is still missing before an action can go live](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-go-live-gate): List what is still missing before an action can go live
+* [Take an action live, if its gate is met](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-go-live): Refused with `422 refused` and the `missing` list while any requirement is unmet.
+* [Set how to reach a person about an alert](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-set-contact): Set how to reach a person about an alert
+* [Propose a new version of a policy](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-propose-policy): Proposes a policy version.
+* [Approve a proposed policy version](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-approve-policy): Approve a proposed policy version
+* [Propose an approver's public key](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-propose-approver-key): Propose an approver's public key
+* [Approve a proposed approver key](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-approve-approver-key): Approve a proposed approver key
+* [Revoke an approver key](https://docs.parmanasystems.com/api-reference/endpoints/policy-v2-revoke-approver-key): Revoke an approver key
 ## REST API: Business Signal Sources
 
 * [List business signal sources](https://docs.parmanasystems.com/api-reference/endpoints/list-business-signal-sources): Lists every business signal source registration, active and revoked: the name a policy's `signalSources` uses, the HTTPS endpoint Parmana asks, and the Ed25519 key its answers must be signed with, if one is registered.

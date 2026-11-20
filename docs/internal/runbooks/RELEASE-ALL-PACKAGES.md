@@ -2,17 +2,18 @@
 
 This runbook covers a release of the four SDK packages in this repository and the two verifier packages in `pavancharak/parmana-verifier`. Each release uses one version number per repository. The 1.6.2 release is the worked example, and its values are shown in the commands below.
 
-| Package                  | Registry | Repository                                 | Tag                   |
-| ------------------------ | -------- | ------------------------------------------ | --------------------- |
-| `@parmana/sdk`           | npm      | `parmana-core` (`typescript/`)             | `sdk-v<version>`      |
-| `parmana`                | PyPI     | `parmana-core` (`python/`)                 | `sdk-v<version>`      |
-| `@parmana/connector-sdk` | npm      | `parmana-core` (`packages/connector-sdk/`) | `sdk-v<version>`      |
-| `@parmana/shared`        | npm      | `parmana-core` (`packages/shared/`)        | `sdk-v<version>`      |
-| `@parmana/crypto`        | npm      | `parmana-core` (`packages/crypto/`)        | `sdk-v<version>`      |
-| `@parmana/cli`           | npm      | `parmana-core` (`packages/cli/`)           | `sdk-v<version>`      |
-| `parmana-connector-sdk`  | PyPI     | `parmana-core` (`python-connector-sdk/`)   | `sdk-v<version>`      |
-| `@parmana/verifier`      | npm      | `parmana-verifier`                         | `verifier-v<version>` |
-| `parmana-verifier`       | PyPI     | `parmana-verifier` (`python/`)             | `verifier-v<version>` |
+| Package                      | Registry | Repository                                     | Tag                   |
+| ---------------------------- | -------- | ---------------------------------------------- | --------------------- |
+| `@parmana/sdk`               | npm      | `parmana-core` (`typescript/`)                 | `sdk-v<version>`      |
+| `parmana`                    | PyPI     | `parmana-core` (`python/`)                     | `sdk-v<version>`      |
+| `@parmana/connector-sdk`     | npm      | `parmana-core` (`packages/connector-sdk/`)     | `sdk-v<version>`      |
+| `@parmana/shared`            | npm      | `parmana-core` (`packages/shared/`)            | `sdk-v<version>`      |
+| `@parmana/crypto`            | npm      | `parmana-core` (`packages/crypto/`)            | `sdk-v<version>`      |
+| `@parmana/cli`               | npm      | `parmana-core` (`packages/cli/`)               | `sdk-v<version>`      |
+| `@parmana/envelope-verifier` | npm      | `parmana-core` (`packages/envelope-verifier/`) | `sdk-v<version>`      |
+| `parmana-connector-sdk`      | PyPI     | `parmana-core` (`python-connector-sdk/`)       | `sdk-v<version>`      |
+| `@parmana/verifier`          | npm      | `parmana-verifier`                             | `verifier-v<version>` |
+| `parmana-verifier`           | PyPI     | `parmana-verifier` (`python/`)                 | `verifier-v<version>` |
 
 The per-package release notes are `typescript/RELEASING.md`, `python/RELEASING.md` and `RELEASING.md` in the verifier repository. This runbook ties them together and records what went wrong on the last release.
 
@@ -54,7 +55,7 @@ Use the sections below for detail. This list is the order. Do not skip a check, 
 **Confirm the release files (section 4)**
 
 11. Re-run **Release artifacts** and **CLI image** from their run pages (Re-run failed jobs). Both must be green.
-12. Download the nine package files and `multiple.intoto.jsonl` from the release into one new, empty folder. Check each release file's SHA-256 against the step 7 record. The release files must match the step 7 files exactly. If any differ, stop and report it. npm already has the step 7 files, so the release is then the one that is wrong.
+12. Download the ten package files and `multiple.intoto.jsonl` from the release into one new, empty folder. Check each release file's SHA-256 against the step 7 record. The release files must match the step 7 files exactly. If any differ, stop and report it. npm already has the step 7 files, so the release is then the one that is wrong.
 13. Run `slsa-verifier verify-artifact` on each `.tgz` and each Python file, with `--source-uri github.com/pavancharak/parmana-core --source-tag sdk-vX.Y.Z`. Each must print `PASSED`.
 
 **Publish PyPI, from the release files (section 5)**
@@ -63,7 +64,7 @@ Use the sections below for detail. This list is the order. Do not skip a check, 
 
 **Confirm (section 6)**
 
-15. Run `python -I .github/release/check-registry-matches-release.py X.Y.Z` from the repository. It must end with `All 9 registry files match`. If any line says `DIFFERS`, `NOT IN PROVENANCE` or `NOT ON REGISTRY`, stop and report it. The release is not complete.
+15. Run `python -I .github/release/check-registry-matches-release.py X.Y.Z` from the repository. It must end with `All 10 registry files match`. If any line says `DIFFERS`, `NOT IN PROVENANCE` or `NOT ON REGISTRY`, stop and report it. The release is not complete.
 
 **Docs (section 7)**
 

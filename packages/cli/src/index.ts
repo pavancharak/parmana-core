@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 import { parseArgs } from "node:util";
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 import { CliError, CliUsageError } from "./errors.js";
 import { redactText } from "./redact.js";
@@ -199,8 +201,21 @@ export async function main(
   }
 }
 
-// Run when this file is the command itself, not when a test imports it.
-if (/[\\/](index\.js|parmana)$/.test(process.argv[1] ?? "")) {
+// Run when this file is the command itself, not when a test imports it. The
+// check compares real paths, so it holds when npm starts the command through a
+// symlinked bin (for example `parmana-ops`), whose file name is not index.js.
+const isEntryPoint = (() => {
+  if (process.argv[1] === undefined) return false;
+  try {
+    return (
+      realpathSync(process.argv[1]) ===
+      realpathSync(fileURLToPath(import.meta.url))
+    );
+  } catch {
+    return false;
+  }
+})();
+if (isEntryPoint) {
   main(process.argv.slice(2), {
     runtime: defaultRuntime(),
     io: {

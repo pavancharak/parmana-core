@@ -5,7 +5,7 @@ import { FilePolicyRepository } from "@parmana/policy";
 
 import { RuntimeFactory } from "@parmana/runtime";
 
-import { DefaultExecutionSystem } from "@parmana/execution-system";
+import { SimulatedExecutionSystem } from "@parmana/execution-system";
 
 import {
   MemoryBusinessTransactionRepository,
@@ -40,7 +40,7 @@ const trustRecords = new MemoryExecutionTrustRecordRepository();
 // In production, replace this with a real
 // ExecutionSystem implementation.
 //
-const executionSystem = new DefaultExecutionSystem();
+const executionSystem = new SimulatedExecutionSystem();
 
 const application = RuntimeFactory.create(
   transactions,

@@ -1,5 +1,7 @@
 # Schema version 3 rollout: preconditions, steps, checks, rollback
 
+> **Amended 2026-11-20.** Schema 3 is the default (ADR-0016 amendment). `HYBRID_SCHEMA_VERSION` unset means 3, and `HYBRID_SCHEMA_V3_ACKNOWLEDGED` is no longer read. The default does not remove the key-delivery gate below, and nothing in this file records that the gate has been met. The status section is the state as of 2026-11-07.
+
 Status as of 2026-11-07. Owner: the maintainer. Tracked by parmana-core#291 and parmana-verifier#27. Nothing in this runbook is done yet.
 
 ## What v3 changes
@@ -22,7 +24,7 @@ v3 records are hybrid-signed: one Ed25519 entry and one ML-DSA-65 entry (`dilith
 3. **Node 24.x** is the runtime of that environment. ML-DSA-65 needs Node 24 or later with OpenSSL 3.5 or later. Confirm the patch from the build log's `Using Node.js` line.
 4. **The verifier and SDK versions** that will read the records are released or pinned: parmana-verifier with v3 support, and the SDKs from PR #491.
 
-Do not proceed if any precondition is missing. The server refuses `HYBRID_SCHEMA_VERSION=3` without `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true`, and refuses hybrid mode with `KEY_PROVIDER=aws-kms`.
+Do not proceed if any precondition is missing. The server no longer requires an acknowledgement for schema 3. It still refuses hybrid mode with `KEY_PROVIDER=aws-kms`, and it refuses a `HYBRID_SCHEMA_VERSION` other than 2 or 3.
 
 ## Gate: no ML-DSA-65 key in an environment variable
 
@@ -37,14 +39,14 @@ Until one of these holds, schema v3 stays off in every environment.
 
 Set these on the Vercel **Preview** environment only. Production must not have them.
 
-| Variable                                | Value                              |
-| --------------------------------------- | ---------------------------------- |
-| `CRYPTO_MODE`                           | `hybrid`                           |
-| `PRIMARY_SIGNATURE_PROVIDER`            | `ed25519`                          |
-| `SECONDARY_SIGNATURE_PROVIDER`          | `ml-dsa-65`                        |
-| `PARMANA_VERIFICATION_SECONDARY_KEY_ID` | the ML-DSA-65 key id (not the key) |
-| `HYBRID_SCHEMA_VERSION`                 | `3`                                |
-| `HYBRID_SCHEMA_V3_ACKNOWLEDGED`         | `true`                             |
+| Variable                                | Value                                    |
+| --------------------------------------- | ---------------------------------------- |
+| `CRYPTO_MODE`                           | `hybrid`                                 |
+| `PRIMARY_SIGNATURE_PROVIDER`            | `ed25519`                                |
+| `SECONDARY_SIGNATURE_PROVIDER`          | `ml-dsa-65`                              |
+| `PARMANA_VERIFICATION_SECONDARY_KEY_ID` | the ML-DSA-65 key id (not the key)       |
+| `HYBRID_SCHEMA_VERSION`                 | unset (the default is 3; `2` rolls back) |
+| `HYBRID_SCHEMA_V3_ACKNOWLEDGED`         | not read (remove it)                     |
 
 Set the Preview Node.js Version to `24.x` and redeploy the Preview branch.
 

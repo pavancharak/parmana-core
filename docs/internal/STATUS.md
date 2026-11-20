@@ -83,7 +83,7 @@ Option A authenticates with the server's Vercel OIDC identity. This is not set u
 This starts only after 3.3 and 3.4 have run on Preview, or once the owner has accepted the exposure in writing. See the gate in `runbooks/SCHEMA-V3-ROLLOUT.md`.
 
 1. Load the ML-DSA-65 key through option A, not an environment variable.
-2. On Preview only, set `CRYPTO_MODE=hybrid`, `PRIMARY_SIGNATURE_PROVIDER=ed25519`, `SECONDARY_SIGNATURE_PROVIDER=ml-dsa-65`, `PARMANA_VERIFICATION_SECONDARY_KEY_ID`, `HYBRID_SCHEMA_VERSION=3` and `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true`.
+2. On Preview only, set `CRYPTO_MODE=hybrid`, `PRIMARY_SIGNATURE_PROVIDER=ed25519`, `SECONDARY_SIGNATURE_PROVIDER=ml-dsa-65`, `PARMANA_VERIFICATION_SECONDARY_KEY_ID`, leave `HYBRID_SCHEMA_VERSION` unset (the default is 3).
 3. Redeploy Preview. Create one trust record. Check that it has `schemaVersion: 3` and two signatures.
 4. Verify it with the TypeScript and Python SDKs. Expect `valid: true` and `coverage: "full"`. Add a field to a copy: both must report `valid: false`.
 5. Watch Preview's logs for signing errors over a day.

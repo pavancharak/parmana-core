@@ -1,5 +1,13 @@
 # Tutorial 103 — Policy Governance (Maker-Checker)
 
+> **Environment.** Run this tutorial with the server-side settings it needs. Without them it stops at start-up with `PARMANA_POLICY_DIR is not set` (and, for this one, `PARMANA_KEY_DIR`). From the repository root:
+>
+> ```bash
+> env -u DATABASE_URL PARMANA_POLICY_DIR=./policies PARMANA_KEY_DIR=./keys PARMANA_STORAGE=memory npx tsx <this tutorial's run.ts>
+> ```
+>
+> `npm run examples` sets these defaults for you.
+
 ## Objective
 
 Exercise the full maker-checker approval flow a policy content change goes through before it can take effect, through a real HTTP server: human-only enforcement, maker ≠ checker, and step-up authorization, each independently enforced (`docs/internal/CLAIMS.md` §2.26). Mirrors `packages/api/tests/integration/pending-policy-changes-governance.integration.test.ts`.

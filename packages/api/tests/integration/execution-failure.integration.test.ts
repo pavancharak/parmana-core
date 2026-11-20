@@ -12,7 +12,7 @@ import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-g
  * Phase 2D — restored.
  *
  * Previously `describe.skip`, with the stated reason "the current
- * RuntimeFactory always creates a DefaultExecutionSystem internally,
+ * RuntimeFactory always creates a SimulatedExecutionSystem internally,
  * making it impossible to inject a failing implementation." That
  * blocker is gone — `RuntimeFactory.create()` now requires an
  * `ExecutionSystem` as a constructor argument rather than building one

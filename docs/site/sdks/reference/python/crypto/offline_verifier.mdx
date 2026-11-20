@@ -31,13 +31,20 @@ ML-DSA-65 needs `cryptography` 47.0.0 or later.
 ```python
 def verify_execution_trust_record_offline(
         trust_record: Any,
-        public_keys: dict[str, str]) -> OfflineVerificationResult
+        public_keys: dict[str, str],
+        *,
+        require_full_coverage: bool = False) -> OfflineVerificationResult
 ```
 
 `trust_record` is a plain dict, exactly as `json.load()` would
 produce from a Trust Record JSON file or API response body, or the
 ExecutionTrustRecord that `client.trust_record()` returns.
 `public_keys` maps keyId -> PEM-encoded public key text.
+
+`require_full_coverage` (default False) fails closed on legacy
+coverage: the record is valid only when it is schema 3 with a verified
+hybrid signature. Schema 2 records, which sign seven fields, are refused.
+The default keeps the result of earlier releases (findings F2).
 
 #### verify_execution_intent_offline
 

@@ -1,4 +1,4 @@
-import { existsSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { approverKeyFileStem, generateApproverKeyPair } from "@parmana/crypto";
 import { join } from "node:path";
 
@@ -46,6 +46,10 @@ export function generateApproverKey(
   keyId: string,
 ): ApproverKeyFiles {
   const files = approverKeyFileNames(outDir, approverId, keyId);
+
+  // Create the folder when it is missing. Writing into a missing folder
+  // failed with ENOENT, which the quickstart's `--out-dir ~/.parmana` hit.
+  mkdirSync(outDir, { recursive: true, mode: 0o700 });
 
   for (const path of [files.privateKeyPath, files.publicKeyPath]) {
     if (existsSync(path)) {

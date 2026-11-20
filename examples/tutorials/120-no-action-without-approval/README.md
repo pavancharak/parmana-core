@@ -1,5 +1,13 @@
 # Tutorial 120: no action without a signed human approval
 
+> **Environment.** Run this tutorial with the server-side settings it needs. Without them it stops at start-up with `PARMANA_POLICY_DIR is not set` (and, for this one, `PARMANA_KEY_DIR`). From the repository root:
+>
+> ```bash
+> env -u DATABASE_URL PARMANA_POLICY_DIR=./policies PARMANA_STORAGE=memory npx tsx <this tutorial's run.ts>
+> ```
+>
+> `npm run examples` sets these defaults for you.
+
 ## Objective
 
 Show the rule every policy and every action follow: no AI agent action is authorized without a
