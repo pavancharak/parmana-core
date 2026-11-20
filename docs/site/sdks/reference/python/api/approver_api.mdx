@@ -33,12 +33,14 @@ Maps to GET /approval-issuers.
 
 ```python
 def propose_add(*, approver_id: str, key_id: str, public_key_pem: str,
-                reason: str) -> ApprovalIssuerChange
+                capabilities: list[str], reason: str) -> ApprovalIssuerChange
 ```
 
-Propose trusting a new approver key.
+Propose trusting a new approver key, granted the listed capabilities.
 
-Maps to POST /approval-issuers/changes with action "add".
+Maps to POST /approval-issuers/changes with action "add". The server
+requires `capabilities`: a list of 1 to 50 capability names (for
+example "erp:pay-invoice"). An approver may approve only those.
 `public_key_pem` is the .public.pem file
 scripts/generate-approver-key.ts writes. Nothing changes until a
 different person approves it.

@@ -7707,6 +7707,8 @@ paths:
                       -----BEGIN PUBLIC KEY-----
                       MCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=
                       -----END PUBLIC KEY-----
+                    capabilities:
+                      - erp:pay-invoice
                     reason: The approver approves refunds for the West region from October.
                     proposedBy: human-maker
                     proposedAt: 2026-09-28T19:05:59.726Z
@@ -7828,6 +7830,7 @@ paths:
                 public_key_pem=Path(
                     "approver-example__approver-example-key-1.public.pem"
                 ).read_text(),
+                capabilities=["erp:pay-invoice"],
                 reason="The example approver approves refunds for the West region from October.",
             )
 
@@ -16947,6 +16950,15 @@ components:
         rejectionReason:
           type: string
           description: Present when REJECTED.
+        capabilities:
+          type: array
+          minItems: 1
+          maxItems: 50
+          description: "For add: the capability names the approver may approve, as the
+            server stored them (duplicates removed)."
+          items:
+            type: string
+            pattern: ^[a-z0-9][a-z0-9._:-]{0,127}$
       examples:
         - changeId: ba7c5827-5844-4069-94fc-9b438ef08f78
           action: add
@@ -17004,6 +17016,15 @@ components:
           type: string
           minLength: 1
           maxLength: 2000
+        capabilities:
+          type: array
+          minItems: 1
+          maxItems: 50
+          description: "Required for add, not allowed for revoke: the capability names
+            this approver may approve. The server removes duplicates."
+          items:
+            type: string
+            pattern: ^[a-z0-9][a-z0-9._:-]{0,127}$
       examples:
         - action: add
           approverId: approver-example
@@ -17013,10 +17034,33 @@ components:
             MCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=
             -----END PUBLIC KEY-----
           reason: Priya approves refunds for the West region from October.
+          capabilities:
+            - erp:pay-invoice
         - action: revoke
           approverId: approver-example
           keyId: approver-example-key-1
           reason: Priya moved to another team.
+      allOf:
+        - if:
+            properties:
+              action:
+                const: add
+            required:
+              - action
+          then:
+            required:
+              - publicKeyPem
+              - capabilities
+        - if:
+            properties:
+              action:
+                const: revoke
+            required:
+              - action
+          then:
+            not:
+              required:
+                - capabilities
     approval-issuer-change-response.schema:
       title: Approver Change Response
       description: Response of POST /approval-issuers/changes (201) and of approve and

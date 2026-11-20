@@ -177,11 +177,9 @@ These public functions or routes exist but are documented only at the level of t
 
 ## Missing examples
 
-- A Python version of the declare-then-execute flow and of the approval cases.
-- A Python version of the CLI maker-checker flow (the CLI is the same in both languages).
 - A live refund against a server with a registered payment source. Tutorial 129 runs the decision in-process; the server path was not run.
 - A run of each of the 202, 500 and 502 branches, and of `reconcile`.
-- A governance example for approver keys, connectors, signal sources and authority grants.
+- The approval of an external connector and of a signal source is covered by connector_and_signal_source.py, run on one network only: on a network where the endpoint does not resolve to a public address, the server refuses the approval, and the example prints that outcome.
 - A bulk trust-record export example.
 - Examples for `KEY_PROVIDER=aws-kms` and the secrets provider.
 - Any example in a language other than TypeScript, Python or the shell. The repository has no Java or Go SDK; the API manifest lists them as `null`.

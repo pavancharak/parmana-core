@@ -342,6 +342,26 @@ export class ReviewQueue {
 
   /** Replaces the queue's contents with a snapshot taken earlier. */
   load(snapshot: ReviewSnapshot): void {
+    // A stored snapshot must hold every part. A partial one fails here, with the missing part
+    // named, instead of as a TypeError while the queue is read.
+    for (const part of [
+      "items",
+      "results",
+      "grants",
+      "events",
+      "alerted",
+    ] as const) {
+      if (!Array.isArray(snapshot[part])) {
+        throw new Error(
+          `The stored review state is malformed: '${part}' must be a list. Restore it from a complete snapshot before serving decisions.`,
+        );
+      }
+    }
+    if (typeof snapshot.counter !== "number") {
+      throw new Error(
+        "The stored review state is malformed: 'counter' must be a number.",
+      );
+    }
     this.items.clear();
     this.results.clear();
     this.grants.clear();

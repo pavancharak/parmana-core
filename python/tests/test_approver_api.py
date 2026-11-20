@@ -80,6 +80,7 @@ def test_propose_add_and_revoke_send_the_documented_bodies():
         approver_id="manager-priya",
         key_id="manager-priya-key-1",
         public_key_pem="PEM",
+        capabilities=["erp:pay-invoice"],
         reason="Why.",
     )
     api.propose_revoke(
@@ -94,6 +95,7 @@ def test_propose_add_and_revoke_send_the_documented_bodies():
             "approverId": "manager-priya",
             "keyId": "manager-priya-key-1",
             "publicKeyPem": "PEM",
+            "capabilities": ["erp:pay-invoice"],
             "reason": "Why.",
         },
     )
@@ -104,6 +106,23 @@ def test_propose_add_and_revoke_send_the_documented_bodies():
         "keyId": "manager-priya-key-1",
         "reason": "Why.",
     }
+
+
+def test_propose_add_needs_one_to_fifty_capabilities():
+    api = ApproverApi(FakeTransport(CHANGE))
+    for bad in ([], [f"c:{i}" for i in range(51)]):
+        try:
+            api.propose_add(
+                approver_id="manager-priya",
+                key_id="manager-priya-key-1",
+                public_key_pem="PEM",
+                capabilities=bad,
+                reason="Why.",
+            )
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"accepted {len(bad)} capabilities")
 
 
 def test_list_changes_filters_by_status_and_decodes():
