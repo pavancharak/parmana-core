@@ -70,7 +70,9 @@ def main() -> int:
         CONFIG_DIR / "local-test-approver__local-test-approver-key-1.private.pem"
     ).read_text()
     policy_content = json.loads(
-        (CONFIG_DIR / "policies" / POLICY_NAME / POLICY_VERSION / "policy.json").read_text()
+        (
+            CONFIG_DIR / "policies" / POLICY_NAME / POLICY_VERSION / "policy.json"
+        ).read_text()
     )
 
     maker = ParmanaClient(endpoint=ENDPOINT, api_key=raw_keys["maker"])
@@ -80,7 +82,10 @@ def main() -> int:
     # 1. Maker proposes the policy version.
     print(f"1. maker proposes {POLICY_NAME}@{POLICY_VERSION}")
     proposal = maker.propose_policy_change(
-        POLICY_NAME, POLICY_VERSION, proposed_content=policy_content, reason="Governed quickstart"
+        POLICY_NAME,
+        POLICY_VERSION,
+        proposed_content=policy_content,
+        reason="Governed quickstart",
     )
     pending_id = proposal.pending_policy_change_id
     print(f"   pending change: {pending_id}")
@@ -123,7 +128,9 @@ def main() -> int:
         action="test:fixture-execute",
         target="vendor://payments",
         parameters={"amount": 1000, "currency": "USD"},
-        policy=PolicyReference(name=POLICY_NAME, version=POLICY_VERSION, schema_version="1.0.0"),
+        policy=PolicyReference(
+            name=POLICY_NAME, version=POLICY_VERSION, schema_version="1.0.0"
+        ),
         signals={
             "humanApproved": True,
             "approvalArtifact": approval,
@@ -160,9 +167,11 @@ def main() -> int:
     except ParmanaError as error:
         print(f"   refused as expected: {explain(error)}")
     else:
-        raise SystemExit("The server accepted a repeated transaction. This must not happen.")
+        raise SystemExit(
+            "The server accepted a repeated transaction. This must not happen."
+        )
 
-    print("")
+    print()
     print("Governed flow complete.")
     return 0
 

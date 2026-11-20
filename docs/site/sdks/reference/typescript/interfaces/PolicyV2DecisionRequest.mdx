@@ -1,0 +1,18 @@
+---
+title: "Interface: PolicyV2DecisionRequest"
+---
+
+A decision request. The capability is namespace:verb, for example
+erp:pay-invoice. Signals are caller values, untrusted unless a registered
+source signed them. Approvals are approval artifacts, checked by the server.
+
+## Members
+
+| Name            | Kind     | Type                                             | Description |
+| --------------- | -------- | ------------------------------------------------ | ----------- |
+| `capability`    | Property | `string`                                         |             |
+| `transactionId` | Property | `string`                                         |             |
+| `target`        | Property | `string`                                         |             |
+| `parameters?`   | Property | `Readonly<Record<string, unknown>> \| undefined` |             |
+| `signals?`      | Property | `Readonly<Record<string, unknown>> \| undefined` |             |
+| `approvals?`    | Property | `Readonly<Record<string, unknown>> \| undefined` |             |

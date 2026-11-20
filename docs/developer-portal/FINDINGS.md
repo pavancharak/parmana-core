@@ -114,10 +114,58 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Evidence.** The register's change responses (sources, thresholds, actions, approver keys, policy versions, role grants) are documented as `type: object` with `additionalProperties: true`. The record types are defined in `packages/policy/src/v2/register.ts`, and the sample responses are illustrative, not captured.
 - **Recommendation.** Give each record its own schema, and capture a real response from a deployment with policy version 2 enabled to replace the illustrative example.
 
-### F17. Policy v2 is not exercised against a live server
+### F21. An approved version that is not live was refused as "no approved policy" (fixed)
 
-- **Evidence.** The Policy v2 routes are checked by the route-parity, sample and schema tests, and the server's policy v2 unit tests. No deployment with `PARMANA_POLICY_V2_DECISIONS` set was started in this pass, so no live request was made.
-- **Recommendation.** Start a server with the policy v2 settings and record a decision, a review and an evidence replay, before the owner promotes the contract.
+- **Evidence.** During the live run, a decision for an action whose go-live gate had not passed was refused with `NO_APPROVED_POLICY` ("No approved policy is in force"), although a version was approved. The message sent the caller to approve a policy, which had already been done.
+- **Fix.** A new refusal code, `ACTION_NOT_LIVE`, with a detail that names the go-live gate. The register reports whether a version is approved and its action is not live; the decision service uses that only to choose the refusal, and never to allow a decision. `NO_APPROVED_POLICY` is unchanged when nothing is approved. The code is added to the OpenAPI enum, the TypeScript type, the Python docstring, and the error-code index. The unit test for the new refusal passes; the Policy v2 API and integration tests (137) pass against local PostgreSQL; the Python suite (212) passes. The live server was not re-run after this change.
+
+### F17. Policy v2 run live, from setup to a finished review (fixed: the run is recorded)
+
+- **Evidence.** A fresh local database (PostgreSQL 16, migrated), a server with `PARMANA_POLICY_V2_DECISIONS=true` and the owner set by `PARMANA_POLICY_V2_BOOTSTRAP_OWNER`, and 39 requests in order. The steps and their results:
+  1. Roles: the checker is `reviewer` and `second-approver`; the reviewer-2 caller is `reviewer`; the maker is `action-owner`, `operator` and `gate-owner` (an operator must exist before `gate-owner`, and the server refused the grant in the wrong order); two gate owners are `operator` then `gate-owner`.
+  2. Action `erp:pay-invoice`, owner `maker`, successor `successor-1`, reviewers `checker` and `reviewer-2`. A reviewer cannot be added later unless it was named at registration, and the successor cannot review. The approval validity is at most 60 minutes.
+  3. Thresholds `maxAmount` (1000 USD) and `reviewRiskScoreAbove` (50): proposed by the maker and approved by the checker. The policy must declare each threshold, or it is refused.
+  4. Policy `2.0.0` proposed by the maker and approved by the checker.
+  5. Tier tests for `refuse`, `review` and `reject`, run by a gate owner. The go-live check then lists nothing missing.
+  6. Go-live by both gate owners. The action is live. Until it is, the decision path reports `NO_APPROVED_POLICY`, even with an approved policy.
+  7. Decisions: a high-risk request is `REVIEW` with review `review-1`; an over-limit request is `REJECT` at the `refuse` tier; a low-risk request is `REJECT` at the `reject` tier. None is released.
+  8. Review: the requester is refused (`The requester cannot review their own request`). The checker's decision is recorded as `assigned`, and the second reviewer's makes it final: `APPROVED`, two decisions. A second decision by the same reviewer is refused.
+  9. Evidence replay of `ev-1` reproduces the decision with no differences.
+- **Defect found and fixed in this run.** Before the fix, a partial stored review state made every decision answer 500 (F20).
+- **Not exercised.** The alerts board, the sweeps (timed review reminders and expiry), the notifications and webhooks, and the console screens. The `release` of an approved review: after the review is approved, the record `ev-1` still says `REVIEW` and `released: false`. Whether an approved review should release the action is not answered by this run, and the owner should decide it before promotion.
+- **Recommendation.** Decide whether an approved review releases the action, and record a run of the alerts and sweeps before the owner promotes the contract.
+- **Resolved in F22.** The review outcome is now a separate, hash-bound record that refers to the decision. The release question is decided in F22: an approved review releases nothing.
+
+### F22. A reviewed decision left no outcome record that refers to the decision (fixed)
+
+- **Evidence.** The design (`docs/internal/design/POLICY-V2-SPEC.md`, the review outcome) says the final approval or refusal is a further separate record that refers back to the decision. The review item referred only to the decision's policy hash and rule, not to its evidence record, and the outcome had no hash that covered the decision. An approved review left nothing in the log that tied the outcome to the decision it finished.
+- **Fix.** The review item now stores the decision's evidence record id and its hash, and the decision route supplies them. The outcome carries that reference and its own SHA-256 over its canonical form, so changing the decision it refers to breaks the hash. `verifyReviewResult` checks it. Outcomes are persisted with the review state. The evidence chain is unchanged, so existing records and the replay path are unaffected.
+- **Decision: an approved review releases nothing.** The design already says a decision releases nothing, and an approval is a record, not an instruction to pay. Releasing an action from an approved review would move money on a record that a person approved for a different purpose; the release path belongs to the existing gated execution, which a later change can design and the owner can approve. This decision can be overruled by the owner, and if it is, the release rule needs its own design.
+- **Verified.** The policy unit tests (768, including two new ones: the outcome refers to its decision and verifies; a changed reference fails). The Policy v2 integration and API tests (137) pass against local PostgreSQL, and the shared test database was cleaned afterward.
+
+### F23. The offline verifier checks Execution Trust Records only, and refuses the default server's records
+
+- **Evidence.** Run against the repository's verifier (`parmana-verify`, 2.0.3). The governed flow on a quickstart server (CRYPTO_MODE single, no hybrid signing) produced a real record. Its records have no `schemaVersion`, so they are legacy records, which the verifier refuses by default: "covers only seven top-level fields and is refused by default". With `allowLegacyV2: true` in the trust file, the real record is valid (`trustRecordHash` and `signature` pass, correspondence passes); the same record with its outcome changed is invalid on both checks. A Policy v2 evidence record and a review outcome (F22) are not understood: the verifier reports a hash mismatch and a missing signature, not that the format is unsupported.
+- **Meaning.** The verifier can independently check the Execution Trust Record. It cannot check the Policy v2 evidence chain or the review outcome hash. An auditor with only the verifier would be told a valid Policy v2 record is malformed.
+- **Resolved in part (local, not released).** The Policy v2 evidence chain and review outcome are now checked offline by `parmana-verify policy-v2`, on local branch `feat/policy-v2-evidence` in `parmana-verifier` (commit `da972d5`, npm test 116 passing). The test vectors were produced by parmana-core's own code, and the verifier accepts them. The Python package has the same command (`parmana_verifier.policy_v2`), tested against the same vectors (Python suite 114, npm suite 116). Both are committed on `ccr-ead4b602-t6o6n7` in `parmana-verifier`, but not pushed: push access to that repository was denied for this session, and no release has been made.
+- **Decision on the legacy refusal.** Legacy single-mode records stay refused by default. Their signed fields are fixed, so adding a schema version to them would change what the signature covers. Production signs hybrid records as schema 3, which the default verifier accepts. The quickstart records are test-only. This decision follows the existing design; it was not re-run live.
+- **Recommendation.** Decide whether the verifier should check the Policy v2 evidence chain and review outcomes, which needs its own format document and a verifier release. Until then, the verifier documentation should say that it does not read them. Decide also whether single-mode records should carry `schemaVersion`, so that the default verifier accepts them without `allowLegacyV2`.
+
+### F20. A partial review state crashed the decision route, and a test left one behind (fixed)
+
+- **Evidence.** The integration test `packages/policy/tests/integration/policy-v2-commit.integration.test.ts` saved `{ items: [] }` as the review state. It truncated the tables before each test but not after the last one, so the row stayed in the shared database. The next server start that read it failed: `ReviewQueue.load` read `snapshot.results` of an undefined value, and each decision answered `500`.
+- **Fix.** `ReviewQueue.load` now checks every part of a stored snapshot, and fails with the part named (`'results' must be a list`). The integration test truncates the Policy v2 tables in `afterAll`. Two unit tests cover the partial snapshot and a complete round trip. The Policy v2 test files (15 files, 130 tests) pass against the local PostgreSQL.
+
+### F18. The Python SDK could not propose an approver key that the server accepts (fixed)
+
+- **Evidence.** Before the fix, against a live local server, `ApproverApi.propose_add` sent `approverId`, `keyId`, `publicKeyPem` and `reason`, and the server answered HTTP 400: `capabilities is required for add: a list of 1 to 50 capability names`. The method had no `capabilities` argument. The `parmana-ops approver propose-add` command already takes `--capabilities`.
+- **Fix.** `propose_add` takes `capabilities: list[str]` (keyword-only, 1 to 50 names, checked before the call), and sends it. The approver API tests and the docs code samples now include it. The Python test suite passes (212 tests). `governance_changes.py` was run against a fresh live server: the maker's own approval is refused, the checker approves the key.
+- **Still open.** The method has been published since 1.4.0 without the argument, so it never worked against a server. The fix needs a release, and a note in the Python changelog that `capabilities` is now required. That release is for the owner to make.
+
+### F19. The published request schema omits `capabilities`, which the server requires (fixed)
+
+- **Evidence.** `schemas/requests/propose-approval-issuer-change-request.schema.json` had no `capabilities` property, and the server requires it for an `add` change. The shared change schema, `schemas/common/approval-issuer-change.schema.json`, has `additionalProperties: false` and no `capabilities` either, so a response that includes it would fail that schema.
+- **Fix.** The request schema now has `capabilities` (1 to 50 names, each matching the server's pattern), required with `publicKeyPem` for `add` and not allowed for `revoke`. The shared change schema has `capabilities`. The OpenAPI add example shows it. The bundle and the code samples were regenerated with `npm run openapi`. The 26 test files that cover the schemas, the OpenAPI document and the approver routes pass (170 tests), run against a local PostgreSQL.
 
 ### F14. Verifier Windows commands were not run here
 

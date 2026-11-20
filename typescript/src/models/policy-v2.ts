@@ -15,6 +15,7 @@ export type PolicyV2Outcome = "APPROVE" | "REJECT" | "REVIEW";
 /** The refusals that happen before any rule runs. Each one refuses the request. */
 export type PolicyV2RefusalCode =
   | "NO_APPROVED_POLICY"
+  | "ACTION_NOT_LIVE"
   | "POLICY_INVALID"
   | "SOURCE_UNAVAILABLE"
   | "SOURCE_NOT_VERIFIED"

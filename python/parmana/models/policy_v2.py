@@ -35,7 +35,7 @@ class PolicyV2Refusal:
     """
     A refusal that happens before any rule runs. It refuses the request.
 
-    code is one of NO_APPROVED_POLICY, POLICY_INVALID, SOURCE_UNAVAILABLE,
+    code is one of NO_APPROVED_POLICY, ACTION_NOT_LIVE, POLICY_INVALID, SOURCE_UNAVAILABLE,
     SOURCE_NOT_VERIFIED, STALE, INVALID, MISSING_VALUE or THRESHOLD_NOT_APPROVED.
     """
 
