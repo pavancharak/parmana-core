@@ -115,11 +115,29 @@ Each step is for each deployment. Do not skip a step.
 
 Setting `HYBRID_SCHEMA_VERSION` back to `2` returns new records to schema 2. Keep the hybrid settings and the cutover in place, so records stay hybrid-signed and the cutover stays enforced. **Not tested in this repository. Check it on a non-production deployment before relying on it.**
 
+## Cost: size and speed
+
+Measured on 2026-11-20 with the built packages in this repository, using the server's own signing code (`VerificationCrypto`) and the TypeScript SDK's offline verifier. The record was a minimal one (one transaction, no executions), so treat the byte counts as the cost of the signature envelope, not a size for production records. Each figure is the average over 1000 iterations, from two runs that agreed to within about 0.1 ms.
+
+| Mode                           | Record size | Sign          | Offline verify | Coverage reported |
+| ------------------------------ | ----------- | ------------- | -------------- | ----------------- |
+| Single (legacy signature only) | 600 bytes   | about 0.15 ms | about 0.15 ms  | `legacy`          |
+| Schema 2, hybrid               | 5,248 bytes | about 1.7 ms  | about 0.6 ms   | `legacy`          |
+| Schema 3, hybrid               | 5,248 bytes | about 1.6 ms  | about 0.6 ms   | `full`            |
+
+What this means:
+
+- **Schema 2 and schema 3 cost the same.** Both carry the same hybrid envelope. Going to v3 changes what is covered, not how much it costs.
+- **The hybrid envelope is the cost.** Adding it multiplies the record size by about 8.7 for this record (an extra 4,648 bytes). Signing is about 10 times slower than the single signature, and verifying about 4 times slower.
+- **The overhead is per record, not per field.** The signatures have a fixed size, so the extra bytes do not grow with the record's payload. Records with large payloads gain proportionally less.
+- **The environment was a 4-vCPU Linux container on Node 24.22.3.** Other hardware will differ. Re-measure on the deployment's own machines before sizing storage or latency budgets.
+- **Algorithm names.** `dilithium3` is an alias for ML-DSA-65 in this codebase, so the configuration above and the benchmark used the same algorithm.
+
 ## Known limits and open items
 
 - **The code default is still `2`.** Changing it would make every new record v3. That is a separate decision, recorded as [FINDINGS F1](../FINDINGS.md#f1-records-are-signed-with-schema-version-2-by-default-signature-covers-7-fields).
 - **Third-party readers are unknown.** Only the TypeScript and Python SDKs and `parmana-verifier` 2.0.3 have been checked to read v3. Whether other tools do is not known (F11). Ask each consumer before v3 is enabled on a deployment that hands records to it.
-- **Size and speed are not measured.** dilithium3 signatures are much larger than ed25519, so records and signing take more space and time. No figure has been recorded here.
+- **Size and speed were measured** (see [Cost](#cost-size-and-speed)). Re-measure on the deployment's own hardware before sizing storage or latency budgets.
 - **The cutover rests on an owner statement.** The repository cannot confirm that no `single`-mode record exists, or that every issuing server is in hybrid mode.
 - **Verifier-side changes are in another repository.** The `hybridRequiredFrom` and `allowLegacyV2` handling lives in `parmana-verifier`. This portal documents it but does not change it.
 
