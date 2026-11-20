@@ -101,7 +101,9 @@ def main() -> int:
 
     print("2. status")
     status = client.transaction_status(business_transaction_id)
-    print(f"   current: {value_of(status.current.status)} (stage {status.current.stage})")
+    print(
+        f"   current: {value_of(status.current.status)} (stage {status.current.stage})"
+    )
 
     print("3. execute")
     record = client.execute_transaction(business_transaction_id)

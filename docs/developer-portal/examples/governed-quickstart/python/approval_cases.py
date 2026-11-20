@@ -28,8 +28,9 @@ import json
 import os
 import time
 import uuid
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from parmana import (
     ParmanaClient,
@@ -102,9 +103,7 @@ def attempt(label: str, run: Callable[[], object]) -> None:
         run()
     except ParmanaError as error:
         status_code = getattr(error, "status_code", None)
-        print(
-            f"{label}: refused ({type(error).__name__}, HTTP {status_code}): {error}"
-        )
+        print(f"{label}: refused ({type(error).__name__}, HTTP {status_code}): {error}")
     else:
         print(f"{label}: APPROVED")
 

@@ -177,7 +177,6 @@ These public functions or routes exist but are documented only at the level of t
 
 ## Missing examples
 
-- A Python version of the CLI maker-checker flow (the CLI is the same in both languages).
 - A live refund against a server with a registered payment source. Tutorial 129 runs the decision in-process; the server path was not run.
 - A run of each of the 202, 500 and 502 branches, and of `reconcile`.
 - A governance example for approver keys, connectors, signal sources and authority grants.
