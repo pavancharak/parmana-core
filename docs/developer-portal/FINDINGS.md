@@ -119,10 +119,16 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Evidence.** The Policy v2 routes are checked by the route-parity, sample and schema tests, and the server's policy v2 unit tests. No deployment with `PARMANA_POLICY_V2_DECISIONS` set was started in this pass, so no live request was made.
 - **Recommendation.** Start a server with the policy v2 settings and record a decision, a review and an evidence replay, before the owner promotes the contract.
 
-### F18. The Python SDK cannot propose an approver key that the server accepts
+### F18. The Python SDK could not propose an approver key that the server accepts (fixed)
 
-- **Evidence.** Run against a live local server, `ApproverApi.propose_add` (`python/parmana/api/approver_api.py`) sends `approverId`, `keyId`, `publicKeyPem` and `reason`. The server answers HTTP 400: `capabilities is required for add: a list of 1 to 50 capability names`. The method has no `capabilities` argument, so the Python SDK cannot add an approver key. The `parmana-ops approver propose-add` command takes `--capabilities`, and the request schema requires it.
-- **Recommendation.** Add a `capabilities` argument (a list of 1 to 50 names) to `propose_add`, with a test against the request schema, and release it. Until then, `governance_changes.py` does not cover approver keys, and the portal says so.
+- **Evidence.** Before the fix, against a live local server, `ApproverApi.propose_add` sent `approverId`, `keyId`, `publicKeyPem` and `reason`, and the server answered HTTP 400: `capabilities is required for add: a list of 1 to 50 capability names`. The method had no `capabilities` argument. The `parmana-ops approver propose-add` command already takes `--capabilities`.
+- **Fix.** `propose_add` takes `capabilities: list[str]` (keyword-only, 1 to 50 names, checked before the call), and sends it. The approver API tests and the docs code samples now include it. The Python test suite passes (212 tests). `governance_changes.py` was run against a fresh live server: the maker's own approval is refused, the checker approves the key.
+- **Still open.** The method has been published since 1.4.0 without the argument, so it never worked against a server. The fix needs a release, and a note in the Python changelog that `capabilities` is now required. That release is for the owner to make.
+
+### F19. The published request schema omits `capabilities`, which the server requires
+
+- **Evidence.** `schemas/requests/propose-approval-issuer-change-request.schema.json` lists `action`, `approverId`, `keyId`, `publicKeyPem` and `reason`, and it has no `capabilities` property. The server requires `capabilities` for an `add` change, so a client that follows the schema is refused (HTTP 400). The OpenAPI document (`openapi/openapi.yaml`) describes the add change the same way and does not mention capabilities.
+- **Recommendation.** Add `capabilities` (an array of 1 to 50 capability names) to the schema, and to the OpenAPI request body for `POST /approval-issuers/changes`, so the contract and the server agree. This changes a normative contract, so it needs the owner's decision.
 
 ### F14. Verifier Windows commands were not run here
 

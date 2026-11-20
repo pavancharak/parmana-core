@@ -4,13 +4,14 @@ public `parmana` package against a local server started by ../start-server.sh.
 
 Each change is a maker-checker change, like a policy change:
 
-  A. Authority grant. The maker proposes that the demo caller may have fixture executions decided,
-     up to an amount limit, until a date. The checker approves it with a step-up signature.
-  B. External connector. The maker proposes an endpoint on localhost. The server refuses it at
+  A. Approver key. The maker proposes trusting a new approver key, granted one capability. The
+     maker's own approval is refused. The checker approves with a step-up signature.
+  B. Authority grant. The maker proposes that the demo caller may have fixture executions decided,
+     up to an amount limit, until a date. The checker approves it.
+  C. External connector. The maker proposes an endpoint on localhost. The server refuses it at
      proposal, because an endpoint must be https and name a public domain.
 
-Not covered here: adding an approver key. The Python SDK's propose_add does not send the
-`capabilities` list that the server requires, so it is refused. See the finding in FINDINGS.md.
+Approving an external connector is not shown: the example proposes one and shows it refused.
 
 Each approval changes the state of the local test server. Run this on a fresh setup if you want
 to see the same results again, and delete the configuration directory to start over.
@@ -72,8 +73,39 @@ def main() -> int:
     maker = ParmanaClient(endpoint=ENDPOINT, api_key=raw_keys["maker"])
     checker = ParmanaClient(endpoint=ENDPOINT, api_key=raw_keys["checker"])
 
+    # A. Approver key.
+    print("A. approver key")
+    approver_public_pem = (
+        CONFIG_DIR / "local-test-approver__local-test-approver-key-1.public.pem"
+    ).read_text()
+    proposal = maker.approvers.propose_add(
+        approver_id="quickstart-approver-2",
+        key_id="quickstart-2-key-1",
+        public_key_pem=approver_public_pem,
+        capabilities=["test:fixture-execute"],
+        reason="Governance example: a second approver for fixture executions",
+    )
+    print(f"   maker proposes the key: change {proposal.change_id}")
+    try:
+        maker.approvers.approve_change(
+            proposal.change_id,
+            step_up(proposal.change_id, "approve", step_up_private_pem),
+        )
+    except ParmanaError as error:
+        print(f"   maker's own approval refused as expected: {explain(error)}")
+    else:
+        raise SystemExit(
+            "The server accepted the maker's own approval. This must not happen."
+        )
+    applied = checker.approvers.approve_change(
+        proposal.change_id, step_up(proposal.change_id, "approve", step_up_private_pem)
+    )
+    print(
+        f"   checker approves: status {getattr(applied.status, 'value', applied.status)}"
+    )
+
     # B. Authority grant.
-    print("A. authority grant")
+    print("B. authority grant")
     valid_until = datetime.now(UTC) + timedelta(days=30)
     grant = maker.authority_grants.propose_grant(
         caller_id="demo",
@@ -90,8 +122,8 @@ def main() -> int:
         f"   checker approves: status {getattr(applied_grant.status, 'value', applied_grant.status)}"
     )
 
-    # B. External connector to a localhost endpoint: refused at proposal.
-    print("B. external connector to localhost (expected to be refused)")
+    # C. External connector to a localhost endpoint: refused at proposal.
+    print("C. external connector to localhost (expected to be refused)")
     try:
         maker.external_connectors.propose_register(
             capability="erp:create-invoice",
