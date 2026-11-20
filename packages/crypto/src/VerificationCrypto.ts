@@ -1,4 +1,4 @@
-import { loadConfig } from "@parmana/shared";
+import { KeyProviders, loadConfig } from "@parmana/shared";
 import type {
   ExecutionTrustRecord,
   Signature,
@@ -17,6 +17,7 @@ import { HybridSignatureProvider } from "./HybridSignatureProvider.js";
 import { TrustRecordHasher } from "./TrustRecordHasher.js";
 import { ArtifactSigner } from "./ArtifactSigner.js";
 import { SignatureVerifier } from "./SignatureVerifier.js";
+import type { Signer } from "./Signer.js";
 import { SignerBootstrap } from "./SignerBootstrap.js";
 import { FileKeyProvider } from "./providers/key/FileKeyProvider.js";
 import {
@@ -100,10 +101,14 @@ export class VerificationCrypto {
     return hybridSignedCanonicalView(trustRecord, schemaVersion);
   }
 
-  private hybridSignatureProvider(): HybridSignatureProvider {
+  private hybridSignatureProvider(
+    primarySigner?: Signer,
+  ): HybridSignatureProvider {
     return new HybridSignatureProvider(
       CryptoBootstrap.createHybrid(),
       this.hybridKeys,
+      undefined,
+      primarySigner,
     );
   }
 
@@ -203,7 +208,15 @@ export class VerificationCrypto {
       );
     }
 
-    return this.hybridSignatureProvider().sign(
+    // With KEY_PROVIDER=aws-kms and PARMANA_HYBRID_KMS=true, the primary signature is made by the KMS
+    // key through the Signer, so the primary private key is never read here.
+    const primarySigner =
+      this.config.keys.provider === KeyProviders.AWS_KMS &&
+      this.config.keys.hybridKmsPrimary
+        ? await SignerBootstrap.create()
+        : undefined;
+
+    return this.hybridSignatureProvider(primarySigner).sign(
       this.hybridCanonicalRecord(
         trustRecord,
         this.config.crypto.hybridSchemaVersion,

@@ -158,6 +158,12 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **What this does not show.** This was a single server on one machine. It does not show key rotation, the production key store (`PARMANA_KEY_DIR` or KMS), or a multi-server deployment. The governed example's offline step needs the secondary key to be supplied to pass; that is a gap in the example, not in the verifier.
 - **Decision for the owner.** Production keys must be generated, stored and pinned under a key policy before this is used for real records.
 
+### F25. Hybrid signing with a KMS primary key: built behind a flag, not verified against real KMS
+
+- **Evidence.** The hybrid provider can take its primary (ed25519) signature from a `Signer` instead of reading the primary private key, and `VerificationCrypto.signHybrid` passes the KMS signer when `KEY_PROVIDER=aws-kms` and `PARMANA_HYBRID_KMS=true`. The signer is the existing KMS signer, which signs the same bytes as the file path. Tests: a fake KMS signer shows that the primary signature goes through the signer and the primary private key is never read, and that the primary signature is byte-identical to the file-key path (ed25519 signatures are deterministic). The crypto and shared suites and the architecture tests pass (1170 tests).
+- **Not verified.** Against a real AWS KMS key. The signer was tested with a fake. The Doctor check still refuses `hybrid` with `aws-kms` unless `PARMANA_HYBRID_KMS=true`, and the flag is off by default.
+- **Decision for the owner.** Whether to lift the refusal after a real KMS run. That needs an AWS sandbox account and a KMS ed25519 key; I have neither here.
+
 ### F20. A partial review state crashed the decision route, and a test left one behind (fixed)
 
 - **Evidence.** The integration test `packages/policy/tests/integration/policy-v2-commit.integration.test.ts` saved `{ items: [] }` as the review state. It truncated the tables before each test but not after the last one, so the row stayed in the shared database. The next server start that read it failed: `ReviewQueue.load` read `snapshot.results` of an undefined value, and each decision answered `500`.
