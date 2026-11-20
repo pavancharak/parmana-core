@@ -251,6 +251,15 @@ class ParmanaClient:
         """
         return __version__
 
+    def server_version(self) -> dict[str, Any]:
+        """
+        The server's version: Runtime name, version and API version (GET /version).
+
+        `version` is this SDK's version. This method asks the server, as the
+        TypeScript SDK's `version()` does.
+        """
+        return self.execution.version()
+
     #
     # Canonical flat capabilities (docs/site/sdks/api-coverage.mdx, parity rules:
     # execute(), verify(), replay(), validatePolicy(), health()), plus

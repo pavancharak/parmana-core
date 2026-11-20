@@ -274,19 +274,27 @@ function python(op: Operation): string {
   const imports = ["import urllib.request"];
   if (op.body !== undefined) imports.unshift("import json");
   if (op.auth !== false) imports.unshift("import os");
+  // The request runs only as a script. Pytest collects files named *_test.py,
+  // and an import-time request would hit the network during collection.
   return [
     `# ${NOTE}`,
     `# ${op.comment}`,
     ...imports,
     "",
-    `request = urllib.request.Request(`,
-    `    "${ENDPOINT}${op.route}",`,
-    `    data=${payload},`,
-    `    method="${op.method}",`,
-    `    headers={${headers.join(", ")}},`,
-    `)`,
-    "with urllib.request.urlopen(request) as response:",
-    `    print(response.status, response.read().decode("utf-8"))`,
+    "",
+    "def main() -> None:",
+    `    request = urllib.request.Request(`,
+    `        "${ENDPOINT}${op.route}",`,
+    `        data=${payload},`,
+    `        method="${op.method}",`,
+    `        headers={${headers.join(", ")}},`,
+    `    )`,
+    "    with urllib.request.urlopen(request) as response:",
+    `        print(response.status, response.read().decode("utf-8"))`,
+    "",
+    "",
+    `if __name__ == "__main__":`,
+    "    main()",
     "",
   ].join("\n");
 }

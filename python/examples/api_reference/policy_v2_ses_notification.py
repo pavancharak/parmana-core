@@ -3,11 +3,17 @@
 import json
 import urllib.request
 
-request = urllib.request.Request(
-    "https://parmana-api-real.vercel.app/v2/notifications/ses",
-    data=json.dumps(json.loads(r'{"Type":"Notification","Message":"{}"}')).encode('utf-8'),
-    method="POST",
-    headers={"Content-Type": "application/json"},
-)
-with urllib.request.urlopen(request) as response:
-    print(response.status, response.read().decode("utf-8"))
+
+def main() -> None:
+    request = urllib.request.Request(
+        "https://parmana-api-real.vercel.app/v2/notifications/ses",
+        data=json.dumps(json.loads(r'{"Type":"Notification","Message":"{}"}')).encode('utf-8'),
+        method="POST",
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(request) as response:
+        print(response.status, response.read().decode("utf-8"))
+
+
+if __name__ == "__main__":
+    main()

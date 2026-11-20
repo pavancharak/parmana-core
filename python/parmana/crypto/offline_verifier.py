@@ -163,12 +163,19 @@ class OfflineVerificationResult:
 def verify_execution_trust_record_offline(
     trust_record: Any,
     public_keys: dict[str, str],
+    *,
+    require_full_coverage: bool = False,
 ) -> OfflineVerificationResult:
     """
     `trust_record` is a plain dict, exactly as `json.load()` would
     produce from a Trust Record JSON file or API response body, or the
     ExecutionTrustRecord that `client.trust_record()` returns.
     `public_keys` maps keyId -> PEM-encoded public key text.
+
+    `require_full_coverage` (default False) fails closed on legacy
+    coverage: the record is valid only when it is schema 3 with a verified
+    hybrid signature. Schema 2 records, which sign seven fields, are refused.
+    The default keeps the result of earlier releases (findings F2).
     """
 
     trust_record = _as_json(trust_record)
@@ -254,7 +261,20 @@ def verify_execution_trust_record_offline(
         else "legacy"
     )
 
-    valid = hash_valid and legacy_signature_valid and (hybrid_valid is not False)
+    coverage_refused = require_full_coverage and coverage != "full"
+    if coverage_refused:
+        errors.append(
+            "require_full_coverage: the record is not full coverage (schema 3 "
+            "with a verified hybrid signature). A schema 2 record covers 7 "
+            "fields, so fields outside them can change without detection."
+        )
+
+    valid = (
+        hash_valid
+        and legacy_signature_valid
+        and (hybrid_valid is not False)
+        and not coverage_refused
+    )
 
     return OfflineVerificationResult(
         valid=valid,

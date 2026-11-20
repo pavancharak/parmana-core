@@ -6,6 +6,18 @@ This changelog records changes to the developer portal in `docs/developer-portal
 
 Versions follow the packages the portal documents: SDKs and server 4.1.1, offline verifier 2.0.3.
 
+## 2026-11-20: third pass: the review items with a non-breaking fix
+
+Applied the fixes the review asked for that do not change existing behaviour. Each has a test.
+
+- **Python SDK:** `client.server_version()` asks the server for its version, as the TypeScript `version()` does. `client.version` stays the SDK version. (FINDINGS F4)
+- **Both SDKs:** the offline trust-record check takes an opt-in `requireFullCoverage` (TypeScript) or `require_full_coverage=True` (Python). It fails closed on legacy (schema 2) records. The default result is unchanged. (FINDINGS F2)
+- **Python samples:** the generated Policy v2 samples run their request only under `__main__`. Pytest collects files named `*_test.py`, and an import-time request reached the network during collection.
+- **Portal checker:** counts SDK methods from padded table rows too. Before this, the count depended on how the index was last formatted.
+- **Cleanup:** removed two empty, unreferenced fixtures (`typescript/test/fixtures/policy.ts` and `replay-result.ts`).
+
+Still open, and needing an owner decision or a release: the schema 2 default (F1), the approval helper for the quickstart (F7), and publishing the `parmana-ops` entry-point fix (the published 4.1.1 still has the old check).
+
 ## 2026-11-20: second pass: the five unverified items
 
 Closed the five gaps the first pass left open: Policy v2 in the contract, the exercised features, the connector release path, the untriggered error branches, and the retired flag. Each change has a test or a run named in [COVERAGE.md](COVERAGE.md#verification-log).

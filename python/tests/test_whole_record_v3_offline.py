@@ -49,3 +49,30 @@ def test_a_changed_value_is_rejected():
     result = verify_execution_trust_record_offline(record, _public_keys())
 
     assert result.valid is False
+
+
+def test_require_full_coverage_accepts_a_full_coverage_record():
+    result = verify_execution_trust_record_offline(
+        _load("record.json"), _public_keys(), require_full_coverage=True
+    )
+
+    assert result.valid, result.errors
+    assert result.coverage == "full"
+
+
+def test_a_legacy_record_is_valid_by_default_and_refused_with_require_full_coverage():
+    # The record's own legacy signature still covers its seven fields, so
+    # without the hybrid array it is a genuine schema 2 record.
+    record = {**_load("record.json"), "schemaVersion": 2}
+    record.pop("signatures", None)
+
+    default = verify_execution_trust_record_offline(record, _public_keys())
+    assert default.valid is True
+    assert default.coverage == "legacy"
+
+    strict = verify_execution_trust_record_offline(
+        record, _public_keys(), require_full_coverage=True
+    )
+    assert strict.valid is False
+    assert strict.coverage == "legacy"
+    assert any("require_full_coverage" in error for error in strict.errors)

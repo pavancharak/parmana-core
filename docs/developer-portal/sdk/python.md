@@ -92,7 +92,7 @@ Import the signing and offline functions from `parmana.crypto`. `OfflineVerifica
 | `client.business_signal_sources` | Business signal sources and their changes    |
 | `client.authority_grants`        | Authority grants and their changes           |
 
-`client.endpoint` and `client.version` are **properties** (no parentheses). `client.version` is the SDK's own version string. The TypeScript `version()` method is different: it calls `GET /version` on the server, which now reports the same package version (4.1.1). Both return the same value for the same build, but they are reached differently; see [FINDINGS](../FINDINGS.md) F4.
+`client.endpoint` and `client.version` are **properties** (no parentheses). `client.version` is the SDK's own version string. To ask the server, call `client.server_version()`, which returns what `GET /version` reports as a `dict`. It matches the TypeScript SDK's `version()`, which also calls the server (FINDINGS F4).
 
 The complete list of the 50 public methods, with exact signatures and the request each sends, is in the [generated method index](python-method-index.md).
 
@@ -116,6 +116,7 @@ The complete list of the 50 public methods, with exact signatures and the reques
 | `latest_receipt(business_transaction_id)`                                                 | `Receipt`                     | `GET /receipt/latest/{id}`                        |
 | `trust_record(business_transaction_id)`                                                   | `ExecutionTrustRecord`        | `GET /trust-records/{id}`                         |
 | `policy_in_effect(capability)`                                                            | `PolicyInEffect`              | `GET /policies/in-effect?capability=`             |
+| `server_version()`                                                                        | `dict`                        | `GET /version`                                    |
 | `validate_policy(policy_id, policy_version)`                                              | `dict`                        | `POST /policies/validate`                         |
 | `propose_policy_change(name, version, *, proposed_content, reason)`                       | `ProposedPolicyChange`        | `POST /policies/{name}/{version}/pending-changes` |
 | `policy_changes(status=None)`                                                             | `list[PolicyChangeForReview]` | `GET /policies/pending-changes`                   |
@@ -222,6 +223,8 @@ client.approve_policy_change(pending_policy_change_id, envelope)
 The Python `approve_policy_change` takes the envelope as a `dict`. Sign it immediately before you submit it, because it expires.
 
 ## Offline verification: `verify_execution_trust_record_offline`
+
+Pass `require_full_coverage=True` to fail closed on legacy records: the result is `valid=False`, and `errors` says why. The default is `False`, which keeps the result of earlier releases (FINDINGS F2).
 
 ```python
 import json

@@ -284,7 +284,13 @@ const result = verifyExecutionTrustRecordOffline(record, {
 
 - `publicKeys` maps each `keyId` to a PEM public key. Pin these yourself (see [Evidence verification](../security/evidence-verification.md)).
 - `valid` means the stored hash and the signatures check out. It does **not** mean the record is fully covered. Read `coverage`: `"full"` for a schema version 3 record, `"legacy"` otherwise. A version 2 record covers only seven top-level fields, so a change to any other field is not detected by it.
-- The SDK's check does not refuse legacy records by default. The standalone verifier does. Decide in your code which you require.
+- The SDK's check does not refuse legacy records by default. To fail closed, pass `{ requireFullCoverage: true }` as the third argument (`VerifyTrustRecordOptions`). A legacy record then returns `valid: false`, and `errors` says why. The default keeps the result of earlier releases (FINDINGS F2).
+
+```typescript
+const strict = verifyExecutionTrustRecordOffline(record, publicKeys, {
+  requireFullCoverage: true,
+});
+```
 
 `verifyExecutionIntentOffline(intent, publicKeys)` does the same for an execution intent.
 

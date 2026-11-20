@@ -126,3 +126,27 @@ def test_replay_receipt_transactions_are_callable_and_still_navigable():
     assert hasattr(client.replay, "replay")  # client.replay.replay(id) still works
     # client.transactions.list(...) still works
     assert hasattr(client.transactions, "list")
+
+
+@responses.activate
+def test_version_is_the_sdk_version_and_server_version_asks_the_server():
+    """
+    `version` is the SDK's version (a string). `server_version()` returns what
+    GET /version reports, as the TypeScript SDK's `version()` does (findings F4).
+    """
+
+    responses.add(
+        responses.GET,
+        "http://localhost:3000/version",
+        json={"name": "Parmana", "version": "4.1.1", "apiVersion": "1"},
+        status=200,
+    )
+
+    client = ParmanaClient(endpoint="http://localhost:3000")
+
+    assert isinstance(client.version, str)
+    assert client.server_version() == {
+        "name": "Parmana",
+        "version": "4.1.1",
+        "apiVersion": "1",
+    }

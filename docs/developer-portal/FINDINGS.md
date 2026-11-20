@@ -22,6 +22,8 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 
 ### F2. The SDK offline check reports legacy records as valid
 
+**Resolved.** Both SDKs take an opt-in option, default off: `requireFullCoverage` (TypeScript, third argument) and `require_full_coverage=True` (Python, keyword). With it, a legacy record is `valid: false` with an error that names the option. The default result is unchanged, so no caller breaks. Tests: `typescript/test/whole-record-v3-offline.test.ts` and `python/tests/test_whole_record_v3_offline.py`.
+
 - **Evidence.** `verifyExecutionTrustRecordOffline` (TypeScript) and `verify_execution_trust_record_offline` (Python) return `valid: true` with `coverage: legacy` for a schema 2 record. The standalone verifier refuses the same record by default.
 - **Why not changed.** Changing the SDK return value is a public API change. A new option (`requireFullCoverage`, default off) would be backward compatible.
 - **Recommendation.** Add the option in a minor release, and document it as the way to fail closed.
@@ -33,6 +35,8 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Recommendation.** Point `dev:setup` at `fixtures/policies` and say in its output that an approval is needed first, or drop the command in favour of the quickstart.
 
 ### F4. Python `version` is a property; TypeScript `version()` is a method that calls the server
+
+**Resolved (both kept).** Python `client.version` stays the SDK's version, a property, as it was. The new `client.server_version()` asks the server, as TypeScript `version()` does. Test: `python/tests/test_client.py`.
 
 - **Evidence.** The same name returns the SDK's version in Python and the server's version in TypeScript.
 - **Why not changed.** Either side would be a breaking change for existing callers.

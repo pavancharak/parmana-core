@@ -106,6 +106,7 @@ export {
   verifyExecutionTrustRecordOffline,
   verifyExecutionIntentOffline,
   type OfflineVerificationResult,
+  type VerifyTrustRecordOptions,
   type PublicKeys,
 } from "./crypto/offline-verifier.js";
 
