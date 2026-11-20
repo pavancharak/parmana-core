@@ -129,6 +129,7 @@ const examples = [
   "examples/tutorials/128-nbfc-loan-disbursement/run.ts",
   "examples/tutorials/129-payment-refund-stand-in-source/run.ts",
   "examples/tutorials/130-rate-limiting/run.ts",
+  "examples/tutorials/131-configuration-and-bootstrapping/run.ts",
   "examples/scenarios/expense-approval/run.ts",
   "examples/scenarios/purchase-order/run.ts",
   "examples/04-verified-execution/run.ts",
