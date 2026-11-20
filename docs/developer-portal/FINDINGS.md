@@ -119,6 +119,11 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Evidence.** The Policy v2 routes are checked by the route-parity, sample and schema tests, and the server's policy v2 unit tests. No deployment with `PARMANA_POLICY_V2_DECISIONS` set was started in this pass, so no live request was made.
 - **Recommendation.** Start a server with the policy v2 settings and record a decision, a review and an evidence replay, before the owner promotes the contract.
 
+### F18. The Python SDK cannot propose an approver key that the server accepts
+
+- **Evidence.** Run against a live local server, `ApproverApi.propose_add` (`python/parmana/api/approver_api.py`) sends `approverId`, `keyId`, `publicKeyPem` and `reason`. The server answers HTTP 400: `capabilities is required for add: a list of 1 to 50 capability names`. The method has no `capabilities` argument, so the Python SDK cannot add an approver key. The `parmana-ops approver propose-add` command takes `--capabilities`, and the request schema requires it.
+- **Recommendation.** Add a `capabilities` argument (a list of 1 to 50 names) to `propose_add`, with a test against the request schema, and release it. Until then, `governance_changes.py` does not cover approver keys, and the portal says so.
+
 ### F14. Verifier Windows commands were not run here
 
 - **Evidence.** The verifier README records a Windows PowerShell run on 2026-10-29. This environment is Linux, so the PowerShell commands were not repeated.
