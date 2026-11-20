@@ -1,6 +1,6 @@
 # Architecture
 
-[Back to the README](../../README.md) · [Developer docs index](README.md)
+[Back to the README](https://github.com/pavancharak/parmana-core/blob/main/README.md) · [Developer docs index](README.md)
 
 ## How it works
 

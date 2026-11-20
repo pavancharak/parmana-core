@@ -81,13 +81,13 @@ catalog](/api-reference/error-catalog).
 
 ```typescript
 import { RuntimeFactory } from "@parmana/runtime";
-import { DefaultExecutionSystem } from "@parmana/execution-system";
+import { SimulatedExecutionSystem } from "@parmana/execution-system";
 
 const application = RuntimeFactory.create(
   transactionRepository,
   trustRecordRepository,
   policyRepository,
-  new DefaultExecutionSystem(),
+  new SimulatedExecutionSystem(),
 );
 
 const trustRecord = await application.execute(transaction); // throws if REJECTED

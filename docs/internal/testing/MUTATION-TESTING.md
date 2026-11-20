@@ -1,6 +1,6 @@
 # Mutation testing results
 
-`npm run mutation -- <package>` (see [CONTRIBUTING.md](../../../CONTRIBUTING.md#mutation-testing))
+`npm run mutation -- <package>` (see [CONTRIBUTING.md](https://github.com/pavancharak/parmana-core/blob/main/CONTRIBUTING.md#mutation-testing))
 makes small deliberate changes to a package's source, one at a time, and runs that package's
 tests against each. A change the tests catch is **caught**; one they miss **survived**. The score
 is the share caught.
@@ -115,7 +115,7 @@ amount gt X, otherwise approve" would not reject it. The shipped policies tested
 check, and no bypass was found. Now `PolicyEngine` refuses a request whose declared signals do
 not have the declared types before any rule runs (`signal-type-violation`), and
 `PolicyValidator` refuses a `signalsSchema` type other than `boolean`, `number` or `string`
-([CLAIMS 2.52](../CLAIMS.md), threat T18 in [THREAT-MODEL.md](../../../THREAT-MODEL.md)).
+([CLAIMS 2.52](../CLAIMS.md), threat T18 in [THREAT-MODEL.md](https://github.com/pavancharak/parmana-core/blob/main/THREAT-MODEL.md)).
 
 ### execution-gateway
 

@@ -14,8 +14,6 @@ import { MemoryExternalConnectorRepository } from "@parmana/storage";
 // same way its own unit test suite does.
 //
 process.env.NODE_ENV = "test";
-// Test-only: this example runs with no maker-checker records for its policy.
-process.env.PARMANA_ALLOW_UNGOVERNED_POLICY = "true";
 
 const { createConnectorRegistry } =
   await import("../../../packages/api/src/bootstrap/createConnectorRegistry.js");

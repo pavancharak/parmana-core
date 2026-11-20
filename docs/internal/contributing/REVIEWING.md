@@ -6,16 +6,16 @@ change nobody else read is a change nobody else checked.
 
 ## Before you start
 
-- **Licence.** The repository is licensed under the Apache License 2.0 ([LICENSE](../../../LICENSE)).
+- **Licence.** The repository is licensed under the Apache License 2.0 ([LICENSE](https://github.com/pavancharak/parmana-core/blob/main/LICENSE)).
   Reviewing it as a collaborator needs a written agreement with Parmana Systems, as described in
-  [CONTRIBUTING.md](../../../CONTRIBUTING.md).
+  [CONTRIBUTING.md](https://github.com/pavancharak/parmana-core/blob/main/CONTRIBUTING.md).
 - **Access.** Write access to `pavancharak/parmana`, so your approval counts toward the branch rule on
   `main`. You do not need, and should not receive, production keys, database credentials or vendor
   credentials. Everything below runs on a local copy.
 - **Setup.** Node 24 (`node -v`), then `npm ci`, `npm run build`, `npm test`. ML-DSA-65 tests skip on
   older Node.
 - **Read first, about an hour.** [docs/site/how-parmana-thinks.mdx](../../site/how-parmana-thinks.mdx),
-  [THREAT-MODEL.md](../../../THREAT-MODEL.md), and the "Open issues at a glance" table in
+  [THREAT-MODEL.md](https://github.com/pavancharak/parmana-core/blob/main/THREAT-MODEL.md), and the "Open issues at a glance" table in
   [VERIFICATION-GAPS.md](../VERIFICATION-GAPS.md).
 
 ## Reviewing a pull request
@@ -57,13 +57,13 @@ Useful tools on the way:
 - `npm run evaluate` runs the attack scenarios; `npm run evaluate -- EV-04` runs one.
 - [MUTATION-TESTING.md](../testing/MUTATION-TESTING.md) lists the mutants that survived and why; a surviving
   mutant in the code above is worth a look.
-- [SECURITY-CHALLENGE.md](../../../SECURITY-CHALLENGE.md) lists what counts as a break.
+- [SECURITY-CHALLENGE.md](https://github.com/pavancharak/parmana-core/blob/main/SECURITY-CHALLENGE.md) lists what counts as a break.
 
 ## Reporting what you find
 
 - **A vulnerability:** privately, through
   [a security advisory draft](https://github.com/pavancharak/parmana/security/advisories/new) or
-  founder@parmanasystems.com, never in a public issue or comment ([SECURITY.md](../../../SECURITY.md)).
+  founder@parmanasystems.com, never in a public issue or comment ([SECURITY.md](https://github.com/pavancharak/parmana-core/blob/main/SECURITY.md)).
 - **Anything else:** a GitHub issue, or a comment on the pull request. Name the file and line, the
   input, what happens, and what should happen.
 - **The deep review:** one written summary. What you covered, what you did not, each finding with its

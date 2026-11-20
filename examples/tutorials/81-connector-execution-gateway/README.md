@@ -12,9 +12,13 @@ Exercise `GatewayConnectorRegistry` directly, via the real production wiring (`c
 
 ## Running the Tutorial
 
-```bash
-npx tsx examples/tutorials/81-connector-execution-gateway/run.ts
-```
+> **Environment.** The tutorial needs the server-side settings below. Without them it stops at start-up with `PARMANA_POLICY_DIR is not set`. `npm run examples` sets them for you. To run it on its own, from the repository root, point `PARMANA_KEY_DIR` at a directory holding the Ed25519 key pairs `default`, `gateway` and `signal-verifier` (`<id>.private.pem` and `<id>.public.pem`):
+>
+> ```bash
+> env -u DATABASE_URL PARMANA_POLICY_DIR=./policies PARMANA_STORAGE=memory KEY_PROVIDER=local PRIMARY_SIGNATURE_PROVIDER=ed25519 PARMANA_KEY_DIR=<key directory> npx tsx examples/tutorials/81-connector-execution-gateway/run.ts
+> ```
+>
+> This was run with a freshly generated key directory: exit 0, ending with `Tutorial Complete`.
 
 ## Why This Matters
 

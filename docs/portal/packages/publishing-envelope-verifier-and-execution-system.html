@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Publishing @parmana/envelope-verifier and @parmana/execution-system · Parmana developer docs</title>
+<meta name="description" content="Publishing @parmana/envelope-verifier and @parmana/execution-system Portal home · SDK index · FINDINGS F5 This page sets out what publishing these two packages would mean, what is already true, and what to check first. It is for the owner, ">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="publishing-envelope-verifier-and-execution-system.html" aria-current="page">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>SDKs and packages</span><span class="sep">/</span><span>Publishing @parmana/envelope-verifier and @parmana/execution-system</span></div>
+    <article>
+<h1 id="publishing-parmanaenvelope-verifier-and-parmanaexecution-system">Publishing <code>@parmana/envelope-verifier</code> and <code>@parmana/execution-system</code><a class="anchor" href="#publishing-parmanaenvelope-verifier-and-parmanaexecution-system" aria-label="Link to this section">#</a></h1>
+<p><a href="../index.html">Portal home</a> · <a href="../sdk/index.html">SDK index</a> · <a href="../FINDINGS.html#f5-two-packages-are-on-npm-at-010-while-the-repository-is-411">FINDINGS F5</a></p>
+<p>This page sets out what publishing these two packages would mean, what is already true, and what to check first. It is for the owner, who decides and publishes. It does not publish anything.</p>
+<h2 id="the-decision">The decision<a class="anchor" href="#the-decision" aria-label="Link to this section">#</a></h2>
+<p>Two packages are marked public in the repository but have a different state on npm:</p>
+<ul>
+<li>The repository has both at <strong>4.1.1</strong>.</li>
+<li>npm has both at <strong>0.1.0</strong> (and a <code>0.0.0-stage</code> tag). The <code>0.1.0</code> versions are older code.</li>
+</ul>
+<p>The question is whether they should be published as public packages at all, and if so, at what version.</p>
+<h2 id="what-is-verified">What is verified<a class="anchor" href="#what-is-verified" aria-label="Link to this section">#</a></h2>
+<p>These facts were checked on 2026-11-20 against the repository and the registry:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Fact</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Repository version</td>
+<td>4.1.1 for both (<code>packages/envelope-verifier/package.json</code>, <code>packages/execution-system/package.json</code>)</td>
+</tr>
+<tr>
+<td>Marked private</td>
+<td>No. Neither manifest sets <code>private</code>.</td>
+</tr>
+<tr>
+<td>Registry versions</td>
+<td><code>0.1.0</code> and <code>0.0.0-stage</code>, for both</td>
+</tr>
+<tr>
+<td>Packs cleanly</td>
+<td>Yes. <code>npm pack --dry-run</code> lists only the built <code>dist</code> files (<code>index.js</code>, <code>index.d.ts</code> and maps).</td>
+</tr>
+<tr>
+<td>Who depends on them</td>
+<td>Only the server packages: <code>api</code>, <code>runtime</code>, <code>storage</code>, <code>approval</code> and <code>execution-gateway</code>.</td>
+</tr>
+<tr>
+<td>Public SDKs, CLI or verifiers that depend on them</td>
+<td>None. <code>@parmana/sdk</code>, <code>@parmana/cli</code>, <code>@parmana/verifier</code> and <code>parmana-verifier</code> do not.</td>
+</tr>
+<tr>
+<td>In the release process</td>
+<td>No. <code>docs/internal/runbooks/RELEASE-ALL-PACKAGES.md</code> lists nine packages, and these two are not among them.</td>
+</tr>
+<tr>
+<td>Documented as an API in this portal</td>
+<td>No. The portal lists both as &quot;building blocks&quot;, not integration points (<a href="../sdk/index.html">SDK index</a>).</td>
+</tr>
+<tr>
+<td>npm access from the environment used to prepare this</td>
+<td>None. <code>npm whoami</code> returns <code>ENEEDAUTH</code>. Publishing needs the owner&#39;s npm account.</td>
+</tr>
+</tbody></table></div>
+<h2 id="why-publish">Why publish<a class="anchor" href="#why-publish" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>The registry is out of step.</strong> Anyone who installs <code>0.1.0</code> gets older code than the repository has. That can mislead someone who relies on the package.</li>
+<li><strong>The manifests already say public.</strong> Leaving them public and unpublished is an inconsistency that the repository itself carries.</li>
+<li><strong>Third parties may want the verifier.</strong> <code>@parmana/envelope-verifier</code> verifies that an execution request was authorized. If someone outside the project needs that check alone, a published package is the simplest way to give it to them.</li>
+</ul>
+<h2 id="why-not-publish">Why not publish<a class="anchor" href="#why-not-publish" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>They are not integration points.</strong> The portal says they are building blocks, and that people should not install them. Publishing them invites use that the portal does not support.</li>
+<li><strong>Publishing creates a version promise.</strong> Once <code>4.1.1</code> is on npm, consumers can depend on it, and a later breaking change needs a major version bump. The current <code>execution-system</code> is a protocol, and its public surface is not documented.</li>
+<li><strong>They are outside the release process.</strong> A release outside the runbook has no SLSA provenance, no registry check against the release files, and no version-bump review. The runbook exists to prevent that.</li>
+<li><strong>Nothing in the published SDKs needs them.</strong> Publishing them does not change what SDK users install.</li>
+</ul>
+<h2 id="if-you-publish">If you publish<a class="anchor" href="#if-you-publish" aria-label="Link to this section">#</a></h2>
+<p>Do this through the release runbook, not by hand, unless you decide otherwise.</p>
+<ol>
+<li><strong>Decide the audience.</strong> Confirm that an outside user needs these packages. If not, mark them <code>private</code> and stop here.</li>
+<li><strong>Document the public surface.</strong> <code>execution-system</code> has no documented API. Write one before publishing, or do not publish it.</li>
+<li><strong>Add both to the release process.</strong> Update the package table in <code>RELEASE-ALL-PACKAGES.md</code> and the release manifest, so provenance and the registry checks cover them.</li>
+<li><strong>Version.</strong> Publish at <code>4.1.1</code>, the repository&#39;s version, so the registry and the repository agree. Do not reuse <code>0.1.0</code>, and do not publish <code>0.0.0-stage</code> over anything.</li>
+<li><strong>Check the tarball.</strong> Run <code>npm pack --dry-run</code> and confirm the contents. Confirm the SHA-256 matches the release record.</li>
+<li><strong>Publish with the owner account,</strong> then confirm with <code>npm view &lt;name&gt; version</code> that the registry shows <code>4.1.1</code>.</li>
+<li><strong>Update this page and the SDK index.</strong> Replace &quot;registry version differs&quot; with the published version.</li>
+</ol>
+<h2 id="decision-2026-11-20-public-in-two-steps">Decision (2026-11-20): public, in two steps<a class="anchor" href="#decision-2026-11-20-public-in-two-steps" aria-label="Link to this section">#</a></h2>
+<p>The owner decided both packages are public. The owner has agreed to publish in two steps, to limit the version promise:</p>
+<ol>
+<li><strong><code>@parmana/envelope-verifier</code> first.</strong> It verifies that an execution request was authorized, and a third party may need that check alone. Before its first publish, write a short API page for it in this portal.</li>
+<li><strong><code>@parmana/execution-system</code> held.</strong> It is a protocol, with no documented public surface. Publish it only after its API is written down, in a later release.</li>
+</ol>
+<h3 id="done-on-the-branch-not-published">Done on the branch (not published)<a class="anchor" href="#done-on-the-branch-not-published" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>.github/release/release-manifest.json</code>: <code>@parmana/envelope-verifier</code> added to the <code>npm</code> list.</li>
+<li><code>.github/workflows/release.yml</code>: both <code>npm pack</code> command lists include <code>--workspace=packages/envelope-verifier</code>.</li>
+<li><code>docs/internal/runbooks/RELEASE-ALL-PACKAGES.md</code>: the package table names it, and the counts are ten files.</li>
+<li><code>tests/architecture/release-manifest.test.ts</code> passes (25 tests).</li>
+</ul>
+<h3 id="api-pages-written-2026-11-20">API pages (written 2026-11-20)<a class="anchor" href="#api-pages-written-2026-11-20" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><a href="envelope-verifier-api.html"><code>@parmana/envelope-verifier</code> API</a>: ready for the publish.</li>
+<li><a href="execution-system-api.html"><code>@parmana/execution-system</code> API</a>: the three defects recorded on 2026-11-20 are fixed, and the placeholder is renamed to <code>SimulatedExecutionSystem</code>. The package stays held until its receiving-system obligations are documented and the owner decides on the placeholder.</li>
+</ul>
+<h3 id="still-needed-before-the-owner-publishes">Still needed before the owner publishes<a class="anchor" href="#still-needed-before-the-owner-publishes" aria-label="Link to this section">#</a></h3>
+<ol>
+<li>Confirm the envelope verifier API page matches the source at the release commit.</li>
+<li>Release through the runbook, from the owner&#39;s npm account, at <code>4.1.1</code>. The runbook&#39;s other steps (the version bump PR, provenance, registry checks) apply.</li>
+<li>Leave <code>@parmana/execution-system</code> out of the release until its API is documented.</li>
+</ol>
+<h2 id="recommendation">Recommendation<a class="anchor" href="#recommendation" aria-label="Link to this section">#</a></h2>
+<p>Do not publish until the audience question in step 1 has an answer. If nobody outside the project needs these packages, mark them <code>private</code>. That removes the registry mismatch, and it removes the version promise.</p>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/packages/publishing-envelope-verifier-and-execution-system.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="execution-system-api.html"><span>Previous</span>@parmana/execution-system: API reference</a><a class="pn next" href="../deployment/index.html"><span>Next</span>Deployment and operations</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#the-decision">The decision</a></li><li class="d2"><a href="#what-is-verified">What is verified</a></li><li class="d2"><a href="#why-publish">Why publish</a></li><li class="d2"><a href="#why-not-publish">Why not publish</a></li><li class="d2"><a href="#if-you-publish">If you publish</a></li><li class="d2"><a href="#decision-2026-11-20-public-in-two-steps">Decision (2026-11-20): public, in two steps</a></li><li class="d3"><a href="#done-on-the-branch-not-published">Done on the branch (not published)</a></li><li class="d3"><a href="#api-pages-written-2026-11-20">API pages (written 2026-11-20)</a></li><li class="d3"><a href="#still-needed-before-the-owner-publishes">Still needed before the owner publishes</a></li><li class="d2"><a href="#recommendation">Recommendation</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

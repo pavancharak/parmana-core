@@ -347,9 +347,21 @@ function verifySigned(
  *   `GET /trust-records/{id}` returned it, or as parsed from a JSON file.
  * @param publicKeys Key ID to PEM public key.
  */
+/** Options for verifyExecutionTrustRecordOffline. Each defaults to off. */
+export interface VerifyTrustRecordOptions {
+  /**
+   * Fail closed on legacy coverage. When true, a record is valid only when it
+   * is schema 3 with a verified hybrid signature (coverage "full"). Schema 2
+   * records, which sign seven fields, are refused. Default false, which keeps
+   * the result of earlier releases.
+   */
+  readonly requireFullCoverage?: boolean;
+}
+
 export function verifyExecutionTrustRecordOffline(
   trustRecord: unknown,
   publicKeys: PublicKeys,
+  options: VerifyTrustRecordOptions = {},
 ): OfflineVerificationResult {
   const record = (trustRecord ?? {}) as JsonObject;
   const result = verifySigned(
@@ -386,16 +398,29 @@ export function verifyExecutionTrustRecordOffline(
     hybridValid = false;
   }
 
+  const coverage: "full" | "legacy" =
+    schemaVersion === WHOLE_RECORD_SCHEMA_VERSION && hybridValid === true
+      ? "full"
+      : "legacy";
+  const coverageRefused =
+    options.requireFullCoverage === true && coverage !== "full";
+  if (coverageRefused) {
+    result.errors.push(
+      "requireFullCoverage: the record is not full coverage (schema 3 with a verified hybrid signature). A schema 2 record covers 7 fields, so fields outside them can change without detection.",
+    );
+  }
+
   return {
-    valid: result.hashValid && result.signatureValid && hybridValid !== false,
+    valid:
+      result.hashValid &&
+      result.signatureValid &&
+      hybridValid !== false &&
+      !coverageRefused,
     hashValid: result.hashValid,
     legacySignatureValid: result.signatureValid,
     algorithmsChecked: result.algorithmsChecked,
     errors: result.errors,
-    coverage:
-      schemaVersion === WHOLE_RECORD_SCHEMA_VERSION && hybridValid === true
-        ? "full"
-        : "legacy",
+    coverage,
     hybridSignaturesValid: hybridValid,
   };
 }

@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TypeScript SDK: @parmana/sdk · Parmana developer docs</title>
+<meta name="description" content="TypeScript SDK: @parmana/sdk SDKs · Full method index · Python SDK · Offline verifier About the code on this page. Blocks marked as methods, builders and signing show the call shape. Fragments such as an undefined approval or record are ill">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="index.html">SDKs and packages</a></li><li><a href="typescript.html" aria-current="page">TypeScript SDK: @parmana/sdk</a></li><li><a href="python.html">Python SDK: parmana</a></li><li><a href="cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>SDKs and packages</span><span class="sep">/</span><span>TypeScript SDK: @parmana/sdk</span></div>
+    <article>
+<h1 id="typescript-sdk-parmanasdk">TypeScript SDK: <code>@parmana/sdk</code><a class="anchor" href="#typescript-sdk-parmanasdk" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">SDKs</a> · <a href="typescript-method-index.html">Full method index</a> · <a href="python.html">Python SDK</a> · <a href="verifier.html">Offline verifier</a></p>
+<blockquote>
+<p><strong>About the code on this page.</strong> Blocks marked as methods, builders and signing show the call shape. Fragments such as an undefined <code>approval</code> or <code>record</code> are <strong>illustrative</strong>, not runnable on their own. The runnable versions are the examples linked under <a href="#examples">Examples</a> (governed-flow.ts, declare-then-execute.ts and limits.ts), which were run for this portal.</p>
+</blockquote>
+<h2 id="package">Package<a class="anchor" href="#package" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Package</td>
+<td><code>@parmana/sdk</code></td>
+</tr>
+<tr>
+<td>Version documented</td>
+<td>4.1.1 (npm)</td>
+</tr>
+<tr>
+<td>Purpose</td>
+<td>Client for the Parmana API: declare and execute Business Transactions, read and verify Execution Trust Records, manage policy and approval changes, and verify records offline.</td>
+</tr>
+<tr>
+<td>Module format</td>
+<td>ES modules (<code>&quot;type&quot;: &quot;module&quot;</code>). Use <code>import</code>, or <code>await import()</code> from CommonJS.</td>
+</tr>
+<tr>
+<td>Runtime</td>
+<td>Node.js 24 or later (<code>engines.node &gt;=24</code>). Uses the built-in <code>fetch</code>.</td>
+</tr>
+<tr>
+<td>Other environments</td>
+<td>Not verified. The SDK uses <code>node:crypto</code>, so it is intended for Node.js and server-side code. Browser use is not documented.</td>
+</tr>
+<tr>
+<td>Dependencies</td>
+<td><code>dotenv</code> (runtime)</td>
+</tr>
+</tbody></table></div>
+<h2 id="install">Install<a class="anchor" href="#install" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">npm install @parmana/sdk@4.1.1</code></pre></div>
+<p>Check the install and the exports:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">node --input-type=module -e "import('@parmana/sdk').then(m =&gt; console.log(m.VERSION, typeof m.ParmanaClient))"
+# 4.1.1 function</code></pre></div>
+<h2 id="initialize-the-client">Initialize the client<a class="anchor" href="#initialize-the-client" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import { ParmanaClient } from "@parmana/sdk";
+
+const client = new ParmanaClient({
+  endpoint: "https://parmana.example.com", // or http://localhost:3000 for local development
+  apiKey: process.env.PARMANA_API_KEY, // the caller's raw API key
+  timeout: 30_000, // optional, milliseconds
+});</code></pre></div>
+<p>The constructor throws <code>ConfigurationError</code> if <code>endpoint</code> is missing. It also throws a plain <code>Error</code> if the endpoint is not an absolute URL, is not <code>https://</code> (except <code>localhost</code>, <code>127.0.0.1</code>, <code>[::1]</code>), or contains credentials. The API key is kept out of <code>console.log</code> and <code>JSON.stringify</code>: printing the client shows only the endpoint.</p>
+<p><code>ParmanaClient</code> is immutable after construction. Create one per endpoint and key, and reuse it.</p>
+<h2 id="configuration">Configuration<a class="anchor" href="#configuration" aria-label="Link to this section">#</a></h2>
+<p>The <code>Configuration</code> interface (<code>import type { Configuration } from &quot;@parmana/sdk&quot;</code>):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>endpoint</code></td>
+<td><code>string</code></td>
+<td>yes</td>
+<td>none</td>
+<td>Base URL of the Parmana API. Must be <code>https://</code>, or <code>http://</code> for loopback only.</td>
+</tr>
+<tr>
+<td><code>apiKey</code></td>
+<td><code>string</code></td>
+<td>no</td>
+<td>none</td>
+<td>Caller&#39;s raw API key, sent as <code>Authorization: Bearer &lt;key&gt;</code>. Required for every route except health, readiness and the documentation routes.</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td><code>number</code></td>
+<td>no</td>
+<td><code>30000</code></td>
+<td>Milliseconds to wait for each request.</td>
+</tr>
+<tr>
+<td><code>retryPolicy</code></td>
+<td><code>RetryPolicy</code></td>
+<td>no</td>
+<td>retries off</td>
+<td>See below.</td>
+</tr>
+<tr>
+<td><code>transport</code></td>
+<td><code>Transport</code></td>
+<td>no</td>
+<td><code>HttpTransport</code></td>
+<td>Replace the HTTP layer, for example to add tracing or to test.</td>
+</tr>
+<tr>
+<td><code>userAgent</code></td>
+<td><code>string</code></td>
+<td>no</td>
+<td>SDK default</td>
+<td>Sent with each request.</td>
+</tr>
+</tbody></table></div>
+<h3 id="retries">Retries<a class="anchor" href="#retries" aria-label="Link to this section">#</a></h3>
+<p><code>RetryPolicy</code> has <code>enabled</code>, <code>maxAttempts</code>, <code>initialDelayMs</code> (default 1000), <code>maxDelayMs</code>, and <code>strategy</code> (<code>RetryStrategy.FIXED</code> or <code>RetryStrategy.EXPONENTIAL</code>). Retries are <strong>off by default</strong> (<code>maxAttempts</code> defaults to 0).</p>
+<p>The transport retries only <code>GET</code> requests. It never retries a <code>POST</code>, so an execution is not repeated by the SDK. Keep it that way in your code: retrying <code>execute</code> with the same <code>businessTransactionId</code> returns <code>409 Conflict</code>, and retrying with a new id creates a second execution.</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import { ParmanaClient, RetryStrategy } from "@parmana/sdk";
+
+const client = new ParmanaClient({
+  endpoint: "https://parmana.example.com",
+  apiKey: process.env.PARMANA_API_KEY,
+  retryPolicy: {
+    enabled: true,
+    maxAttempts: 3,
+    initialDelayMs: 500,
+    strategy: RetryStrategy.EXPONENTIAL,
+  },
+});</code></pre></div>
+<h2 id="exports">Exports<a class="anchor" href="#exports" aria-label="Link to this section">#</a></h2>
+<p>Everything below is exported from <code>@parmana/sdk</code>. The full list is generated from the package&#39;s <code>index.ts</code>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Exports</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Client</td>
+<td><code>ParmanaClient</code></td>
+</tr>
+<tr>
+<td>Version</td>
+<td><code>VERSION</code></td>
+</tr>
+<tr>
+<td>Configuration and transport</td>
+<td><code>Configuration</code>, <code>RetryPolicy</code>, <code>RetryStrategy</code>, <code>Transport</code>, <code>TransportRequest</code>, <code>TransportResponse</code>, <code>HttpTransport</code></td>
+</tr>
+<tr>
+<td>Builder</td>
+<td><code>createBusinessTransaction</code>, <code>CreateBusinessTransactionOptions</code></td>
+</tr>
+<tr>
+<td>Domain model</td>
+<td>Every type in <code>src/models</code> (for example <code>BusinessTransaction</code>, <code>ExecutionTrustRecord</code>, <code>Verification</code>, <code>Receipt</code>, <code>RefusalRecord</code>, <code>ExecutionIntent</code>, <code>PolicyInEffect</code>, <code>CallerIdentity</code>, <code>PublicKeyInfo</code>, <code>ApprovalIssuer</code>, <code>AuthorityGrant</code>, <code>PendingPolicyChange</code>)</td>
+</tr>
+<tr>
+<td>Errors</td>
+<td><code>ParmanaError</code>, <code>ConfigurationError</code>, <code>ValidationError</code>, <code>AuthenticationError</code>, <code>AuthorizationError</code>, <code>NotFoundError</code>, <code>ConflictError</code>, <code>ExecutionRejectedError</code>, <code>ExecutionPendingError</code>, <code>InternalServerError</code>, <code>NetworkError</code>, <code>RateLimitError</code>, <code>ReplayError</code>, <code>TimeoutError</code>, <code>VerificationError</code></td>
+</tr>
+<tr>
+<td>Offline checks and signing</td>
+<td><code>verifyExecutionTrustRecordOffline</code>, <code>verifyExecutionIntentOffline</code>, <code>OfflineVerificationResult</code>, <code>PublicKeys</code>, <code>signApproval</code>, <code>SignApprovalInput</code>, <code>SignedApproval</code>, <code>ApprovalPayload</code>, <code>ApprovalScope</code>, <code>ApprovalScopeComparator</code>, <code>DEFAULT_APPROVAL_TTL_SECONDS</code>, <code>MAX_APPROVAL_TTL_SECONDS</code>, <code>signPolicyChangeStepUp</code>, <code>SignPolicyChangeStepUpInput</code>, <code>canonicalSerialize</code>, <code>verifyParmanaRelease</code>, <code>ParmanaRelease</code>, <code>ParmanaReleaseCondition</code>, <code>ParmanaReleaseVerification</code>, <code>VerifyParmanaReleaseOptions</code>, <code>DEFAULT_RELEASE_CLOCK_SKEW_SECONDS</code></td>
+</tr>
+<tr>
+<td>Sub-APIs</td>
+<td><code>HealthApi</code>, <code>ExecutionApi</code>, <code>VerificationApi</code>, <code>ReplayApi</code>, <code>PolicyV2Api</code>, <code>PolicyApi</code>, <code>PolicyValidationResult</code>, <code>ReceiptApi</code>, <code>TransactionApi</code>, <code>TrustRecordApi</code>, <code>RefusalApi</code>, <code>ExecutionIntentApi</code>, <code>AuditApi</code>, <code>CallerApi</code>, <code>ApproverApi</code>, <code>ExternalConnectorApi</code>, <code>BusinessSignalSourceApi</code>, <code>AuthorityGrantApi</code></td>
+</tr>
+</tbody></table></div>
+<p>The sub-API classes are exported, but <code>ParmanaClient</code> composes them internally and does not expose them as properties. Call the methods on <code>ParmanaClient</code>. Use the exported classes only if you are writing your own transport on top of the SDK.</p>
+<h2 id="methods">Methods<a class="anchor" href="#methods" aria-label="Link to this section">#</a></h2>
+<p><code>ParmanaClient</code> has 58 public methods. The complete table, with exact signatures and the HTTP request each one sends, is in the <a href="typescript-method-index.html">generated method index</a>. The table below groups them by task.</p>
+<h3 id="health-and-identity">Health and identity<a class="anchor" href="#health-and-identity" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Returns</th>
+<th>Request</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>health()</code></td>
+<td><code>Promise&lt;HealthStatus&gt;</code></td>
+<td><code>GET /health</code></td>
+</tr>
+<tr>
+<td><code>version()</code></td>
+<td><code>Promise&lt;unknown&gt;</code></td>
+<td><code>GET /version</code>. Returns the server&#39;s response, not the SDK version.</td>
+</tr>
+<tr>
+<td><code>endpoint()</code></td>
+<td><code>string</code></td>
+<td>Local. Returns the configured endpoint.</td>
+</tr>
+<tr>
+<td><code>caller()</code></td>
+<td><code>Promise&lt;CallerIdentity&gt;</code></td>
+<td><code>GET /callers/me</code></td>
+</tr>
+<tr>
+<td><code>publicKey(keyId?)</code></td>
+<td><code>Promise&lt;PublicKeyInfo&gt;</code></td>
+<td><code>GET /keys/{keyId}</code>. Default <code>keyId</code> is <code>&quot;default&quot;</code>. The result has <code>pem</code>, <code>algorithm</code>, <code>keyId</code>, <code>use</code>.</td>
+</tr>
+</tbody></table></div>
+<h3 id="declare-execute-and-read-business-transactions">Declare, execute and read Business Transactions<a class="anchor" href="#declare-execute-and-read-business-transactions" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Returns</th>
+<th>Request</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>execute(transaction)</code></td>
+<td><code>Promise&lt;ExecutionTrustRecord&gt;</code></td>
+<td><code>POST /execute</code>. Decides and, if approved, releases in one call.</td>
+</tr>
+<tr>
+<td><code>createTransaction(transaction)</code></td>
+<td><code>Promise&lt;ExecutionTrustRecord&gt;</code></td>
+<td>Declares then executes: <code>POST /transactions</code>, then <code>POST /transactions/{id}/execute</code>.</td>
+</tr>
+<tr>
+<td><code>declareTransaction(transaction)</code></td>
+<td><code>Promise&lt;DeclaredTransaction&gt;</code></td>
+<td><code>POST /transactions</code>. Records <code>RECEIVED</code>. Decides nothing.</td>
+</tr>
+<tr>
+<td><code>executeTransaction(businessTransactionId)</code></td>
+<td><code>Promise&lt;ExecutionTrustRecord&gt;</code></td>
+<td><code>POST /transactions/{id}/execute</code></td>
+</tr>
+<tr>
+<td><code>transactionStatus(businessTransactionId, options?)</code></td>
+<td><code>Promise&lt;TransactionStatusResult&gt;</code></td>
+<td><code>GET /transactions/{id}/status</code>. <code>options.history: true</code> includes the event history.</td>
+</tr>
+<tr>
+<td><code>reconcileTransaction(businessTransactionId)</code></td>
+<td><code>Promise&lt;ReconcileResult&gt;</code></td>
+<td><code>POST /transactions/{id}/reconcile</code>. Use after a <code>202</code> or <code>502</code>.</td>
+</tr>
+<tr>
+<td><code>transaction(businessTransactionId)</code></td>
+<td><code>Promise&lt;BusinessTransaction&gt;</code></td>
+<td><code>GET /transactions/{id}</code></td>
+</tr>
+<tr>
+<td><code>transactions(page?, pageSize?)</code></td>
+<td><code>Promise&lt;BusinessTransaction[]&gt;</code></td>
+<td><code>GET /transactions?page=&amp;pageSize=</code>. Defaults: page 1, size 25.</td>
+</tr>
+</tbody></table></div>
+<h3 id="verify-replay-and-receipts">Verify, replay and receipts<a class="anchor" href="#verify-replay-and-receipts" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Returns</th>
+<th>Request</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>verify(businessTransactionId)</code></td>
+<td><code>Promise&lt;Verification&gt;</code></td>
+<td><code>POST /verify</code>. Read <code>status</code> (<code>VERIFIED</code> or <code>FAILED</code>).</td>
+</tr>
+<tr>
+<td><code>getLatestVerification(businessTransactionId)</code></td>
+<td><code>Promise&lt;Verification&gt;</code></td>
+<td><code>GET /verification/{id}</code></td>
+</tr>
+<tr>
+<td><code>replay(businessTransactionId)</code></td>
+<td><code>Promise&lt;ReplayResult&gt;</code></td>
+<td><code>POST /replay</code>. Read <code>verified</code>.</td>
+</tr>
+<tr>
+<td><code>receipt(businessTransactionId)</code></td>
+<td><code>Promise&lt;Receipt&gt;</code></td>
+<td><code>POST /receipt</code>. Requires a <code>VERIFIED</code> record.</td>
+</tr>
+<tr>
+<td><code>latestReceipt(businessTransactionId)</code></td>
+<td><code>Promise&lt;Receipt&gt;</code></td>
+<td><code>GET /receipt/latest/{id}</code></td>
+</tr>
+<tr>
+<td><code>trustRecord(businessTransactionId)</code></td>
+<td><code>Promise&lt;ExecutionTrustRecord&gt;</code></td>
+<td><code>GET /trust-records/{id}</code></td>
+</tr>
+<tr>
+<td><code>trustRecords(page?, pageSize?, options?)</code></td>
+<td><code>Promise&lt;ExecutionTrustRecord[]&gt;</code></td>
+<td><code>GET /trust-records</code>. <code>options</code> takes <code>since</code> and <code>until</code> (ISO timestamps).</td>
+</tr>
+<tr>
+<td><code>refusalRecord(businessTransactionId)</code></td>
+<td><code>Promise&lt;RefusalRecord&gt;</code></td>
+<td><code>GET /refusal/{id}</code></td>
+</tr>
+<tr>
+<td><code>verifyRefusalRecord(record)</code></td>
+<td><code>Promise&lt;boolean&gt;</code></td>
+<td><code>POST /refusal/verify</code></td>
+</tr>
+<tr>
+<td><code>verifyAuditEvent(event, signature)</code></td>
+<td><code>Promise&lt;boolean&gt;</code></td>
+<td><code>POST /audit/verify</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="policy-in-effect-and-validation">Policy in effect and validation<a class="anchor" href="#policy-in-effect-and-validation" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Returns</th>
+<th>Request</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>policyInEffect(capability)</code></td>
+<td><code>Promise&lt;PolicyInEffect&gt;</code></td>
+<td><code>GET /policies/in-effect?capability=</code>. Returns the policy bound to a capability. A capability with no binding returns <code>404 CAPABILITY_NOT_BOUND</code>.</td>
+</tr>
+<tr>
+<td><code>validatePolicy(policyId, policyVersion)</code></td>
+<td><code>Promise&lt;PolicyValidationResult&gt;</code></td>
+<td><code>POST /policies/validate</code>. Returns <code>{ valid, errors }</code>. It checks the named version as stored, not a document you pass in.</td>
+</tr>
+</tbody></table></div>
+<h3 id="policy-changes-maker-checker">Policy changes (maker-checker)<a class="anchor" href="#policy-changes-maker-checker" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Returns</th>
+<th>Request</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>proposePolicyChange(name, version, input)</code></td>
+<td><code>Promise&lt;ProposedPolicyChange&gt;</code></td>
+<td><code>POST /policies/{name}/{version}/pending-changes</code>. <code>input</code> has <code>proposedContent</code> and <code>reason</code>.</td>
+</tr>
+<tr>
+<td><code>policyChanges(status?)</code></td>
+<td><code>Promise&lt;PolicyChangeForReview[]&gt;</code></td>
+<td><code>GET /policies/pending-changes?status=</code></td>
+</tr>
+<tr>
+<td><code>approvePolicyChange(pendingId, stepUpAuthorization)</code></td>
+<td><code>Promise&lt;PendingPolicyChange&gt;</code></td>
+<td><code>POST /policies/pending-changes/{id}/approve</code>. Checker only.</td>
+</tr>
+<tr>
+<td><code>rejectPolicyChange(pendingId, rejectionReason, stepUpAuthorization)</code></td>
+<td><code>Promise&lt;PendingPolicyChange&gt;</code></td>
+<td><code>POST /policies/pending-changes/{id}/reject</code>. Checker only.</td>
+</tr>
+</tbody></table></div>
+<p>Approver, external-connector, business-signal-source and authority-grant changes follow the same pattern: <code>propose…Change</code>, <code>…Changes(status?)</code>, <code>approve…Change(changeId, stepUpAuthorization)</code> and <code>reject…Change(changeId, reason, stepUpAuthorization)</code>. The approver methods are <code>approvers()</code>, <code>proposeApproverChange</code>, <code>approverChanges</code>, <code>approveApproverChange</code> and <code>rejectApproverChange</code>. Their endpoints are in the <a href="typescript-method-index.html">method index</a>.</p>
+<p>The maker-checker flow, with the step-up signature, is in the <a href="../tutorials/maker-checker.html">maker-checker tutorial</a>.</p>
+<h3 id="execution-intents-experimental">Execution intents (experimental)<a class="anchor" href="#execution-intents-experimental" aria-label="Link to this section">#</a></h3>
+<p><code>executionIntent</code>, <code>verifyExecutionIntent</code>, <code>unfinalizedExecutionIntents</code>, <code>finalizeExecutionIntent</code> and <code>resolveExecutionIntent</code> call the <code>/execution-intents</code> routes (ADR-0012). The server reports <code>executionIntentsConfigured: false</code> unless the deployment enables execution intents, so treat these as <strong>Experimental</strong> and do not rely on them without a test against your deployment.</p>
+<h3 id="policy-v2-experimental-opt-in">Policy v2 (experimental, opt-in)<a class="anchor" href="#policy-v2-experimental-opt-in" aria-label="Link to this section">#</a></h3>
+<p><code>decidePolicyV2</code>, <code>policyV2Review</code>, <code>decidePolicyV2Review</code> and <code>policyV2Replay</code> call <code>/v2/...</code> routes. These routes are in the OpenAPI document, marked <code>x-stability: experimental</code>. The server mounts them only when <code>PARMANA_POLICY_V2_DECISIONS</code> and its related settings are set (see <a href="../reference/environment-variables.html">Environment variables</a>). Without them the routes return <code>404</code>. Status: <strong>Experimental</strong>.</p>
+<h2 id="governance-changes-every-method">Governance changes: every method<a class="anchor" href="#governance-changes-every-method" aria-label="Link to this section">#</a></h2>
+<p>These methods cover the approver, external-connector, business-signal-source and authority-grant changes. Each follows the policy-change pattern: a <code>propose…Change</code> method, a <code>…Changes(status?)</code> list, and <code>approve…Change</code> and <code>reject…Change</code> for the checker, which take a step-up envelope. The table lists each one, with the request it sends. Like the policy methods above, the approve and reject calls need a human checker and a step-up envelope.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>HTTP</th>
+<th>Path</th>
+<th>Signature</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>externalConnectors</code></td>
+<td>GET</td>
+<td><code>/external-connectors</code></td>
+<td>externalConnectors(): Promise&lt;ExternalConnector[]&gt;</td>
+</tr>
+<tr>
+<td><code>proposeExternalConnectorChange</code></td>
+<td>POST</td>
+<td><code>/external-connectors/changes</code></td>
+<td>proposeExternalConnectorChange(input: ProposeExternalConnectorChangeInput): Promise<ExternalConnectorChange></td>
+</tr>
+<tr>
+<td><code>externalConnectorChanges</code></td>
+<td>GET</td>
+<td><code>/external-connectors/changes</code></td>
+<td>externalConnectorChanges(status?: PendingPolicyChangeStatus): Promise&lt;ExternalConnectorChange[]&gt;</td>
+</tr>
+<tr>
+<td><code>approveExternalConnectorChange</code></td>
+<td>POST</td>
+<td><code>/external-connectors/changes/{param}/approve</code></td>
+<td>approveExternalConnectorChange(changeId: string, stepUpAuthorization: PolicyChangeStepUpAuthorization): Promise<ExternalConnectorChange></td>
+</tr>
+<tr>
+<td><code>rejectExternalConnectorChange</code></td>
+<td>POST</td>
+<td><code>/external-connectors/changes/{param}/reject</code></td>
+<td>rejectExternalConnectorChange(changeId: string, rejectionReason: string, stepUpAuthorization: PolicyChangeStepUpAuthorization): Promise<ExternalConnectorChange></td>
+</tr>
+<tr>
+<td><code>businessSignalSources</code></td>
+<td>GET</td>
+<td><code>/business-signal-sources</code></td>
+<td>businessSignalSources(): Promise&lt;BusinessSignalSource[]&gt;</td>
+</tr>
+<tr>
+<td><code>proposeBusinessSignalSourceChange</code></td>
+<td>POST</td>
+<td><code>/business-signal-sources/changes</code></td>
+<td>proposeBusinessSignalSourceChange(input: ProposeBusinessSignalSourceChangeInput): Promise<BusinessSignalSourceChange></td>
+</tr>
+<tr>
+<td><code>businessSignalSourceChanges</code></td>
+<td>GET</td>
+<td><code>/business-signal-sources/changes</code></td>
+<td>businessSignalSourceChanges(status?: PendingPolicyChangeStatus): Promise&lt;BusinessSignalSourceChange[]&gt;</td>
+</tr>
+<tr>
+<td><code>approveBusinessSignalSourceChange</code></td>
+<td>POST</td>
+<td><code>/business-signal-sources/changes/{param}/approve</code></td>
+<td>approveBusinessSignalSourceChange(changeId: string, stepUpAuthorization: PolicyChangeStepUpAuthorization): Promise<BusinessSignalSourceChange></td>
+</tr>
+<tr>
+<td><code>rejectBusinessSignalSourceChange</code></td>
+<td>POST</td>
+<td><code>/business-signal-sources/changes/{param}/reject</code></td>
+<td>rejectBusinessSignalSourceChange(changeId: string, rejectionReason: string, stepUpAuthorization: PolicyChangeStepUpAuthorization): Promise<BusinessSignalSourceChange></td>
+</tr>
+<tr>
+<td><code>authorityGrants</code></td>
+<td>GET</td>
+<td><code>/authority-grants</code></td>
+<td>authorityGrants(): Promise&lt;AuthorityGrant[]&gt;</td>
+</tr>
+<tr>
+<td><code>proposeAuthorityGrantChange</code></td>
+<td>POST</td>
+<td><code>/authority-grants/changes</code></td>
+<td>proposeAuthorityGrantChange(input: ProposeAuthorityGrantChangeInput): Promise<AuthorityGrantChange></td>
+</tr>
+<tr>
+<td><code>authorityGrantChanges</code></td>
+<td>GET</td>
+<td><code>/authority-grants/changes</code></td>
+<td>authorityGrantChanges(status?: PendingPolicyChangeStatus): Promise&lt;AuthorityGrantChange[]&gt;</td>
+</tr>
+<tr>
+<td><code>approveAuthorityGrantChange</code></td>
+<td>POST</td>
+<td><code>/authority-grants/changes/{param}/approve</code></td>
+<td>approveAuthorityGrantChange(changeId: string, stepUpAuthorization: PolicyChangeStepUpAuthorization): Promise<AuthorityGrantChange></td>
+</tr>
+<tr>
+<td><code>rejectAuthorityGrantChange</code></td>
+<td>POST</td>
+<td><code>/authority-grants/changes/{param}/reject</code></td>
+<td>rejectAuthorityGrantChange(changeId: string, rejectionReason: string, stepUpAuthorization: PolicyChangeStepUpAuthorization): Promise<AuthorityGrantChange></td>
+</tr>
+</tbody></table></div>
+<h2 id="builder-createbusinesstransaction">Builder: <code>createBusinessTransaction</code><a class="anchor" href="#builder-createbusinesstransaction" aria-label="Link to this section">#</a></h2>
+<p>The builder creates the nested request and keeps the ids that the server checks for consistency in step. Use it instead of writing the five objects by hand.</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import {
+  createBusinessTransaction,
+  type CreateBusinessTransactionOptions,
+} from "@parmana/sdk";
+
+const options: CreateBusinessTransactionOptions = {
+  principalId: "alice@example.com", // the person or service the action is for
+  purpose: "Vendor payment approval", // why the authority exists
+  action: "payments:refund", // the capability, format namespace:name
+  target: "vendor/V-100", // the resource the action acts on
+  parameters: { amount: 4500, currency: "USD" },
+  policy: { name: "vendor-payment", version: "2.1.0", schemaVersion: "1.0.0" },
+  signals: {/* facts the policy reads; see Policy management */},
+  // optional:
+  businessTransactionId: undefined, // a UUID; generated when omitted
+  authorityType: "SERVICE", // "USER" | "ROLE" | "SERVICE" | "ORGANIZATION"
+  displayName: "Accounts payable agent",
+  correlationId: "order-7731",
+  tenantId: undefined,
+  sourceSystem: "ap-automation",
+  submittedBy: "ap-automation",
+};
+
+const transaction = createBusinessTransaction(options);</code></pre></div>
+<p>Each of the following is checked by the server (<code>400</code>), and the builder keeps them equal:</p>
+<ul>
+<li><code>metadata.businessTransactionId</code> equals <code>businessTransactionId</code>.</li>
+<li><code>authorization.authorityId</code> equals <code>authority.authorityId</code>.</li>
+<li><code>intent.authorizationId</code> equals <code>authorization.authorizationId</code>.</li>
+<li><code>policy.name</code>, <code>policy.version</code> and <code>intent.action</code> are non-empty.</li>
+</ul>
+<p>The full schema is <code>schemas/requests/transaction-create-request.schema.json</code> in the repository.</p>
+<h2 id="human-approvals-signapproval">Human approvals: <code>signApproval</code><a class="anchor" href="#human-approvals-signapproval" aria-label="Link to this section">#</a></h2>
+<p>The approver signs on the approver&#39;s own machine. The agent attaches the result to <code>signals.approvalArtifact</code> and sets <code>signals.humanApproved</code> to <code>true</code>.</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import { readFileSync } from "node:fs";
+import { signApproval } from "@parmana/sdk";
+
+const approval = signApproval({
+  privateKeyPem: readFileSync("approver.private.pem", "utf8"), // stays with the approver
+  approverId: "finance-approver-1", // as registered on the server
+  keyId: "finance-approver-key-1", // as registered on the server
+  capability: "payments:refund", // must match intent.action
+  resourceId: "vendor/V-100", // must match the target the policy names
+  maxAmount: 5000, // optional: the largest amount approved
+  ttlSeconds: 900, // optional: default 900, at most 86400
+});</code></pre></div>
+<ul>
+<li>Without <code>maxAmount</code>, the approval names exactly <code>resourceId</code>. With <code>maxAmount</code>, it approves any amount up to that value on that resource, under the policy&#39;s <code>approvalSignals</code> value path.</li>
+<li>An approval is usable once. A second use is refused (tutorial 129 shows the refusal in its own run).</li>
+<li><code>signApproval</code> throws if <code>ttlSeconds</code> is not a whole number from 1 to 86400, if <code>capability</code> does not match <code>namespace:name</code>, if <code>resourceId</code> is empty, or if the key is not Ed25519.</li>
+</ul>
+<h2 id="policy-change-step-up-signpolicychangestepup">Policy change step-up: <code>signPolicyChangeStepUp</code><a class="anchor" href="#policy-change-step-up-signpolicychangestepup" aria-label="Link to this section">#</a></h2>
+<p>The checker signs a step-up envelope locally and sends it with their own API key.</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import { readFileSync } from "node:fs";
+import { signPolicyChangeStepUp } from "@parmana/sdk";
+
+const envelope = signPolicyChangeStepUp({
+  pendingPolicyChangeId: "f3bce0b6-1095-492c-a06e-9cb27253bbce",
+  action: "approve", // or "reject"
+  privateKeyPem: readFileSync("checker-stepup.private.pem", "utf8"),
+  keyId: "checker-step-up-key", // a label; the server checks the signature
+  ttlSeconds: 120, // optional
+});</code></pre></div>
+<p>The envelope is valid for a short time (the default is 120 seconds). Sign it immediately before you submit it.</p>
+<h2 id="offline-verification-verifyexecutiontrustrecordoffline">Offline verification: <code>verifyExecutionTrustRecordOffline</code><a class="anchor" href="#offline-verification-verifyexecutiontrustrecordoffline" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import { verifyExecutionTrustRecordOffline } from "@parmana/sdk";
+
+const result = verifyExecutionTrustRecordOffline(record, {
+  default: publicKeyPem,
+});
+// result: { valid, coverage, hashValid, legacySignatureValid, hybridSignaturesValid?,
+//           algorithmsChecked, errors }</code></pre></div>
+<ul>
+<li><code>publicKeys</code> maps each <code>keyId</code> to a PEM public key. Pin these yourself (see <a href="../security/evidence-verification.html">Evidence verification</a>).</li>
+<li><code>valid</code> means the stored hash and the signatures check out. It does <strong>not</strong> mean the record is fully covered. Read <code>coverage</code>: <code>&quot;full&quot;</code> for a schema version 3 record, <code>&quot;legacy&quot;</code> otherwise. A version 2 record covers only seven top-level fields, so a change to any other field is not detected by it.</li>
+<li>The SDK&#39;s check does not refuse legacy records by default. To fail closed, pass <code>{ requireFullCoverage: true }</code> as the third argument (<code>VerifyTrustRecordOptions</code>). A legacy record then returns <code>valid: false</code>, and <code>errors</code> says why. The default keeps the result of earlier releases (FINDINGS F2).</li>
+</ul>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">const strict = verifyExecutionTrustRecordOffline(record, publicKeys, {
+  requireFullCoverage: true,
+});</code></pre></div>
+<p><code>verifyExecutionIntentOffline(intent, publicKeys)</code> does the same for an execution intent.</p>
+<h2 id="errors">Errors<a class="anchor" href="#errors" aria-label="Link to this section">#</a></h2>
+<p>Every error the SDK throws is a subclass of <code>ParmanaError</code>. Each has <code>code</code> (an <code>ErrorCode</code>), <code>message</code>, optional <code>requestId</code>, optional <code>cause</code>, and for HTTP errors <code>statusCode</code>. Some also carry <code>serverCode</code>, the server&#39;s own <code>code</code> string.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Class</th>
+<th><code>ErrorCode</code></th>
+<th>Raised for</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ConfigurationError</code></td>
+<td><code>CONFIGURATION_ERROR</code></td>
+<td>Missing or invalid configuration.</td>
+</tr>
+<tr>
+<td><code>ValidationError</code></td>
+<td><code>VALIDATION_ERROR</code></td>
+<td>HTTP <code>400</code>: the request is malformed. Nothing was stored.</td>
+</tr>
+<tr>
+<td><code>AuthenticationError</code></td>
+<td><code>AUTHENTICATION_ERROR</code></td>
+<td>HTTP <code>401</code>: no key, or an unknown key.</td>
+</tr>
+<tr>
+<td><code>AuthorizationError</code></td>
+<td><code>AUTHORIZATION_ERROR</code></td>
+<td>HTTP <code>403</code> not otherwise classified. Also <code>CAPABILITY_NOT_ALLOWED</code> and <code>TENANT_NOT_ALLOWED</code>, with <code>serverCode</code> set.</td>
+</tr>
+<tr>
+<td><code>ExecutionRejectedError</code></td>
+<td><code>EXECUTION_REJECTED</code></td>
+<td>HTTP <code>403</code> with <code>POLICY_DENIED</code>: the policy refused the request. Final for that request.</td>
+</tr>
+<tr>
+<td><code>NotFoundError</code></td>
+<td><code>NOT_FOUND_ERROR</code></td>
+<td>HTTP <code>404</code>.</td>
+</tr>
+<tr>
+<td><code>ConflictError</code></td>
+<td><code>CONFLICT_ERROR</code></td>
+<td>HTTP <code>409</code>: the id was used, or the status does not allow the action.</td>
+</tr>
+<tr>
+<td><code>ExecutionPendingError</code></td>
+<td><code>EXECUTION_STATUS_PENDING</code></td>
+<td>HTTP <code>202</code>: released and recorded, but the status is <code>EXECUTING</code>. Reconcile. Carries the <code>record</code>.</td>
+</tr>
+<tr>
+<td><code>RateLimitError</code></td>
+<td><code>RATE_LIMIT_ERROR</code></td>
+<td>HTTP <code>429</code>. <code>retryAfterSeconds</code> when the server sends <code>Retry-After</code>.</td>
+</tr>
+<tr>
+<td><code>InternalServerError</code></td>
+<td><code>INTERNAL_SERVER_ERROR</code></td>
+<td>HTTP <code>500</code> and <code>503</code>, and any other status. <code>serverCode</code> carries <code>EXECUTION_RECORD_INCOMPLETE</code>, <code>EXECUTION_OUTCOME_UNKNOWN</code>, or <code>SIGNING_UNAVAILABLE</code> where the server sends one.</td>
+</tr>
+<tr>
+<td><code>NetworkError</code></td>
+<td><code>NETWORK_ERROR</code></td>
+<td>The request did not get an HTTP response.</td>
+</tr>
+<tr>
+<td><code>TimeoutError</code></td>
+<td><code>TIMEOUT_ERROR</code></td>
+<td>The request exceeded <code>timeout</code>.</td>
+</tr>
+<tr>
+<td><code>VerificationError</code></td>
+<td><code>VERIFICATION_ERROR</code></td>
+<td>A verification step failed.</td>
+</tr>
+<tr>
+<td><code>ReplayError</code></td>
+<td><code>REPLAY_ERROR</code></td>
+<td>A replay step failed.</td>
+</tr>
+</tbody></table></div>
+<p>The mapping is in <code>typescript/src/transport/mapHttpErrorResponse.ts</code>. The codes the server sends are listed in the <a href="../reference/error-codes.html">error catalogue</a>.</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import {
+  ExecutionRejectedError,
+  ConflictError,
+  ExecutionPendingError,
+  ParmanaError,
+} from "@parmana/sdk";
+
+try {
+  const record = await client.execute(transaction);
+} catch (error) {
+  if (error instanceof ExecutionRejectedError) {
+    // Policy refused. Do not retry this transaction. Show the reason, record the refusal.
+  } else if (error instanceof ConflictError) {
+    // The id was used. Read the existing outcome with trustRecord() or transactionStatus().
+  } else if (error instanceof ExecutionPendingError) {
+    // Released, record exists, status not yet EXECUTED. Call reconcileTransaction(id). Do not resubmit.
+  } else if (error instanceof ParmanaError) {
+    console.error(
+      error.code,
+      (error as { statusCode?: number }).statusCode,
+      error.message,
+    );
+  } else {
+    throw error;
+  }
+}</code></pre></div>
+<h2 id="examples">Examples<a class="anchor" href="#examples" aria-label="Link to this section">#</a></h2>
+<p>These examples are in the repository and were run against a local server for this portal. See <a href="../getting-started.html">Getting started</a> for the server.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Example</th>
+<th>What it shows</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/typescript/governed-flow.ts"><code>governed-quickstart/typescript/governed-flow.ts</code></a></td>
+<td>Propose, refused self-approval, checker approval, execute, verify (server and offline), replay refused</td>
+<td>Run; passed</td>
+</tr>
+<tr>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/typescript/declare-then-execute.ts"><code>governed-quickstart/typescript/declare-then-execute.ts</code></a></td>
+<td>Declare, status, execute, status after</td>
+<td>Run; passed</td>
+</tr>
+<tr>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/typescript/limits.ts"><code>governed-quickstart/typescript/limits.ts</code></a></td>
+<td>Three refusals: amount above approval, risk above limit, bound amount mismatch</td>
+<td>Run; all refused as expected</td>
+</tr>
+</tbody></table></div>
+<h2 id="best-practices">Best practices<a class="anchor" href="#best-practices" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Create one client per endpoint and key</strong> and reuse it. The client holds no mutable state.</li>
+<li><strong>Keep the default retry setting for <code>POST</code>.</strong> The SDK never retries a <code>POST</code>, and you should not wrap one in a retry loop. Retry reads (<code>GET</code>) freely.</li>
+<li><strong>Use a new <code>businessTransactionId</code> for each new business action, and the same id only to recover.</strong> After a <code>202</code> or <code>502</code>, read the status or reconcile. Do not submit a new id for the same action.</li>
+<li><strong>Store the approval artifact with the transaction</strong> if you need to show later who approved what. The record includes it.</li>
+<li><strong>Never put a private key in code.</strong> Load the approver&#39;s private key from a file or a secret store that the approver controls, and sign on the approver&#39;s machine.</li>
+<li><strong>Verify the record, not the response.</strong> Keep the Execution Trust Record. Verify it when you need proof, with the pinned key and a check of <code>coverage</code>.</li>
+<li><strong>Handle <code>ExecutionRejectedError</code> as a business outcome</strong>, not as a failure to retry.</li>
+<li><strong>Use <code>https://</code></strong> for every endpoint that is not on your own machine.</li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/sdk/typescript.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="index.html"><span>Previous</span>SDKs and packages</a><a class="pn next" href="python.html"><span>Next</span>Python SDK: parmana</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#package">Package</a></li><li class="d2"><a href="#install">Install</a></li><li class="d2"><a href="#initialize-the-client">Initialize the client</a></li><li class="d2"><a href="#configuration">Configuration</a></li><li class="d3"><a href="#retries">Retries</a></li><li class="d2"><a href="#exports">Exports</a></li><li class="d2"><a href="#methods">Methods</a></li><li class="d3"><a href="#health-and-identity">Health and identity</a></li><li class="d3"><a href="#declare-execute-and-read-business-transactions">Declare, execute and read Business Transactions</a></li><li class="d3"><a href="#verify-replay-and-receipts">Verify, replay and receipts</a></li><li class="d3"><a href="#policy-in-effect-and-validation">Policy in effect and validation</a></li><li class="d3"><a href="#policy-changes-maker-checker">Policy changes (maker-checker)</a></li><li class="d3"><a href="#execution-intents-experimental">Execution intents (experimental)</a></li><li class="d3"><a href="#policy-v2-experimental-opt-in">Policy v2 (experimental, opt-in)</a></li><li class="d2"><a href="#governance-changes-every-method">Governance changes: every method</a></li><li class="d2"><a href="#builder-createbusinesstransaction">Builder: createBusinessTransaction</a></li><li class="d2"><a href="#human-approvals-signapproval">Human approvals: signApproval</a></li><li class="d2"><a href="#policy-change-step-up-signpolicychangestepup">Policy change step-up: signPolicyChangeStepUp</a></li><li class="d2"><a href="#offline-verification-verifyexecutiontrustrecordoffline">Offline verification: verifyExecutionTrustRecordOffline</a></li><li class="d2"><a href="#errors">Errors</a></li><li class="d2"><a href="#examples">Examples</a></li><li class="d2"><a href="#best-practices">Best practices</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

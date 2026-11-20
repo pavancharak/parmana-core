@@ -74,7 +74,12 @@ export function assertSigningKeyMaterialConfigured(): void {
   materializeFromEnvIfConfigured(keyDirectory);
 
   if (config.crypto.mode === "hybrid") {
-    assertHybridKeyMaterialConfigured(config.keys.provider, keyDirectory);
+    assertHybridKeyMaterialConfigured(
+      config.keys.provider,
+      keyDirectory,
+      config.crypto.primarySignatureProvider,
+      config.crypto.secondarySignatureProvider,
+    );
   }
 
   // ADR-0009: KEY_PROVIDER=aws-kms moves only the "default" signing
@@ -152,7 +157,23 @@ export async function assertKmsSigningKeyReachable(): Promise<void> {
 function assertHybridKeyMaterialConfigured(
   provider: string,
   keyDirectory: string,
+  primary: string,
+  secondary: string | undefined,
 ): void {
+  // Without a secondary provider the action is released and then the record
+  // cannot be signed (observed: a 500 after release). Refuse before binding.
+  if (secondary === undefined) {
+    throw new Error(
+      "CRYPTO_MODE=hybrid requires SECONDARY_SIGNATURE_PROVIDER (for example dilithium3). " +
+        "Refusing to start: without it an action is released and its Trust Record cannot be signed.",
+    );
+  }
+  if (secondary === primary) {
+    throw new Error(
+      `SECONDARY_SIGNATURE_PROVIDER must differ from PRIMARY_SIGNATURE_PROVIDER (both are "${primary}").`,
+    );
+  }
+
   if (provider === KeyProviders.AWS_KMS) {
     throw new Error(
       "CRYPTO_MODE=hybrid is not supported with KEY_PROVIDER=aws-kms: the hybrid " +

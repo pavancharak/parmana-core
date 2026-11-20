@@ -99,6 +99,17 @@ def version() -> str
 
 Parmana SDK version.
 
+#### server_version
+
+```python
+def server_version() -> dict[str, Any]
+```
+
+The server's version: Runtime name, version and API version (GET /version).
+
+`version` is this SDK's version. This method asks the server, as the
+TypeScript SDK's `version()` does.
+
 #### health
 
 ```python

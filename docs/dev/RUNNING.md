@@ -1,6 +1,6 @@
 # Running Parmana
 
-[Back to the README](../../README.md) · [Developer docs index](README.md)
+[Back to the README](https://github.com/pavancharak/parmana-core/blob/main/README.md) · [Developer docs index](README.md)
 
 ## Quick start
 
@@ -14,14 +14,14 @@ npm run examples
 npm run evaluate
 ```
 
-- `npm run evaluate` runs the 16 attack scenarios in [evaluations/scenarios.json](../../evaluations/scenarios.json) and reports whether each was blocked. [EVALUATION.md](../../EVALUATION.md) explains the result.
+- `npm run evaluate` runs the 16 attack scenarios in [evaluations/scenarios.json](https://github.com/pavancharak/parmana-core/blob/main/evaluations/scenarios.json) and reports whether each was blocked. [EVALUATION.md](https://github.com/pavancharak/parmana-core/blob/main/EVALUATION.md) explains the result.
 - To see the whole chain against a local mock connector, with no network access or credentials:
 
   ```bash
   npx tsx examples/tutorials/60-end-to-end-enterprise-execution/run.ts
   ```
 
-- For the step-by-step evaluation guide, see [EVALUATION.md](../../EVALUATION.md).
+- For the step-by-step evaluation guide, see [EVALUATION.md](https://github.com/pavancharak/parmana-core/blob/main/EVALUATION.md).
 - `npm run dev:setup` starts a local server with test keys, for building against the API. It is for local development only. See [Run a local server in one command](https://docs.parmanasystems.com/guides/local-development).
 
 ## Run it locally

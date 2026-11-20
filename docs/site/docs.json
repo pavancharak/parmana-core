@@ -517,6 +517,39 @@
             ]
           },
           {
+            "group": "Policy v2 (experimental)",
+            "pages": [
+              "api-reference/endpoints/policy-v2-decide",
+              "api-reference/endpoints/policy-v2-get-review",
+              "api-reference/endpoints/policy-v2-decide-review",
+              "api-reference/endpoints/policy-v2-replay",
+              "api-reference/endpoints/policy-v2-console",
+              "api-reference/endpoints/policy-v2-ses-notification",
+              "api-reference/endpoints/policy-v2-notification-events",
+              "api-reference/endpoints/policy-v2-register-read",
+              "api-reference/endpoints/policy-v2-register-audit",
+              "api-reference/endpoints/policy-v2-grant-role",
+              "api-reference/endpoints/policy-v2-revoke-role",
+              "api-reference/endpoints/policy-v2-propose-source",
+              "api-reference/endpoints/policy-v2-approve-source",
+              "api-reference/endpoints/policy-v2-revoke-source",
+              "api-reference/endpoints/policy-v2-propose-threshold",
+              "api-reference/endpoints/policy-v2-approve-threshold",
+              "api-reference/endpoints/policy-v2-register-action",
+              "api-reference/endpoints/policy-v2-add-reviewer",
+              "api-reference/endpoints/policy-v2-revoke-reviewer",
+              "api-reference/endpoints/policy-v2-record-test",
+              "api-reference/endpoints/policy-v2-go-live-gate",
+              "api-reference/endpoints/policy-v2-go-live",
+              "api-reference/endpoints/policy-v2-set-contact",
+              "api-reference/endpoints/policy-v2-propose-policy",
+              "api-reference/endpoints/policy-v2-approve-policy",
+              "api-reference/endpoints/policy-v2-propose-approver-key",
+              "api-reference/endpoints/policy-v2-approve-approver-key",
+              "api-reference/endpoints/policy-v2-revoke-approver-key"
+            ]
+          },
+          {
             "group": "Business Signal Sources",
             "pages": [
               "api-reference/endpoints/list-business-signal-sources",

@@ -72,7 +72,7 @@ jobs:
         run: |
           mkdir -p release-dist
           npm pack --workspace=typescript --workspace=packages/connector-sdk \
-            --workspace=packages/shared --workspace=packages/crypto --workspace=packages/cli \
+            --workspace=packages/shared --workspace=packages/crypto --workspace=packages/cli --workspace=packages/envelope-verifier \
             --pack-destination release-dist
           for tgz in release-dist/*.tgz; do
             python .github/release/normalize_sdist.py "$tgz"
@@ -101,7 +101,7 @@ jobs:
           python -m build --no-isolation python --outdir rebuild-check
           python -m build --no-isolation python-connector-sdk --outdir rebuild-check
           npm pack --workspace=typescript --workspace=packages/connector-sdk \
-            --workspace=packages/shared --workspace=packages/crypto --workspace=packages/cli \
+            --workspace=packages/shared --workspace=packages/crypto --workspace=packages/cli --workspace=packages/envelope-verifier \
             --pack-destination rebuild-check
           for file in rebuild-check/*.tar.gz rebuild-check/*.tgz; do
             python .github/release/normalize_sdist.py "$file"

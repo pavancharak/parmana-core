@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tutorial: gate vendor payments in a fintech application · Parmana developer docs</title>
+<meta name="description" content="Tutorial: gate vendor payments in a fintech application Tutorials · Transaction limits · Refund authorization · Maker-checker Goal. Your payments service releases a vendor payment only when the organization's policy approves it. The policy ">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="index.html">Tutorials</a></li><li><a href="maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="fintech-integration.html" aria-current="page">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Tutorials</span><span class="sep">/</span><span>Tutorial: gate vendor payments in a fintech application</span></div>
+    <article>
+<h1 id="tutorial-gate-vendor-payments-in-a-fintech-application">Tutorial: gate vendor payments in a fintech application<a class="anchor" href="#tutorial-gate-vendor-payments-in-a-fintech-application" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">Tutorials</a> · <a href="transaction-limits.html">Transaction limits</a> · <a href="refund-authorization.html">Refund authorization</a> · <a href="maker-checker.html">Maker-checker</a></p>
+<p><strong>Goal.</strong> Your payments service releases a vendor payment only when the organization&#39;s policy approves it. The policy checks the payment&#39;s facts, the amount, and the risk, and a finance approver must have signed an approval for this vendor, this amount, and this time window.</p>
+<p><strong>Verification.</strong> Run against a local server from this repository. <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/typescript/governed-flow.ts"><code>governed-flow.ts</code></a> approves and executes a payment through the <code>vendor-payment</code> policy. <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/typescript/limits.ts"><code>limits.ts</code></a> refuses three payments that exceed the approval, the risk threshold, or the bound amount.</p>
+<blockquote>
+<p><strong>Important.</strong> The policy in this tutorial is the repository&#39;s example, <code>vendor-payment@2.1.0</code>. Your organization writes and owns its own policy. Which facts Parmana verifies, which the caller declares, and what the limits are, are decisions for your policy owner. The example shows the mechanism, not your rules.</p>
+</blockquote>
+<h2 id="who-does-what">Who does what<a class="anchor" href="#who-does-what" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Party</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Payments service</strong></td>
+<td>Builds the payment request, asks the finance approver, calls Parmana, and calls the payment provider only when Parmana approves.</td>
+</tr>
+<tr>
+<td><strong>Finance approver</strong> (a person)</td>
+<td>Reviews the payment, and signs an approval for this vendor, this amount, and this window.</td>
+</tr>
+<tr>
+<td><strong>Policy owner</strong> (a person, through maker-checker)</td>
+<td>Owns the <code>vendor-payment</code> policy and approves each version.</td>
+</tr>
+<tr>
+<td><strong><code>@parmana/sdk</code></strong></td>
+<td>Sends the request and turns refusals into typed errors.</td>
+</tr>
+<tr>
+<td><strong>Parmana service</strong></td>
+<td>Checks the caller, loads the version in effect, evaluates the rules, verifies the approval, decides, and records the evidence.</td>
+</tr>
+<tr>
+<td><strong>Payment provider</strong> (through a connector)</td>
+<td>Moves the money. It should accept requests only from Parmana&#39;s connector.</td>
+</tr>
+</tbody></table></div>
+<h2 id="what-the-example-policy-decides">What the example policy decides<a class="anchor" href="#what-the-example-policy-decides" aria-label="Link to this section">#</a></h2>
+<p>From <code>fixtures/policies/vendor-payment/2.1.0/policy.json</code>:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Outcome</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>humanApproved</code> is true, <code>vendorVerified</code>, <code>invoiceVerified</code>, <code>paymentApproved</code> and <code>sufficientFunds</code> are all true, the amount is positive, and <code>riskScore</code> is at most 20</td>
+<td><strong>approve</strong></td>
+</tr>
+<tr>
+<td><code>riskScore</code> is above 20</td>
+<td>reject: &quot;the assessed payment risk exceeds the maximum permitted threshold&quot;</td>
+</tr>
+<tr>
+<td><code>vendorVerified</code> is false</td>
+<td>reject: &quot;the vendor has not been verified&quot;</td>
+</tr>
+<tr>
+<td><code>invoiceVerified</code> is false</td>
+<td>reject: &quot;the invoice has not been verified&quot;</td>
+</tr>
+<tr>
+<td><code>paymentApproved</code> is false</td>
+<td>reject: &quot;the required payment approval has not been granted&quot;</td>
+</tr>
+<tr>
+<td><code>sufficientFunds</code> is false</td>
+<td>reject: &quot;Vendor payment rejected because sufficient funds are not available.&quot;</td>
+</tr>
+</tbody></table></div>
+<p>Two bindings matter as much as the rules:</p>
+<ul>
+<li><strong>The approval</strong> is scoped to <code>target</code> (the vendor) and to <code>parameters.amount</code> (the amount). An approval for 1000 does not cover a payment of 5000.</li>
+<li><strong>Bound signals</strong> must equal request fields. <code>paymentAmount</code> must equal <code>parameters.amount</code>, and <code>vendorId</code> must equal <code>target</code>. A mismatch is refused before the rules run.</li>
+</ul>
+<p>In this policy, <code>vendorVerified</code>, <code>invoiceVerified</code>, <code>paymentApproved</code> and <code>sufficientFunds</code> are declared by the caller. Parmana does not confirm them, because the policy has no signal source for them. If your organization needs Parmana to confirm a fact (for example, that the vendor is on an approved list), the policy must bind that fact to a registered source. Write that in the policy and approve the policy through <a href="maker-checker.html">maker-checker</a>.</p>
+<h2 id="step-1-approve-and-run-the-example">Step 1: approve and run the example<a class="anchor" href="#step-1-approve-and-run-the-example" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash"># With the server running (see Getting started):
+npx tsx docs/developer-portal/examples/governed-quickstart/typescript/governed-flow.ts</code></pre></div>
+<p>The flow proposes <code>vendor-payment@2.1.0</code>, has a checker approve it, and then executes a payment for 1000 with an approval for 1000. The output ends with <code>outcome: APPROVED</code> and <code>offline (SDK): valid=true</code>.</p>
+<h2 id="step-2-refuse-the-payments-that-should-not-go-through">Step 2: refuse the payments that should not go through<a class="anchor" href="#step-2-refuse-the-payments-that-should-not-go-through" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash"># Use the policy version in effect (2.1.0 after governed-flow.ts, or 2.1.1 if you approved it with the CLI):
+GOVERNED_POLICY_VERSION=2.1.0 npx tsx docs/developer-portal/examples/governed-quickstart/typescript/limits.ts</code></pre></div>
+<div class="code"><div class="code-bar"><span>text</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-text">refused: amount above the human approval
+   ExecutionRejectedError HTTP 403
+   Execution rejected: Rejected: declared signal(s) do not match independently verified state (humanApproved=true != verified humanApproved=false).
+refused: risk score above the policy limit
+   ExecutionRejectedError HTTP 403
+   Execution rejected: Vendor payment rejected because the assessed payment risk exceeds the maximum permitted threshold.
+refused: bound paymentAmount differs from amount
+   ExecutionRejectedError HTTP 403
+   Execution rejected: Rejected: declared signal(s) do not match the executed intent (paymentAmount=999 != intent.parameters.amount=1000).</code></pre></div>
+<p>Each refusal names its reason. The first refusal reports that Parmana&#39;s independent check of the human approval returned false. The approval covers 1000 and the payment is 5000, so the check does not pass. The message does not say &quot;amount&quot; in so many words: it names the signal that failed.</p>
+<h2 id="step-3-wire-it-into-the-payments-service">Step 3: wire it into the payments service<a class="anchor" href="#step-3-wire-it-into-the-payments-service" aria-label="Link to this section">#</a></h2>
+<p>The integration is the same as in the <a href="nodejs-integration.html">Node.js tutorial</a>. The fintech-specific parts are:</p>
+<ul>
+<li><strong>Ask for the approval as part of the payment workflow.</strong> Show the finance approver the vendor, the amount, the invoice and the risk score. The approver signs an approval for exactly those values with <code>maxAmount</code> set to the amount they accept.</li>
+<li><strong>Use one transaction id per payment attempt.</strong> A retry of the same attempt uses the same id to read the outcome; a new attempt uses a new id.</li>
+<li><strong>Treat <code>ExecutionRejectedError</code> as the answer.</strong> Mark the payment as not authorized and show the reason to the approver.</li>
+<li><strong>Store the record with the payment.</strong> The <code>trustRecordId</code> and the record are your evidence for an audit.</li>
+</ul>
+<h2 id="step-4-keep-the-evidence">Step 4: keep the evidence<a class="anchor" href="#step-4-keep-the-evidence" aria-label="Link to this section">#</a></h2>
+<p>After a payment is approved, verify its record offline with the pinned key and keep the result. An auditor can check the record later without contacting Parmana. See <a href="../security/evidence-verification.html">Evidence verification</a>.</p>
+<h2 id="what-happens-in-the-business-application">What happens in the business application<a class="anchor" href="#what-happens-in-the-business-application" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>The payment workflow prepares the payment and the approver signs it.</li>
+<li>Parmana approves. The connector instructs the payment provider. The provider moves the money.</li>
+<li>The payments service records the outcome and the record. The ledger entry references the record.</li>
+<li>If Parmana refuses, no instruction reaches the provider. The payment stays unauthorized and the reason is recorded.</li>
+</ol>
+<h2 id="production-notes">Production notes<a class="anchor" href="#production-notes" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Set <code>riskScore</code> from your own risk engine, and document it in the policy. The example&#39;s constant <code>5</code> is illustrative.</li>
+<li>Keep <code>maxAmount</code> as small as the approver&#39;s actual decision. A large approval reused for many payments is a risk in itself; approvals are single-use, but a large ceiling still exposes more than one payment.</li>
+<li>Put the payment provider&#39;s credentials behind the connector, not in the payments service. The connector is the only place the provider&#39;s credentials should be used.</li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/tutorials/fintech-integration.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="ai-agents.html"><span>Previous</span>Tutorial: let an AI agent act through Parmana</a><a class="pn next" href="../examples/index.html"><span>Next</span>Runnable examples</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#who-does-what">Who does what</a></li><li class="d2"><a href="#what-the-example-policy-decides">What the example policy decides</a></li><li class="d2"><a href="#step-1-approve-and-run-the-example">Step 1: approve and run the example</a></li><li class="d2"><a href="#step-2-refuse-the-payments-that-should-not-go-through">Step 2: refuse the payments that should not go through</a></li><li class="d2"><a href="#step-3-wire-it-into-the-payments-service">Step 3: wire it into the payments service</a></li><li class="d2"><a href="#step-4-keep-the-evidence">Step 4: keep the evidence</a></li><li class="d2"><a href="#what-happens-in-the-business-application">What happens in the business application</a></li><li class="d2"><a href="#production-notes">Production notes</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

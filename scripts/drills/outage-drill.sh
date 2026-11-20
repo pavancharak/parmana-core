@@ -73,7 +73,6 @@ start_server() {
     PORT="$API_PORT" \
     PARMANA_SERVICE_PORT="$API_PORT" \
     PARMANA_DATABASE_CA_FILE= \
-    PARMANA_ALLOW_UNGOVERNED_POLICY=true \
     EXECUTION_INTENTS_CHECK=true \
     SIGNING_READINESS_CHECK=true \
     node --import tsx src/server.ts > "$WORK/server.log" 2>&1 &
