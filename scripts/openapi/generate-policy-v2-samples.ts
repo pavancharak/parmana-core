@@ -271,9 +271,11 @@ function python(op: Operation): string {
     op.body === undefined
       ? "None"
       : "json.dumps(json.loads(r'" + op.body + "')).encode('utf-8')";
-  const imports = ["import urllib.request"];
-  if (op.body !== undefined) imports.unshift("import json");
-  if (op.auth !== false) imports.unshift("import os");
+  // Sorted, as ruff's import rule requires: json, os, urllib.request.
+  const imports: string[] = [];
+  if (op.body !== undefined) imports.push("import json");
+  if (op.auth !== false) imports.push("import os");
+  imports.push("import urllib.request");
   // The request runs only as a script. Pytest collects files named *_test.py,
   // and an import-time request would hit the network during collection.
   return [

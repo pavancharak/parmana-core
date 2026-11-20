@@ -7,7 +7,9 @@ import urllib.request
 def main() -> None:
     request = urllib.request.Request(
         "https://parmana-api-real.vercel.app/v2/notifications/ses",
-        data=json.dumps(json.loads(r'{"Type":"Notification","Message":"{}"}')).encode('utf-8'),
+        data=json.dumps(json.loads(r'{"Type":"Notification","Message":"{}"}')).encode(
+            "utf-8"
+        ),
         method="POST",
         headers={"Content-Type": "application/json"},
     )
