@@ -92,7 +92,7 @@ Import the signing and offline functions from `parmana.crypto`. `OfflineVerifica
 | `client.business_signal_sources` | Business signal sources and their changes    |
 | `client.authority_grants`        | Authority grants and their changes           |
 
-`client.endpoint` and `client.version` are **properties** (no parentheses). `client.version` is the SDK's own version string. The TypeScript `version()` method is different: it calls `GET /version` on the server. The server reports `0.4.0` in this build (see [COVERAGE](../COVERAGE.md#known-issues-found-during-this-review)), so do not read `client.version` as the server version.
+`client.endpoint` and `client.version` are **properties** (no parentheses). `client.version` is the SDK's own version string. The TypeScript `version()` method is different: it calls `GET /version` on the server, which now reports the same package version (4.1.1). Both return the same value for the same build, but they are reached differently; see [FINDINGS](../FINDINGS.md) F4.
 
 The complete list of the 50 public methods, with exact signatures and the request each sends, is in the [generated method index](python-method-index.md).
 

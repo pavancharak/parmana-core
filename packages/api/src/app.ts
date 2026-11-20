@@ -734,6 +734,19 @@ export function createApp(
   app.use("/replay", createReplayRouter(application));
 
   /**
+   * Unmatched routes
+   *
+   * Express answers an unknown path with an HTML page. Every other refusal
+   * of this API is JSON with an `error` message and, where useful, a `code`,
+   * so an unknown route gets the same shape. Registered after all routes.
+   */
+  app.use((_req, res) => {
+    res
+      .status(404)
+      .json({ error: "Route not found.", code: "ROUTE_NOT_FOUND" });
+  });
+
+  /**
    * Error handling
    *
    * Must be registered after all routes. Threaded with the same

@@ -30,7 +30,7 @@ Each feature carries one of these labels:
 | API server (`@parmana/api`, run from source or Docker)   | repository 4.1.1           | `packages/api`. Not published to npm. See [Deployment](deployment/README.md). |
 | OpenAPI document                                         | API `1.0.0`, OpenAPI 3.1.0 | `openapi/openapi.yaml`                                                        |
 
-A server that the repository builds reports `"version":"0.4.0"` from `GET /version`. That string does not match the 4.1.1 packages. It is recorded as a finding in [COVERAGE.md](COVERAGE.md#known-issues-found-during-this-review).
+`GET /version` reports the `@parmana/api` package version, the same as the packages (4.1.1 in this build). An earlier build reported a hand-typed `0.4.0`; that is fixed. See [COVERAGE.md](COVERAGE.md#known-issues-found-during-this-review).
 
 ## Sections
 

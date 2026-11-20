@@ -2,7 +2,7 @@
 
 # Error code index
 
-105 error code literals found in the server source. "Triggered in verification" means a request in this portal's runs produced the code. The others are defined in source and were not triggered; their meaning is in the file named, and their HTTP status is in that file's error path.
+106 error code literals found in the server source. "Triggered in verification" means a request in this portal's runs produced the code. The others are defined in source and were not triggered; their meaning is in the file named, and their HTTP status is in that file's error path.
 
 | Code                                      | Triggered in verification | Raised most often in                                                          |
 | ----------------------------------------- | ------------------------- | ----------------------------------------------------------------------------- |
@@ -94,6 +94,7 @@
 | `REVIEW_APPROVED`                         | no                        | `packages/policy/src/v2/review.ts`                                            |
 | `REVIEW_EXPIRED`                          | no                        | `packages/policy/src/v2/review.ts`                                            |
 | `REVIEW_REFUSED`                          | no                        | `packages/policy/src/v2/review.ts`                                            |
+| `ROUTE_NOT_FOUND`                         | no                        | `packages/api/src/app.ts`                                                     |
 | `RUNTIME_ERROR`                           | no                        | `packages/runtime/src/errors/RuntimeError.ts`                                 |
 | `SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE`    | yes                       | `packages/shared/src/errors/same-actor-cannot-approve-own-change-error.ts`    |
 | `SAME_OPERATOR_CANNOT_CONFIRM_RESET`      | no                        | `packages/api/src/routes/kill-switch.ts`                                      |

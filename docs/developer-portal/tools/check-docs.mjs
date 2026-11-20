@@ -152,6 +152,9 @@ const STALE = [
   "Verified: after a server restart, the state",
   "Parmana does not change currency",
   "Do not reformat it, because a formatter",
+  "reports `0.4.0`",
+  "HTML `404`",
+  "PARMANA_ALLOW_UNGOVERNED_POLICY=true` does not help",
 ];
 const staleHits = [];
 for (const file of files) {

@@ -31,7 +31,7 @@ parmana-ops keys generate-api-key --caller-id invoice-agent --out-dir ./agent-ke
   --allowed-capabilities test:fixture-execute --allowed-principal-ids demo
 ```
 
-The `parmana-ops` bin currently prints nothing when run as an installed command. Run it through its file, as described in [CLI](../sdk/cli.md#known-issue-the-installed-binary-prints-nothing). `keys generate-api-key` writes two files to the output directory, `<caller>.key` (the raw key, owner-only) and `<caller>.entry.json` (the `PARMANA_API_KEYS` entry, with only the hash). It prints the paths, and no secret. Verified.
+The `parmana-ops` bin printed nothing in the published 4.1.1 release. The fix is in the repository; until a release contains it, run the command through its file, as described in [CLI](../sdk/cli.md#the-installed-binary-fixed-in-the-repository-not-yet-in-a-published-release). `keys generate-api-key` writes two files to the output directory, `<caller>.key` (the raw key, owner-only) and `<caller>.entry.json` (the `PARMANA_API_KEYS` entry, with only the hash). It prints the paths, and no secret. Verified.
 
 Do not set `credentialHolderType` to `USER` for an agent. A service caller is refused on the human-only routes with `NON_HUMAN_CALLER_DENIED` (verified in tutorial 103).
 

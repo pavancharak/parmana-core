@@ -104,7 +104,7 @@ No. Memory storage loses every transaction, record and approval on restart. Veri
 
 ### What version of Parmana is this?
 
-The SDK and package versions are 4.1.1. The verifier is 2.0.3. The server's `GET /version` reports `0.4.0` on the build this portal verified, which does not match. See [COVERAGE](COVERAGE.md#known-issues-found-during-this-review).
+The SDK and package versions are 4.1.1. The verifier is 2.0.3. `GET /version` reports the server package version, 4.1.1 on this build (an earlier build reported a hand-typed `0.4.0`, now fixed). See [COVERAGE](COVERAGE.md#known-issues-found-during-this-review).
 
 ### Is there a Java or Go SDK?
 

@@ -193,8 +193,6 @@ function startServer(
         env: {
           ...process.env,
           NODE_ENV: "test",
-          // Benchmark only: vendor-payment has no maker-checker records here.
-          PARMANA_ALLOW_UNGOVERNED_POLICY: "true",
           PORT: String(port),
           PARMANA_AUTH_DISABLED: "true",
           // The server refuses to start without a policy directory

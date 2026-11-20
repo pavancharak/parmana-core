@@ -4,11 +4,11 @@
 
 `parmana-ops` is the operator's command-line tool. It proposes policy changes from a file, signs a checker's step-up envelope on the checker's own machine, submits it, creates caller keys, and generates approver keys. It is the recommended route for a policy change in a real deployment, because the signing key never has to leave the checker's machine.
 
-|         |                                                                                                                                        |
-| ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Package | `@parmana/cli` (npm, 4.1.1)                                                                                                            |
-| Binary  | `parmana-ops`                                                                                                                          |
-| Status  | **Implemented.** Known defect in how the installed binary starts. See [Known issue](#known-issue-the-installed-binary-prints-nothing). |
+|         |                                                                                                                                                                               |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Package | `@parmana/cli` (npm, 4.1.1)                                                                                                                                                   |
+| Binary  | `parmana-ops`                                                                                                                                                                 |
+| Status  | **Implemented.** The installed-binary defect is fixed in the repository. The published 4.1.1 on npm still has it until a release containing the fix is published (see below). |
 
 ## Install
 
@@ -16,17 +16,11 @@
 npm install -g @parmana/cli@4.1.1
 ```
 
-## Known issue: the installed binary prints nothing
+## The installed binary: fixed in the repository, not yet in a published release
 
-When you run the installed `parmana-ops`, it exits with code 0 and prints nothing. The command does nothing. The cause is in the entry-point check at the end of `packages/cli/src/index.ts`:
+In `@parmana/cli` 4.1.1 on npm, running the installed `parmana-ops` printed nothing and exited 0. The entry-point check matched only file names ending in `index.js` or `parmana`, so a bin started under its own name never ran `main()`.
 
-```typescript
-if (/[\\/](index\.js|parmana)$/.test(process.argv[1] ?? "")) {
-```
-
-The check runs `main()` only when the script's path ends in `index.js` or `parmana`. When npm starts the command through its bin name (`parmana-ops`), the path ends in `parmana-ops`, the check fails, and `main()` never runs. The verification reproduced this: `node <bin path>/parmana-ops --help` printed nothing, and `node <package>/dist/index.js --help` printed the usage.
-
-This was not changed, because the published package's behaviour is outside the scope of this portal. Until it is fixed, run the command through the file itself:
+**The repository now compares real paths**, following symlinks, so the bin name works. Two regression tests cover it: one runs the command through a symlink with a different name, and one checks that importing the module does not run the command. Until a release containing the fix is published, the published package still has the defect. Use the file directly:
 
 ```bash
 CLI="$(npm root -g)/@parmana/cli/dist/index.js"
@@ -34,7 +28,7 @@ node "$CLI" --help
 node "$CLI" policy status vendor-payment 2.1.1
 ```
 
-Or, from a repository checkout: `node packages/cli/dist/index.js --help`. Once fixed upstream, the plain `parmana-ops` command will work and this section can be removed.
+From a repository checkout, `node packages/cli/dist/index.js` works, and so does `parmana-ops` through a symlink once the package is built.
 
 ## Global options and environment
 

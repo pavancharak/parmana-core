@@ -40,7 +40,7 @@ curl -s http://localhost:3000/version
 | `Content-Type`  | Every route with a body   | `application/json` |
 | `Accept`        | Optional                  | `application/json` |
 
-Responses are `application/json; charset=utf-8`, except `GET /parmana-handbook.pdf` (PDF) and unknown routes, which return an HTML `404` page. A client must check the status code and the `Content-Type` before parsing.
+Responses are `application/json; charset=utf-8`, except `GET /parmana-handbook.pdf` (PDF). An unknown route returns a JSON `404` with `code: ROUTE_NOT_FOUND` (as of this change; earlier builds returned an HTML page). A client must still check the status code and the `Content-Type` before parsing.
 
 ## Rate limits
 
@@ -66,7 +66,7 @@ Error bodies are JSON with an `error` message and, for most refusals, a `code`:
 }
 ```
 
-Some routes return a body with `error` only. Validation errors from the request-body checks name the missing fields in the message. Routes that are not mounted return an HTML page.
+Some routes return a body with `error` only. Validation errors from the request-body checks name the missing fields in the message. Unknown routes return JSON `404` with `code: ROUTE_NOT_FOUND`.
 
 The error catalogue, with each code, its status and its meaning, is in [Error codes](../reference/error-codes.md). The SDKs map status codes to error classes; see the [TypeScript errors](../sdk/typescript.md#errors) and [Python errors](../sdk/python.md#errors).
 
@@ -104,7 +104,7 @@ List routes take `page` (from 1) and `pageSize`. `GET /transactions` defaults to
 
 ## Versions
 
-- `GET /version` returns `{"name":"Parmana","version":"0.4.0","api":"v1"}` on the build this portal verified. The package version is 4.1.1. These do not match. The discrepancy is recorded in [COVERAGE](../COVERAGE.md#known-issues-found-during-this-review).
+- `GET /version` returns `{"name":"Parmana","version":"4.1.1","api":"v1"}` on this build. `version` is the `@parmana/api` package version, a deployment build identifier separate from the REST API version `api`. An earlier build reported a hand-typed `0.4.0`; that is fixed.
 - `GET /api-manifest.json` describes the API and links the SDKs, and reports the same build version.
 - The OpenAPI document is `1.0.0`.
 
@@ -113,7 +113,7 @@ List routes take `page` (from 1) and `pageSize`. `GET /transactions` defaults to
 | Route family                                                         | Status               | Notes                                                                                                                                                                           |
 | -------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/execution-intents/*`                                               | Experimental         | Enabled by the deployment's execution-intent settings. `executionIntentsConfigured: false` in the dev server.                                                                   |
-| `/kill-switch/*`                                                     | Experimental, opt-in | Mounted only when `KILL_SWITCH_ENABLED=true`. Not mounted in the verified configuration: it returns an HTML `404`.                                                              |
+| `/kill-switch/*`                                                     | Experimental, opt-in | Mounted only when `KILL_SWITCH_ENABLED=true`. Not mounted in the verified configuration: it returns a JSON `404` with `ROUTE_NOT_FOUND`.                                        |
 | `/v2/*` (policy v2: decisions, register, reviews, evidence, console) | Experimental, opt-in | Not in the OpenAPI document. Mounted only when `PARMANA_POLICY_V2_DECISIONS` and related settings are set.                                                                      |
 | `/v1/inbound/*`                                                      | Experimental, opt-in | Inbound refund decision and outcome routes (RFC-0025). Mounted only when `INBOUND_AUDIENCE` is set, and the server fails closed if the gateway's private key is not configured. |
 | `/sandbox/approvals`                                                 | Demo, sandbox only   | Returns an approval signed by the sandbox's demo approver, and only for `sandbox:receipt`. The OpenAPI document says that in a production deployment this route does not exist. |

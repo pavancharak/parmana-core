@@ -86,7 +86,7 @@ curl -s http://localhost:3000/health
 # {"status":"UP"}
 ```
 
-> **Why the script?** A server started with only the variables in the existing [quickstart](../site/quickstart.mdx) does not run as written. It needs `PARMANA_POLICY_DIR` and `PARMANA_KEY_DIR`, and a first execution needs an approved policy version. The setup script supplies those. The gaps are described in [Troubleshooting](troubleshooting/README.md#the-existing-quickstart-does-not-run-as-written).
+> **Why the script?** The existing [quickstart](../site/quickstart.mdx) needed several fixes to run: the policy and key directories are now in its command, the approver generator creates its folder, and its warning explains the approval step. The governed setup here still does more: it creates a second caller and a checker, so the approval flow runs end to end without the quickstart's manual steps. The gaps and their status are in [Troubleshooting](troubleshooting/README.md#the-existing-quickstart-did-not-run-as-written-now-corrected).
 
 ## 4. Connect and confirm your caller
 

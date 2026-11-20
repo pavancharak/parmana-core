@@ -56,10 +56,10 @@ curl -s -H "Authorization: Bearer $PARMANA_API_KEY" "$PARMANA_API_URL/version"
 ```
 
 ```json
-{ "name": "Parmana", "version": "0.4.0", "api": "v1" }
+{ "name": "Parmana", "version": "4.1.1", "api": "v1" }
 ```
 
-Verified: `200` with a key, `401` without. **The version reports `0.4.0` on this build, not the 4.1.1 package version.** Do not use it to check the SDK version.
+Verified: `200` with a key, `401` without. **`version` is the `@parmana/api` package version (4.1.1 on this build)**; it is a build identifier, separate from the REST API version `api`. An earlier build reported a hard-coded `0.4.0`; that is fixed.
 
 ### `GET /callers/me`
 

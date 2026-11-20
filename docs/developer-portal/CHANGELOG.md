@@ -6,6 +6,28 @@ This changelog records changes to the developer portal in `docs/developer-portal
 
 Versions follow the packages the portal documents: SDKs and server 4.1.1, offline verifier 2.0.3.
 
+## 2026-11-20: production-readiness pass on the code and the portal
+
+Changed the code where the review had a verified defect, and corrected the portal to match. Every change has a test or a live check named in [COVERAGE.md](COVERAGE.md#known-issues-found-during-this-review). Items that need an owner's decision are in [FINDINGS.md](FINDINGS.md).
+
+Code changes:
+
+- `GET /version` and the API manifest report the `@parmana/api` package version (4.1.1), not a hand-typed `0.4.0`.
+- Unknown routes return a JSON `404` with `code: ROUTE_NOT_FOUND`, not an HTML page.
+- The installed `parmana-ops` command runs when started through its bin name. The fix is in the repository; a release containing it is needed.
+- Hybrid signing is refused at start-up unless `SECONDARY_SIGNATURE_PROVIDER` is set and differs from the primary.
+- Production refuses memory storage at start-up (the default when `PARMANA_STORAGE` is unset). This reverses an earlier test's expectation; the owner should confirm it ([FINDINGS F0](FINDINGS.md#f0-production-with-memory-storage-is-now-refused-a-reversal-to-confirm)).
+- `scripts/generate-approver-key.ts` creates its output folder.
+- The retired `PARMANA_ALLOW_UNGOVERNED_POLICY` flag is removed from the examples runner, the load test and tutorial 81.
+- The TypeScript workspace test script runs with the root configuration, and the six empty test files are removed. `npm test --workspace=typescript` passes with no extra environment.
+- Corrected comments: the schema 3 gate in `Config.ts`, and the `PARMANA_KEY_DIR` requirement in `.env.example`.
+- Tutorials 60, 103 and 120 state the environment they need.
+- The existing quickstart page is corrected: the policy and key directories, and a warning about the approval step.
+
+Portal changes: every statement that described a fixed defect was updated, and the generated error reference and `llms-full.txt` were regenerated.
+
+Open, and not changed (see [FINDINGS.md](FINDINGS.md)): the schema 2 default (F1), the SDK's legacy-record result (F2), the dev setup (F3), Python `version` versus TypeScript `version()` (F4), two `0.1.0` packages (F5), the Policy v2 contract (F6), approval automation (F7), the Docker, database and load checks (F8, F9), the Python and Node verifier test-count difference (F10), third-party reading of schema 3 (F11), the declared-transaction approval rule (F12), and unknown routes without a key (F13).
+
 ## 2026-11-20: first version of the developer portal
 
 Added the developer portal in `docs/developer-portal/`, written from the repository's source and checked against it:

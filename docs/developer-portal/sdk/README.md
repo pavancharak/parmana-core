@@ -70,7 +70,7 @@ Some OpenAPI operations have no SDK method (for example the kill switch, the han
 - The SDK packages share one version number with the server repository (4.1.1 at the time of writing).
 - The offline verifiers have their own version (2.0.3).
 - A record carries a `schemaVersion`. The verifiers and the SDKs handle schema version 2 (legacy) and 3 (whole-record). See [Evidence verification](../security/evidence-verification.md).
-- The server's `GET /version` reports `0.4.0` in this build. This does not match the packages. Do not use it to check compatibility until that is resolved; see [COVERAGE](../COVERAGE.md#known-issues-found-during-this-review).
+- The server's `GET /version` reports the `@parmana/api` package version (4.1.1 in this build). An earlier build reported a hand-typed `0.4.0`; that is fixed, and the value now matches the packages.
 
 ## Next
 

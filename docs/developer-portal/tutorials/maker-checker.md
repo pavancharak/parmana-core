@@ -138,7 +138,7 @@ parmana-ops approval sign --key-file checker-stepup.private.pem --key-id checker
 PARMANA_TOKEN="$CHECKER_KEY" parmana-ops approval submit --pending <id> --action approve --envelope envelope.json
 ```
 
-`parmana-ops` as an installed command currently prints nothing. Use `node "$(npm root -g)/@parmana/cli/dist/index.js"` in its place. See [CLI](../sdk/cli.md#known-issue-the-installed-binary-prints-nothing).
+The published `parmana-ops` 4.1.1 prints nothing when run as an installed command; the repository's fix is not yet released. Use `node "$(npm root -g)/@parmana/cli/dist/index.js"` in its place. See [CLI](../sdk/cli.md#the-installed-binary-fixed-in-the-repository-not-yet-in-a-published-release).
 
 ## Production notes
 

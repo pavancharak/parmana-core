@@ -37,18 +37,19 @@ The mapping is in `typescript/src/transport/mapHttpErrorResponse.ts` and in the 
 
 Plain error bodies without a code are also common. Each row below was observed unless it says "from source":
 
-| Status | Body (observed)                                                                                               | Meaning                                                             |
-| ------ | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `401`  | `{"error":"authentication required"}`                                                                         | No key, or an unknown key.                                          |
-| `400`  | `{"error":"businessTransactionId must be a valid UUID."}`                                                     | The id is not a UUID.                                               |
-| `400`  | `{"error":"capability is required, for example ?capability=erp:invoice-pay."}`                                | A required query parameter is missing.                              |
-| `403`  | `{"error":"Caller is not permitted to assert this authority.principalId."}` (from source, not triggered here) | The key may not act for this principal. No code.                    |
-| `403`  | `{"error":"Execution rejected: Rejected: …"}`                                                                 | An execution refused by the decision. The message names the reason. |
-| `404`  | `{"error":"Business Transaction not found."}`                                                                 | Unknown transaction for this key.                                   |
-| `404`  | `{"error":"Execution Trust Record not found."}`                                                               | Unknown record.                                                     |
-| `404`  | `{"error":"Policy 'vendor-payment' version '2.1.0' was not found."}`                                          | No such version on this server.                                     |
-| `409`  | `{"error":"Business Transaction '…' already exists."}`                                                        | The id was used. Nothing ran again.                                 |
-| `400`  | `{"error":"Request body must be a Refusal Record (refusalRecordId, …)."}`                                     | A verification body is missing fields. The message names them.      |
+| Status | Body (observed)                                                                                               | Meaning                                                                                             |
+| ------ | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `401`  | `{"error":"authentication required"}`                                                                         | No key, or an unknown key.                                                                          |
+| `400`  | `{"error":"businessTransactionId must be a valid UUID."}`                                                     | The id is not a UUID.                                                                               |
+| `400`  | `{"error":"capability is required, for example ?capability=erp:invoice-pay."}`                                | A required query parameter is missing.                                                              |
+| `403`  | `{"error":"Caller is not permitted to assert this authority.principalId."}` (from source, not triggered here) | The key may not act for this principal. No code.                                                    |
+| `403`  | `{"error":"Execution rejected: Rejected: …"}`                                                                 | An execution refused by the decision. The message names the reason.                                 |
+| `404`  | `{"error":"Business Transaction not found."}`                                                                 | Unknown transaction for this key.                                                                   |
+| `404`  | `{"error":"Execution Trust Record not found."}`                                                               | Unknown record.                                                                                     |
+| `404`  | `{"error":"Policy 'vendor-payment' version '2.1.0' was not found."}`                                          | No such version on this server.                                                                     |
+| `409`  | `{"error":"Business Transaction '…' already exists."}`                                                        | The id was used. Nothing ran again.                                                                 |
+| `400`  | `{"error":"Request body must be a Refusal Record (refusalRecordId, …)."}`                                     | A verification body is missing fields. The message names them.                                      |
+| `404`  | `{"error":"Route not found.","code":"ROUTE_NOT_FOUND"}`                                                       | An unknown path, sent with a valid key. Added in this change; earlier builds returned an HTML page. |
 
 ### Execution refusals
 

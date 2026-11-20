@@ -369,10 +369,11 @@ export function parseHybridSchemaVersion(
 
   if (value === "3") {
     //
-    // Schema version 3 records are not readable by the SDKs and by
-    // the published third-party verifier until those are updated (ADR-0016 issuance gate).
-    // Refuse to start unless the operator also sets the acknowledgement,
-    // so a stray value cannot switch v3 on.
+    // Schema version 3 is an issuance decision (ADR-0016 gate): it stays
+    // off unless the operator opts in. Refuse to start unless the operator
+    // also sets the acknowledgement, so a stray value cannot switch v3 on.
+    // Verified in this repository: the TypeScript and Python SDK offline
+    // checks and parmana-verifier 2.0.3 all read and verify v3 records.
     //
     if (acknowledged !== "true") {
       throw new Error(

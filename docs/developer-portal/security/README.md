@@ -69,7 +69,7 @@ Verified: with this configuration, a record reported `"coverage":"full"` under t
 
 Configuration notes:
 
-- **`CRYPTO_MODE=hybrid` without `SECONDARY_SIGNATURE_PROVIDER` breaks execution.** The action is released, and the server then fails to produce the record. In a run for this portal the response was `500` with `Secondary signature provider is not configured.` See [Troubleshooting](../troubleshooting/README.md#a-500-after-the-action-was-released-hybrid-signing-misconfigured).
+- **`CRYPTO_MODE=hybrid` without `SECONDARY_SIGNATURE_PROVIDER` breaks execution.** The action is released, and the server then fails to produce the record. In a run for this portal the response was `500` with `Secondary signature provider is not configured.` See [Troubleshooting](../troubleshooting/README.md#hybrid-signing-without-a-secondary-provider-now-refused-at-start-up).
 - The secondary key must be a `dilithium3` (ML-DSA-65) key, generated with the repository's key script (`scripts/generate-keypair.ts --algorithm dilithium3`) or equivalent. This needs Node.js 24 with OpenSSL 3.5 or later.
 
 ## Tamper detection
@@ -97,20 +97,22 @@ The verifier's trust rules add more checks: a key whose PEM does not match its f
 
 Parmana refuses rather than guesses. These behaviours were observed:
 
-| Situation                                            | Behaviour observed                                                                    |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| The server starts without a policy directory         | Refuses to start: `PARMANA_POLICY_DIR is not set.`                                    |
-| The server starts without a signing key directory    | Refuses to start: `PARMANA_KEY_DIR is not configured.`                                |
-| No approval, or an approval that does not verify     | Refused with `403`.                                                                   |
-| An approval reused, expired, or for another target   | Refused with `403`, `humanApproved` verified as false.                                |
-| The policy version is not the one in effect          | Refused with `403`: "was superseded".                                                 |
-| A policy version with no approval record             | Refused with `403`: "has no PolicyChangeApprovalRecord".                              |
-| The payment source does not answer (refund policy)   | Refused: `SOURCE_UNAVAILABLE`.                                                        |
-| A bad or missing caller key                          | `401`. Nothing is evaluated.                                                          |
-| The test approver configured outside `NODE_ENV=test` | Refuses to start.                                                                     |
-| `DATABASE_PROVIDER` set (a removed setting)          | Refuses to start: `DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead.` |
-| The action released, but the record cannot be signed | `500`: the action ran; do not resubmit.                                               |
-| The action released, then the connector call fails   | `502`, `EXECUTION_OUTCOME_UNKNOWN`: reconcile.                                        |
+| Situation                                                                               | Behaviour observed                                                                    |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| The server starts without a policy directory                                            | Refuses to start: `PARMANA_POLICY_DIR is not set.`                                    |
+| `NODE_ENV=production` with memory storage (the default when `PARMANA_STORAGE` is unset) | Refuses to start, before the port is bound: memory is not durable.                    |
+| `CRYPTO_MODE=hybrid` without `SECONDARY_SIGNATURE_PROVIDER`, or equal to the primary    | Refuses to start. Earlier builds released actions first, then failed to record them.  |
+| The server starts without a signing key directory                                       | Refuses to start: `PARMANA_KEY_DIR is not configured.`                                |
+| No approval, or an approval that does not verify                                        | Refused with `403`.                                                                   |
+| An approval reused, expired, or for another target                                      | Refused with `403`, `humanApproved` verified as false.                                |
+| The policy version is not the one in effect                                             | Refused with `403`: "was superseded".                                                 |
+| A policy version with no approval record                                                | Refused with `403`: "has no PolicyChangeApprovalRecord".                              |
+| The payment source does not answer (refund policy)                                      | Refused: `SOURCE_UNAVAILABLE`.                                                        |
+| A bad or missing caller key                                                             | `401`. Nothing is evaluated.                                                          |
+| The test approver configured outside `NODE_ENV=test`                                    | Refuses to start.                                                                     |
+| `DATABASE_PROVIDER` set (a removed setting)                                             | Refuses to start: `DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead.` |
+| The action released, but the record cannot be signed                                    | `500`: the action ran; do not resubmit.                                               |
+| The action released, then the connector call fails                                      | `502`, `EXECUTION_OUTCOME_UNKNOWN`: reconcile.                                        |
 
 ## Caller authentication
 

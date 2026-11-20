@@ -50,15 +50,15 @@ Configuration errors stop the server at start-up, with a message that names the 
 
 ## Versions
 
-| Item                                                                                         | Version                                                                                                     |
-| -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `@parmana/sdk`, `parmana`, `@parmana/cli`, `@parmana/connector-sdk`, `parmana-connector-sdk` | 4.1.1                                                                                                       |
-| `@parmana/verifier`, `parmana-verifier`                                                      | 2.0.3                                                                                                       |
-| Repository packages (`packages/*`)                                                           | 4.1.1                                                                                                       |
-| OpenAPI document                                                                             | API `1.0.0`, OpenAPI 3.1.0                                                                                  |
-| `GET /version` on this build                                                                 | `0.4.0` (does not match the packages; see [COVERAGE](../COVERAGE.md#known-issues-found-during-this-review)) |
-| Node.js                                                                                      | 24 or later                                                                                                 |
-| Python                                                                                       | 3.10 or later                                                                                               |
+| Item                                                                                         | Version                                                                                             |
+| -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `@parmana/sdk`, `parmana`, `@parmana/cli`, `@parmana/connector-sdk`, `parmana-connector-sdk` | 4.1.1                                                                                               |
+| `@parmana/verifier`, `parmana-verifier`                                                      | 2.0.3                                                                                               |
+| Repository packages (`packages/*`)                                                           | 4.1.1                                                                                               |
+| OpenAPI document                                                                             | API `1.0.0`, OpenAPI 3.1.0                                                                          |
+| `GET /version` on this build                                                                 | `4.1.1`, the `@parmana/api` package version (an earlier build reported a hand-typed `0.4.0`; fixed) |
+| Node.js                                                                                      | 24 or later                                                                                         |
+| Python                                                                                       | 3.10 or later                                                                                       |
 
 ## Glossary and FAQ
 

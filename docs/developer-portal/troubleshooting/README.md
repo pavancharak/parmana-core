@@ -20,7 +20,7 @@ Run these in order. Each step narrows the cause.
 | 6. Was it refused?                  | `curl -s -H "Authorization: Bearer $KEY" $PARMANA_API_URL/refusal/$ID`                                                                                               | The refusal record, with its `decision`                              |
 | 7. Does the record verify?          | The [evidence verification](../security/evidence-verification.md) steps                                                                                              | `valid: true`                                                        |
 
-For the CLI, add `--verbose` to log each request and response code with secrets removed, and `--dry-run` to see the request without sending it. The CLI as an installed bin needs the workaround in [CLI](../sdk/cli.md#known-issue-the-installed-binary-prints-nothing).
+For the CLI, add `--verbose` to log each request and response code with secrets removed, and `--dry-run` to see the request without sending it. The CLI as an installed bin needs the workaround in [CLI](../sdk/cli.md#the-installed-binary-fixed-in-the-repository-not-yet-in-a-published-release).
 
 ## Authentication failures
 
@@ -106,25 +106,23 @@ The SDK retries `GET` requests only, when retries are enabled. It never retries 
 
 These were found when the existing [quickstart](../../../docs/site/quickstart.mdx) was run as written on a fresh checkout. They are recorded in [COVERAGE](../COVERAGE.md#known-issues-found-during-this-review). The governed setup in [Getting started](../getting-started.md) avoids each one.
 
-### The existing quickstart does not run as written
+### The existing quickstart did not run as written (now corrected)
 
-1. **The server refuses to start without `PARMANA_POLICY_DIR`.** The quickstart's server command does not set it. Error: `PARMANA_POLICY_DIR is not set. Refusing to start without a configured policy directory…`
-2. **The server refuses to start without `PARMANA_KEY_DIR`.** Error: `PARMANA_KEY_DIR is not configured.` Generating the keys into `keys/` does not set this variable.
-3. **The approver key generator does not create its output folder.** `generate-approver-key.ts --out-dir ~/.parmana` fails with `ENOENT` unless `~/.parmana` already exists. Run `mkdir -p ~/.parmana` first.
-4. **The first execution is refused.** `vendor-payment@2.1.0` has no approval record on a fresh server, so the quickstart's execution fails with `…has no PolicyChangeApprovalRecord…`. The quickstart does not mention maker-checker.
-5. **`PARMANA_ALLOW_UNGOVERNED_POLICY=true` does not help.** The examples runner sets it, but no server source file under `packages/*/src` reads it. The version in effect comes only from an approval record, and the code says no setting turns that off.
+These were the problems in the quickstart. The quickstart page and the code are corrected in this change; the list stays so that anyone who followed an older copy can match the error to its fix.
 
-With the governed setup, steps 1 to 3 are done for you, and step 4 is the maker-checker flow that the setup's example runs.
+1. **The server refused to start without `PARMANA_POLICY_DIR`.** Fixed: the quickstart's server command sets `PARMANA_POLICY_DIR=./fixtures/policies`.
+2. **The server refused to start without `PARMANA_KEY_DIR`.** Fixed: the command sets `PARMANA_KEY_DIR=./keys`. The setting is required in every environment, including `NODE_ENV=test`.
+3. **The approver key generator did not create its output folder.** Fixed: `generate-approver-key` creates the folder, so no `mkdir` is needed.
+4. **The first execution is refused until the policy is approved.** Still true, and deliberate: `vendor-payment@2.1.0` has no approval record on a fresh server. The quickstart now says so and points to the maker-checker flow. It is not automated (see [FINDINGS](../FINDINGS.md), F7).
+5. **`PARMANA_ALLOW_UNGOVERNED_POLICY=true` did nothing.** Fixed: the setting is removed from the examples runner, the load test and tutorial 81. Governance is enforced in every environment.
 
 ### `npm run dev:setup` refuses the fixture flows
 
 `npm run dev:setup` starts a server with `PARMANA_POLICY_DIR=./policies`, which does not include `vendor-payment`. Its caller key can invoke only `test:fixture-execute`, which is unbound by design. Verified: `POST /execute` for `vendor-payment@2.1.0` returns `404 Policy 'vendor-payment' version '2.1.0' was not found.`, and `GET /policies/in-effect?capability=test:fixture-execute` returns `404 CAPABILITY_NOT_BOUND`. Use the governed setup for the fixture flows.
 
-### A `500` after the action was released: hybrid signing misconfigured
+### Hybrid signing without a secondary provider (now refused at start-up)
 
-With `CRYPTO_MODE=hybrid` but no `SECONDARY_SIGNATURE_PROVIDER`, the server released the action and then could not produce the record. Observed response: `500 INTERNAL_SERVER_ERROR` with the cause `Secondary signature provider is not configured.`, and the message that the action was released and must not be retried as a new transaction.
-
-Set `SECONDARY_SIGNATURE_PROVIDER=dilithium3`, with a `default-secondary` key in the key directory. Then reconcile the released transaction; do not resubmit it. See [Security](../security/README.md#schema-versions-and-coverage).
+Earlier builds released the action and then returned `500` with `Secondary signature provider is not configured.` The server now refuses to start with `CRYPTO_MODE=hybrid` unless `SECONDARY_SIGNATURE_PROVIDER` is set and differs from the primary, and it checks the secondary key files before it binds the port. If you see a `500` like this on an older build, reconcile the released transaction and do not resubmit it. Set `SECONDARY_SIGNATURE_PROVIDER=dilithium3`, with a `default-secondary` key in the key directory. See [Security](../security/README.md#schema-versions-and-coverage).
 
 ### A policy file does not match its approval record
 
@@ -132,13 +130,13 @@ The server refuses a policy whose file was changed outside the approval flow. Th
 
 ## Debugging the CLI
 
-- `parmana-ops` printed nothing and exited 0. The installed bin does not start the command. Run the file instead: `node "$(npm root -g)/@parmana/cli/dist/index.js" --help`. See [CLI](../sdk/cli.md#known-issue-the-installed-binary-prints-nothing).
+- The published `parmana-ops` 4.1.1 printed nothing and exited 0 when run under its bin name. The fix is in the repository and is not yet in a published release. Until then run the file: `node "$(npm root -g)/@parmana/cli/dist/index.js" --help`. See [CLI](../sdk/cli.md#the-installed-binary-fixed-in-the-repository-not-yet-in-a-published-release).
 - A `HTTP 403 SAME_ACTOR…` from `approval submit` with the hint "This token is not allowed to do this. Check which credential is set." means the token in `PARMANA_TOKEN` is the maker's, not the checker's.
 
 ## Tests and examples that fail on a fresh checkout
 
-- **`npm test --workspace=typescript` fails** in this checkout. Six test files under `typescript/test/` are empty (zero bytes, committed that way), so vitest reports "No test suite found". The two integration suites need `PARMANA_POLICY_DIR` and a `./keys` directory. The examples integration test passed 3 of 3 when run from the repository root with the database variables unset.
-- **Tutorials 60, 103 and 120 fail when run directly with `npx tsx`** until `PARMANA_POLICY_DIR` is set, with `PARMANA_POLICY_DIR is not set…`. Tutorial 103 also needs `PARMANA_KEY_DIR`. Their READMEs do not say so. `npm run examples` sets defaults for these variables and ran 116 examples with exit code 0.
+- **`npm test --workspace=typescript` failed** before this change: six test files were empty and the integration suites needed the root test setup. Fixed: the empty files are removed, and the workspace script runs with the root configuration. It passes with no extra environment (22 files, 248 tests).
+- **Tutorials 60, 103 and 120 need `PARMANA_POLICY_DIR`** (and 103 also `PARMANA_KEY_DIR`) when run directly. Their READMEs now state the command. `npm run examples` sets these defaults for you.
 - **`DATABASE_URL` in your environment** can make a test run target a database. The repository's test setup refuses hosted databases unless they are listed in `PARMANA_TEST_PROJECT_REFS` and `ALLOW_LIVE_SUPABASE=1` is set. Unset `DATABASE_URL` for local runs.
 
 ## Getting more help

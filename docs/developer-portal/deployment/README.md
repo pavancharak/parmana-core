@@ -38,7 +38,7 @@ bash ~/.parmana/governed-quickstart/start-server.sh
 
 `npm run dev:setup` starts a local server in one command, with local keys in `keys/` and `.parmana-dev/`. It sets `NODE_ENV=test` and `PARMANA_POLICY_DIR=./policies`. Verified: the server started and `GET /health` returned `UP`. Its policy directory holds `payment-refund`, not `vendor-payment`, so a request for `vendor-payment@2.1.0` is refused with `404 Policy … was not found`. Use the governed setup for the fixture flows.
 
-The server refuses to start with missing configuration, and says what is missing:
+The server refuses to start with missing configuration, and says what is missing. In production it also refuses memory storage (`PARMANA_STORAGE` unset or `memory`), and refuses hybrid signing without a distinct secondary provider:
 
 ```text
 Error: PARMANA_POLICY_DIR is not set. Refusing to start without a configured policy directory…
