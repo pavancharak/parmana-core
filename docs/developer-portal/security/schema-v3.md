@@ -8,9 +8,9 @@ The decision record is [ADR-0016](../../../docs/internal/adr/ADR-0016-Whole-Reco
 
 ## Summary
 
-- **Schema 2 (the default)** signs seven top-level fields with the legacy signature. A change to any other field, such as `updatedAt`, still verifies. The verifier reports `coverage: "legacy"`.
+- **Schema 2** signs seven top-level fields with the legacy signature. A change to any other field, such as `updatedAt`, still verifies. The verifier reports `coverage: "legacy"`. It was the default until 2026-11-20, and is now the rollback setting.
 - **Schema 3** signs every top-level field except five excluded fields, with hybrid signatures (ed25519 and dilithium3). A change to any covered field fails. The verifier reports `coverage: "full"`.
-- **v3 is opt-in.** The code default stays at schema 2. Enabling v3 is a decision made per deployment.
+- **Schema 3 is the default** (decided 2026-11-20, ADR-0016). An unset `HYBRID_SCHEMA_VERSION` means 3. The former acknowledgement gate, `HYBRID_SCHEMA_V3_ACKNOWLEDGED`, is no longer read. The default applies to hybrid signing: a server in `CRYPTO_MODE=single` issues records with no hybrid envelope, and so no schema 3 record.
 - **The downgrade gap is decided.** Someone who can write to stored records can remove the hybrid envelope and set the version back to 2. The chosen fix (ADR-0016 option 2) is a cutover instant. From that instant, a record without a valid hybrid envelope is rejected. The instant is `2026-11-20T13:01:38Z`.
 - **The cutover holds only if every issuing server runs hybrid signing.** A server in `CRYPTO_MODE=single` issues records with no hybrid envelope, and every such record would be rejected after the cutover. This is a precondition, not something the repository can check.
 
@@ -27,6 +27,7 @@ The exclusion list is the same in the verifier's `docs/FORMAT.md` and in the sig
 
 - **`verifications` and `receipts` are not covered.** They are attached after signing. A receipt carries its own signature, which is checked separately.
 - **The legacy `signature` does not cover `schemaVersion`.** That is the root of the downgrade gap. v3 covers `schemaVersion` only through its hybrid message. If the hybrid envelope is removed, nothing signs the version, so the cutover is what closes the gap.
+- **Receipts keep their own hybrid version.** `ReceiptCrypto` signs receipts with hybrid message version 2 (a constant in `packages/crypto/src/ReceiptCrypto.ts`). The default schema change does not affect receipts.
 - **v3 does not prove the business action happened.** It proves the record is unchanged since the key holder signed it. Use the connector's own records to show the action ran.
 
 ### Verified results
@@ -47,15 +48,15 @@ With the v3 settings below, a record reported `"coverage":"full"` under the veri
 | `CRYPTO_MODE`                   | `single`  | `hybrid` makes the server add a `signatures` array to each record. In `single` mode there is no hybrid envelope.                                                 |
 | `PRIMARY_SIGNATURE_PROVIDER`    | `ed25519` | The primary algorithm.                                                                                                                                           |
 | `SECONDARY_SIGNATURE_PROVIDER`  | none      | Required when `CRYPTO_MODE=hybrid`. Must differ from the primary. The server refuses to start otherwise.                                                         |
-| `HYBRID_SCHEMA_VERSION`         | `2`       | `2` or `3`. Any other value is refused at start-up.                                                                                                              |
-| `HYBRID_SCHEMA_V3_ACKNOWLEDGED` | none      | Must be `true` when `HYBRID_SCHEMA_VERSION=3`. Without it the server refuses to start. This is the issuance gate.                                                |
+| `HYBRID_SCHEMA_VERSION`         | `3`       | `2` or `3`. Unset means 3. `2` is the rollback. Any other value is refused at start-up.                                                                          |
+| `HYBRID_SCHEMA_V3_ACKNOWLEDGED` | not read  | Ignored. It was the issuance gate until schema 3 became the default. Remove it from environment files.                                                           |
 | `HYBRID_SIGNATURE_REQUIRED`     | `false`   | When `true`, verifying a record with no `signatures` array, or a partial one, is a rejection, whatever its version.                                              |
 | `HYBRID_REQUIRED_FROM`          | none      | The cutover (UTC, ending in `Z`). From this instant, a record needs a valid hybrid envelope. Enforced by the server's verification path as well as by verifiers. |
 
 Start-up refusals you will see:
 
 - `CRYPTO_MODE=hybrid` without `SECONDARY_SIGNATURE_PROVIDER`, or with the same provider as the primary.
-- `HYBRID_SCHEMA_VERSION=3` without `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true`.
+- A `HYBRID_SCHEMA_VERSION` that is neither `2` nor `3`.
 - A `HYBRID_REQUIRED_FROM` that is not a UTC ISO-8601 timestamp.
 
 If `CRYPTO_MODE=hybrid` is set but no secondary provider is, the server releases the action and then fails to write the record. Its response is `500` with `Secondary signature provider is not configured.`. The start-up check above now stops this before any action is released.
@@ -98,7 +99,7 @@ ADR-0016 set four conditions for issuing v3. Each was checked on 2026-11-20:
 | `docs/FORMAT.md` describes v3 coverage exactly as the code signs it         | Met    | Exclusion list matches `WHOLE_RECORD_EXCLUDED_FIELDS` in the signing code                                 |
 | The downgrade decision is recorded in the ADR                               | Met    | ADR-0016, "Decision recorded" and "Issuance gate: status"                                                 |
 
-The gate is open. Opening it allows v3 to be enabled. It does not turn v3 on anywhere.
+The gate is met, and on 2026-11-20 the owner made schema 3 the default. The acknowledgement that the gate used to require is no longer read.
 
 ## Rollout
 
@@ -107,7 +108,7 @@ Each step is for each deployment. Do not skip a step.
 1. **Confirm the precondition.** Every server that issues records runs `CRYPTO_MODE=hybrid`, with a secondary provider that differs from the primary, and `HYBRID_SIGNATURE_REQUIRED=true`. Keep this set for the lifetime of the deployment.
 2. **Set the cutover on the server:** `HYBRID_REQUIRED_FROM=2026-11-20T13:01:38Z`.
 3. **Set the cutover in every verifier trust file:** `hybridRequiredFrom: "2026-11-20T13:01:38Z"`. Do this before, or with, step 4, so a verifier never accepts a record that a stricter one would refuse.
-4. **Enable v3 on the deployment:** `HYBRID_SCHEMA_VERSION=3` and `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true`. Restart, and check that the server starts.
+4. **Confirm the server signs schema 3.** There is nothing to enable: schema 3 is the default. Restart the server, and confirm that a new hybrid record reports `schemaVersion` 3. If you must roll back, set `HYBRID_SCHEMA_VERSION=2`.
 5. **Check one record end to end.** Create a record and verify it offline. It should report `valid: true` and `coverage: "full"`. Change one covered field in a copy and confirm it is rejected.
 6. **Tell consumers what to require.** Each consumer that needs the whole record should require `coverage: "full"`, or use `requireFullCoverage`.
 
@@ -135,10 +136,10 @@ What this means:
 
 ## Known limits and open items
 
-- **The code default is still `2`.** Changing it would make every new record v3. That is a separate decision, recorded as [FINDINGS F1](../FINDINGS.md#f1-records-are-signed-with-schema-version-2-by-default-signature-covers-7-fields).
-- **Third-party readers are unknown.** Only the TypeScript and Python SDKs and `parmana-verifier` 2.0.3 have been checked to read v3. Whether other tools do is not known (F11). Ask each consumer before v3 is enabled on a deployment that hands records to it.
+- **The default was changed on 2026-11-20** by the owner's decision, recorded in [FINDINGS F1](../FINDINGS.md#f1-records-are-signed-with-schema-version-2-by-default-signature-covers-7-fields). Changing it again is a new decision.
+- **Third-party readers are unknown, and the owner reports no active consumer.** Only the TypeScript and Python SDKs and `parmana-verifier` 2.0.3 have been checked to read v3. Whether other tools do is not known (F11). Any consumer added later must read v3 before it receives records.
 - **Size and speed were measured** (see [Cost](#cost-size-and-speed)). Re-measure on the deployment's own hardware before sizing storage or latency budgets.
-- **The cutover rests on an owner statement.** The repository cannot confirm that no `single`-mode record exists, or that every issuing server is in hybrid mode.
+- **The cutover and the default rest on owner statements.** The owner reports that no `single`-mode record exists and that no consumer is active. The repository cannot confirm either, or that every issuing server is in hybrid mode.
 - **Verifier-side changes are in another repository.** The `hybridRequiredFrom` and `allowLegacyV2` handling lives in `parmana-verifier`. This portal documents it but does not change it.
 
 ## Related

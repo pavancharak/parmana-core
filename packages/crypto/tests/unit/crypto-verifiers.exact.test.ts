@@ -524,6 +524,9 @@ describe.skipIf(!isMlDsa65Supported())(
     beforeEach(() => {
       process.env.CRYPTO_MODE = "hybrid";
       process.env.SECONDARY_SIGNATURE_PROVIDER = "dilithium3";
+      // These records declare schemaVersion 2, so they must be signed as
+      // version 2. The default is now 3 (ADR-0016, 2026-11-20).
+      process.env.HYBRID_SCHEMA_VERSION = "2";
     });
 
     beforeAll(() => {

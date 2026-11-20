@@ -6,6 +6,10 @@ This changelog records changes to the developer portal in `docs/developer-portal
 
 Versions follow the packages the portal documents: SDKs and server 4.1.1, offline verifier 2.0.3.
 
+## 2026-11-20: schema version 3 is the default
+
+The owner made schema 3 the default: an unset `HYBRID_SCHEMA_VERSION` now means 3, and `2` is the rollback. The acknowledgement gate (`HYBRID_SCHEMA_V3_ACKNOWLEDGED`) is no longer read. This applies only to hybrid signing: a server in `CRYPTO_MODE=single` issues no schema 3 records. Changed: the parser and the doctor check, the tests that encoded the old default (each now states the schema it signs), `.env.example`, the public environment table, and the portal pages. Receipts are unchanged. The owner reports no active consumer and no single-mode record.
+
 ## 2026-11-20: schema version 3 documented in full
 
 Added [Schema version 3](security/schema-v3.md): what v3 covers and what it does not, the server and verifier settings, the downgrade decision and its cutover instant (`2026-11-20T13:01:38Z`), the issuance gate with its evidence, and the rollout and rollback steps. The code default is unchanged.

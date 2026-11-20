@@ -39,10 +39,10 @@ A signature proves only that the holder of a key made it. Whether to believe a r
 
 The record's `schemaVersion` says which fields the signatures cover. The verifier reports this as `coverage`. The [complete schema 3 reference](schema-v3.md) covers the cutover, the configuration, the decision and the rollout.
 
-| Schema version         | What the signatures cover                                                                                                                                  | Coverage reported | Default on this build |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | --------------------- |
-| **2** (or unversioned) | Seven top-level fields: `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `overrides`, `executions`, `createdAt`.                  | `legacy`          | **Yes**               |
-| **3** (hybrid)         | Every top-level field except `signature`, `signatures`, `schemaVersion`, `verifications` and `receipts`. `schemaVersion` is covered by the hybrid message. | `full`            | No. Opt-in (below).   |
+| Schema version         | What the signatures cover                                                                                                                                  | Coverage reported | Default on this build                          |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ---------------------------------------------- |
+| **2** (or unversioned) | Seven top-level fields: `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `overrides`, `executions`, `createdAt`.                  | `legacy`          | No. Rollback only (`HYBRID_SCHEMA_VERSION=2`). |
+| **3** (hybrid)         | Every top-level field except `signature`, `signatures`, `schemaVersion`, `verifications` and `receipts`. `schemaVersion` is covered by the hybrid message. | `full`            | **Yes**, since 2026-11-20 (ADR-0016).          |
 
 **Verified in this portal, on records from the same run:**
 
@@ -55,14 +55,13 @@ So a schema 2 record's `valid: true` tells you only that its covered fields are 
 
 **Schema 2 can also be stripped.** `schemaVersion` is not covered by the legacy signature. Someone who can write to stored records could remove the hybrid envelope and set the version to 2. The fix is `hybridRequiredFrom` in the trust file, which requires a hybrid envelope for records created at or after a cutover time.
 
-**To get full coverage**, configure the server for schema 3 with hybrid signatures:
+**Schema 3 is the default.** Hybrid signing makes the server issue schema 3 records. Configure hybrid signing:
 
 ```bash
 CRYPTO_MODE=hybrid
 PRIMARY_SIGNATURE_PROVIDER=ed25519
 SECONDARY_SIGNATURE_PROVIDER=dilithium3
-HYBRID_SCHEMA_VERSION=3
-HYBRID_SCHEMA_V3_ACKNOWLEDGED=true     # the server refuses HYBRID_SCHEMA_VERSION=3 without this
+# HYBRID_SCHEMA_VERSION is 3 when unset. Set 2 only to roll back.
 ```
 
 Verified: with this configuration, a record reported `"coverage":"full"` under the verifier's default trust rules (no legacy flags), and the TypeScript and Python SDK offline checks agreed (`coverage: "full"`). A tampered copy was rejected by all three. The server's source describes the schema 3 setting as an issuance decision (ADR-0016), and it is off unless set. Choose it deliberately for production, and confirm the verifiers you hand records to accept it.

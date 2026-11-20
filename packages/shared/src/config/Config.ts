@@ -351,16 +351,14 @@ export interface LoggingConfig {
  * should be accessed.
  */
 /**
- * HYBRID_SCHEMA_VERSION: unset means 2. Any other value must be exactly
- * 2 or 3, and anything else throws, so a typo cannot pick a schema
- * version silently.
+ * HYBRID_SCHEMA_VERSION: unset or blank means 3 (the default, decided
+ * 2026-11-20 under ADR-0016). `2` selects the previous schema, for a
+ * rollback. Any other value throws, so a typo cannot pick a schema version
+ * silently. The former HYBRID_SCHEMA_V3_ACKNOWLEDGED gate is no longer read.
  */
-export function parseHybridSchemaVersion(
-  value: string | undefined,
-  acknowledged: string | undefined,
-): 2 | 3 {
+export function parseHybridSchemaVersion(value: string | undefined): 2 | 3 {
   if (value === undefined || value.trim() === "") {
-    return 2;
+    return 3;
   }
 
   if (value === "2") {
@@ -368,19 +366,6 @@ export function parseHybridSchemaVersion(
   }
 
   if (value === "3") {
-    //
-    // Schema version 3 is an issuance decision (ADR-0016 gate): it stays
-    // off unless the operator opts in. Refuse to start unless the operator
-    // also sets the acknowledgement, so a stray value cannot switch v3 on.
-    // Verified in this repository: the TypeScript and Python SDK offline
-    // checks and parmana-verifier 2.0.3 all read and verify v3 records.
-    //
-    if (acknowledged !== "true") {
-      throw new Error(
-        "HYBRID_SCHEMA_VERSION=3 is refused unless HYBRID_SCHEMA_V3_ACKNOWLEDGED=true is also set (ADR-0016 issuance gate).",
-      );
-    }
-
     return 3;
   }
 
@@ -449,7 +434,6 @@ export function loadConfig(): Readonly<Config> {
 
       hybridSchemaVersion: parseHybridSchemaVersion(
         process.env.HYBRID_SCHEMA_VERSION,
-        process.env.HYBRID_SCHEMA_V3_ACKNOWLEDGED,
       ),
     }),
 
