@@ -117,7 +117,7 @@ Setting `HYBRID_SCHEMA_VERSION` back to `2` returns new records to schema 2. Kee
 
 ## Cost: size and speed
 
-Measured on 2026-11-20 with the built packages in this repository, using the server's own signing code (`VerificationCrypto`) and the TypeScript SDK's offline verifier. The record was a minimal one (one transaction, no executions), so treat the byte counts as the cost of the signature envelope, not a size for production records. Each figure is the average over 1000 iterations, from two runs that agreed to within about 0.1 ms.
+Measured on 2026-11-20 with the built packages in this repository, using the server's own signing code (`VerificationCrypto`) and the TypeScript SDK's offline verifier. The record was a minimal one (one transaction, no executions), so treat the byte counts as the cost of the signature envelope, not a size for production records. To reproduce these figures on your hardware, run `npx tsx scripts/bench-whole-record-cost.ts 1000` from the repository root after `npm run build:packages`. Each figure is the average over 1000 iterations, from two runs that agreed to within about 0.1 ms.
 
 | Mode                           | Record size | Sign          | Offline verify | Coverage reported |
 | ------------------------------ | ----------- | ------------- | -------------- | ----------------- |
