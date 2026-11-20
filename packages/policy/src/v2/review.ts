@@ -11,6 +11,10 @@
  * Used by the runtime: the decision service opens items, the reviewer route decides them, and the sweeps expire them.
  */
 
+import { createHash } from "node:crypto";
+
+import { canonicalize } from "./sourceAnswer.js";
+
 import { viewDigest, type ApprovalView } from "./approvals.js";
 
 /** The longest review window (design 5.6, decision D11). */
@@ -33,11 +37,19 @@ export interface ReviewerDecision {
   readonly at: string;
 }
 
+/** A decision's evidence record: its record id and its hash in the evidence chain. */
+export interface DecisionRecordRef {
+  readonly recordId: string;
+  readonly hash: string;
+}
+
 export interface ReviewItem {
   readonly id: string;
   readonly capability: string;
   readonly target: string;
   readonly requester: string;
+  /** The evidence record of the decision that opened the review, and that record's hash. */
+  readonly decisionRecord: DecisionRecordRef;
   /** Reference to the decision that opened the review: its policy hash and matched rule. */
   readonly decisionRef: {
     readonly policyHash: string;
@@ -63,6 +75,31 @@ export interface ReviewResult {
   readonly decidedBy: readonly string[];
   readonly digest: string;
   readonly at: string;
+  /** The decision this outcome finishes: its evidence record id and hash. */
+  readonly decisionRecord: DecisionRecordRef;
+  /** SHA-256 of the outcome's canonical form, including the decision reference. */
+  readonly outcomeHash: string;
+}
+
+function outcomeDigest(result: Omit<ReviewResult, "outcomeHash">): string {
+  return createHash("sha256")
+    .update(
+      canonicalize({
+        reviewId: result.reviewId,
+        outcome: result.outcome,
+        decidedBy: result.decidedBy,
+        digest: result.digest,
+        at: result.at,
+        decisionRecord: result.decisionRecord,
+      }),
+    )
+    .digest("hex");
+}
+
+/** True only if the outcome's hash matches its contents, including the decision it refers to. */
+export function verifyReviewResult(result: ReviewResult): boolean {
+  const { outcomeHash, ...rest } = result;
+  return outcomeDigest(rest) === outcomeHash;
 }
 
 export interface ReviewEvent {
@@ -83,6 +120,7 @@ export interface OpenInput {
   readonly capability: string;
   readonly target: string;
   readonly requester: string;
+  readonly decisionRecord: DecisionRecordRef;
   readonly decisionRef: {
     readonly policyHash: string;
     readonly matchedRuleId: string;
@@ -186,6 +224,7 @@ export class ReviewQueue {
       digest: viewDigest(input.view),
       highValue: input.highValue,
       ...(input.amount !== undefined && { amount: input.amount }),
+      decisionRecord: input.decisionRecord,
       requiredApprovals: input.highValue ? 2 : 1,
       openedAt: openedAt.toISOString(),
       dueAt: addBusinessDays(openedAt, input.windowBusinessDays).toISOString(),
@@ -449,12 +488,17 @@ export class ReviewQueue {
           ? "refused"
           : "expired";
     this.items.set(item.id, { ...item, status, decisions, assignedTo });
-    const result: ReviewResult = {
+    const unsigned = {
       reviewId: item.id,
       outcome,
       decidedBy: decisions.map((d) => d.reviewerId),
       digest: item.digest,
       at,
+      decisionRecord: item.decisionRecord,
+    };
+    const result: ReviewResult = {
+      ...unsigned,
+      outcomeHash: outcomeDigest(unsigned),
     };
     this.results.set(item.id, result);
     this.record("system", "review.closed", `${item.id}: ${outcome}`);

@@ -163,6 +163,7 @@ export class PolicyV2DecisionService {
       // highValue is set true until the risk function is wired. That only requires more reviewers, so it fails safe.
       const item = queue.open({
         capability: request.capability,
+        decisionRecord: { recordId: record.recordId, hash: record.hash },
         target: request.target,
         requester: caller,
         decisionRef: {

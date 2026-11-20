@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   ReviewQueue,
   addBusinessDays,
+  verifyReviewResult,
   type OpenInput,
 } from "../../src/v2/review.js";
 import type { ApprovalView } from "../../src/v2/approvals.js";
@@ -300,5 +301,60 @@ describe("loading a stored snapshot", () => {
     };
     expect(() => queue.load(empty)).not.toThrow();
     expect(queue.snapshot()).toEqual(empty);
+  });
+});
+
+describe("the outcome refers to its decision", () => {
+  const DECISION = { recordId: "ev-7", hash: "a".repeat(64) };
+
+  it("carries the decision's record and a hash that verifies", () => {
+    const queue = new ReviewQueue(() => START);
+    queue.replaceGrants([
+      { reviewerId: "reviewer-a", capability: "erp:pay-invoice" },
+    ]);
+    const item = queue.open({
+      capability: "erp:pay-invoice",
+      target: "INV-1001",
+      requester: "demo",
+      decisionRecord: DECISION,
+      decisionRef: {
+        policyHash: "b".repeat(64),
+        matchedRuleId: "review-high-risk",
+      },
+      reason: "High risk.",
+      view: view(),
+      highValue: false,
+      windowBusinessDays: 1,
+    });
+    const result = queue.decide(item.id, "reviewer-a", "approve");
+    expect(result.decisionRecord).toEqual(DECISION);
+    expect(verifyReviewResult(result)).toBe(true);
+  });
+
+  it("fails verification when the decision it refers to is changed", () => {
+    const queue = new ReviewQueue(() => START);
+    queue.replaceGrants([
+      { reviewerId: "reviewer-a", capability: "erp:pay-invoice" },
+    ]);
+    const item = queue.open({
+      capability: "erp:pay-invoice",
+      target: "INV-1001",
+      requester: "demo",
+      decisionRecord: DECISION,
+      decisionRef: {
+        policyHash: "b".repeat(64),
+        matchedRuleId: "review-high-risk",
+      },
+      reason: "High risk.",
+      view: view(),
+      highValue: false,
+      windowBusinessDays: 1,
+    });
+    const result = queue.decide(item.id, "reviewer-a", "approve");
+    const moved = {
+      ...result,
+      decisionRecord: { recordId: "ev-8", hash: DECISION.hash },
+    };
+    expect(verifyReviewResult(moved)).toBe(false);
   });
 });

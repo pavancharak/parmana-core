@@ -53,6 +53,7 @@ function withOpenReview() {
   const queue = new policyV2.review.ReviewQueue(() => NOW);
   queue.replaceGrants([{ reviewerId: "rev-1", capability: CAP }]);
   const item = queue.open({
+    decisionRecord: { recordId: "ev-1", hash: "0".repeat(64) },
     capability: CAP,
     target: "inv-1",
     requester: "partner-a",
