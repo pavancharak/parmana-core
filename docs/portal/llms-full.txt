@@ -1062,6 +1062,8 @@ Before applying, run `terraform plan` and check that the resource policy and the
 
 Each time the API starts, it logs one line with `"event": "effective_crypto_config"`. It shows the settings that decide how the process signs: `cryptoMode`, the signature providers, `hybridSchemaVersion`, `hybridSignatureRequired`, `keyProvider`, `hybridKmsPrimary`, and `secondaryKeySource` (`none`, `file` or `secret`). It never shows secret values, secret names, ARNs or key material.
 
+Which trust policy an integrator should use to verify a deployment's records depends on this mode. See the verifier's `docs/OPERATING-MODES.md`.
+
 To check a deployment, open its startup logs and find the most recent `effective_crypto_config` line. Don't rely on the environment-variable screen, because the values there are hidden after they are saved.
 
 ## Verifying a key
