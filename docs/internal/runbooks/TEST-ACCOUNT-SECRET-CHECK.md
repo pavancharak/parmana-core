@@ -173,6 +173,24 @@ Version: ecd0197e-de4b-4e99-a0ac-ff9807b134a1
 
 ---
 
+### 5.10 Account guard check (2026-11-21)
+
+After the run above, each stack was given an `expected_account_id` and a postcondition on `aws_caller_identity` (commit `125a06c7`). To test the guard against AWS, a temporary access key was created for `parmana-test-runner`, used once, and is to be deleted (§9).
+
+From `infra/parmana-prod-signing`, with the test credentials and the production variable file:
+
+```powershell
+terraform plan "-var-file=prod.tfvars" "-var=secondary_key_secret_name=guard-test" "-var=secret_key_admin_arn=arn:aws:iam::013659367671:root"
+```
+
+Observed:
+
+- `Resource postcondition failed`: `self.account_id is "703759331191"`, `var.expected_account_id is "013659367671"`. The message: "This stack is for account 013659367671, but the credentials belong to another account. Stop."
+- The plan did not continue to changes. A plan does not write state.
+- The same plan also reported `AccessDenied` when reading the production alias `alias/parmana-prod` and the production role policy. These errors show that the test runner cannot read production resources.
+
+Before the guard was added, the same folder with the same credentials had planned against production resources in its state (§8.2). The guard now stops that.
+
 ## 6. Results (observed)
 
 | Check                             | Observed                                                                      |
@@ -229,6 +247,7 @@ Version: ecd0197e-de4b-4e99-a0ac-ff9807b134a1
 | Delete the EC2 key pair `parmana-test-check`                            | Operator | Pending |
 | Delete `parmana-test-check.pem` from Downloads                          | Operator | Pending |
 | Delete the access key of `parmana-test-runner`                          | Operator | Pending |
+| Delete the temporary access key created for the guard test (§5.10)      | Operator | Pending |
 | Decide whether to keep the test secret (it holds a test key)            | Owner    | Pending |
 | Decide whether to keep the AWS Organization in production (§8.4)        | Owner    | Pending |
 | Confirm the production folder state and the production resources (§8.2) | Owner    | Pending |
