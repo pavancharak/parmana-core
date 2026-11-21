@@ -241,16 +241,16 @@ Before the guard was added, the same folder with the same credentials had planne
 
 ## 9. Cleanup (pending)
 
-| Item                                                                    | Owner    | Status                                      |
-| ----------------------------------------------------------------------- | -------- | ------------------------------------------- |
-| Terminate `i-05f355e07aae8b7ba`                                         | Operator | Done (reported by the operator, 2026-11-21) |
-| Delete the EC2 key pair `parmana-test-check`                            | Operator | Done (reported by the operator, 2026-11-21) |
-| Delete `parmana-test-check.pem` from Downloads                          | Operator | Done (reported by the operator, 2026-11-21) |
-| Delete the access key of `parmana-test-runner`                          | Operator | Done (reported by the operator, 2026-11-21) |
-| Delete the temporary access key created for the guard test (§5.10)      | Operator | Done (reported by the operator, 2026-11-21) |
-| Decide whether to keep the test secret (it holds a test key)            | Owner    | Pending                                     |
-| Decide whether to keep the AWS Organization in production (§8.4)        | Owner    | Pending                                     |
-| Confirm the production folder state and the production resources (§8.2) | Owner    | Pending                                     |
+| Item                                                                                                                                                       | Owner    | Status                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Terminate `i-05f355e07aae8b7ba`                                                                                                                            | Operator | Done (reported by the operator, 2026-11-21)                                                                                                             |
+| Delete the EC2 key pair `parmana-test-check`                                                                                                               | Operator | Done (reported by the operator, 2026-11-21)                                                                                                             |
+| Delete `parmana-test-check.pem` from Downloads                                                                                                             | Operator | Done (reported by the operator, 2026-11-21)                                                                                                             |
+| Delete the access key of `parmana-test-runner`                                                                                                             | Operator | Done (reported by the operator, 2026-11-21)                                                                                                             |
+| Delete the temporary access key created for the guard test (§5.10)                                                                                         | Operator | Done (reported by the operator, 2026-11-21)                                                                                                             |
+| Test secret `parmana-test/secondary-key`: deleted by the operator in the console, scheduled for deletion after a 30-day recovery window (about 2026-12-21) | Owner    | Done (reported by the operator, 2026-11-21). The name stays reserved until the window ends. Terraform in `infra/parmana-test-signing` fails until then. |
+| Decide whether to keep the AWS Organization in production (§8.4)                                                                                           | Owner    | Pending                                                                                                                                                 |
+| Confirm the production folder state and the production resources (§8.2)                                                                                    | Owner    | Pending                                                                                                                                                 |
 
 ---
 
@@ -278,3 +278,9 @@ shred -u key.pem
 ```
 
 Expected: the account in the first command is `703759331191`, the identity ends in `parmana-test-server`, and the last line is `ml-dsa-65`. Do not run `terraform apply` against `infra/parmana-prod-signing` with test variables.
+
+### 9.1 Test secret deletion (2026-11-21)
+
+- The operator deleted `parmana-test/secondary-key` in the test account's console. The console scheduled deletion after a 30-day recovery window, ending about 2026-12-21.
+- The CLI force-delete was attempted first from the default profile, which is production. It was denied (`cost-audit` in account `013659367671` has no `secretsmanager:DeleteSecret`). Nothing was deleted by that attempt. The default profile was then cleared (§5 of this record, and the operator's notes).
+- Until the window ends, the key can be restored, and only the server role can read it. Terraform in `infra/parmana-test-signing` fails until the secret is purged, so do not recreate the stack before then.
