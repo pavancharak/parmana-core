@@ -50,6 +50,7 @@ const NAV = [
       "glossary.md",
       "security/key-management.md",
       "policies/README.md",
+      "policies/payment-refund-coverage.md",
       "security/README.md",
       "security/evidence-verification.md",
       "security/schema-v3.md",
