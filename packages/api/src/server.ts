@@ -3,7 +3,7 @@ import "dotenv/config";
 
 import { parsePolicyChangeCheckers } from "./governance/policyChangeCheckers.js";
 import { PolicyChangeCrypto } from "@parmana/crypto";
-import { loadConfig } from "@parmana/shared";
+import { describeEffectiveCrypto, loadConfig } from "@parmana/shared";
 
 import { assertStorageConfigured } from "./bootstrap/assertStorageConfigured.js";
 import {
@@ -205,6 +205,13 @@ try {
   });
   process.exit(1);
 }
+
+// The settings that decide how this process signs, logged once so a deployment shows what it runs.
+// Contains no secret values, names or ARNs (see EffectiveConfig.ts).
+console.log({
+  event: "effective_crypto_config",
+  ...describeEffectiveCrypto(loadConfig()),
+});
 
 const server = app.listen(PORT, HOST, () => {
   console.log(`API running on http://${HOST}:${PORT}`);

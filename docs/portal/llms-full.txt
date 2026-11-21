@@ -1058,6 +1058,12 @@ What it does not create, and why:
 
 Before applying, run `terraform plan` and check that the resource policy and the KMS key policy name only the intended roles.
 
+## Checking what a deployment runs
+
+Each time the API starts, it logs one line with `"event": "effective_crypto_config"`. It shows the settings that decide how the process signs: `cryptoMode`, the signature providers, `hybridSchemaVersion`, `hybridSignatureRequired`, `keyProvider`, `hybridKmsPrimary`, and `secondaryKeySource` (`none`, `file` or `secret`). It never shows secret values, secret names, ARNs or key material.
+
+To check a deployment, open its startup logs and find the most recent `effective_crypto_config` line. Don't rely on the environment-variable screen, because the values there are hidden after they are saved.
+
 ## Verifying a key
 
 Obtain a key's fingerprint with `parmana-verify key-fingerprint <public-key.pem>`, and check it out of band before pinning it in a trust file. A verifier accepts a record only under a key it has pinned.
