@@ -9,7 +9,7 @@ Usage (from the repository root):
 
     python3 scripts/aws-identity-check.py
 
-Reads AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, optionally AWS_SESSION_TOKEN and AWS_REGION.
+Reads AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and optionally AWS_SESSION_TOKEN. AWS_REGION is ignored: STS signs in us-east-1.
 """
 
 from __future__ import annotations
@@ -35,7 +35,8 @@ def _signed_request(access_key: str, secret_key: str, token: str | None) -> urll
     now = datetime.datetime.now(datetime.timezone.utc)
     amz_date = now.strftime("%Y%m%dT%H%M%SZ")
     date = now.strftime("%Y%m%d")
-    region = os.environ.get("AWS_REGION", "us-east-1")
+    # The global STS endpoint only accepts signatures scoped to us-east-1, whatever AWS_REGION is set to.
+    region = "us-east-1"
 
     headers = {
         "content-type": "application/x-www-form-urlencoded; charset=utf-8",
