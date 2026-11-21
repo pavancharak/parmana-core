@@ -1,5 +1,5 @@
 # TEST ENVIRONMENT ONLY. Account 703759331191 (not production 013659367671).
-# Use with: terraform plan -var-file=test.tfvars
+# Use from infra/parmana-test-signing: terraform plan "-var-file=test.tfvars"
 # Never use prod.tfvars against this account, and never this file against production.
 
 environment               = "test"

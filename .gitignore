@@ -175,3 +175,8 @@ docs/OPEN-SOURCE-WORK.md
 
 # Personal Claude Code settings, not shared
 .claude/settings.local.json
+
+# Terraform state and working directories: never commit
+**/*.tfstate
+**/*.tfstate.*
+**/.terraform/
