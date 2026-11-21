@@ -76,6 +76,25 @@ If the server refuses to start with `AWS_ROLE_ARN` or `Secrets Manager` errors, 
 - It does not change how v2 or v3 records are signed.
 - It does not work on AWS KMS. ML-DSA-65 keys are not held in KMS yet (option B in `KEY-DELIVERY.md`).
 
+## The secondary key secret (dilithium3, F26)
+
+This is separate from option A. It holds only the secondary (dilithium3) private key, read through `PARMANA_SECONDARY_KEY_SECRET_ID`. The primary and other keys stay where they are.
+
+1. Review `terraform plan` for `infra/parmana-prod-signing/main.tf`, then apply it. It creates the secret, a KMS key for it, and a policy that lets only the server role read the value. Terraform does not create the value.
+2. Store the PEM as the secret's value from a file, then delete the file:
+
+   ```bash
+   aws secretsmanager put-secret-value --secret-id <secret-name> --secret-string file://secondary.pem
+   rm secondary.pem
+   ```
+
+3. Set `PARMANA_SECONDARY_KEY_SECRET_ID` and `AWS_REGION`. The server refuses to start if the secret cannot be read or does not parse as a key.
+4. Confirm the server starts, and that CloudTrail shows `GetSecretValue` only from the server role.
+
+Rotation: write a new value (the rotation role, or the owner). The server picks it up after the five-minute cache expires, or on restart.
+
+Not done: this has not been run against AWS. Step 4's CloudTrail alert is an operator step.
+
 ## Open checks
 
 - Whether Vercel's OIDC role can read the secret has **not been verified**. Verify it on Preview before production.

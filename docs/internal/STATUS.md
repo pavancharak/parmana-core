@@ -128,3 +128,9 @@ npx vitest run
 - Three TypeScript test files are empty placeholders (`HealthApi`, `ParmanaClient`, `PolicyApi`). This predates today's work.
 - Option A is tested with a fake secrets provider. It has not been run against AWS Secrets Manager.
 - Whether Vercel's OIDC role can read the secret is not yet verified.
+
+## 9. Update 2026-11-21: key management
+
+- **Built, not verified against AWS:** a KMS primary for hybrid signing behind `PARMANA_HYBRID_KMS` (F25), and the dilithium3 secondary key from Secrets Manager (F26). Both are tested with fakes only.
+- **Infrastructure drafted:** `infra/parmana-prod-signing/main.tf` adds the secret, its KMS key and its read policy. Validated, not planned or applied. See PR #760.
+- **Owner decisions open:** D17 (lift the hybrid + KMS refusal by default, after a real run) and D18 (confirm the secret's readers). Recorded in `docs/assurance/OPEN_ITEMS.md`.
