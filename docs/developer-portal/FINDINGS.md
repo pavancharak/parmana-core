@@ -188,7 +188,9 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Observed (2026-11-21, production console, KMS, region ap-south-1).**
   - Key `2787acce-db19-4cd6-88ed-ce2c1319096b`: aliases `default` and `parmana-ed25519-signer`. Status enabled, Ed25519 (`ECC_NIST_EDWARDS25519`), sign and verify. Created 15 September 2026. Last used 7 days before the check. Description: "Parmana Ed25519 signing key (replaces .env PARMANA_KEY_MATERIAL_JSON)".
   - Key `7b0c7156-88b1-4979-be5d-7eca96972c39`: alias `parmana-prod`. This is the key ARN in `infra/parmana-prod-signing/prod.tfvars`, and the alias the state holds (see F28). Its creation date and last-used date were not checked.
-- **What this means.** Production has a live Ed25519 signing key that predates the Terraform work, and a second key with the alias the Terraform created. Which key the production server signs with has not been confirmed from this record. The state's alias points to the second key.
+- **Also observed.** Key `7b0c7156…` was created on 13 November 2026 at 23:23 (IST), and last used 37 minutes before the check. Production's environment (Vercel, Production scope) has a variable `PARMANA_SIGNING_KEY_ID`, added on 13 November. The value is hidden by Vercel after saving. The operator reports it is a key ID, not an alias, and it is consistent with `7b0c7156…`. This is not yet confirmed against the value itself.
+- **What this means.** Production appears to sign with `7b0c7156…`, the key created on 13 November, and the older key `2787acce…` has not been used for about 7 days.
+- **Previously recorded.** Production has a live Ed25519 signing key that predates the Terraform work, and a second key with the alias the Terraform created. Which key the production server signs with has not been confirmed from this record. The state's alias points to the second key.
 - **Not done.** No key was disabled, deleted or re-aliased. Nothing in this record changes production's signing.
 - **Decision for the owner.** Confirm which key the production server uses, and whether `7b0c7156…` is needed. Until then, neither key is to be disabled, deleted or re-aliased.
 
