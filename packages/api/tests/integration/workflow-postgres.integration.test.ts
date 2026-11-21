@@ -100,23 +100,22 @@ describe.skipIf(!databaseConfigured)("Supabase Workflow Integration", () => {
       verifications: [],
       receipts: [],
       trustRecordHash: "",
-      signature: {
-        algorithm: "ed25519",
-        keyId: "default",
-        value: "",
-        signedAt: new Date(),
-      },
       createdAt: new Date(),
       updatedAt: new Date(),
     } as unknown as ExecutionTrustRecord;
 
     const trustRecordHash = await crypto.hash(unsigned);
-    const signature = await crypto.sign(unsigned);
-
-    await storage.trustRecords.create({
+    // Schema version 3: sign the record with its hash set, over the whole record (decision D24).
+    const hashed = {
       ...unsigned,
       trustRecordHash,
-      signature,
+      schemaVersion: 3,
+    } as ExecutionTrustRecord;
+    const signatures = await crypto.signWholeRecord(hashed);
+
+    await storage.trustRecords.create({
+      ...hashed,
+      signatures,
     });
 
     await storage.trustRecords.appendOverride(

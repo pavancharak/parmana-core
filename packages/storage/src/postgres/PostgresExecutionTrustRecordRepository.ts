@@ -178,14 +178,15 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
     businessTransactionId: string,
     verification: Verification,
   ): Promise<void> {
+    // Verifications are attached after signing and are not covered by the
+    // whole-record signature (decision D24), so they do not change updated_at.
+    // Touching it here would break the signature of every verified record.
     await this.pool.query(INSERT_VERIFICATION_SQL, [
       verification.verificationId,
       businessTransactionId,
       JSON.stringify(verification),
       verification.verifiedAt.toISOString(),
     ]);
-
-    await this.touch(businessTransactionId);
   }
 
   /**
@@ -195,14 +196,14 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
     businessTransactionId: string,
     receipt: Receipt,
   ): Promise<void> {
+    // Receipts are not covered by the whole-record signature (decision D24), so
+    // they do not change updated_at. See appendVerification.
     await this.pool.query(INSERT_RECEIPT_SQL, [
       receipt.receiptId,
       businessTransactionId,
       JSON.stringify(receipt),
       receipt.issuedAt.toISOString(),
     ]);
-
-    await this.touch(businessTransactionId);
   }
 
   /**
