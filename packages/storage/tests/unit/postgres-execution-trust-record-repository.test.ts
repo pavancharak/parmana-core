@@ -64,6 +64,7 @@ function createFakePool() {
           authorizationJson,
           schemaVersion,
           signaturesJson,
+          evidenceAnchorJson,
         ] = values as readonly unknown[];
 
         header.row = {
@@ -81,6 +82,10 @@ function createFakePool() {
           signatures_json:
             signaturesJson != null
               ? JSON.parse(signaturesJson as string)
+              : null,
+          evidence_anchor_json:
+            evidenceAnchorJson != null
+              ? JSON.parse(evidenceAnchorJson as string)
               : null,
         };
 

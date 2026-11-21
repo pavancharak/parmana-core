@@ -56,14 +56,19 @@ describe.skipIf(!databaseConfigured)(
 
       const signedRecord = await buildSignedMultiExecutionRecord(transaction);
 
-      await trustRecords.create(signedRecord);
-
+      //
+      // Executions are stored before the record is sealed, as the runtime does
+      // (the execution is recorded, then the record is created and signed). An
+      // execution added after sealing would change the signed content.
+      //
       for (const execution of signedRecord.executions) {
         await trustRecords.appendExecution(
           transaction.businessTransactionId,
           execution,
         );
       }
+
+      await trustRecords.create(signedRecord);
 
       const [verification1, verification2] = buildVerificationPair(
         transaction.businessTransactionId,

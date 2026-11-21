@@ -360,7 +360,7 @@ describe.skipIf(!databaseConfigured)(
       expect(executed.body.outcome).toBe("pending");
       expect(executed.body.status).toBe("EXECUTING");
       expect(executed.body.record.businessTransactionId).toBe(id);
-      expect(executed.body.record.signature).toBeDefined();
+      expect(executed.body.record.signatures).toBeDefined();
       const before = await events(id);
       expect(before.map((e) => e.status)).toEqual([
         "RECEIVED",
