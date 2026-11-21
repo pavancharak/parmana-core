@@ -19,7 +19,7 @@ This folder holds the AWS configuration for signing keys in one environment. It 
 ## Status
 
 - `terraform validate` and `fmt` pass (terraform 1.9.8).
-- The production stack has not been applied. Its folder's state already lists production resources (`alias/parmana-prod` and the `parmana-vercel-kms-signer` policy). Do not apply here until open item PROD-1 is resolved.
+- The original alias and runtime policy were applied to production from this folder on 2026-11-13 (state serial 3, three resources: `alias/parmana-prod`, the `parmana-vercel-kms-signer` policy, and its data source). The secret stack has not been applied to production. Do not apply here until open item PROD-1 is resolved.
 - The same file was applied to the test account in `infra/parmana-test-signing`. See `docs/internal/runbooks/TEST-ACCOUNT-SECRET-CHECK.md`.
 - Each stack refuses to run in an account other than the one named in its variable file (`expected_account_id`). That check was confirmed against AWS on 2026-11-21.
 - The secret's value is never written to Terraform or to state.

@@ -179,6 +179,7 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 ### F28. The production Terraform folder's state lists production resources, though the stack is documented as never applied (open)
 
 - **Evidence.** A plan in `infra/parmana-prod-signing` showed the state holding `aws_kms_alias.signing [id=alias/parmana-prod]` and `aws_iam_role_policy.runtime [id=parmana-vercel-kms-signer:parmana-prod-kms-signing]`. The stack header and the key-management page say it has not been applied.
+- **Finding (2026-11-21).** The state file was last written on 2026-11-13, at serial 3, by a Terraform 1.17.1 run. It holds three resources: the alias, the runtime policy and its data source. So the original alias and runtime policy were applied to production from this folder. The secret stack was never applied to production.
 - **Effect.** A plan or apply from that folder with other variables can act on production resources. Nothing was applied by this run.
 - **Decision for the owner.** Find out how that state was produced, and confirm what those production resources are (open item PROD-1).
 

@@ -50,7 +50,7 @@ When the secondary key is a file, the deployment writes it into `PARMANA_KEY_DIR
 
 ## Infrastructure for the secondary key secret
 
-The Terraform stack in `infra/parmana-prod-signing/main.tf` creates the secret, its own KMS key, and the policies that limit who can read the secret. It is a reviewed draft. It has been applied to a separate test account (`infra/parmana-test-signing`, a copy of the same file) and checked there, as recorded in `docs/internal/runbooks/TEST-ACCOUNT-SECRET-CHECK.md`. It has not been applied to production, and the production folder's state needs an owner check first (open item PROD-1). Each stack refuses to run in any account except the one its variable file names.
+The Terraform stack in `infra/parmana-prod-signing/main.tf` creates the secret, its own KMS key, and the policies that limit who can read the secret. It is a reviewed draft. It has been applied to a separate test account (`infra/parmana-test-signing`, a copy of the same file) and checked there, as recorded in `docs/internal/runbooks/TEST-ACCOUNT-SECRET-CHECK.md`. The secret stack has not been applied to production. The original alias and runtime policy were applied to production from the same folder on 2026-11-13, and the owner check is open (PROD-1). Each stack refuses to run in any account except the one its variable file names.
 
 What it creates:
 

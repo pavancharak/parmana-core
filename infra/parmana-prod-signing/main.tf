@@ -3,7 +3,9 @@
 # The KMS key itself is created by create-signing-key.ps1, because the AWS
 # Terraform provider does not accept the ECC_NIST_EDWARDS25519 key spec.
 # Terraform manages the alias and the server role's permissions for that key.
-# Draft for review. Not applied. Run terraform validate and plan first.
+# State evidence (2026-11-21): the alias and runtime policy below were applied to production from this
+# folder on 2026-11-13 (state serial 3). The secret stack further down has NOT been applied to production.
+# Owner check open: PROD-1 (docs/internal/runbooks/TEST-ACCOUNT-SECRET-CHECK.md).
 
 terraform {
   required_version = ">= 1.5"

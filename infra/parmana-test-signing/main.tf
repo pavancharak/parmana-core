@@ -5,7 +5,7 @@
 # The KMS key itself is created by create-signing-key.ps1, because the AWS
 # Terraform provider does not accept the ECC_NIST_EDWARDS25519 key spec.
 # Terraform manages the alias and the server role's permissions for that key.
-# Draft for review. Not applied. Run terraform validate and plan first.
+# Test account copy. Applied to the test account (703759331191) on 2026-11-21. Not applied to production.
 
 terraform {
   required_version = ">= 1.5"
