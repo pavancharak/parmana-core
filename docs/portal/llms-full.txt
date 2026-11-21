@@ -894,7 +894,7 @@ The only path through which Parmana releases an approved request to a connector.
 
 ## Execution Trust Record
 
-The signed evidence for one Business Transaction. It holds the transaction, the authorization, the overrides, the executions (with their decisions), the verifications, the receipts, an evidence anchor, timestamps, the `trustRecordHash`, and the signature. Verify it with the server or offline. See [Evidence verification](security/evidence-verification.md).
+The signed evidence for one Business Transaction. It holds the transaction, the authorization, the executions (with their decisions), the verifications, the receipts, an evidence anchor, timestamps, the `trustRecordHash`, and the signature. Verify it with the server or offline. See [Evidence verification](security/evidence-verification.md).
 
 ## Fail closed
 
@@ -1333,7 +1333,7 @@ The record's `schemaVersion` says which fields the signatures cover. The verifie
 
 | Schema version         | What the signatures cover                                                                                                                                  | Coverage reported | Default on this build                          |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ---------------------------------------------- |
-| **2** (or unversioned) | Seven top-level fields: `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `overrides`, `executions`, `createdAt`.                  | `legacy`          | No. Rollback only (`HYBRID_SCHEMA_VERSION=2`). |
+| **2** (or unversioned) | Seven top-level fields: `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `executions`, `createdAt`.                               | `legacy`          | No. Rollback only (`HYBRID_SCHEMA_VERSION=2`). |
 | **3** (hybrid)         | Every top-level field except `signature`, `signatures`, `schemaVersion`, `verifications` and `receipts`. `schemaVersion` is covered by the hybrid message. | `full`            | **Yes**, since 2026-11-20 (ADR-0016).          |
 
 **Verified in this portal, on records from the same run:**
@@ -1546,7 +1546,7 @@ The default configuration of this build produces schema 2 records with one signa
 { "allowLegacyV2": true, "allowLegacyOnly": true, "keys": [ … ] }
 ```
 
-With those settings, a schema 2 record is accepted with `coverage: legacy`. **Know what that means.** The signature covers only `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `overrides`, `executions` and `createdAt`. A change to `updatedAt`, `evidenceAnchor`, `verifications` or `receipts` is not detected. This was reproduced in this portal: changing `updatedAt` left `valid: true`.
+With those settings, a schema 2 record is accepted with `coverage: legacy`. **Know what that means.** The signature covers only `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `executions` and `createdAt`. A change to `updatedAt`, `evidenceAnchor`, `verifications` or `receipts` is not detected. This was reproduced in this portal: changing `updatedAt` left `valid: true`.
 
 Prefer schema 3 for records you must rely on. See [Security: schema versions and coverage](README.md#schema-versions-and-coverage).
 
@@ -1668,7 +1668,7 @@ The decision record is [ADR-0016](../../../docs/internal/adr/ADR-0016-Whole-Reco
 
 | Schema version         | Signatures                                                             | Fields covered                                                                                                                                                                                | Coverage reported |
 | ---------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| **2** (or unversioned) | Legacy `signature` (ed25519), plus `signatures` only when hybrid is on | `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `overrides`, `executions`, `createdAt`                                                                              | `legacy`          |
+| **2** (or unversioned) | Legacy `signature` (ed25519), plus `signatures` only when hybrid is on | `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `executions`, `createdAt`                                                                                           | `legacy`          |
 | **3**                  | Hybrid `signatures`: ed25519 and dilithium3, both required             | Every top-level field except `signature`, `signatures`, `schemaVersion`, `verifications` and `receipts`. `schemaVersion` is part of the hybrid message, so changing it breaks the signatures. | `full`            |
 
 The exclusion list is the same in the verifier's `docs/FORMAT.md` and in the signing code (`WHOLE_RECORD_EXCLUDED_FIELDS` in `packages/crypto/src/ExecutionTrustRecordCanonicalView.ts`). It was checked against both on 2026-11-20.
@@ -3340,7 +3340,6 @@ Verified responses on this build: `200` (approved), `403` with `POLICY_DENIED`-s
   "businessTransactionId": "66412b22-256e-4b81-b590-c37047ab6ba5",
   "transaction": { "…": "the Business Transaction as stored" },
   "authorization": { "…": "the signed authorization" },
-  "overrides": [],
   "executions": [{ "decision": { "outcome": "APPROVED", "…": "…" }, "…": "…" }],
   "verifications": [],
   "receipts": [],
@@ -5829,7 +5828,6 @@ Source: docs/developer-portal/reference/error-code-index.md
 | `NOT_READY`                               | no                        | `packages/api/src/routes/ready.ts`                                            |
 | `NOT_YET_VALID`                           | no                        | `packages/policy/src/v2/approvals.ts`                                         |
 | `OUTCOME_UNKNOWN`                         | no                        | `packages/shared/src/errors/outcome-unknown-error.ts`                         |
-| `OVERRIDE_NOT_ALLOWED`                    | no                        | `packages/shared/src/errors/override-not-allowed-error.ts`                    |
 | `PAYTM_CONNECTOR_SHARED_SECRET`           | no                        | `packages/api/src/bootstrap/createSandboxOptions.ts`                          |
 | `PAYTM_CONNECTOR_TIMEOUT_MS`              | no                        | `packages/api/src/bootstrap/createSandboxOptions.ts`                          |
 | `PAYTM_CONNECTOR_URL`                     | no                        | `packages/api/src/bootstrap/createSandboxOptions.ts`                          |

@@ -220,7 +220,6 @@ Verified responses on this build: `200` (approved), `403` with `POLICY_DENIED`-s
   "businessTransactionId": "66412b22-256e-4b81-b590-c37047ab6ba5",
   "transaction": { "…": "the Business Transaction as stored" },
   "authorization": { "…": "the signed authorization" },
-  "overrides": [],
   "executions": [{ "decision": { "outcome": "APPROVED", "…": "…" }, "…": "…" }],
   "verifications": [],
   "receipts": [],

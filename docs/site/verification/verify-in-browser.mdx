@@ -16,7 +16,6 @@ export const exampleRecord = {
       amount: 100,
     },
   },
-  overrides: [],
   executions: [],
   createdAt: "2026-11-21T00:00:00.000Z",
   updatedAt: "2026-11-21T00:00:00.000Z",
@@ -28,13 +27,13 @@ export const exampleRecord = {
       algorithm: "ed25519",
       keyId: "single-record-ed",
       signature:
-        "cLj1WPk9aUgWSzZqQTvrxps6WgEX8EZC5m4iypurRy22uMWbk7NnwztLtfRopd8QJTwCbsqfnpxnFWBg6j4AAA==",
+        "eGi6ISiRT/tiln/W7yXaXsGrtH+O++olih+NIjqbwwIxThkq0GUHhYEgjf+Pjv8puGgHz2+r8fJByKoxIFQjDA==",
     },
   ],
 };
 
 export const examplePublicKey =
-  "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAdVb3c1R+ICNlV691GYYdrf6fTHT6HT1Jc00WJF7NWrI=\n-----END PUBLIC KEY-----\n";
+  "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEASLCYwV3TL3tRvZ1T9RZZWM+WvZFdUfzA77+6LGzCubM=\n-----END PUBLIC KEY-----\n";
 
 A signed Execution Trust Record proves two things to anyone holding the public key: its
 content has not changed since it was signed, and it was signed by the holder of that key. This
@@ -66,7 +65,7 @@ Python SDK's offline verifier is tested against.
 
 | Check         | How                                                                                                                                                                                                                                                                                                                            |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| The hash      | The signed fields (`trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `overrides`, `executions`, `createdAt`) are serialized as canonical JSON, with object keys sorted, and hashed with SHA-256. The result must equal `trustRecordHash`.                                                              |
+| The hash      | The signed fields (`trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `executions`, `createdAt`) are serialized as canonical JSON, with object keys sorted, and hashed with SHA-256. The result must equal `trustRecordHash`.                                                                           |
 | The signature | The `signature` field must be an Ed25519 signature over the same canonical bytes, by the key you paste. A record over 4096 bytes may be signed as a commitment (a fixed prefix and the SHA-512 of the content), which AWS KMS requires; both forms are accepted, as in the [offline verifier](/verification/offline-verifier). |
 
 The code is

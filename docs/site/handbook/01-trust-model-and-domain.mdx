@@ -77,7 +77,7 @@ chain fields is accepted only before the first chained one, as data from before 
 hash and signature, so the chain is a second layer, not the only one.
 
 **`ExecutionTrustRecord`** (`execution-trust-record.ts`), the aggregate root: one
-`BusinessTransaction`, arrays of `overrides`/`executions`/`verifications`/`receipts` (arrays,
+`BusinessTransaction`, arrays of `executions`/`verifications`/`receipts` (arrays,
 not single values, because a long-running or retried transaction can accumulate more than
 one of each), an optional signed `authorization` (the exact `SignedExecutionAuthorization`
 the Execution Gateway accepted, see Chapter 10), a `trustRecordHash`, and a `signature`. This
