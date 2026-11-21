@@ -99,7 +99,7 @@ const publicKeyPem = readFileSync("default.public.pem", "utf8"); // e.g. fetched
 const result = await verifyExecutionTrustRecordOffline(trustRecord, {
   default: publicKeyPem,
 });
-console.log(result); // { valid, hashValid, legacySignatureValid, hybridSignaturesValid?, algorithmsChecked, errors }
+console.log(result); // { valid, hashValid, hybridSignaturesValid, algorithmsChecked, errors }
 ```
 
 Same logic exists as a CLI (`scripts/verify-trust-record.ts`) and, independently reimplemented

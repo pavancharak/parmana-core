@@ -154,8 +154,8 @@ def main() -> int:
     published = demo.public_key("default")
     offline = verify_execution_trust_record_offline(record, {"default": published.pem})
     print(
-        f"   offline (SDK): valid={offline.valid} coverage={offline.coverage} "
-        f"hash_valid={offline.hash_valid} legacy_signature_valid={offline.legacy_signature_valid}"
+        f"   offline (SDK): valid={offline.valid} "
+        f"hash_valid={offline.hash_valid} hybrid_signatures_valid={offline.hybrid_signatures_valid}"
     )
     if not offline.valid:
         raise SystemExit(f"Offline verification failed: {'; '.join(offline.errors)}")

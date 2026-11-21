@@ -182,8 +182,8 @@ async function main(): Promise<void> {
     default: published.pem,
   });
   console.log(
-    `   offline (SDK): valid=${offline.valid} coverage=${offline.coverage} hashValid=${offline.hashValid} ` +
-      `legacySignatureValid=${offline.legacySignatureValid}`,
+    `   offline (SDK): valid=${offline.valid} hashValid=${offline.hashValid} ` +
+      `hybridSignaturesValid=${offline.hybridSignaturesValid}`,
   );
   if (!offline.valid)
     throw new Error(

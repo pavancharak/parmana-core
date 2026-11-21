@@ -34,10 +34,9 @@ not two implementations that could silently drift apart from each other.
 
 It checks three things, and reports each independently rather than collapsing them into one
 opaque boolean: `hashValid` (does the record's own `trustRecordHash` match a fresh hash of its
-canonical content), `legacySignatureValid` (does the always-present legacy `signature` field
-verify), and `hybridSignaturesValid` (only present when the record actually carries a
-`signatures` array, a hybrid record needs at least two distinct-algorithm entries, and a
-duplicate algorithm in that array is treated as invalid). The function's own comment is explicit
+canonical content), and `hybridSignaturesValid` (whether the record's `signatures` array verifies:
+one or two entries, each for a supported algorithm, with no algorithm repeated, and from the
+cutover on, both hybrid entries are required). The function's own comment is explicit
 about a real limitation: the hash check recomputes SHA-256 unconditionally, because that's the
 only hash algorithm this codebase actually implements today (other config-declared algorithms
 like `sha3-512`/`blake3` have no real provider), a record hashed under a genuinely different

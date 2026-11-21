@@ -163,7 +163,7 @@ print(caller.caller_id, caller.allowed_capabilities)</code></pre></div>
    outcome: APPROVED
 5. verification
    server verification: VERIFIED
-   offline (SDK): valid=true coverage=legacy hashValid=true legacySignatureValid=true
+   offline (SDK): valid=true hashValid=true hybridSignaturesValid=true
 6. the same transaction is submitted again (expected to be refused)
    refused as expected: ConflictError (HTTP 409): ... already exists.</code></pre></div>
 <p>The same flow in Python is <code>python3 docs/developer-portal/examples/governed-quickstart/python/governed_flow.py</code>. The maker, checker and demo keys are separate, and each can do only what its role allows. The step is explained in full in the <a href="tutorials/maker-checker.html">maker-checker tutorial</a>.</p>

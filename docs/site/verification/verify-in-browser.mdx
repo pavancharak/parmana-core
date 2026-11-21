@@ -6,36 +6,36 @@ description: "Paste a signed Execution Trust Record and a public key, and check 
 import { RecordVerifier } from "/snippets/record-verifier.jsx";
 
 export const exampleRecord = {
-  trustRecordId: "cross-language-fixture-txn",
-  businessTransactionId: "cross-language-fixture-txn",
-  transaction: {
-    businessTransactionId: "cross-language-fixture-txn",
-    status: "RECEIVED",
-    createdAt: "2026-01-01T00:00:00.000Z",
-    signals: {
-      amount: 100,
-      vendorId: "vendor-café",
-    },
+  "trustRecordId": "cross-language-fixture-txn",
+  "businessTransactionId": "cross-language-fixture-txn",
+  "transaction": {
+    "businessTransactionId": "cross-language-fixture-txn",
+    "status": "RECEIVED",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "signals": {
+      "amount": 100,
+      "vendorId": "vendor-café"
+    }
   },
-  overrides: [],
-  executions: [],
-  verifications: [],
-  receipts: [],
-  createdAt: "2026-01-01T00:00:00.000Z",
-  updatedAt: "2026-01-01T00:00:00.000Z",
-  trustRecordHash:
-    "dfc3d4d686244a2f79b120eac15886c7472d55a1708d4c71da898a79c9f9238d",
-  signature: {
-    algorithm: "ed25519",
-    keyId: "cross-language-fixture",
-    value:
-      "S0dkK028gp/fH9LJjV9Aq8Ap4BR8w22hZHRECQSbOu3FOyGYljbjCBEjKpRkXjmq1LgJQJxRgcZJeYPy6VZTDw==",
-    signedAt: "2026-10-05T09:25:09.491Z",
-  },
+  "overrides": [],
+  "executions": [],
+  "verifications": [],
+  "receipts": [],
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "updatedAt": "2026-01-01T00:00:00.000Z",
+  "trustRecordHash": "dfc3d4d686244a2f79b120eac15886c7472d55a1708d4c71da898a79c9f9238d",
+  "schemaVersion": 3,
+  "signatures": [
+    {
+      "algorithm": "ed25519",
+      "keyId": "cross-language-fixture",
+      "signature": "rPmP0IRIQJkXlyncmeeoSlqi1iQHlvghWjN4AHJRw7Ty+1DzBaXwF7KBDcMJ++CONgHaAPLh4EAY4XYuMsAmAg=="
+    }
+  ]
 };
 
 export const examplePublicKey =
-  "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA8DDY1SMMZC/HT+ec/tMAdxofJVCNTj/FFOVgqQKsUdY=\n-----END PUBLIC KEY-----\n";
+  "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAnPO+AxhXozslFRAvItTsh7pjAqj+8VUiaxafMAHC4aE=\n-----END PUBLIC KEY-----\n";
 
 A signed Execution Trust Record proves two things to anyone holding the public key: its
 content has not changed since it was signed, and it was signed by the holder of that key. This
@@ -50,10 +50,9 @@ key.
 
 ## Try it
 
-1. **Load the example**, then **Verify**. The example has no post-quantum envelope, so the
-   result is "not valid" until you tick **Accept a legacy-only record**. With the box ticked,
-   the result is valid. The box is unticked by default, so a record with its envelope removed is
-   refused, the same as the offline verifier.
+1. **Load the example**, then **Verify**. The example is a schema version 3 record, signed with
+   Ed25519. The result is valid. A record with no `signatures` array, or a schema version other
+   than 3, is refused, the same as the offline verifier.
 2. **Load the example, changed**: the same record with the amount changed from 100 to 100000.
    **Verify** reports that the hash no longer matches. Changing any signed field has the
    same effect.

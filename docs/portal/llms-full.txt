@@ -364,7 +364,7 @@ Its output, in order:
    outcome: APPROVED
 5. verification
    server verification: VERIFIED
-   offline (SDK): valid=true coverage=legacy hashValid=true legacySignatureValid=true
+   offline (SDK): valid=true hashValid=true hybridSignaturesValid=true
 6. the same transaction is submitted again (expected to be refused)
    refused as expected: ConflictError (HTTP 409): ... already exists.
 ```
@@ -4133,17 +4133,16 @@ import { verifyExecutionTrustRecordOffline } from "@parmana/sdk";
 const result = verifyExecutionTrustRecordOffline(record, {
   default: publicKeyPem,
 });
-// result: { valid, coverage, hashValid, legacySignatureValid, hybridSignaturesValid?,
-//           algorithmsChecked, errors }
+// result: { valid, hashValid, hybridSignaturesValid, algorithmsChecked, errors }
 ```
 
 - `publicKeys` maps each `keyId` to a PEM public key. Pin these yourself (see [Evidence verification](../security/evidence-verification.md)).
-- `valid` means the stored hash and the signatures check out. It does **not** mean the record is fully covered. Read `coverage`: `"full"` for a schema version 3 record, `"legacy"` otherwise. A version 2 record covers only seven top-level fields, so a change to any other field is not detected by it.
-- The SDK's check does not refuse legacy records by default. To fail closed, pass `{ requireFullCoverage: true }` as the third argument (`VerifyTrustRecordOptions`). A legacy record then returns `valid: false`, and `errors` says why. The default keeps the result of earlier releases (FINDINGS F2).
+- `valid` means the stored hash and the record's `signatures` array check out. A trust record must be schema version 3 (decision D24); schema version 2 is refused. The signatures cover the whole record, so a changed field fails.
+- One valid signature is accepted, unless the record was created at or after `hybridRequiredFrom`. From that instant, both hybrid signatures are required. Pass the cutover as the third argument (`VerifyTrustRecordOptions`):
 
 ```typescript
 const strict = verifyExecutionTrustRecordOffline(record, publicKeys, {
-  requireFullCoverage: true,
+  hybridRequiredFrom: "2026-12-01T00:00:00Z",
 });
 ```
 
@@ -4453,7 +4452,7 @@ The Python `approve_policy_change` takes the envelope as a `dict`. Sign it immed
 
 ## Offline verification: `verify_execution_trust_record_offline`
 
-Pass `require_full_coverage=True` to fail closed on legacy records: the result is `valid=False`, and `errors` says why. The default is `False`, which keeps the result of earlier releases (FINDINGS F2).
+Records are schema version 3 only (decision D24). A record with one valid signature is accepted, unless it was created at or after `hybrid_required_from`; from that instant, both hybrid signatures are required. Pass the cutover as `hybrid_required_from="2026-12-01T00:00:00Z"`.
 
 ```python
 import json
@@ -4463,7 +4462,7 @@ with open("record.json") as f:
     record = json.load(f)
 
 result = verify_execution_trust_record_offline(record, {"default": public_key_pem})
-print(result.valid, result.coverage, result.hash_valid, result.legacy_signature_valid)
+print(result.valid, result.hash_valid, result.hybrid_signatures_valid)
 print(result.errors)
 ```
 

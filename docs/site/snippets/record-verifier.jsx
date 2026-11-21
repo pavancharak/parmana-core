@@ -18,7 +18,6 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
     options = {},
   ) => {
     const subtle = globalThis.crypto.subtle;
-    const allowLegacyOnly = options.allowLegacyOnly === true;
     const encoder = new TextEncoder();
     const errors = [];
     const notes = [];
@@ -73,9 +72,9 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
       executions: record.executions,
       createdAt: record.createdAt,
     };
-    const bytes = canonicalBytes(view);
+    const hashBytes = canonicalBytes(view);
 
-    const digest = hex(await subtle.digest("SHA-256", bytes));
+    const digest = hex(await subtle.digest("SHA-256", hashBytes));
     const hashValid = digest === record.trustRecordHash;
     if (!hashValid) {
       errors.push(
@@ -83,19 +82,33 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
       );
     }
 
-    const signature = record.signature;
+    // Schema version 3 only (decision D24). The signature covers the whole record, including the
+    // schema version, and every field except the signatures, verifications and receipts.
+    if (record.schemaVersion !== 3) {
+      errors.push(
+        `The record is schema version ${String(record.schemaVersion)}; only schema version 3 is accepted (decision D24).`,
+      );
+    }
+    const excluded = [
+      "signature",
+      "signatures",
+      "schemaVersion",
+      "verifications",
+      "receipts",
+    ];
+    const covered = Object.fromEntries(
+      Object.entries(record).filter(([key]) => !excluded.includes(key)),
+    );
+    const bytes = canonicalBytes({ ...covered, schemaVersion: 3 });
+
+    const entries = Array.isArray(record.signatures) ? record.signatures : [];
+    const signature = entries.find(
+      (entry) => entry && entry.algorithm === "ed25519",
+    );
     let signatureValid = false;
     let signedForm;
-    if (
-      typeof signature !== "object" ||
-      signature === null ||
-      typeof signature.value !== "string"
-    ) {
-      errors.push("The record has no signature.");
-    } else if (signature.algorithm !== "ed25519") {
-      errors.push(
-        `The signature algorithm is ${String(signature.algorithm)}; this page checks ed25519 only. Use the offline verifier (see Offline verifier).`,
-      );
+    if (!signature || typeof signature.signature !== "string") {
+      errors.push("The record has no ed25519 entry in its signatures array.");
     } else {
       try {
         const der = fromBase64(
@@ -110,7 +123,7 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
           false,
           ["verify"],
         );
-        const signatureBytes = fromBase64(signature.value);
+        const signatureBytes = fromBase64(signature.signature);
         if (
           await subtle.verify({ name: "Ed25519" }, key, signatureBytes, bytes)
         ) {
@@ -151,31 +164,28 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
       }
     }
 
-    // A record with no hybrid (post-quantum) envelope is refused unless the
-    // reader allows legacy-only records, the same default as the offline
-    // verifier. Without this, a record whose envelope was removed would pass.
-    const hasEnvelope =
-      Array.isArray(record.signatures) && record.signatures.length > 0;
-    const envelopeOk = hasEnvelope || allowLegacyOnly;
+    // One or two entries, each for a different algorithm. A record with an empty signatures array
+    // is refused, so removing the entries cannot make a record pass.
+    const algorithms = entries.map((entry) => entry && entry.algorithm);
+    const envelopeOk =
+      entries.length >= 1 &&
+      entries.length <= 2 &&
+      new Set(algorithms).size === entries.length;
 
-    if (!hasEnvelope && !allowLegacyOnly) {
+    if (!envelopeOk) {
       errors.push(
-        'The record has no hybrid (post-quantum) envelope, so it is refused. Tick "Accept a legacy-only record" only if you accept records made without one.',
+        "The signatures array must hold one or two entries, each for a different algorithm.",
       );
     }
-    if (!hasEnvelope && allowLegacyOnly) {
+    if (entries.length === 2) {
       notes.push(
-        "Accepted as a legacy-only record: it has no hybrid envelope.",
-      );
-    }
-    if (hasEnvelope) {
-      notes.push(
-        "The record also carries a hybrid signatures array (for example ML-DSA-65). This page does not check it; the offline verifier does.",
+        "The record also carries a second signature (for example ML-DSA-65). This page checks the ed25519 entry; the offline verifier checks both.",
       );
     }
 
     return {
-      valid: hashValid && signatureValid && envelopeOk,
+      valid:
+        record.schemaVersion === 3 && hashValid && signatureValid && envelopeOk,
       hashValid,
       signatureValid,
       keyId: signature && signature.keyId,
@@ -190,7 +200,6 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
   const [keyText, setKeyText] = useState("");
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [allowLegacy, setAllowLegacy] = useState(false);
 
   const run = async (text, pem) => {
     setBusy(true);
@@ -214,11 +223,7 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
         });
         return;
       }
-      setResult(
-        await verifyParmanaTrustRecord(record, pem, {
-          allowLegacyOnly: allowLegacy,
-        }),
-      );
+      setResult(await verifyParmanaTrustRecord(record, pem));
     } catch (error) {
       setResult({
         valid: false,
@@ -305,14 +310,6 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
         onChange={(event) => setKeyText(event.target.value)}
         placeholder="-----BEGIN PUBLIC KEY-----"
       />
-      <label style={{ display: "block", marginTop: "8px" }}>
-        <input
-          type="checkbox"
-          checked={allowLegacy}
-          onChange={(event) => setAllowLegacy(event.target.checked)}
-        />{" "}
-        Accept a legacy-only record (no post-quantum envelope)
-      </label>
       <div>
         <button
           type="button"

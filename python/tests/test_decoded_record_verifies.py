@@ -35,16 +35,21 @@ def test_the_record_carries_an_explicit_null() -> None:
     assert RECORD["executions"][0]["previousChainHash"] is None
 
 
-def test_the_raw_json_verifies() -> None:
-    assert verify_execution_trust_record_offline(RECORD, KEYS).valid
+def test_the_raw_json_hash_matches() -> None:
+    # This record is schema version 2, which is discarded (decision D24), so it is refused. Its hash
+    # still matches, which is what this regression test guards.
+    result = verify_execution_trust_record_offline(RECORD, KEYS)
+
+    assert result.hash_valid is True
+    assert result.valid is False
 
 
-def test_the_decoded_model_verifies() -> None:
+def test_the_decoded_model_hash_matches() -> None:
     model = decode(RECORD, ExecutionTrustRecord)
 
     result = verify_execution_trust_record_offline(model, KEYS)
 
-    assert result.valid, result.errors
+    assert result.hash_valid is True, result.errors
 
 
 def test_a_decoded_model_encodes_back_to_the_servers_json() -> None:
@@ -56,11 +61,11 @@ def test_encoding_returns_a_copy_so_the_model_cannot_be_changed_through_it() -> 
 
     encode(model)["trustRecordHash"] = "0" * 64
 
-    assert verify_execution_trust_record_offline(model, KEYS).valid
+    assert verify_execution_trust_record_offline(model, KEYS).hash_valid is True
 
 
 def test_a_changed_model_is_encoded_from_its_fields_and_fails() -> None:
     model = decode(RECORD, ExecutionTrustRecord)
     changed = dataclasses.replace(model, trust_record_hash="0" * 64)
 
-    assert not verify_execution_trust_record_offline(changed, KEYS).valid
+    assert verify_execution_trust_record_offline(changed, KEYS).hash_valid is False

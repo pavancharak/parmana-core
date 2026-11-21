@@ -97,7 +97,7 @@ async function main(): Promise<void> {
 
   console.log(`valid                : ${result.valid}`);
   console.log(`hashValid            : ${result.hashValid}`);
-  console.log(`legacySignatureValid : ${result.legacySignatureValid}`);
+  console.log(`hybridSignaturesValid: ${result.hybridSignaturesValid}`);
   console.log(`algorithmsChecked    : ${result.algorithmsChecked.join(", ")}`);
   console.log();
 

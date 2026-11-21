@@ -84,14 +84,13 @@ const draft = {
 } as never;
 
 const trustRecordHash = await crypto.hash(draft);
-const signature = await crypto.sign(draft);
-const signatures = await crypto.signHybrid({
+// Schema version 3 has no legacy signature: the signatures array covers the whole record (D24).
+const signatures = await crypto.signWholeRecord({
   ...draft,
   trustRecordHash,
-  signature,
 } as never);
 
-const record = { ...draft, trustRecordHash, signature, signatures };
+const record = { ...draft, trustRecordHash, signatures };
 
 writeFileSync(`${outDir}/record.json`, JSON.stringify(record, null, 2));
 
