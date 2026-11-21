@@ -171,7 +171,7 @@
 <li>Not run against real AWS KMS or real Secrets Manager. The code paths are tested with fakes and with the verifier; the first real run needs a sandbox account and a KMS key.</li>
 <li>The server does not check the trust file. Each verifier is updated by hand.</li>
 <li>Rotation is not automated.</li>
-<li>The startup check that reads the secret has no unit test of its own.</li>
+<li>The startup check that reads the secret has unit tests with an injected reader. It has not been run against a real secret.</li>
 <li>The classical key is not read from a secret. Only the secondary key can be.</li>
 </ul>
 <p>Decisions for the owner: lifting the refusal of hybrid with KMS by default (after a real KMS run), who may read the secondary key&#39;s secret, and whether the classical key should also move to a secret store.</p>

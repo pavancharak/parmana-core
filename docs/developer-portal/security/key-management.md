@@ -98,7 +98,7 @@ Obtain a key's fingerprint with `parmana-verify key-fingerprint <public-key.pem>
 - Not run against real AWS KMS or real Secrets Manager. The code paths are tested with fakes and with the verifier; the first real run needs a sandbox account and a KMS key.
 - The server does not check the trust file. Each verifier is updated by hand.
 - Rotation is not automated.
-- The startup check that reads the secret has no unit test of its own.
+- The startup check that reads the secret has unit tests with an injected reader. It has not been run against a real secret.
 - The classical key is not read from a secret. Only the secondary key can be.
 
 Decisions for the owner: lifting the refusal of hybrid with KMS by default (after a real KMS run), who may read the secondary key's secret, and whether the classical key should also move to a secret store.
