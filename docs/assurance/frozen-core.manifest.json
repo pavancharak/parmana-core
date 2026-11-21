@@ -1,7 +1,7 @@
 {
   "packages/crypto/src/ArtifactSigner.ts": "c1bafefbf5cb2e5c2ea5143c6c02fc0245aaad463ab58c448856210a5d5e1170",
   "packages/crypto/src/CanonicalSerializer.ts": "cd4ba2131a3455aa870b3e909032a095ee561341917ccbfc3b0988ed5102ea04",
-  "packages/crypto/src/ExecutionTrustRecordCanonicalView.ts": "a49bdbd08ae425ba4ba43e39df75123df01b7d26c1a3e1b891e69ec818c4fed5",
+  "packages/crypto/src/ExecutionTrustRecordCanonicalView.ts": "745f204e15f1bf66a98b1c40911151c623d72ec555c37bed79b7bfa09847feff",
   "packages/crypto/src/OfflineVerifier.ts": "51a18bab4be95c4a79004a3a09e7cf2008c0f984a086c932f9a2a9a34b664b3d",
   "packages/crypto/src/TrustRecordHasher.ts": "5894209863b95639c2a342a637dbaa1f8fe5f1b9acfaa58ee0577079a86913dc",
   "packages/crypto/src/providers/hash/SHA256HashProvider.ts": "4725e3762c01467687749b96d3209630abba8edb9cb20d5e5fe308dfc2f3ff43",
