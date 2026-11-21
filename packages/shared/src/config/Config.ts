@@ -248,6 +248,13 @@ export interface KeyConfig {
    * been verified against a real KMS key (F25).
    */
   readonly hybridKmsPrimary: boolean;
+
+  /**
+   * PARMANA_SECONDARY_KEY_SECRET_ID. The name or ARN of an AWS Secrets Manager secret that holds the
+   * secondary (post-quantum) private key as PEM. When set, the secondary key is read from the secret
+   * and is never written to disk. Unset means the secondary key is a file in keyDirectory.
+   */
+  readonly secondaryKeySecretId: string | undefined;
 }
 /**
  * Secrets backend configuration (ADR-0009). Selects where connector
@@ -451,6 +458,9 @@ export function loadConfig(): Readonly<Config> {
       keyDirectory: process.env.PARMANA_KEY_DIR!,
 
       hybridKmsPrimary: process.env.PARMANA_HYBRID_KMS === "true",
+
+      secondaryKeySecretId:
+        process.env.PARMANA_SECONDARY_KEY_SECRET_ID?.trim() || undefined,
     }),
 
     secrets: Object.freeze({
