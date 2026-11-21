@@ -183,6 +183,15 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Effect.** A plan or apply from that folder with other variables can act on production resources. Nothing was applied by this run.
 - **Decision for the owner.** Find out how that state was produced, and confirm what those production resources are (open item PROD-1).
 
+### F29. Production has two Ed25519 signing keys. One is in active use; the other is not yet identified (open, PROD-1)
+
+- **Observed (2026-11-21, production console, KMS, region ap-south-1).**
+  - Key `2787acce-db19-4cd6-88ed-ce2c1319096b`: aliases `default` and `parmana-ed25519-signer`. Status enabled, Ed25519 (`ECC_NIST_EDWARDS25519`), sign and verify. Created 15 September 2026. Last used 7 days before the check. Description: "Parmana Ed25519 signing key (replaces .env PARMANA_KEY_MATERIAL_JSON)".
+  - Key `7b0c7156-88b1-4979-be5d-7eca96972c39`: alias `parmana-prod`. This is the key ARN in `infra/parmana-prod-signing/prod.tfvars`, and the alias the state holds (see F28). Its creation date and last-used date were not checked.
+- **What this means.** Production has a live Ed25519 signing key that predates the Terraform work, and a second key with the alias the Terraform created. Which key the production server signs with has not been confirmed from this record. The state's alias points to the second key.
+- **Not done.** No key was disabled, deleted or re-aliased. Nothing in this record changes production's signing.
+- **Decision for the owner.** Confirm which key the production server uses, and whether `7b0c7156…` is needed. Until then, neither key is to be disabled, deleted or re-aliased.
+
 ### F20. A partial review state crashed the decision route, and a test left one behind (fixed)
 
 - **Evidence.** The integration test `packages/policy/tests/integration/policy-v2-commit.integration.test.ts` saved `{ items: [] }` as the review state. It truncated the tables before each test but not after the last one, so the row stayed in the shared database. The next server start that read it failed: `ReviewQueue.load` read `snapshot.results` of an undefined value, and each decision answered `500`.
