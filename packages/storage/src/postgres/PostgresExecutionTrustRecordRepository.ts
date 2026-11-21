@@ -49,7 +49,6 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
       record.businessTransactionId,
       JSON.stringify(record.transaction),
       record.trustRecordHash,
-      JSON.stringify(record.signature),
       record.createdAt.toISOString(),
       record.updatedAt.toISOString(),
       record.authorization !== undefined
@@ -110,7 +109,6 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
       ),
 
       trustRecordHash: header.trust_record_hash,
-      signature: header.signature_json,
       ...(header.authorization_json != null
         ? { authorization: header.authorization_json }
         : {}),
@@ -242,10 +240,10 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
 const INSERT_TRUST_RECORD_SQL = `
   INSERT INTO execution_trust_records
     (trust_record_id, business_transaction_id, transaction_json,
-     trust_record_hash, signature_json, created_at, updated_at,
+     trust_record_hash, created_at, updated_at,
      authorization_json, schema_version, signatures_json)
   VALUES
-    ($1, $2, $3::jsonb, $4, $5::jsonb, $6, $7, $8::jsonb, $9, $10::jsonb)
+    ($1, $2, $3::jsonb, $4, $5, $6, $7::jsonb, $8, $9::jsonb)
 `;
 
 const SELECT_HEADER_SQL = `
@@ -319,7 +317,6 @@ interface TrustRecordHeaderRow {
   readonly business_transaction_id: string;
   readonly transaction_json: ExecutionTrustRecord["transaction"];
   readonly trust_record_hash: string;
-  readonly signature_json: ExecutionTrustRecord["signature"];
   readonly created_at: string | Date;
   readonly updated_at: string | Date;
   readonly authorization_json?: ExecutionTrustRecord["authorization"] | null;

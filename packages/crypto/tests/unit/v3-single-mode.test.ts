@@ -20,22 +20,14 @@ async function singleRecord(
     createdAt: now,
     updatedAt: now,
     trustRecordHash: "",
-    signature: {
-      algorithm: "ed25519" as const,
-      keyId: "default",
-      value: "",
-      signedAt: now,
-    },
   } as unknown as ExecutionTrustRecord;
 
   const trustRecordHash = await crypto.hash(draft);
   const withHash = { ...draft, trustRecordHash } as ExecutionTrustRecord;
-  const signature = await crypto.sign(withHash);
-  const signatures = await crypto.signWholeRecord({ ...withHash, signature });
+  const signatures = await crypto.signWholeRecord(withHash);
 
   return {
     ...withHash,
-    signature,
     schemaVersion: 3,
     signatures,
   } as ExecutionTrustRecord;
@@ -57,6 +49,7 @@ describe("schema version 3, single mode (D24)", () => {
     const record = await singleRecord(crypto);
     expect(record.signatures).toHaveLength(1);
     expect(record.signatures?.[0]?.algorithm).toBe("ed25519");
+    expect(record).not.toHaveProperty("signature");
     await expect(crypto.verify(record)).resolves.toBe(true);
   });
 

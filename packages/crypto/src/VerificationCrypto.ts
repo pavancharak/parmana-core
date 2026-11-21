@@ -145,36 +145,6 @@ export class VerificationCrypto {
   }
 
   /**
-   * Creates a digital signature over the canonical
-   * Trust Record.
-   *
-   * Unchanged by hybrid mode: always the single, legacy signature,
-   * over exactly the same content as before this milestone. See
-   * signHybrid() for the additive second signature.
-   */
-  async sign(trustRecord: ExecutionTrustRecord): Promise<Signature> {
-    const keyId = currentVerificationKeyId();
-
-    const signer = await this.signerPromise;
-
-    const value = await this.signer.signWithSigner(
-      this.canonicalRecord(trustRecord),
-      keyId,
-      signer,
-    );
-
-    return {
-      algorithm: this.crypto.signature.algorithm,
-
-      keyId,
-
-      value,
-
-      signedAt: new Date(),
-    };
-  }
-
-  /**
    * Signing readiness probe (docs/internal/VERIFICATION-GAPS.md G-52).
    *
    * Proves, before an action is released, that the evidence signing path
@@ -304,16 +274,6 @@ export class VerificationCrypto {
    * independently don't have to reimplement canonicalization.
    */
   async verifySignature(trustRecord: ExecutionTrustRecord): Promise<boolean> {
-    const signer = await this.signerPromise;
-
-    const publicKey = await signer.getPublicKey(trustRecord.signature.keyId);
-
-    const legacyVerified = await this.verifier.verify(
-      this.canonicalRecord(trustRecord),
-      trustRecord.signature.value,
-      publicKey,
-    );
-
     // Schema version 2 is discarded (decision D24): only version 3 is accepted.
     if (trustRecord.schemaVersion !== WHOLE_RECORD_SCHEMA_VERSION) {
       return false;
@@ -336,7 +296,7 @@ export class VerificationCrypto {
         ? await this.hybridSignatureProvider().verify(canonical, entries)
         : await this.hybridSignatureProvider().verifySingle(canonical, entries);
 
-    return legacyVerified && envelopeVerified;
+    return envelopeVerified;
   }
 
   /**
@@ -354,8 +314,7 @@ export class VerificationCrypto {
     }
 
     //
-    // Verify signature(s) -- legacy always, hybrid additionally
-    // when the record declares itself hybrid-signed.
+    // Verify the signatures array, which covers the whole record (decision D24).
     //
     return this.verifySignature(trustRecord);
   }

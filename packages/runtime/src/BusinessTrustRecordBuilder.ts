@@ -147,16 +147,6 @@ export class BusinessTrustRecordBuilder {
       ...draft,
 
       trustRecordHash: "",
-
-      signature: {
-        algorithm: CryptoBootstrap.create().signature.algorithm,
-
-        keyId: currentSigningKeyId(),
-
-        value: "",
-
-        signedAt: now,
-      },
     };
 
     const trustRecordHash = await this.crypto.hash(trustRecord);
@@ -167,19 +157,15 @@ export class BusinessTrustRecordBuilder {
       trustRecordHash,
     };
 
-    const signature = await this.crypto.sign(recordWithHash);
-
     //
-    // Schema version 3 only (decision D24). Single mode carries one signature, for the configured
-    // primary algorithm. Hybrid mode carries one per configured algorithm. The legacy `signature`
-    // field is still present in this stage; it is removed in the next stage.
+    // Schema version 3 only (decision D24): the signatures array covers the whole record. Single
+    // mode carries one signature, for the configured primary algorithm; hybrid mode carries one per
+    // configured algorithm. There is no separate legacy signature.
     //
     const signatures = await this.crypto.signWholeRecord(recordWithHash);
 
     return {
       ...recordWithHash,
-
-      signature,
 
       schemaVersion: WHOLE_RECORD_SCHEMA_VERSION,
 

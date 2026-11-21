@@ -104,7 +104,6 @@ export interface ExecutionTrustRecord {
    * This proves the Trust Record was produced by
    * Parmana and has not been modified since signing.
    */
-  readonly signature: Signature;
 
   /**
    * Envelope schema version (Hybrid Signature Support milestone,
