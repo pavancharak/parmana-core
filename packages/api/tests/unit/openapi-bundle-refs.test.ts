@@ -185,7 +185,6 @@ describe("openapi.bundled.yaml — full dereference", () => {
       dereferenced.components.schemas["execution-trust-record.schema"];
 
     expect(trustRecord.properties.transaction.type).toBe("object");
-    expect(trustRecord.properties.overrides.items.type).toBe("object");
     expect(trustRecord.properties.executions.items.type).toBe("object");
     expect(trustRecord.properties.verifications.items.type).toBe("object");
     expect(trustRecord.properties.receipts.items.type).toBe("object");

@@ -32,8 +32,6 @@ export function canonicalExecutionTrustRecord(
 
     authorization: trustRecord.authorization,
 
-    overrides: trustRecord.overrides,
-
     executions: trustRecord.executions,
 
     createdAt: trustRecord.createdAt,

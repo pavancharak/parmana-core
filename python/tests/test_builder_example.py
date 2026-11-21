@@ -126,7 +126,7 @@ def test_builder_example_runs_end_to_end_against_a_real_server(builder_example_s
     assert trust_record.trust_record_id
     assert len(trust_record.executions) == 1
     assert trust_record.executions[0].decision.outcome.value == "APPROVED"
-    assert trust_record.signature.algorithm.value == "ed25519"
+    assert trust_record.signatures[0].algorithm.value == "ed25519"
 
     # The property this example exists to prove: every id pair the
     # builder derives round-trips correctly through a real server, not

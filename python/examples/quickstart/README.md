@@ -8,10 +8,10 @@ Constructs a `ParmanaClient`, submits a Business Transaction through
 - The client can reach a real running Parmana Runtime and get back a
   fully-formed `ExecutionTrustRecord`, including the fields a previous
   SDK version silently dropped or never modeled:
-  - `trust_record.signature` (a real `Signature` object, not missing)
+  - `trust_record.signatures` (a list of `SignatureEntry` objects, not missing)
   - `trust_record.executions[0].evidence` (what was actually executed)
   - `trust_record.executions[0].completed_at` / `.metadata`
-- `trust_record.signature.algorithm` decodes to a real `SignatureAlgorithm`
+- `trust_record.signatures[0].algorithm` decodes to a real `SignatureAlgorithm`
   enum member (`isinstance` holds), not a bare string.
 
 ## Prerequisites

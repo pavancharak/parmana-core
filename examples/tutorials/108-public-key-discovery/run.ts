@@ -112,16 +112,12 @@ try {
   const withHash: ExecutionTrustRecord = {
     ...draft,
     trustRecordHash,
-    signature: {
-      algorithm: "ed25519",
-      keyId: "default",
-      value: "",
-      signedAt: new Date(),
-    },
+    schemaVersion: 3,
   };
 
-  const signature = await crypto.sign(withHash);
-  const trustRecord: ExecutionTrustRecord = { ...withHash, signature };
+  // Schema version 3: the signatures array covers the whole record (decision D24).
+  const signatures = await crypto.signWholeRecord(withHash);
+  const trustRecord: ExecutionTrustRecord = { ...withHash, signatures };
 
   // From here on, no further reference to baseUrl, the server, or any
   // Parmana process at all -- only the record and the PEM string

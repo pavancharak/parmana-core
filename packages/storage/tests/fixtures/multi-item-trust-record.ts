@@ -8,12 +8,10 @@ import {
   DecisionOutcome,
   ExecutionMode,
   ExecutionStatus,
-  SignatureAlgorithms,
   VerificationStatus,
   type BusinessTransaction,
   type Execution,
   type ExecutionTrustRecord,
-  type Override,
   type Receipt,
   type SignedExecutionAuthorization,
   type Verification,
@@ -113,24 +111,6 @@ function buildExecution(
   };
 }
 
-function buildOverride(
-  businessTransactionId: string,
-  label: string,
-  approvedAt: Date,
-): Override {
-  return {
-    overrideId: crypto.randomUUID(),
-
-    businessTransactionId,
-
-    approvedBy: "ordering-test",
-
-    reason: label,
-
-    approvedAt,
-  };
-}
-
 function buildVerification(
   businessTransactionId: string,
   trustRecordHash: string,
@@ -172,15 +152,12 @@ function buildReceipt(
 }
 
 /**
- * Builds a hashed and signed ExecutionTrustRecord with two Executions and
- * two Overrides already present at signing time (the only two collections
- * that feed VerificationCrypto's canonical hash — see
- * VerificationCrypto.canonicalRecord()). Appending a second Execution or
- * Override to an already-sealed record breaks its hash (it is never
- * re-sealed), so both items must exist before hashing/signing rather
- * than being appended afterward.
+ * Builds a hashed and signed ExecutionTrustRecord with two Executions already
+ * present at signing time. The Executions feed VerificationCrypto's canonical
+ * hash, so an Execution appended to an already-sealed record breaks its hash.
+ * Both must exist before hashing and signing.
  */
-export async function buildSignedMultiExecutionOverrideRecord(
+export async function buildSignedMultiExecutionRecord(
   transaction: BusinessTransaction,
   authorization?: SignedExecutionAuthorization,
 ): Promise<ExecutionTrustRecord> {
@@ -199,19 +176,6 @@ export async function buildSignedMultiExecutionOverrideRecord(
     ),
   ];
 
-  const overrides = [
-    buildOverride(
-      businessTransactionId,
-      "override-1",
-      new Date("2026-07-11T00:00:03Z"),
-    ),
-    buildOverride(
-      businessTransactionId,
-      "override-2",
-      new Date("2026-07-11T00:00:04Z"),
-    ),
-  ];
-
   const now = new Date("2026-07-11T00:00:05Z");
 
   const draft = {
@@ -222,8 +186,6 @@ export async function buildSignedMultiExecutionOverrideRecord(
     transaction,
 
     ...(authorization !== undefined ? { authorization } : {}),
-
-    overrides,
 
     executions,
 
@@ -242,13 +204,6 @@ export async function buildSignedMultiExecutionOverrideRecord(
     ...draft,
 
     trustRecordHash: "",
-
-    signature: {
-      algorithm: SignatureAlgorithms.ED25519,
-      keyId: "default",
-      value: "",
-      signedAt: now,
-    },
   };
 
   const trustRecordHash = await verificationCrypto.hash(
@@ -261,12 +216,14 @@ export async function buildSignedMultiExecutionOverrideRecord(
     trustRecordHash,
   };
 
-  const signature = await verificationCrypto.sign(recordWithHash);
+  const signatures = await verificationCrypto.signWholeRecord(recordWithHash);
 
   return {
     ...recordWithHash,
 
-    signature,
+    schemaVersion: 3,
+
+    signatures,
   };
 }
 

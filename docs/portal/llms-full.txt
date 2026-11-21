@@ -364,7 +364,7 @@ Its output, in order:
    outcome: APPROVED
 5. verification
    server verification: VERIFIED
-   offline (SDK): valid=true coverage=legacy hashValid=true legacySignatureValid=true
+   offline (SDK): valid=true hashValid=true hybridSignaturesValid=true
 6. the same transaction is submitted again (expected to be refused)
    refused as expected: ConflictError (HTTP 409): ... already exists.
 ```
@@ -894,7 +894,7 @@ The only path through which Parmana releases an approved request to a connector.
 
 ## Execution Trust Record
 
-The signed evidence for one Business Transaction. It holds the transaction, the authorization, the overrides, the executions (with their decisions), the verifications, the receipts, an evidence anchor, timestamps, the `trustRecordHash`, and the signature. Verify it with the server or offline. See [Evidence verification](security/evidence-verification.md).
+The signed evidence for one Business Transaction. It holds the transaction, the authorization, the executions (with their decisions), the verifications, the receipts, an evidence anchor, timestamps, the `trustRecordHash`, and the signature. Verify it with the server or offline. See [Evidence verification](security/evidence-verification.md).
 
 ## Fail closed
 
@@ -1333,7 +1333,7 @@ The record's `schemaVersion` says which fields the signatures cover. The verifie
 
 | Schema version         | What the signatures cover                                                                                                                                  | Coverage reported | Default on this build                          |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ---------------------------------------------- |
-| **2** (or unversioned) | Seven top-level fields: `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `overrides`, `executions`, `createdAt`.                  | `legacy`          | No. Rollback only (`HYBRID_SCHEMA_VERSION=2`). |
+| **2** (or unversioned) | Seven top-level fields: `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `executions`, `createdAt`.                               | `legacy`          | No. Rollback only (`HYBRID_SCHEMA_VERSION=2`). |
 | **3** (hybrid)         | Every top-level field except `signature`, `signatures`, `schemaVersion`, `verifications` and `receipts`. `schemaVersion` is covered by the hybrid message. | `full`            | **Yes**, since 2026-11-20 (ADR-0016).          |
 
 **Verified in this portal, on records from the same run:**
@@ -1546,7 +1546,7 @@ The default configuration of this build produces schema 2 records with one signa
 { "allowLegacyV2": true, "allowLegacyOnly": true, "keys": [ … ] }
 ```
 
-With those settings, a schema 2 record is accepted with `coverage: legacy`. **Know what that means.** The signature covers only `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `overrides`, `executions` and `createdAt`. A change to `updatedAt`, `evidenceAnchor`, `verifications` or `receipts` is not detected. This was reproduced in this portal: changing `updatedAt` left `valid: true`.
+With those settings, a schema 2 record is accepted with `coverage: legacy`. **Know what that means.** The signature covers only `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `executions` and `createdAt`. A change to `updatedAt`, `evidenceAnchor`, `verifications` or `receipts` is not detected. This was reproduced in this portal: changing `updatedAt` left `valid: true`.
 
 Prefer schema 3 for records you must rely on. See [Security: schema versions and coverage](README.md#schema-versions-and-coverage).
 
@@ -1668,7 +1668,7 @@ The decision record is [ADR-0016](../../../docs/internal/adr/ADR-0016-Whole-Reco
 
 | Schema version         | Signatures                                                             | Fields covered                                                                                                                                                                                | Coverage reported |
 | ---------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| **2** (or unversioned) | Legacy `signature` (ed25519), plus `signatures` only when hybrid is on | `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `overrides`, `executions`, `createdAt`                                                                              | `legacy`          |
+| **2** (or unversioned) | Legacy `signature` (ed25519), plus `signatures` only when hybrid is on | `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `executions`, `createdAt`                                                                                           | `legacy`          |
 | **3**                  | Hybrid `signatures`: ed25519 and dilithium3, both required             | Every top-level field except `signature`, `signatures`, `schemaVersion`, `verifications` and `receipts`. `schemaVersion` is part of the hybrid message, so changing it breaks the signatures. | `full`            |
 
 The exclusion list is the same in the verifier's `docs/FORMAT.md` and in the signing code (`WHOLE_RECORD_EXCLUDED_FIELDS` in `packages/crypto/src/ExecutionTrustRecordCanonicalView.ts`). It was checked against both on 2026-11-20.
@@ -1698,7 +1698,7 @@ With the v3 settings below, a record reported `"coverage":"full"` under the veri
 | `CRYPTO_MODE`                   | `single`  | `hybrid` makes the server add a `signatures` array to each record. In `single` mode there is no hybrid envelope.                                                 |
 | `PRIMARY_SIGNATURE_PROVIDER`    | `ed25519` | The primary algorithm.                                                                                                                                           |
 | `SECONDARY_SIGNATURE_PROVIDER`  | none      | Required when `CRYPTO_MODE=hybrid`. Must differ from the primary. The server refuses to start otherwise.                                                         |
-| `HYBRID_SCHEMA_VERSION`         | `3`       | `2` or `3`. Unset means 3. `2` is the rollback. Any other value is refused at start-up.                                                                          |
+| `HYBRID_SCHEMA_VERSION`         | `3`       | `3` only. Unset means 3. `2` is refused at start-up (discarded, D24). Any other value is refused too.                                                            |
 | `HYBRID_SCHEMA_V3_ACKNOWLEDGED` | not read  | Ignored. It was the issuance gate until schema 3 became the default. Remove it from environment files.                                                           |
 | `HYBRID_SIGNATURE_REQUIRED`     | `false`   | When `true`, verifying a record with no `signatures` array, or a partial one, is a rejection, whatever its version.                                              |
 | `HYBRID_REQUIRED_FROM`          | none      | The cutover (UTC, ending in `Z`). From this instant, a record needs a valid hybrid envelope. Enforced by the server's verification path as well as by verifiers. |
@@ -1706,7 +1706,7 @@ With the v3 settings below, a record reported `"coverage":"full"` under the veri
 Start-up refusals you will see:
 
 - `CRYPTO_MODE=hybrid` without `SECONDARY_SIGNATURE_PROVIDER`, or with the same provider as the primary.
-- A `HYBRID_SCHEMA_VERSION` that is neither `2` nor `3`.
+- A `HYBRID_SCHEMA_VERSION` other than `3`, including `2`, which is discarded (D24).
 - A `HYBRID_REQUIRED_FROM` that is not a UTC ISO-8601 timestamp.
 
 If `CRYPTO_MODE=hybrid` is set but no secondary provider is, the server releases the action and then fails to write the record. Its response is `500` with `Secondary signature provider is not configured.`. The start-up check above now stops this before any action is released.
@@ -1764,7 +1764,7 @@ Each step is for each deployment. Do not skip a step.
 
 ### Rollback
 
-Setting `HYBRID_SCHEMA_VERSION` back to `2` returns new records to schema 2. Keep the hybrid settings and the cutover in place, so records stay hybrid-signed and the cutover stays enforced. **Not tested in this repository. Check it on a non-production deployment before relying on it.**
+Schema version 2 has been discarded (decision D24), so there is no rollback to it: `HYBRID_SCHEMA_VERSION=2` is refused at start-up. Keep the hybrid settings and the cutover in place, so records stay hybrid-signed and the cutover stays enforced. **Not tested in this repository. Check it on a non-production deployment before relying on it.**
 
 ## Cost: size and speed
 
@@ -3340,7 +3340,6 @@ Verified responses on this build: `200` (approved), `403` with `POLICY_DENIED`-s
   "businessTransactionId": "66412b22-256e-4b81-b590-c37047ab6ba5",
   "transaction": { "…": "the Business Transaction as stored" },
   "authorization": { "…": "the signed authorization" },
-  "overrides": [],
   "executions": [{ "decision": { "outcome": "APPROVED", "…": "…" }, "…": "…" }],
   "verifications": [],
   "receipts": [],
@@ -4133,17 +4132,16 @@ import { verifyExecutionTrustRecordOffline } from "@parmana/sdk";
 const result = verifyExecutionTrustRecordOffline(record, {
   default: publicKeyPem,
 });
-// result: { valid, coverage, hashValid, legacySignatureValid, hybridSignaturesValid?,
-//           algorithmsChecked, errors }
+// result: { valid, hashValid, hybridSignaturesValid, algorithmsChecked, errors }
 ```
 
 - `publicKeys` maps each `keyId` to a PEM public key. Pin these yourself (see [Evidence verification](../security/evidence-verification.md)).
-- `valid` means the stored hash and the signatures check out. It does **not** mean the record is fully covered. Read `coverage`: `"full"` for a schema version 3 record, `"legacy"` otherwise. A version 2 record covers only seven top-level fields, so a change to any other field is not detected by it.
-- The SDK's check does not refuse legacy records by default. To fail closed, pass `{ requireFullCoverage: true }` as the third argument (`VerifyTrustRecordOptions`). A legacy record then returns `valid: false`, and `errors` says why. The default keeps the result of earlier releases (FINDINGS F2).
+- `valid` means the stored hash and the record's `signatures` array check out. A trust record must be schema version 3 (decision D24); schema version 2 is refused. The signatures cover the whole record, so a changed field fails.
+- One valid signature is accepted, unless the record was created at or after `hybridRequiredFrom`. From that instant, both hybrid signatures are required. Pass the cutover as the third argument (`VerifyTrustRecordOptions`):
 
 ```typescript
 const strict = verifyExecutionTrustRecordOffline(record, publicKeys, {
-  requireFullCoverage: true,
+  hybridRequiredFrom: "2026-12-01T00:00:00Z",
 });
 ```
 
@@ -4453,7 +4451,7 @@ The Python `approve_policy_change` takes the envelope as a `dict`. Sign it immed
 
 ## Offline verification: `verify_execution_trust_record_offline`
 
-Pass `require_full_coverage=True` to fail closed on legacy records: the result is `valid=False`, and `errors` says why. The default is `False`, which keeps the result of earlier releases (FINDINGS F2).
+Records are schema version 3 only (decision D24). A record with one valid signature is accepted, unless it was created at or after `hybrid_required_from`; from that instant, both hybrid signatures are required. Pass the cutover as `hybrid_required_from="2026-12-01T00:00:00Z"`.
 
 ```python
 import json
@@ -4463,7 +4461,7 @@ with open("record.json") as f:
     record = json.load(f)
 
 result = verify_execution_trust_record_offline(record, {"default": public_key_pem})
-print(result.valid, result.coverage, result.hash_valid, result.legacy_signature_valid)
+print(result.valid, result.hash_valid, result.hybrid_signatures_valid)
 print(result.errors)
 ```
 
@@ -5563,7 +5561,7 @@ Parmana is configured through environment variables. The server reads them at st
 | `HASH_PROVIDER`                         | `sha256`            | `sha256`, `sha3-512`, `blake3`                                                                          | No                                     | Implemented                                            | Hash algorithm, per the example file.                                                                                                    |
 | `HYBRID_SIGNATURE_REQUIRED`             | `false`             | `true`                                                                                                  | No                                     | Implemented                                            | Requires a hybrid envelope on records.                                                                                                   |
 | `HYBRID_REQUIRED_FROM`                  | none                | UTC ISO-8601 ending in `Z`                                                                              | No                                     | Implemented                                            | Records created at or after this instant must be hybrid-signed.                                                                          |
-| `HYBRID_SCHEMA_VERSION`                 | `3` (unset)         | `2`, `3`                                                                                                | No                                     | Implemented (`3` exercised)                            | `3` covers the whole record (see [Security](../security/README.md#schema-versions-and-coverage)).                                        |
+| `HYBRID_SCHEMA_VERSION`                 | `3` (unset)         | `3`                                                                                                     | No                                     | Implemented (`3` exercised)                            | `3` covers the whole record (see [Security](../security/README.md#schema-versions-and-coverage)).                                        |
 | `HYBRID_SCHEMA_V3_ACKNOWLEDGED`         | not read            | Ignored. Retired when schema 3 became the default (2026-11-20). Remove it from environment files.       |
 | `TRUST_PROFILE`                         | `v1`                | `v1`                                                                                                    | No                                     | Implemented                                            | The trust record schema profile.                                                                                                         |
 | `RECEIPT_VERSION`                       | `1`                 | Free text (only `1` is meaningful)                                                                      | No                                     | Implemented                                            | The receipt schema version.                                                                                                              |
@@ -5635,7 +5633,7 @@ PARMANA_API_KEYS='[{"callerId":"…","keyHash":"…","allowedCapabilities":["…
 POLICY_CHANGE_CHECKERS='{"vendor-payment":["…"]}'
 CRYPTO_MODE=hybrid
 SECONDARY_SIGNATURE_PROVIDER=dilithium3
-# HYBRID_SCHEMA_VERSION defaults to 3. Set 2 only to roll back.
+# HYBRID_SCHEMA_VERSION is always 3. Schema version 2 is discarded (decision D24); setting 2 is refused at start-up.
 ```
 
 This is an illustrative set. The values are placeholders. Check each one against your deployment before you use it.
@@ -5830,7 +5828,6 @@ Source: docs/developer-portal/reference/error-code-index.md
 | `NOT_READY`                               | no                        | `packages/api/src/routes/ready.ts`                                            |
 | `NOT_YET_VALID`                           | no                        | `packages/policy/src/v2/approvals.ts`                                         |
 | `OUTCOME_UNKNOWN`                         | no                        | `packages/shared/src/errors/outcome-unknown-error.ts`                         |
-| `OVERRIDE_NOT_ALLOWED`                    | no                        | `packages/shared/src/errors/override-not-allowed-error.ts`                    |
 | `PAYTM_CONNECTOR_SHARED_SECRET`           | no                        | `packages/api/src/bootstrap/createSandboxOptions.ts`                          |
 | `PAYTM_CONNECTOR_TIMEOUT_MS`              | no                        | `packages/api/src/bootstrap/createSandboxOptions.ts`                          |
 | `PAYTM_CONNECTOR_URL`                     | no                        | `packages/api/src/bootstrap/createSandboxOptions.ts`                          |

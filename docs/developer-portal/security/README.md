@@ -41,7 +41,7 @@ The record's `schemaVersion` says which fields the signatures cover. The verifie
 
 | Schema version         | What the signatures cover                                                                                                                                  | Coverage reported | Default on this build                          |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ---------------------------------------------- |
-| **2** (or unversioned) | Seven top-level fields: `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `overrides`, `executions`, `createdAt`.                  | `legacy`          | No. Rollback only (`HYBRID_SCHEMA_VERSION=2`). |
+| **2** (or unversioned) | Seven top-level fields: `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `executions`, `createdAt`.                               | `legacy`          | No. Rollback only (`HYBRID_SCHEMA_VERSION=2`). |
 | **3** (hybrid)         | Every top-level field except `signature`, `signatures`, `schemaVersion`, `verifications` and `receipts`. `schemaVersion` is covered by the hybrid message. | `full`            | **Yes**, since 2026-11-20 (ADR-0016).          |
 
 **Verified in this portal, on records from the same run:**

@@ -1,9 +1,7 @@
 import { BusinessTransaction } from "./business-transaction.js";
 import { Execution } from "./execution.js";
-import { Override } from "./override.js";
 import { Verification } from "./verification.js";
 import { Receipt } from "./receipt.js";
-import { Signature } from "./signature.js";
 import { SignatureEntry } from "./signature-entry.js";
 import { SignedExecutionAuthorization } from "./execution-authorization.js";
 import { EvidenceAnchor } from "./evidence-anchor.js";
@@ -35,15 +33,6 @@ export interface ExecutionTrustRecord {
    * Canonical Business Transaction.
    */
   readonly transaction: BusinessTransaction;
-
-  /**
-   * Optional Override history.
-   *
-   * Business rules currently allow a single accepted
-   * Override, but the history is modeled as an array
-   * to preserve append-only evolution.
-   */
-  readonly overrides: readonly Override[];
 
   /**
    * Execution history.
@@ -104,7 +93,6 @@ export interface ExecutionTrustRecord {
    * This proves the Trust Record was produced by
    * Parmana and has not been modified since signing.
    */
-  readonly signature: Signature;
 
   /**
    * Envelope schema version (Hybrid Signature Support milestone,

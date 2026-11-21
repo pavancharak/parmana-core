@@ -278,17 +278,16 @@ import { verifyExecutionTrustRecordOffline } from "@parmana/sdk";
 const result = verifyExecutionTrustRecordOffline(record, {
   default: publicKeyPem,
 });
-// result: { valid, coverage, hashValid, legacySignatureValid, hybridSignaturesValid?,
-//           algorithmsChecked, errors }
+// result: { valid, hashValid, hybridSignaturesValid, algorithmsChecked, errors }
 ```
 
 - `publicKeys` maps each `keyId` to a PEM public key. Pin these yourself (see [Evidence verification](../security/evidence-verification.md)).
-- `valid` means the stored hash and the signatures check out. It does **not** mean the record is fully covered. Read `coverage`: `"full"` for a schema version 3 record, `"legacy"` otherwise. A version 2 record covers only seven top-level fields, so a change to any other field is not detected by it.
-- The SDK's check does not refuse legacy records by default. To fail closed, pass `{ requireFullCoverage: true }` as the third argument (`VerifyTrustRecordOptions`). A legacy record then returns `valid: false`, and `errors` says why. The default keeps the result of earlier releases (FINDINGS F2).
+- `valid` means the stored hash and the record's `signatures` array check out. A trust record must be schema version 3 (decision D24); schema version 2 is refused. The signatures cover the whole record, so a changed field fails.
+- One valid signature is accepted, unless the record was created at or after `hybridRequiredFrom`. From that instant, both hybrid signatures are required. Pass the cutover as the third argument (`VerifyTrustRecordOptions`):
 
 ```typescript
 const strict = verifyExecutionTrustRecordOffline(record, publicKeys, {
-  requireFullCoverage: true,
+  hybridRequiredFrom: "2026-12-01T00:00:00Z",
 });
 ```
 

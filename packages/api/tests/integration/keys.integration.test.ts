@@ -106,7 +106,6 @@ describe("Public-key discovery (HTTP boundary)", () => {
         status: "RECEIVED",
         createdAt: new Date(),
       },
-      overrides: [],
       executions: [],
       verifications: [],
       receipts: [],
@@ -119,22 +118,16 @@ describe("Public-key discovery (HTTP boundary)", () => {
     const withHash = {
       ...draft,
       trustRecordHash,
-      signature: {
-        algorithm: "ed25519" as const,
-        keyId: "default",
-        value: "",
-        signedAt: new Date(),
-      },
+      schemaVersion: 3,
     } as ExecutionTrustRecord;
 
-    const signature = await crypto.sign(withHash);
-    const record: ExecutionTrustRecord = { ...withHash, signature };
+    // Schema version 3: the signatures array covers the whole record (decision D24).
+    const signatures = await crypto.signWholeRecord(withHash);
+    const record: ExecutionTrustRecord = { ...withHash, signatures };
 
-    const result = await verifyExecutionTrustRecordOffline(
-      record,
-      { default: keyResponse.body.pem },
-      { allowLegacyOnly: true },
-    );
+    const result = await verifyExecutionTrustRecordOffline(record, {
+      default: keyResponse.body.pem,
+    });
 
     expect(result.valid).toBe(true);
   });

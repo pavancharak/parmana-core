@@ -585,15 +585,14 @@ const envelope = signPolicyChangeStepUp({
 const result = verifyExecutionTrustRecordOffline(record, {
   default: publicKeyPem,
 });
-// result: { valid, coverage, hashValid, legacySignatureValid, hybridSignaturesValid?,
-//           algorithmsChecked, errors }</code></pre></div>
+// result: { valid, hashValid, hybridSignaturesValid, algorithmsChecked, errors }</code></pre></div>
 <ul>
 <li><code>publicKeys</code> maps each <code>keyId</code> to a PEM public key. Pin these yourself (see <a href="../security/evidence-verification.html">Evidence verification</a>).</li>
-<li><code>valid</code> means the stored hash and the signatures check out. It does <strong>not</strong> mean the record is fully covered. Read <code>coverage</code>: <code>&quot;full&quot;</code> for a schema version 3 record, <code>&quot;legacy&quot;</code> otherwise. A version 2 record covers only seven top-level fields, so a change to any other field is not detected by it.</li>
-<li>The SDK&#39;s check does not refuse legacy records by default. To fail closed, pass <code>{ requireFullCoverage: true }</code> as the third argument (<code>VerifyTrustRecordOptions</code>). A legacy record then returns <code>valid: false</code>, and <code>errors</code> says why. The default keeps the result of earlier releases (FINDINGS F2).</li>
+<li><code>valid</code> means the stored hash and the record&#39;s <code>signatures</code> array check out. A trust record must be schema version 3 (decision D24); schema version 2 is refused. The signatures cover the whole record, so a changed field fails.</li>
+<li>One valid signature is accepted, unless the record was created at or after <code>hybridRequiredFrom</code>. From that instant, both hybrid signatures are required. Pass the cutover as the third argument (<code>VerifyTrustRecordOptions</code>):</li>
 </ul>
 <div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">const strict = verifyExecutionTrustRecordOffline(record, publicKeys, {
-  requireFullCoverage: true,
+  hybridRequiredFrom: "2026-12-01T00:00:00Z",
 });</code></pre></div>
 <p><code>verifyExecutionIntentOffline(intent, publicKeys)</code> does the same for an execution intent.</p>
 <h2 id="errors">Errors<a class="anchor" href="#errors" aria-label="Link to this section">#</a></h2>

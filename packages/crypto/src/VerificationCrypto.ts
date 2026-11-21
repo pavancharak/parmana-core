@@ -1,16 +1,10 @@
 import { KeyProviders, loadConfig } from "@parmana/shared";
-import type {
-  ExecutionTrustRecord,
-  Signature,
-  SignatureEntry,
-} from "@parmana/shared";
+import type { ExecutionTrustRecord, SignatureEntry } from "@parmana/shared";
 
 import { CryptoBootstrap } from "./CryptoBootstrap.js";
 import {
   canonicalExecutionTrustRecord,
   hybridSignedCanonicalView,
-  SUPPORTED_HYBRID_SCHEMA_VERSIONS,
-  isAtOrAfterCutover,
   WHOLE_RECORD_SCHEMA_VERSION,
 } from "./ExecutionTrustRecordCanonicalView.js";
 import { HybridSignatureProvider } from "./HybridSignatureProvider.js";
@@ -29,16 +23,6 @@ import {
   currentVerificationKeyId,
   currentVerificationSecondaryKeyId,
 } from "./KeyProvider.js";
-
-/**
- * Schema version assumed for a `signatures`-bearing record that does not
- * declare one. Bumped from the implicit v1 (no `schemaVersion` field
- * at all -- today's shape) the moment a second, independent signature
- * is added alongside the legacy one (Hybrid Signature Support
- * milestone, Phase A). The version new records are signed with is
- * `crypto.hybridSchemaVersion`, which defaults to this value.
- */
-const HYBRID_SCHEMA_VERSION = 2;
 
 /**
  * Verification cryptographic operations.
@@ -131,8 +115,18 @@ export class VerificationCrypto {
   private hybridSignatureProvider(
     primarySigner?: Signer,
   ): HybridSignatureProvider {
+    // Single mode (decision D24) has no secondary algorithm. It uses only the primary, through
+    // signSingle and verifySingle, so the secondary slot is filled with the primary and never read.
+    const crypto =
+      this.config.crypto.mode === "hybrid"
+        ? CryptoBootstrap.createHybrid()
+        : (() => {
+            const primary = CryptoBootstrap.create();
+            return { primary, secondary: primary };
+          })();
+
     return new HybridSignatureProvider(
-      CryptoBootstrap.createHybrid(),
+      crypto,
       this.hybridKeys,
       undefined,
       primarySigner,
@@ -144,36 +138,6 @@ export class VerificationCrypto {
    */
   async hash(trustRecord: ExecutionTrustRecord): Promise<string> {
     return this.hasher.hash(this.canonicalRecord(trustRecord));
-  }
-
-  /**
-   * Creates a digital signature over the canonical
-   * Trust Record.
-   *
-   * Unchanged by hybrid mode: always the single, legacy signature,
-   * over exactly the same content as before this milestone. See
-   * signHybrid() for the additive second signature.
-   */
-  async sign(trustRecord: ExecutionTrustRecord): Promise<Signature> {
-    const keyId = currentVerificationKeyId();
-
-    const signer = await this.signerPromise;
-
-    const value = await this.signer.signWithSigner(
-      this.canonicalRecord(trustRecord),
-      keyId,
-      signer,
-    );
-
-    return {
-      algorithm: this.crypto.signature.algorithm,
-
-      keyId,
-
-      value,
-
-      signedAt: new Date(),
-    };
   }
 
   /**
@@ -244,12 +208,33 @@ export class VerificationCrypto {
         : undefined;
 
     return this.hybridSignatureProvider(primarySigner).sign(
-      this.hybridCanonicalRecord(
-        trustRecord,
-        this.config.crypto.hybridSchemaVersion,
-      ),
+      this.hybridCanonicalRecord(trustRecord, WHOLE_RECORD_SCHEMA_VERSION),
       currentVerificationKeyId(),
       currentVerificationSecondaryKeyId(),
+    );
+  }
+
+  /**
+   * Signs a schema version 3 record (decision D24). Single mode: one entry, for the
+   * configured primary algorithm. Hybrid mode: two entries, one per configured
+   * algorithm. Schema version 2 is not produced.
+   */
+  async signWholeRecord(
+    trustRecord: ExecutionTrustRecord,
+  ): Promise<readonly SignatureEntry[]> {
+    if (this.config.crypto.mode === "hybrid") {
+      return this.signHybrid(trustRecord);
+    }
+
+    const primarySigner =
+      this.config.keys.provider === KeyProviders.AWS_KMS &&
+      this.config.keys.hybridKmsPrimary
+        ? await SignerBootstrap.create()
+        : undefined;
+
+    return this.hybridSignatureProvider(primarySigner).signSingle(
+      this.hybridCanonicalRecord(trustRecord, WHOLE_RECORD_SCHEMA_VERSION),
+      currentVerificationKeyId(),
     );
   }
 
@@ -285,60 +270,29 @@ export class VerificationCrypto {
    * independently don't have to reimplement canonicalization.
    */
   async verifySignature(trustRecord: ExecutionTrustRecord): Promise<boolean> {
-    const signer = await this.signerPromise;
-
-    const publicKey = await signer.getPublicKey(trustRecord.signature.keyId);
-
-    const legacyVerified = await this.verifier.verify(
-      this.canonicalRecord(trustRecord),
-      trustRecord.signature.value,
-      publicKey,
-    );
-
-    const declaredVersion = trustRecord.schemaVersion ?? HYBRID_SCHEMA_VERSION;
-
-    if (
-      !(SUPPORTED_HYBRID_SCHEMA_VERSIONS as readonly number[]).includes(
-        declaredVersion,
-      )
-    ) {
+    // Schema version 2 is discarded (decision D24): only version 3 is accepted.
+    if (trustRecord.schemaVersion !== WHOLE_RECORD_SCHEMA_VERSION) {
       return false;
     }
 
-    if (
-      trustRecord.signatures === undefined ||
-      trustRecord.signatures.length === 0
-    ) {
-      //
-      // A schema version 3 record declares that it is whole-record
-      // signed, so a missing hybrid envelope is a rejection even when
-      // requireHybridSignature is off (ADR-0016, decision 4).
-      //
-      //
-      // ADR-0016 option 2: a record created at or after the configured
-      // cutover must carry a hybrid envelope, so stripping the envelope
-      // makes it fail here.
-      //
-      if (
-        this.config.crypto.requireHybridSignature ||
-        declaredVersion === WHOLE_RECORD_SCHEMA_VERSION ||
-        isAtOrAfterCutover(
-          trustRecord.createdAt,
-          this.config.crypto.hybridRequiredFrom,
-        )
-      ) {
-        return false;
-      }
+    const entries = trustRecord.signatures;
 
-      return legacyVerified;
+    if (entries === undefined || entries.length === 0) {
+      return false;
     }
 
-    const hybridVerified = await this.hybridSignatureProvider().verify(
-      this.hybridCanonicalRecord(trustRecord, declaredVersion),
-      trustRecord.signatures,
+    const canonical = this.hybridCanonicalRecord(
+      trustRecord,
+      WHOLE_RECORD_SCHEMA_VERSION,
     );
 
-    return legacyVerified && hybridVerified;
+    // Single mode accepts one entry for the configured primary algorithm; hybrid mode requires both.
+    const envelopeVerified =
+      this.config.crypto.mode === "hybrid"
+        ? await this.hybridSignatureProvider().verify(canonical, entries)
+        : await this.hybridSignatureProvider().verifySingle(canonical, entries);
+
+    return envelopeVerified;
   }
 
   /**
@@ -356,8 +310,7 @@ export class VerificationCrypto {
     }
 
     //
-    // Verify signature(s) -- legacy always, hybrid additionally
-    // when the record declares itself hybrid-signed.
+    // Verify the signatures array, which covers the whole record (decision D24).
     //
     return this.verifySignature(trustRecord);
   }

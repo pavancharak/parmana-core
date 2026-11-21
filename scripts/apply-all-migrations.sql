@@ -3227,3 +3227,37 @@ CREATE TRIGGER policy_v2_delivery_events_no_change
 ALTER TABLE policy_v2_delivery_events ENABLE ROW LEVEL SECURITY;
 
 REVOKE ALL ON policy_v2_delivery_events FROM anon, authenticated;
+
+
+-- =============================================================================
+-- Source: supabase/migrations/20261121120000_drop_legacy_signature_from_execution_trust_records.sql
+-- Decision D24: trust records are schema version 3 only, and carry their signatures in
+-- signatures_json. The legacy signature_json column (seven fields, schema version 2 only)
+-- is no longer written or read, so it is dropped.
+--
+-- The owner confirmed there are no customers, vendors or live traffic, so the legacy
+-- signatures in existing rows are not needed as evidence. Apply only after the owner's approval.
+ALTER TABLE execution_trust_records
+  DROP COLUMN IF EXISTS signature_json;
+
+
+-- =============================================================================
+-- Source: supabase/migrations/20261121130000_drop_overrides_table.sql
+-- Overrides are removed from the Execution Trust Record format. They are no longer part of
+-- the hashed or signed fields (parmana-core frozen canonical view, owner approved), and no
+-- code path creates or reads them. The overrides table, its index, its row-level security
+-- and its sequence columns are dropped with it.
+--
+-- The owner confirmed there are no customers, vendors or live traffic, so existing override
+-- rows are not needed. Apply only after the owner's approval.
+DROP TABLE IF EXISTS overrides;
+
+
+-- =============================================================================
+-- Source: supabase/migrations/20261121140000_add_evidence_anchor_to_execution_trust_records.sql
+-- The Execution Trust Record carries an evidenceAnchor, which the whole-record signature covers
+-- (decision D24). It was built at record creation but never stored, so a record loaded back did
+-- not match the one that was signed. This column stores it. Nullable: records created before this
+-- migration have no anchor, and the loader leaves the field out, as before.
+ALTER TABLE execution_trust_records
+  ADD COLUMN IF NOT EXISTS evidence_anchor_json JSONB;

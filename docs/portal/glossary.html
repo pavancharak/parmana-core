@@ -68,7 +68,7 @@
 <h2 id="execution-gateway">Execution gateway<a class="anchor" href="#execution-gateway" aria-label="Link to this section">#</a></h2>
 <p>The only path through which Parmana releases an approved request to a connector. It re-verifies the signed authorization before release. See <a href="architecture.html#components">Architecture</a>.</p>
 <h2 id="execution-trust-record">Execution Trust Record<a class="anchor" href="#execution-trust-record" aria-label="Link to this section">#</a></h2>
-<p>The signed evidence for one Business Transaction. It holds the transaction, the authorization, the overrides, the executions (with their decisions), the verifications, the receipts, an evidence anchor, timestamps, the <code>trustRecordHash</code>, and the signature. Verify it with the server or offline. See <a href="security/evidence-verification.html">Evidence verification</a>.</p>
+<p>The signed evidence for one Business Transaction. It holds the transaction, the authorization, the executions (with their decisions), the verifications, the receipts, an evidence anchor, timestamps, the <code>trustRecordHash</code>, and the signature. Verify it with the server or offline. See <a href="security/evidence-verification.html">Evidence verification</a>.</p>
 <h2 id="fail-closed">Fail closed<a class="anchor" href="#fail-closed" aria-label="Link to this section">#</a></h2>
 <p>Refuse rather than guess. When a fact cannot be verified, or a source does not answer, or signing is unavailable, Parmana refuses and does not execute. See <a href="security/index.html#fail-closed-behaviour">Security</a>.</p>
 <h2 id="gateway-attestation">Gateway attestation<a class="anchor" href="#gateway-attestation" aria-label="Link to this section">#</a></h2>

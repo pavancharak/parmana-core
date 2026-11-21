@@ -225,7 +225,6 @@ Core artifacts include:
 - ExecutionTrustRecord
 - Verification
 - Receipt
-- Override
 
 The SDK does not redefine these models.
 

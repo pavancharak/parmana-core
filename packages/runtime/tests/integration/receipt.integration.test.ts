@@ -27,7 +27,6 @@ describe("Receipt Service", () => {
       trustRecordId: "tr-1",
       businessTransactionId: transaction.businessTransactionId,
       transaction,
-      overrides: [],
       executions: [],
       verifications: [
         {
@@ -84,7 +83,6 @@ describe("Receipt Service", () => {
       trustRecordId: "tr-2",
       businessTransactionId: transaction.businessTransactionId,
       transaction,
-      overrides: [],
       executions: [],
       verifications: [],
       receipts: [],

@@ -37,7 +37,7 @@ const publicKeyPem = readFileSync("parmana-default.public.pem", "utf8");
 const result = verifyExecutionTrustRecordOffline(record, {
   default: publicKeyPem,
 });
-// { valid, hashValid, legacySignatureValid, hybridSignaturesValid?, algorithmsChecked, errors }
+// { valid, hashValid, hybridSignaturesValid, algorithmsChecked, errors }
 ```
 
 ```python Python

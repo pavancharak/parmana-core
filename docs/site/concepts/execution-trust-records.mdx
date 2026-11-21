@@ -43,7 +43,7 @@ Decision              the policy's outcome (APPROVED / REJECTED) + reason + eval
 Execution             what actually happened: status, mode, evidence
      │              packages/shared/src/domain/execution.ts
      ▼
-Execution Trust Record  the aggregate: transaction + executions + overrides +
+Execution Trust Record  the aggregate: transaction + executions +
                          verifications + receipts + canonical hash + signature
                        packages/shared/src/domain/execution-trust-record.ts
 ```
@@ -69,7 +69,6 @@ export interface ExecutionTrustRecord {
   readonly trustRecordId: string;
   readonly businessTransactionId: string;
   readonly transaction: BusinessTransaction;
-  readonly overrides: readonly Override[]; // append-only
   readonly executions: readonly Execution[]; // append-only
   readonly verifications: readonly Verification[]; // append-only
   readonly receipts: readonly Receipt[]; // append-only
@@ -87,8 +86,8 @@ export interface ExecutionTrustRecord {
 ## What's immutable, and what's append-only
 
 `businessTransactionId`, `metadata`, `policy`, `signals`, and `decision` never change after
-creation. `overrides`, `executions`, `verifications`, and `receipts` may only grow, nothing
-is ever edited or removed from them. For `overrides` and `executions`, this append-only
+creation. `executions`, `verifications`, and `receipts` may only grow, nothing
+is ever edited or removed from them. For `executions`, this append-only
 invariant is what lets a `trustRecordHash` mean anything: they are inside the signed
 content, so growing them changes the hash in a verifiable way. `verifications` and
 `receipts` are append-only too, but for a different reason: they are outside the signed
@@ -99,8 +98,8 @@ convention rather than from the signature.
 
 `canonicalExecutionTrustRecord()` (`packages/crypto/src/ExecutionTrustRecordCanonicalView.ts`)
 builds the exact object that gets hashed and signed, and both `VerificationCrypto` and the
-offline verifier use it. It includes seven fields: `trustRecordId`, `businessTransactionId`,
-`transaction`, `authorization`, `overrides`, `executions`, and `createdAt`. `hash()` and
+offline verifier use it. It includes six fields: `trustRecordId`, `businessTransactionId`,
+`transaction`, `authorization`, `executions`, and `createdAt`. `hash()` and
 `sign()` both call it, so the `trustRecordHash` and `signature` cover precisely this content,
 no more and no less. A record without an `authorization` (older records) hashes exactly as
 before, because the canonical serializer leaves out undefined keys.

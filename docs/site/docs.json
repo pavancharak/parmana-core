@@ -232,7 +232,6 @@
                   "sdks/reference/typescript/interfaces/FinalizeExecutionIntentResult",
                   "sdks/reference/typescript/interfaces/Intent",
                   "sdks/reference/typescript/interfaces/OfflineVerificationResult",
-                  "sdks/reference/typescript/interfaces/Override",
                   "sdks/reference/typescript/interfaces/ParmanaErrorOptions",
                   "sdks/reference/typescript/interfaces/ParmanaRelease",
                   "sdks/reference/typescript/interfaces/ParmanaReleaseCondition",

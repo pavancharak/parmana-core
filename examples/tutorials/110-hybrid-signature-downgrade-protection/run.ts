@@ -10,23 +10,12 @@ import {
 import type { ExecutionTrustRecord } from "@parmana/shared";
 
 //
-// PQC audit RED-4 (docs/internal/VERIFICATION-GAPS.md): schemaVersion and
-// signatures[] are deliberately excluded from the hashed content (so
-// the legacy signature keeps verifying pre-hybrid-era records
-// unchanged), but that also meant VerificationCrypto.verifySignature()
-// silently fell back to legacy-only verification whenever signatures
-// was stripped entirely -- proven exploitable by this codebase's own
-// pre-existing test, "still verifies a legacy-shaped record ...
-// additive, not breaking." Anyone with mere storage/transport access
-// to a copy of a hybrid-signed record -- no key material required --
-// could remove its ML-DSA-65 signature and have it verify as if it
-// were only ever classically signed, defeating hybrid mode's entire
-// purpose (surviving a future break of the classical algorithm).
-//
-// Fix: an opt-in HYBRID_SIGNATURE_REQUIRED flag. Off by default (so
-// enabling CRYPTO_MODE=hybrid never retroactively affects an
-// already-issued record); when a deployment turns it on, the exact
-// same stripping demonstrated here is rejected outright.
+// PQC audit RED-4 (docs/internal/VERIFICATION-GAPS.md), as it stands under
+// decision D24: a schema version 3 record is signed over the whole record, and
+// the signatures array is part of what the verifier requires. There is no
+// legacy-only fallback, so a copy of a hybrid-signed record with its ML-DSA-65
+// signature removed (or with signatures removed altogether) is refused under
+// every policy. The stripping demonstrated below is therefore rejected by default.
 //
 
 async function main(): Promise<void> {
@@ -84,21 +73,14 @@ async function main(): Promise<void> {
   const withHash: ExecutionTrustRecord = {
     ...draft,
     trustRecordHash,
-    signature: {
-      algorithm: "ed25519",
-      keyId: "default",
-      value: "",
-      signedAt: new Date(),
-    },
+    schemaVersion: 3,
   };
 
-  const signature = await crypto.sign(withHash);
-  const signatures = await crypto.signHybrid({ ...withHash, signature });
+  // Schema version 3, hybrid: both entries sign the whole record (decision D24).
+  const signatures = await crypto.signWholeRecord(withHash);
 
   const hybridRecord: ExecutionTrustRecord = {
     ...withHash,
-    signature,
-    schemaVersion: 2,
     signatures,
   };
 
@@ -120,23 +102,17 @@ async function main(): Promise<void> {
   } = hybridRecord;
 
   console.log(
-    "Scenario 2: Default policy (HYBRID_SIGNATURE_REQUIRED unset) -- the stripped record STILL verifies",
+    "Scenario 2: Default policy -- the stripped record is refused (schema version 3 has no fallback)",
   );
   console.log("--------------------------------------------------");
   const strippedUnderDefault = await crypto.verify(
     stripped as ExecutionTrustRecord,
   );
   console.log(`verify(stripped) : ${strippedUnderDefault}`);
-  console.log(
-    "This is deliberate, additive backward compatibility for records signed before this deployment ever",
-  );
-  console.log(
-    "turned on hybrid mode -- not the downgrade attack being missed.",
-  );
   console.log();
 
   console.log(
-    "Scenario 3: HYBRID_SIGNATURE_REQUIRED=true -- the identical stripped record is now rejected",
+    "Scenario 3: HYBRID_SIGNATURE_REQUIRED=true -- the identical stripped record is still refused",
   );
   console.log("--------------------------------------------------");
   process.env.HYBRID_SIGNATURE_REQUIRED = "true";
@@ -159,17 +135,17 @@ async function main(): Promise<void> {
 
   const allCorrect =
     (await crypto.verify(hybridRecord)) &&
-    strippedUnderDefault &&
+    !strippedUnderDefault &&
     !strippedUnderStrict &&
     completeUnderStrict;
 
   if (allCorrect) {
     console.log(
-      "✓ Stripping the ML-DSA-65 signature is invisible under the default policy (by design, non-breaking) and correctly rejected once a deployment opts into HYBRID_SIGNATURE_REQUIRED.",
+      "✓ Stripping the ML-DSA-65 signature is refused under the default policy and under HYBRID_SIGNATURE_REQUIRED=true. The complete hybrid record verifies.",
     );
   } else {
     console.log(
-      "✗ Expected the default policy to accept the stripped record and the strict policy to reject it.",
+      "✗ Expected the stripped record to be refused under both policies, and the complete hybrid record to verify.",
     );
   }
 

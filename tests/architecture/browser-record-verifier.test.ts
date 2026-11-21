@@ -30,10 +30,8 @@ type BrowserResult = {
 type BrowserVerifier = (
   record: unknown,
   publicKeyPem: string,
-  options?: { allowLegacyOnly?: boolean },
+  options?: object,
 ) => Promise<BrowserResult>;
-
-const ALLOW_LEGACY = { allowLegacyOnly: true };
 
 const root = process.cwd();
 const snippet = readFileSync(
@@ -83,12 +81,14 @@ afterAll(() => {
 });
 
 const keyIdOf = (record: Record<string, unknown>) =>
-  (record.signature as { keyId: string }).keyId;
+  (record.signatures as { algorithm: string; keyId: string }[]).find(
+    (entry) => entry.algorithm === "ed25519",
+  )!.keyId;
 
 async function bothVerifiers(
   record: Record<string, unknown>,
   key = pem,
-  options = ALLOW_LEGACY,
+  options = {},
 ) {
   const browser = await verify(record, key, options);
   const reference = await verifyExecutionTrustRecordOffline(
@@ -160,30 +160,32 @@ describe("the in browser record verifier", () => {
     const { record, key } = new Function(
       `${exports}\nreturn { record: exampleRecord, key: examplePublicKey };`,
     )() as { record: Record<string, unknown>; key: string };
-    const browser = await verify(record, key, ALLOW_LEGACY);
+    const browser = await verify(record, key, {});
     expect(browser).toMatchObject({ valid: true, hashValid: true });
     const reference = await verifyExecutionTrustRecordOffline(
       record,
       { [keyIdOf(record)]: key },
-      ALLOW_LEGACY,
+      {},
     );
     expect(reference.valid).toBe(true);
   });
 
-  it("refuses a legacy-only record by default, as the offline verifier does", async () => {
-    const browser = await verify(small, pem);
+  it("refuses a record with no signatures array, as the offline verifier does", async () => {
+    const unsigned = { ...small };
+    delete unsigned.signatures;
+    const browser = await verify(unsigned, pem);
     expect(browser).toMatchObject({
       valid: false,
       hashValid: true,
-      signatureValid: true,
     });
-    expect(browser.errors.join(" ")).toMatch(
-      /no hybrid \(post-quantum\) envelope/,
-    );
+    expect(browser.errors.join(" ")).toMatch(/signatures array/);
 
-    const reference = await verifyExecutionTrustRecordOffline(small as never, {
-      [keyIdOf(small)]: pem,
-    });
+    const reference = await verifyExecutionTrustRecordOffline(
+      unsigned as never,
+      {
+        [keyIdOf(small)]: pem,
+      },
+    );
     expect(reference.valid).toBe(false);
   });
 });

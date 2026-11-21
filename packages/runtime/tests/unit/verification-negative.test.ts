@@ -28,7 +28,7 @@ import type { RuntimeContext } from "../../src/context/RuntimeContext.js";
  *
  * Covers three independent mutation shapes: a payload field inside the
  * signed BusinessTransaction, the signature value, and an element inside
- * one of the hash-chain-participating arrays (executions/overrides).
+ * one of the hash-chain-participating arrays (executions).
  */
 
 class InMemoryExecutionTrustRecordRepository implements ExecutionTrustRecordRepository {
@@ -48,8 +48,6 @@ class InMemoryExecutionTrustRecordRepository implements ExecutionTrustRecordRepo
   async appendExecution(): Promise<void> {}
 
   async replaceExecution(): Promise<void> {}
-
-  async appendOverride(): Promise<void> {}
 
   async appendVerification(): Promise<void> {}
 
@@ -185,10 +183,9 @@ describe("VerificationService negative cases (in-memory, always-on)", () => {
 
     const tamperedRecord: ExecutionTrustRecord = {
       ...trustRecord,
-      signature: {
-        ...trustRecord.signature,
-        value: "not-a-real-signature",
-      },
+      signatures: trustRecord.signatures?.map((entry, index) =>
+        index === 0 ? { ...entry, signature: "not-a-real-signature" } : entry,
+      ),
     };
 
     const repository = new InMemoryExecutionTrustRecordRepository();

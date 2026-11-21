@@ -150,4 +150,69 @@ export class HybridSignatureProvider {
 
     return primaryVerified && secondaryVerified;
   }
+
+  /**
+   * Single mode (decision D24): signs with the configured primary algorithm only,
+   * returning one entry.
+   */
+  async signSingle(
+    artifact: unknown,
+    primaryKeyId: string,
+  ): Promise<readonly SignatureEntry[]> {
+    const primaryArtifactSigner = new ArtifactSigner(
+      this.crypto.primary,
+      this.serializer,
+    );
+
+    const signature =
+      this.primarySigner === undefined
+        ? await primaryArtifactSigner.sign(
+            artifact,
+            await this.keys.getPrivateKey(primaryKeyId),
+          )
+        : await primaryArtifactSigner.signWithSigner(
+            artifact,
+            primaryKeyId,
+            this.primarySigner,
+          );
+
+    return [
+      {
+        algorithm: this.crypto.primary.signature.algorithm,
+        keyId: primaryKeyId,
+        signature,
+      },
+    ];
+  }
+
+  /**
+   * Single mode (decision D24): exactly one entry, for the configured primary
+   * algorithm, verified against that entry's own key. Anything else is a rejection.
+   */
+  async verifySingle(
+    artifact: unknown,
+    signatures: readonly SignatureEntry[],
+  ): Promise<boolean> {
+    if (signatures.length !== 1) {
+      return false;
+    }
+
+    const entry = signatures[0];
+
+    if (entry === undefined) {
+      return false;
+    }
+
+    if (entry.algorithm !== this.crypto.primary.signature.algorithm) {
+      return false;
+    }
+
+    const verifier = new SignatureVerifier(
+      this.crypto.primary,
+      this.serializer,
+    );
+    const publicKey = await this.keys.getPublicKey(entry.keyId);
+
+    return verifier.verify(artifact, entry.signature, publicKey);
+  }
 }

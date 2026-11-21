@@ -52,8 +52,6 @@ class InMemoryExecutionTrustRecordRepository implements ExecutionTrustRecordRepo
 
   async replaceExecution(): Promise<void> {}
 
-  async appendOverride(): Promise<void> {}
-
   async appendVerification(
     _businessTransactionId: string,
     verification: Verification,
@@ -259,10 +257,9 @@ describe("ExecutionTrustApplication.replay() (TD-13 / Phase 2G)", () => {
 
     const tamperedRecord: ExecutionTrustRecord = {
       ...trustRecord,
-      signature: {
-        ...trustRecord.signature,
-        value: "not-a-real-signature",
-      },
+      signatures: trustRecord.signatures?.map((entry, index) =>
+        index === 0 ? { ...entry, signature: "not-a-real-signature" } : entry,
+      ),
     };
 
     const repository = new InMemoryExecutionTrustRecordRepository();

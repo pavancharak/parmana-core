@@ -14,10 +14,9 @@ from datetime import datetime
 from .business_transaction import BusinessTransaction
 from .execution import Execution
 from .execution_authorization import SignedExecutionAuthorization
-from .override import Override
 from .policy import PolicyGovernanceAnchorStatus
 from .receipt import Receipt
-from .signature import Signature, SignatureEntry
+from .signature import SignatureEntry
 from .verification import Verification
 
 
@@ -40,8 +39,6 @@ class ExecutionTrustRecord:
 
     transaction: BusinessTransaction
 
-    overrides: list[Override]
-
     executions: list[Execution]
 
     verifications: list[Verification]
@@ -49,8 +46,6 @@ class ExecutionTrustRecord:
     receipts: list[Receipt]
 
     trust_record_hash: str
-
-    signature: Signature
 
     created_at: datetime
 

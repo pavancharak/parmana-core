@@ -49,17 +49,13 @@ async function signRecord(
   const withHash: ExecutionTrustRecord = {
     ...draft,
     trustRecordHash,
-    signature: {
-      algorithm: "ed25519",
-      keyId: "placeholder",
-      value: "",
-      signedAt: new Date(),
-    },
+    schemaVersion: 3,
   };
 
-  const signature = await crypto.sign(withHash);
+  // Schema version 3: the signatures array covers the whole record (decision D24).
+  const signatures = await crypto.signWholeRecord(withHash);
 
-  return { ...withHash, signature };
+  return { ...withHash, signatures };
 }
 
 async function main(): Promise<void> {
@@ -82,7 +78,7 @@ async function main(): Promise<void> {
     "rotation-tutorial-original",
   );
 
-  console.log(`keyId  : ${originalRecord.signature.keyId}`);
+  console.log(`keyId  : ${originalRecord.signatures?.[0]?.keyId}`);
   console.log(`verify : ${await beforeRotation.verify(originalRecord)}`);
   console.log();
 
@@ -124,7 +120,7 @@ async function main(): Promise<void> {
   const afterRotation = new VerificationCrypto();
   const newRecord = await signRecord(afterRotation, "rotation-tutorial-new");
 
-  console.log(`keyId  : ${newRecord.signature.keyId}`);
+  console.log(`keyId  : ${newRecord.signatures?.[0]?.keyId}`);
   console.log(`verify : ${await afterRotation.verify(newRecord)}`);
   console.log();
 
@@ -142,8 +138,8 @@ async function main(): Promise<void> {
   delete process.env.PARMANA_VERIFICATION_KEY_ID;
 
   const allCorrect =
-    originalRecord.signature.keyId === "default" &&
-    newRecord.signature.keyId === rotatedKeyId &&
+    originalRecord.signatures?.[0]?.keyId === "default" &&
+    newRecord.signatures?.[0]?.keyId === rotatedKeyId &&
     originalStillVerifies &&
     (await afterRotation.verify(newRecord));
 

@@ -98,7 +98,7 @@ describe("typescript/examples/02-execute.ts against a real local @parmana/api in
     expect(trustRecord.trustRecordId).toBeTruthy();
     expect(trustRecord.executions).toHaveLength(1);
     expect(trustRecord.executions[0]?.decision.outcome).toBe("APPROVED");
-    expect(trustRecord.signature.algorithm).toBe("ed25519");
+    expect(trustRecord.signatures?.[0]?.algorithm).toBe("ed25519");
   });
 });
 
@@ -123,7 +123,7 @@ describe("typescript/examples/06-create-business-transaction.ts against a real l
     expect(trustRecord.trustRecordId).toBeTruthy();
     expect(trustRecord.executions).toHaveLength(1);
     expect(trustRecord.executions[0]?.decision.outcome).toBe("APPROVED");
-    expect(trustRecord.signature.algorithm).toBe("ed25519");
+    expect(trustRecord.signatures?.[0]?.algorithm).toBe("ed25519");
 
     // The property this example exists to prove: every id pair the
     // builder derives round-trips correctly through a real server,

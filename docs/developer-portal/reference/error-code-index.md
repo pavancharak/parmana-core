@@ -75,7 +75,6 @@
 | `NOT_READY`                               | no                        | `packages/api/src/routes/ready.ts`                                            |
 | `NOT_YET_VALID`                           | no                        | `packages/policy/src/v2/approvals.ts`                                         |
 | `OUTCOME_UNKNOWN`                         | no                        | `packages/shared/src/errors/outcome-unknown-error.ts`                         |
-| `OVERRIDE_NOT_ALLOWED`                    | no                        | `packages/shared/src/errors/override-not-allowed-error.ts`                    |
 | `PAYTM_CONNECTOR_SHARED_SECRET`           | no                        | `packages/api/src/bootstrap/createSandboxOptions.ts`                          |
 | `PAYTM_CONNECTOR_TIMEOUT_MS`              | no                        | `packages/api/src/bootstrap/createSandboxOptions.ts`                          |
 | `PAYTM_CONNECTOR_URL`                     | no                        | `packages/api/src/bootstrap/createSandboxOptions.ts`                          |

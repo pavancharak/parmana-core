@@ -520,7 +520,7 @@ pem = client.public_key("default").pem
 
 record = client.trust_record("5015499d-b7ba-48fe-a9ad-821862d70ad0")
 result = verify_execution_trust_record_offline(record, {"default": pem})
-# OfflineVerificationResult(valid=True, hash_valid=True, legacy_signature_valid=True,...)
+# OfflineVerificationResult(valid=True, hash_valid=True, hybrid_signatures_valid=True,...)
 
 view = client.execution_intent("5015499d-b7ba-48fe-a9ad-821862d70ad0")
 verify_execution_intent_offline(view.intent, {"default": pem})
