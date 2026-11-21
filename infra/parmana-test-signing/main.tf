@@ -38,6 +38,11 @@ variable "server_role_name" {
   description = "Name of the IAM role the Parmana server assumes in this environment (not the ARN)."
 }
 
+variable "expected_account_id" {
+  type        = string
+  description = "The one AWS account this stack may run in. Plan and apply fail in any other account, so a var file from another environment cannot touch the wrong resources."
+}
+
 locals {
   # Key ARN form: arn:aws:kms:<region>:<account>:key/<key-id>
   signing_key_id = element(split("/", var.signing_key_arn), 1)
@@ -123,7 +128,14 @@ data "aws_iam_policy_document" "secret_kms" {
   }
 }
 
-data "aws_caller_identity" "current" {}
+data "aws_caller_identity" "current" {
+  lifecycle {
+    postcondition {
+      condition     = self.account_id == var.expected_account_id
+      error_message = "This stack is for account ${var.expected_account_id}, but the credentials belong to another account. Stop. Check the AWS credentials in this shell, and the var file."
+    }
+  }
+}
 
 data "aws_iam_role" "server" {
   name = var.server_role_name

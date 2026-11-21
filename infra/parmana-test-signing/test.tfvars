@@ -8,3 +8,4 @@ signing_key_arn           = "arn:aws:kms:ap-southeast-2:703759331191:key/f56e17d
 server_role_name          = "parmana-test-server"
 secondary_key_secret_name = "parmana-test/secondary-key"
 secret_key_admin_arn      = "arn:aws:iam::703759331191:user/parmana-test-runner"
+expected_account_id = "703759331191"
