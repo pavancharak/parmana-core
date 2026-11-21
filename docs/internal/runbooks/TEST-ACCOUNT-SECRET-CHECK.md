@@ -1,6 +1,6 @@
 # Test account run: secondary key secret and server-role read (2026-11-21)
 
-**Status:** the steps below ran and produced the results recorded in §6. Cleanup in §9 is **pending**. Production was not changed by this run. Nothing here is a production sign-off.
+**Status:** the steps below ran and produced the results recorded in §6. Cleanup in §9 is done, except the two owner decisions, which are open. Production was not changed by this run. Nothing here is a production sign-off.
 
 This page is the complete record of the run. A later reader should be able to repeat it from §10 and check the results against §6.
 
@@ -241,16 +241,16 @@ Before the guard was added, the same folder with the same credentials had planne
 
 ## 9. Cleanup (pending)
 
-| Item                                                                    | Owner    | Status  |
-| ----------------------------------------------------------------------- | -------- | ------- |
-| Terminate `i-05f355e07aae8b7ba`                                         | Operator | Pending |
-| Delete the EC2 key pair `parmana-test-check`                            | Operator | Pending |
-| Delete `parmana-test-check.pem` from Downloads                          | Operator | Pending |
-| Delete the access key of `parmana-test-runner`                          | Operator | Pending |
-| Delete the temporary access key created for the guard test (§5.10)      | Operator | Pending |
-| Decide whether to keep the test secret (it holds a test key)            | Owner    | Pending |
-| Decide whether to keep the AWS Organization in production (§8.4)        | Owner    | Pending |
-| Confirm the production folder state and the production resources (§8.2) | Owner    | Pending |
+| Item                                                                    | Owner    | Status                                      |
+| ----------------------------------------------------------------------- | -------- | ------------------------------------------- |
+| Terminate `i-05f355e07aae8b7ba`                                         | Operator | Done (reported by the operator, 2026-11-21) |
+| Delete the EC2 key pair `parmana-test-check`                            | Operator | Done (reported by the operator, 2026-11-21) |
+| Delete `parmana-test-check.pem` from Downloads                          | Operator | Done (reported by the operator, 2026-11-21) |
+| Delete the access key of `parmana-test-runner`                          | Operator | Done (reported by the operator, 2026-11-21) |
+| Delete the temporary access key created for the guard test (§5.10)      | Operator | Done (reported by the operator, 2026-11-21) |
+| Decide whether to keep the test secret (it holds a test key)            | Owner    | Pending                                     |
+| Decide whether to keep the AWS Organization in production (§8.4)        | Owner    | Pending                                     |
+| Confirm the production folder state and the production resources (§8.2) | Owner    | Pending                                     |
 
 ---
 
