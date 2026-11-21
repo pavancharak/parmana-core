@@ -50,7 +50,7 @@ When the secondary key is a file, the deployment writes it into `PARMANA_KEY_DIR
 
 ## Infrastructure for the secondary key secret
 
-The Terraform stack in `infra/parmana-prod-signing/main.tf` creates the secret, its own KMS key, and the policies that limit who can read the secret. It is a reviewed draft: it validates, and it has not been planned or applied against an AWS account.
+The Terraform stack in `infra/parmana-prod-signing/main.tf` creates the secret, its own KMS key, and the policies that limit who can read the secret. It is a reviewed draft. It has been applied to a separate test account (`infra/parmana-test-signing`, a copy of the same file) and checked there, as recorded in `docs/internal/runbooks/TEST-ACCOUNT-SECRET-CHECK.md`. It has not been applied to production, and the production folder's state needs an owner check first (open item PROD-1). Each stack refuses to run in any account except the one its variable file names.
 
 What it creates:
 
@@ -95,10 +95,11 @@ Obtain a key's fingerprint with `parmana-verify key-fingerprint <public-key.pem>
 
 ## What is not covered
 
-- Not run against real AWS KMS or real Secrets Manager. The code paths are tested with fakes and with the verifier; the first real run needs a sandbox account and a KMS key.
+- Not run against real AWS KMS. The code paths are tested with fakes and with the verifier.
+- Secrets Manager: run once in a test account on 2026-11-21. The server role read the secret from an EC2 instance, and the stored key was ML-DSA-65. Not run against production. The record is in `TEST-ACCOUNT-SECRET-CHECK.md`.
 - The server does not check the trust file. Each verifier is updated by hand.
 - Rotation is not automated.
-- The startup check that reads the secret has unit tests with an injected reader. It has not been run against a real secret.
+- The startup check that reads the secret has unit tests with an injected reader. The same read and the same key-type test were run by hand on the test account (see above). The check function itself was not run inside the API server.
 - The classical key is not read from a secret. Only the secondary key can be.
 
 Decisions for the owner: lifting the refusal of hybrid with KMS by default (after a real KMS run), who may read the secondary key's secret, and whether the classical key should also move to a secret store.

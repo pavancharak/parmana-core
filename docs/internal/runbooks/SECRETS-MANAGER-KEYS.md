@@ -82,7 +82,7 @@ This is separate from option A. It holds only the secondary (dilithium3) private
 
 Store the key with `scripts/store-secondary-key.mjs`, and only with it. The script generates a fresh key, so the origin of every stored key is known. Don't store a key from `keys/` or any other folder: such a key may be a copy of a production key, and its origin can't be checked afterwards.
 
-1. Apply `infra/parmana-prod-signing/main.tf` (production) or `infra/parmana-test-signing/main.tf` (test) after reviewing `terraform plan`. Terraform creates the secret and its policies. It does not create the key value.
+1. Apply `infra/parmana-prod-signing/main.tf` (production) or `infra/parmana-test-signing/main.tf` (test) after reviewing `terraform plan`. Use the matching folder and variable file only. Each stack refuses to run in an account other than the one its variable file names. Do not apply the production folder until open item PROD-1 is resolved. Terraform creates the secret and its policies. It does not create the key value.
 2. Store a fresh key (Node 24 or later, from the repository root):
 
    ```bash

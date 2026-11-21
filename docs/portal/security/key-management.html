@@ -108,7 +108,7 @@
 <h2 id="putting-the-key-files-in-place">Putting the key files in place<a class="anchor" href="#putting-the-key-files-in-place" aria-label="Link to this section">#</a></h2>
 <p>When the secondary key is a file, the deployment writes it into <code>PARMANA_KEY_DIR</code> before the server starts. The server does not fetch files. Make the directory readable only by the server&#39;s user, and do not commit the files.</p>
 <h2 id="infrastructure-for-the-secondary-key-secret">Infrastructure for the secondary key secret<a class="anchor" href="#infrastructure-for-the-secondary-key-secret" aria-label="Link to this section">#</a></h2>
-<p>The Terraform stack in <code>infra/parmana-prod-signing/main.tf</code> creates the secret, its own KMS key, and the policies that limit who can read the secret. It is a reviewed draft: it validates, and it has not been planned or applied against an AWS account.</p>
+<p>The Terraform stack in <code>infra/parmana-prod-signing/main.tf</code> creates the secret, its own KMS key, and the policies that limit who can read the secret. It is a reviewed draft. It has been applied to a separate test account (<code>infra/parmana-test-signing</code>, a copy of the same file) and checked there, as recorded in <code>docs/internal/runbooks/TEST-ACCOUNT-SECRET-CHECK.md</code>. It has not been applied to production, and the production folder&#39;s state needs an owner check first (open item PROD-1). Each stack refuses to run in any account except the one its variable file names.</p>
 <p>What it creates:</p>
 <ul>
 <li>A KMS key used only for the secret. The server role may decrypt with it. Key administration goes to <code>secret_key_admin_arn</code>, which must not be the server role.</li>
@@ -168,10 +168,11 @@
 </tbody></table></div>
 <h2 id="what-is-not-covered">What is not covered<a class="anchor" href="#what-is-not-covered" aria-label="Link to this section">#</a></h2>
 <ul>
-<li>Not run against real AWS KMS or real Secrets Manager. The code paths are tested with fakes and with the verifier; the first real run needs a sandbox account and a KMS key.</li>
+<li>Not run against real AWS KMS. The code paths are tested with fakes and with the verifier.</li>
+<li>Secrets Manager: run once in a test account on 2026-11-21. The server role read the secret from an EC2 instance, and the stored key was ML-DSA-65. Not run against production. The record is in <code>TEST-ACCOUNT-SECRET-CHECK.md</code>.</li>
 <li>The server does not check the trust file. Each verifier is updated by hand.</li>
 <li>Rotation is not automated.</li>
-<li>The startup check that reads the secret has unit tests with an injected reader. It has not been run against a real secret.</li>
+<li>The startup check that reads the secret has unit tests with an injected reader. The same read and the same key-type test were run by hand on the test account (see above). The check function itself was not run inside the API server.</li>
 <li>The classical key is not read from a secret. Only the secondary key can be.</li>
 </ul>
 <p>Decisions for the owner: lifting the refusal of hybrid with KMS by default (after a real KMS run), who may read the secondary key&#39;s secret, and whether the classical key should also move to a secret store.</p>
