@@ -8006,7 +8006,7 @@ Both write into `./keys` unless `PARMANA_KEY_DIR` is set. They refuse to overwri
 
 **Check:** `keys/` contains `default.private.pem`, `default.public.pem`, `gateway.private.pem` and `gateway.public.pem`.
 
-Never commit the private files and never bake them into the image. The image starts with an empty `keys/` directory on purpose. To keep the signing key inside AWS KMS instead, set `KEY_PROVIDER=aws-kms` and read the signing keys section of the environment reference. The gateway key is still a file.
+Never commit the private files and never bake them into the image. The image starts with an empty `keys/` directory on purpose. To keep the signing key inside AWS KMS instead, set `KEY_PROVIDER=aws-kms` and read the signing keys section of the environment reference. The gateway key is still a file. The developer portal's key management page (`docs/developer-portal/security/key-management.md`) compares the options.
 
 ## Step 2: Create the database schema
 

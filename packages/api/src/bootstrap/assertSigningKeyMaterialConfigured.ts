@@ -276,13 +276,43 @@ export function writeKeyMaterialJson(
  * so a missing or malformed secret stops the server at startup instead of on the first record.
  * Does nothing when no secret is configured.
  */
-export async function assertSecondaryKeySecretReachable(): Promise<void> {
+export async function assertSecondaryKeySecretReachable(
+  readSecret?: (secretId: string) => Promise<string>,
+): Promise<void> {
   const config = loadConfig();
   const secretId = config.keys.secondaryKeySecretId;
   if (secretId === undefined) return;
 
-  const { readSecretFromAws } = await import("@parmana/crypto");
   const { createPrivateKey } = await import("node:crypto");
-  const pem = await readSecretFromAws(secretId);
-  createPrivateKey(pem);
+  const read =
+    readSecret ?? (await import("@parmana/crypto")).readSecretFromAws;
+
+  let pem: string;
+  try {
+    pem = await read(secretId);
+  } catch (error) {
+    throw new Error(
+      `PARMANA_SECONDARY_KEY_SECRET_ID is set to "${secretId}", but the secret could not be read. ` +
+        "Refusing to start: the secondary key signs every hybrid record. Check the secret's name, " +
+        "AWS_REGION, and that the server role may call GetSecretValue on it.",
+      { cause: error },
+    );
+  }
+
+  // The message names the secret and the key type, never the key material.
+  let keyType: string;
+  try {
+    keyType = createPrivateKey(pem).asymmetricKeyType ?? "unknown";
+  } catch {
+    throw new Error(
+      `The secret "${secretId}" does not hold a private key in PEM (PKCS#8) form. ` +
+        "Refusing to start. Store the dilithium3 private key as PEM.",
+    );
+  }
+  if (keyType !== "ml-dsa-65") {
+    throw new Error(
+      `The secret "${secretId}" holds a ${keyType} key, but the secondary key must be dilithium3 ` +
+        "(ML-DSA-65). Refusing to start rather than fail on the first hybrid record.",
+    );
+  }
 }

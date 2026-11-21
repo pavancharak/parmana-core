@@ -991,43 +991,117 @@ Source: docs/developer-portal/security/key-management.md
 
 # Key management
 
-[Portal home](../README.md) · [Security](README.md) · [Schema version 3](schema-v3.md) · [Verifier](../sdk/verifier.md)
+[Portal home](../README.md) · [Security](README.md) · [Schema version 3](schema-v3.md) · [Verifier](../sdk/verifier.md) · [Environment variables](../reference/environment-variables.md)
 
-This page sets out how the keys that sign Execution Trust Records are held, rotated and retired. It describes what the code does today. Where a practice needs something the code does not do, the page says so.
+This page describes how the keys that sign Execution Trust Records are held, started, rotated and retired. It describes what the code does on this branch. Where something is not verified against a real cloud account, the page says so.
 
-## What the code supports
+## The two signing modes
 
-| Need                                         | Supported today                   | How                                                                                                                                                                          |
-| -------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Classical signing key in a cloud key service | Yes, in `CRYPTO_MODE=single` only | `KEY_PROVIDER=aws-kms`. The Doctor check refuses `CRYPTO_MODE=hybrid` with `aws-kms`.                                                                                        |
-| Hybrid signing (ed25519 plus dilithium3)     | Yes, with file keys               | `CRYPTO_MODE=hybrid` with `KEY_PROVIDER=local`. Key files are read from `PARMANA_KEY_DIR`.                                                                                   |
-| Signing keys read from a secrets manager     | **No**                            | The secrets manager setting (`aws-secrets-manager`) resolves connector credentials, not signing keys. A deployment must put signing key files into `PARMANA_KEY_DIR` itself. |
-| Pinned fingerprints and validity windows     | Yes, in the verifier              | The trust file lists each key with `keyId`, `algorithm`, `fingerprint`, `validFrom`, `validUntil` and `compromised`.                                                         |
+- **Single mode** (`CRYPTO_MODE=single`, the default). One signature, from `PRIMARY_SIGNATURE_PROVIDER` (`ed25519` by default). The key is either a file in `PARMANA_KEY_DIR` (`KEY_PROVIDER=local`) or a KMS key (`KEY_PROVIDER=aws-kms`).
+- **Hybrid mode** (`CRYPTO_MODE=hybrid`). Two signatures on every record: the primary (ed25519) and the secondary (`SECONDARY_SIGNATURE_PROVIDER`, `dilithium3` in production). The record is schema version 3 by default. A verifier that accepts it must have both keys pinned.
 
-## Interim policy
+## Where each key can live
 
-1. **Single-mode signing:** keep the classical key in the cloud key service, with `KEY_PROVIDER=aws-kms` and `AWS_REGION` set. Do not set `CRYPTO_MODE=hybrid` with it.
-2. **Hybrid signing:** keep both key files in `PARMANA_KEY_DIR` with `KEY_PROVIDER=local`. The deployment writes them there at start-up from a secrets manager. The secrets manager holds the files; it is not the server's signing-key source. Restrict who can read the folder, and make the files readable only by the server's user.
-3. **Pinning:** every verifier pins each key by fingerprint. Obtain a fingerprint with `parmana-verify key-fingerprint <public-key.pem>`, and check it out of band before adding it to a trust file.
+| Key                                 | Option          | Settings                                                                | Status                                                                                                             |
+| ----------------------------------- | --------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Primary (ed25519), single mode      | KMS             | `KEY_PROVIDER=aws-kms`, `AWS_REGION`                                    | Supported. The server signs through `KmsSigner`; the private key never leaves KMS.                                 |
+| Primary (ed25519), hybrid mode      | KMS             | `KEY_PROVIDER=aws-kms`, `CRYPTO_MODE=hybrid`, `PARMANA_HYBRID_KMS=true` | Built, not verified against a real KMS key. Off by default. Without the flag, the server refuses this combination. |
+| Primary (ed25519), any mode         | File            | `KEY_PROVIDER=local`, `PARMANA_KEY_DIR`                                 | Supported.                                                                                                         |
+| Secondary (dilithium3), hybrid mode | Secrets Manager | `PARMANA_SECONDARY_KEY_SECRET_ID`, `AWS_REGION`                         | Built, not verified against a real Secrets Manager secret. The key is never written to disk.                       |
+| Secondary (dilithium3), hybrid mode | File            | `PARMANA_KEY_DIR` (`default-secondary.private.pem`, `.public.pem`)      | Supported.                                                                                                         |
+
+The secrets manager configured by `PARMANA_SECRETS_PROVIDER` resolves connector credentials, not signing keys. It is not the source of the primary key. The secondary key is read from a secret only when `PARMANA_SECONDARY_KEY_SECRET_ID` is set.
+
+## Starting the server
+
+**Single mode with KMS.** The KMS key must be an `ECC_NIST_EDWARDS25519` key, with the `SIGN_VERIFY` usage, and the server's role must be allowed `kms:Sign`, `kms:GetPublicKey` and `kms:DescribeKey` on it. The key is referred to by the alias `alias/<keyId>` with dots turned into slashes; the default key is `alias/default`. The signer uses the `ED25519_SHA_512` algorithm with the `RAW` message type. Messages over 4096 bytes are signed as a fixed-size commitment, which the verifier accepts.
+
+**Hybrid mode with KMS for the primary key.** Set `CRYPTO_MODE=hybrid`, `KEY_PROVIDER=aws-kms`, `PARMANA_HYBRID_KMS=true`, `SECONDARY_SIGNATURE_PROVIDER=dilithium3`, and either a secondary key file or `PARMANA_SECONDARY_KEY_SECRET_ID`. The primary signature is then made through KMS, and the primary private key is never read into the process. Without `PARMANA_HYBRID_KMS=true`, the server refuses `CRYPTO_MODE=hybrid` with `KEY_PROVIDER=aws-kms`, and the Doctor check says so.
+
+**Hybrid mode with the secondary key in a secret.** Set `PARMANA_SECONDARY_KEY_SECRET_ID` to the name or ARN of the secret. The secret's value must be the dilithium3 private key as PEM (PKCS#8). The server:
+
+- reads and parses the secret at start-up, and stops if it cannot;
+- does not require `default-secondary.*.pem` files in `PARMANA_KEY_DIR`;
+- reads the secret on first use and again after five minutes, so a rotated secret is picked up without a restart.
+
+The secret is read in `AWS_REGION`. If `AWS_REGION` is not set, start-up stops with a message that says so.
+
+## Permissions a deployment needs
+
+These are the actions the code calls. Grant only these.
+
+- `kms:Sign`, `kms:GetPublicKey`, `kms:DescribeKey` on the signing key (single mode, and hybrid mode with `PARMANA_HYBRID_KMS=true`).
+- `secretsmanager:GetSecretValue` on the secondary key secret only (when `PARMANA_SECONDARY_KEY_SECRET_ID` is set).
+
+Restrict who may read or change the secret. Anyone who can read it can sign records under the secondary key.
+
+## Putting the key files in place
+
+When the secondary key is a file, the deployment writes it into `PARMANA_KEY_DIR` before the server starts. The server does not fetch files. Make the directory readable only by the server's user, and do not commit the files.
+
+## Infrastructure for the secondary key secret
+
+The Terraform stack in `infra/parmana-prod-signing/main.tf` creates the secret, its own KMS key, and the policies that limit who can read the secret. It is a reviewed draft. It has been applied to a separate test account (`infra/parmana-test-signing`, a copy of the same file) and checked there, as recorded in `docs/internal/runbooks/TEST-ACCOUNT-SECRET-CHECK.md`. The secret stack has not been applied to production. The original alias and runtime policy were applied to production from the same folder on 2026-11-13, and the owner check is open (PROD-1). Each stack refuses to run in any account except the one its variable file names.
+
+What it creates:
+
+- A KMS key used only for the secret. The server role may decrypt with it. Key administration goes to `secret_key_admin_arn`, which must not be the server role.
+- The secret named `secondary_key_secret_name`, encrypted with that key.
+- A resource policy on the secret that **denies** `GetSecretValue` to every principal except the server role. The deny covers the account root, so a broad IAM grant elsewhere does not allow a read.
+- A rotation writer, only if `rotation_role_arn` is set. That role can write a new value and describe the secret. It cannot read the value.
+- An inline policy on the server role that allows reading that one secret and decrypting with its key.
+
+What it does not create, and why:
+
+- **The secret's value.** It is the dilithium3 private key as PEM. Create it outside Terraform, with a command that reads the PEM from a file that is then deleted, so the key never appears in Terraform state or in this repository. The file must not be in a shared folder.
+- **The CloudTrail alert.** Reads of the secret are logged only if a trail records Secrets Manager data events. Add an alert on `GetSecretValue` from any principal other than the server role. This is an operator step.
+
+Before applying, run `terraform plan` and check that the resource policy and the KMS key policy name only the intended roles.
+
+## Checking what a deployment runs
+
+Each time the API starts, it logs one line with `"event": "effective_crypto_config"`. It shows the settings that decide how the process signs: `cryptoMode`, the signature providers, `hybridSchemaVersion`, `hybridSignatureRequired`, `keyProvider`, `hybridKmsPrimary`, and `secondaryKeySource` (`none`, `file` or `secret`). It never shows secret values, secret names, ARNs or key material.
+
+Which trust policy an integrator should use to verify a deployment's records depends on this mode. See the verifier's `docs/OPERATING-MODES.md`.
+
+To check a deployment, open its startup logs and find the most recent `effective_crypto_config` line. Don't rely on the environment-variable screen, because the values there are hidden after they are saved.
+
+## Verifying a key
+
+Obtain a key's fingerprint with `parmana-verify key-fingerprint <public-key.pem>`, and check it out of band before pinning it in a trust file. A verifier accepts a record only under a key it has pinned.
 
 ## Rotation
 
-1. Generate the new key with a new `keyId`. Do not reuse an old `keyId`.
-2. Add the new key to each trust file with its fingerprint and a `validFrom` at or before the first record it will sign.
-3. Point the server at the new key, and keep the old key in the trust file until its records are no longer needed.
+1. Create the new key with a new `keyId`. Never reuse an old `keyId`. For KMS, create the new key and point the alias `alias/<keyId>` at it.
+2. Add the new key to each verifier's trust file, with its fingerprint and a `validFrom` at or before the first record it will sign.
+3. Point the server at the new key. For a secret, update the secret's value; the server picks it up within five minutes.
+4. Keep the old key in every trust file until no record signed under it still needs to be checked.
 
 ## Retirement
 
-- **Routine retirement:** set the key's `validUntil` in the trust file. The window excludes that instant, so records created at or after it are not accepted under that key.
-- **Compromise:** set `compromised: true` in the trust file. Verifiers then refuse that key for every record. Records signed before the compromise are refused too, so decide before doing this whether those records need re-issuing.
+- **Routine retirement:** set the key's `validUntil` in the trust file. The window excludes that instant, so records at or after it are not accepted under that key.
+- **Compromise:** set `compromised: true` in the trust file. Verifiers then refuse that key for every record, including records signed before the compromise. Decide before doing this whether those records need to be signed again.
 
-## What this policy does not cover yet
+## Failure modes
 
-- The server does not read signing keys from a secrets manager. Until it does, the step that puts the key files in place is an operator procedure, and it needs its own audit.
-- Hybrid signing cannot use a cloud key service. A dilithium3 key has no managed service in this code, so it stays a file.
-- Rotation is not automated, and the server does not check the trust file. Each verifier must be updated by hand.
+| Condition                                                       | What happens                                                                                |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `CRYPTO_MODE=hybrid` with `aws-kms` and no `PARMANA_HYBRID_KMS` | Refused at start-up.                                                                        |
+| Secret named but not readable or not a PEM key                  | Refused at start-up.                                                                        |
+| `AWS_REGION` unset with a secret or KMS                         | Refused at start-up.                                                                        |
+| Secret becomes unreadable after start-up                        | Signing fails for that record, and the failure is not cached; the next request tries again. |
+| Verifier does not pin the secondary key                         | The record is refused with "no trusted key".                                                |
 
-The decision to change any of these belongs to the owner.
+## What is not covered
+
+- Not run against real AWS KMS. The code paths are tested with fakes and with the verifier.
+- Secrets Manager: run once in a test account on 2026-11-21. The server role read the secret from an EC2 instance, and the stored key was ML-DSA-65. Not run against production. The record is in `TEST-ACCOUNT-SECRET-CHECK.md`.
+- The server does not check the trust file. Each verifier is updated by hand.
+- Rotation is not automated.
+- The startup check that reads the secret has unit tests with an injected reader. The same read and the same key-type test were run by hand on the test account (see above). The check function itself was not run inside the API server.
+- The classical key is not read from a secret. Only the secondary key can be.
+
+Decisions for the owner: lifting the refusal of hybrid with KMS by default (after a real KMS run), who may read the secondary key's secret, and whether the classical key should also move to a secret store.
 
 ---
 
@@ -5468,30 +5542,32 @@ Parmana is configured through environment variables. The server reads them at st
 
 ## Keys and cryptography
 
-| Variable                                | Default             | Accepted values                                                                                   | Required                               | Status                                               | Notes                                                                                                                                    |
-| --------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `KEY_PROVIDER`                          | `local`             | `local`, `aws-kms`                                                                                | No                                     | Implemented (`local`); `aws-kms` checked at start-up | The code refuses any other value as not implemented (`IMPLEMENTED_KEY_PROVIDERS`). `aws-kms` restricts the primary signature to Ed25519. |
-| `PARMANA_SIGNING_KEY_ID`                | `default`           | Key id                                                                                            | No                                     | Implemented                                          | The key that signs trust records and approvals.                                                                                          |
-| `PARMANA_GATEWAY_KEY_ID`                | `gateway`           | Key id                                                                                            | No                                     | Implemented                                          | The gateway's attestation key, in the key directory.                                                                                     |
-| `PARMANA_GATEWAY_ID`                    | `parmana-gateway`   | Letters, digits, `.`, `_`, `-`                                                                    | No                                     | Implemented                                          | The gateway's logical identity.                                                                                                          |
-| `PARMANA_VERIFICATION_KEY_ID`           | `default`           | Key id                                                                                            | No                                     | Implemented                                          | The key id records are signed with. Change only when rotating.                                                                           |
-| `PARMANA_VERIFICATION_SECONDARY_KEY_ID` | `default-secondary` | Key id                                                                                            | No                                     | Implemented                                          | The secondary key id for hybrid records.                                                                                                 |
-| `PARMANA_VERIFIER_KEY_ID`               | `signal-verifier`   | Key id                                                                                            | No                                     | Implemented                                          | Signs the verifier's read-only fetches.                                                                                                  |
-| `PARMANA_KEY_MATERIAL_JSON`             | none                | JSON                                                                                              | No                                     | Implemented                                          | Key material written into the key directory at boot, for files that do not exist there. Treat as a secret.                               |
-| `PARMANA_KEY_MATERIAL_SECRET`           | none                | A secret name or ARN                                                                              | No                                     | Implemented                                          | The same JSON, held in a secrets manager. Needs `PARMANA_SECRETS_PROVIDER=aws-secrets-manager`.                                          |
-| `PARMANA_SECRETS_PROVIDER`              | none                | `aws-secrets-manager`                                                                             | No                                     | Implemented                                          | Where to read `PARMANA_KEY_MATERIAL_SECRET`.                                                                                             |
-| `AWS_REGION`, `AWS_ROLE_ARN`            | none                | AWS values                                                                                        | With `aws-kms` or the secrets provider | Implemented, not exercised here                      | The server assumes the role with the platform's OIDC token, per the example file.                                                        |
-| `CRYPTO_MODE`                           | `single`            | `single`, `hybrid`                                                                                | No                                     | Implemented                                          | `hybrid` also signs with the secondary provider. Verified with `dilithium3`.                                                             |
-| `PRIMARY_SIGNATURE_PROVIDER`            | `ed25519`           | `ed25519`, `ecdsa-p256`, `dilithium3`, `dilithium5`, `sphincs-plus`                               | No                                     | Implemented (`ed25519` exercised)                    | The primary signing algorithm.                                                                                                           |
-| `SECONDARY_SIGNATURE_PROVIDER`          | none                | Same list, must differ from the primary                                                           | Yes with `CRYPTO_MODE=hybrid`          | Implemented (`dilithium3` exercised)                 | Without it, hybrid execution releases the action and then fails to record it (observed: `500`).                                          |
-| `HASH_PROVIDER`                         | `sha256`            | `sha256`, `sha3-512`, `blake3`                                                                    | No                                     | Implemented                                          | Hash algorithm, per the example file.                                                                                                    |
-| `HYBRID_SIGNATURE_REQUIRED`             | `false`             | `true`                                                                                            | No                                     | Implemented                                          | Requires a hybrid envelope on records.                                                                                                   |
-| `HYBRID_REQUIRED_FROM`                  | none                | UTC ISO-8601 ending in `Z`                                                                        | No                                     | Implemented                                          | Records created at or after this instant must be hybrid-signed.                                                                          |
-| `HYBRID_SCHEMA_VERSION`                 | `3` (unset)         | `2`, `3`                                                                                          | No                                     | Implemented (`3` exercised)                          | `3` covers the whole record (see [Security](../security/README.md#schema-versions-and-coverage)).                                        |
-| `HYBRID_SCHEMA_V3_ACKNOWLEDGED`         | not read            | Ignored. Retired when schema 3 became the default (2026-11-20). Remove it from environment files. |
-| `TRUST_PROFILE`                         | `v1`                | `v1`                                                                                              | No                                     | Implemented                                          | The trust record schema profile.                                                                                                         |
-| `RECEIPT_VERSION`                       | `1`                 | Free text (only `1` is meaningful)                                                                | No                                     | Implemented                                          | The receipt schema version.                                                                                                              |
-| `EXECUTION_AUTHORIZATION_TTL_SECONDS`   | `120`               | Seconds                                                                                           | No                                     | Implemented                                          | How long a signed execution authorization is valid, when the caller does not set one.                                                    |
+| Variable                                | Default             | Accepted values                                                                                         | Required                               | Status                                                 | Notes                                                                                                                                    |
+| --------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `KEY_PROVIDER`                          | `local`             | `local`, `aws-kms`                                                                                      | No                                     | Implemented (`local`); `aws-kms` checked at start-up   | The code refuses any other value as not implemented (`IMPLEMENTED_KEY_PROVIDERS`). `aws-kms` restricts the primary signature to Ed25519. |
+| `PARMANA_SIGNING_KEY_ID`                | `default`           | Key id                                                                                                  | No                                     | Implemented                                            | The key that signs trust records and approvals.                                                                                          |
+| `PARMANA_GATEWAY_KEY_ID`                | `gateway`           | Key id                                                                                                  | No                                     | Implemented                                            | The gateway's attestation key, in the key directory.                                                                                     |
+| `PARMANA_GATEWAY_ID`                    | `parmana-gateway`   | Letters, digits, `.`, `_`, `-`                                                                          | No                                     | Implemented                                            | The gateway's logical identity.                                                                                                          |
+| `PARMANA_VERIFICATION_KEY_ID`           | `default`           | Key id                                                                                                  | No                                     | Implemented                                            | The key id records are signed with. Change only when rotating.                                                                           |
+| `PARMANA_VERIFICATION_SECONDARY_KEY_ID` | `default-secondary` | Key id                                                                                                  | No                                     | Implemented                                            | The secondary key id for hybrid records.                                                                                                 |
+| `PARMANA_VERIFIER_KEY_ID`               | `signal-verifier`   | Key id                                                                                                  | No                                     | Implemented                                            | Signs the verifier's read-only fetches.                                                                                                  |
+| `PARMANA_KEY_MATERIAL_JSON`             | none                | JSON                                                                                                    | No                                     | Implemented                                            | Key material written into the key directory at boot, for files that do not exist there. Treat as a secret.                               |
+| `PARMANA_KEY_MATERIAL_SECRET`           | none                | A secret name or ARN                                                                                    | No                                     | Implemented                                            | The same JSON, held in a secrets manager. Needs `PARMANA_SECRETS_PROVIDER=aws-secrets-manager`.                                          |
+| `PARMANA_SECRETS_PROVIDER`              | none                | `aws-secrets-manager`                                                                                   | No                                     | Implemented                                            | Where to read `PARMANA_KEY_MATERIAL_SECRET`.                                                                                             |
+| `AWS_REGION`, `AWS_ROLE_ARN`            | none                | AWS values                                                                                              | With `aws-kms` or the secrets provider | Implemented, not exercised here                        | The server assumes the role with the platform's OIDC token, per the example file.                                                        |
+| `CRYPTO_MODE`                           | `single`            | `single`, `hybrid`                                                                                      | No                                     | Implemented                                            | `hybrid` also signs with the secondary provider. Verified with `dilithium3`.                                                             |
+| `PRIMARY_SIGNATURE_PROVIDER`            | `ed25519`           | `ed25519`, `ecdsa-p256`, `dilithium3`, `dilithium5`, `sphincs-plus`                                     | No                                     | Implemented (`ed25519` exercised)                      | The primary signing algorithm.                                                                                                           |
+| `SECONDARY_SIGNATURE_PROVIDER`          | none                | Same list, must differ from the primary                                                                 | Yes with `CRYPTO_MODE=hybrid`          | Implemented (`dilithium3` exercised)                   | Without it, hybrid execution releases the action and then fails to record it (observed: `500`).                                          |
+| `PARMANA_HYBRID_KMS`                    | `false`             | `true` lets hybrid signing use a KMS primary key                                                        | No                                     | Implemented, not verified against a real KMS key       | Refuses `CRYPTO_MODE=hybrid` with `KEY_PROVIDER=aws-kms` unless set. See F25.                                                            |
+| `PARMANA_SECONDARY_KEY_SECRET_ID`       | none                | AWS Secrets Manager secret (name or ARN) holding the secondary private key as PEM; read in `AWS_REGION` | No                                     | Implemented, not verified against real Secrets Manager | The key is read at startup and cached 5 minutes; it is not written to disk. Its key files are not required. See F26.                     |
+| `HASH_PROVIDER`                         | `sha256`            | `sha256`, `sha3-512`, `blake3`                                                                          | No                                     | Implemented                                            | Hash algorithm, per the example file.                                                                                                    |
+| `HYBRID_SIGNATURE_REQUIRED`             | `false`             | `true`                                                                                                  | No                                     | Implemented                                            | Requires a hybrid envelope on records.                                                                                                   |
+| `HYBRID_REQUIRED_FROM`                  | none                | UTC ISO-8601 ending in `Z`                                                                              | No                                     | Implemented                                            | Records created at or after this instant must be hybrid-signed.                                                                          |
+| `HYBRID_SCHEMA_VERSION`                 | `3` (unset)         | `2`, `3`                                                                                                | No                                     | Implemented (`3` exercised)                            | `3` covers the whole record (see [Security](../security/README.md#schema-versions-and-coverage)).                                        |
+| `HYBRID_SCHEMA_V3_ACKNOWLEDGED`         | not read            | Ignored. Retired when schema 3 became the default (2026-11-20). Remove it from environment files.       |
+| `TRUST_PROFILE`                         | `v1`                | `v1`                                                                                                    | No                                     | Implemented                                            | The trust record schema profile.                                                                                                         |
+| `RECEIPT_VERSION`                       | `1`                 | Free text (only `1` is meaningful)                                                                      | No                                     | Implemented                                            | The receipt schema version.                                                                                                              |
+| `EXECUTION_AUTHORIZATION_TTL_SECONDS`   | `120`               | Seconds                                                                                                 | No                                     | Implemented                                            | How long a signed execution authorization is valid, when the caller does not set one.                                                    |
 
 ## Experimental and opt-in
 
@@ -6452,6 +6528,53 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Resolved in part (local, not released).** The Policy v2 evidence chain and review outcome are now checked offline by `parmana-verify policy-v2`, on local branch `feat/policy-v2-evidence` in `parmana-verifier` (commit `da972d5`, npm test 116 passing). The test vectors were produced by parmana-core's own code, and the verifier accepts them. The Python package has the same command (`parmana_verifier.policy_v2`), tested against the same vectors (Python suite 114, npm suite 116). Both are committed on `ccr-ead4b602-t6o6n7` in `parmana-verifier`, but not pushed: push access to that repository was denied for this session, and no release has been made.
 - **Decision on the legacy refusal.** Legacy single-mode records stay refused by default. Their signed fields are fixed, so adding a schema version to them would change what the signature covers. Production signs hybrid records as schema 3, which the default verifier accepts. The quickstart records are test-only. This decision follows the existing design; it was not re-run live.
 - **Recommendation.** Decide whether the verifier should check the Policy v2 evidence chain and review outcomes, which needs its own format document and a verifier release. Until then, the verifier documentation should say that it does not read them. Decide also whether single-mode records should carry `schemaVersion`, so that the default verifier accepts them without `allowLegacyV2`.
+
+### F24. Hybrid signing run live; the verifier accepts the production-format record (verified)
+
+- **Evidence.** A quickstart server with `CRYPTO_MODE=hybrid`, `PRIMARY_SIGNATURE_PROVIDER=ed25519` and `SECONDARY_SIGNATURE_PROVIDER=dilithium3`, with its `default-secondary` key generated by `scripts/generate-keypair.ts`. The governed flow produced a record in schema 3 with two signatures, `ed25519` and `dilithium3`. The record was fetched from `GET /trust-records`, because the example stops before saving its file when its own offline check fails (it supplies only the primary key).
+- **Verifier results.** With both keys pinned, `parmana-verify` (npm) and `python -m parmana_verifier` both report `valid: true`, `coverage: full`, and `hybridSignatures: true`. A copy with its outcome changed is rejected on the hash and the signature. With the dilithium key not pinned, the record is rejected with "no trusted key".
+- **What this does not show.** This was a single server on one machine. It does not show key rotation, the production key store (`PARMANA_KEY_DIR` or KMS), or a multi-server deployment. The governed example's offline step needs the secondary key to be supplied to pass; that is a gap in the example, not in the verifier.
+- **Decision for the owner.** Production keys must be generated, stored and pinned under a key policy before this is used for real records.
+
+### F25. Hybrid signing with a KMS primary key: built behind a flag, not verified against real KMS
+
+- **Evidence.** The hybrid provider can take its primary (ed25519) signature from a `Signer` instead of reading the primary private key, and `VerificationCrypto.signHybrid` passes the KMS signer when `KEY_PROVIDER=aws-kms` and `PARMANA_HYBRID_KMS=true`. The signer is the existing KMS signer, which signs the same bytes as the file path. Tests: a fake KMS signer shows that the primary signature goes through the signer and the primary private key is never read, and that the primary signature is byte-identical to the file-key path (ed25519 signatures are deterministic). The crypto and shared suites and the architecture tests pass (1170 tests).
+- **Not verified.** Against a real AWS KMS key. The signer was tested with a fake. The Doctor check still refuses `hybrid` with `aws-kms` unless `PARMANA_HYBRID_KMS=true`, and the flag is off by default.
+- **Decision for the owner.** Whether to lift the refusal after a real KMS run. That needs an AWS sandbox account and a KMS ed25519 key; I have neither here.
+
+### F26. The dilithium3 secondary key can come from AWS Secrets Manager, so it never has to be a file (built, not verified against real Secrets Manager)
+
+- **Evidence.** `PARMANA_SECONDARY_KEY_SECRET_ID` names a Secrets Manager secret that holds the secondary private key as PEM. `SecretSecondaryKeyProvider` serves only the secondary key from the secret, caches it for five minutes, and passes every other key to the file provider. The secondary key's files are not required when the secret is set. At startup, `assertSecondaryKeySecretReachable` reads and parses the secret, so a bad secret stops the server before the first record. Tests (with an injected reader, no AWS): the key comes from the secret and its public key is derived from it; the secondary key is never asked of the fallback; the secret is read once within the cache window and again after it; a failed read is not cached; a hybrid record signed with it verifies.
+- **Not verified.** Against a real AWS Secrets Manager secret. The startup check now has unit tests (five, with an injected reader): no secret configured, a readable dilithium3 key, an unreadable secret, a value that is not PEM, and an ed25519 key. The check refuses any key that is not ML-DSA-65, and it never puts key material in an error. It has not run against a real secret. The Terraform that sets the read policy is in `infra/parmana-prod-signing/main.tf` (PR #760). It was applied to a test account and read-checked from EC2 on 2026-11-21 (`docs/internal/runbooks/TEST-ACCOUNT-SECRET-CHECK.md`). Not applied to production.
+- **Decision for the owner.** Who may read the secret (IAM policy), and whether the same secret store should hold the classical key. This change does not read the classical key from a secret.
+
+### F27. The first test secret held a key of unknown origin; removed from the test account and replaced (contained; production origin not established)
+
+- **Evidence.** `scripts/generate-keypair.ts` refused to create a key because `keys/default-secondary.*` already existed. The operator then stored that existing file as the secret's value. The secret was force-deleted with no recovery window, which removes every version. A new key was generated and stored with `scripts/store-secondary-key.mjs`. Full record: `docs/internal/runbooks/TEST-ACCOUNT-SECRET-CHECK.md` §5.7 and §5.8.
+- **Fix.** The store script generates a fresh key in a temporary folder and never reads `keys/`. The runbook (`SECRETS-MANAGER-KEYS.md`) requires it, so a key of unknown origin can't be stored through the documented steps.
+- **Not established.** Whether the original file was a production key. The test account no longer holds it. Production was not changed by any command in this run. The owner has to check production's secondary key (open item PROD-1).
+
+### F28. The production Terraform folder's state lists production resources, though the stack is documented as never applied (open)
+
+- **Evidence.** A plan in `infra/parmana-prod-signing` showed the state holding `aws_kms_alias.signing [id=alias/parmana-prod]` and `aws_iam_role_policy.runtime [id=parmana-vercel-kms-signer:parmana-prod-kms-signing]`. The stack header and the key-management page say it has not been applied.
+- **Finding (2026-11-21).** The state file was last written on 2026-11-13, at serial 3, by a Terraform 1.17.1 run. It holds three resources: the alias, the runtime policy and its data source. So the original alias and runtime policy were applied to production from this folder. The secret stack was never applied to production.
+- **Effect.** A plan or apply from that folder with other variables can act on production resources. Nothing was applied by this run.
+- **Decision for the owner.** Find out how that state was produced, and confirm what those production resources are (open item PROD-1).
+
+### F29. Production has two Ed25519 signing keys. One is in active use; the other is not yet identified (open, PROD-1)
+
+- **Observed (2026-11-21, production console, KMS, region ap-south-1).**
+  - Key `2787acce-db19-4cd6-88ed-ce2c1319096b`: aliases `default` and `parmana-ed25519-signer`. Status enabled, Ed25519 (`ECC_NIST_EDWARDS25519`), sign and verify. Created 15 September 2026. Last used 7 days before the check. Description: "Parmana Ed25519 signing key (replaces .env PARMANA_KEY_MATERIAL_JSON)".
+  - Key `7b0c7156-88b1-4979-be5d-7eca96972c39`: alias `parmana-prod`. This is the key ARN in `infra/parmana-prod-signing/prod.tfvars`, and the alias the state holds (see F28). Its creation date and last-used date were not checked.
+- **Also observed.** Key `7b0c7156…` was created on 13 November 2026 at 23:23 (IST), and last used 37 minutes before the check. Production's environment (Vercel, Production scope) has a variable `PARMANA_SIGNING_KEY_ID`, added on 13 November. The value is hidden by Vercel after saving. The operator reports it is a key ID, not an alias, and it is consistent with `7b0c7156…`. This is not yet confirmed against the value itself.
+- **What this means.** Production appears to sign with `7b0c7156…`, the key created on 13 November, and the older key `2787acce…` has not been used for about 7 days.
+- **Confirmed (2026-11-21).** The public JWKS at `https://parmana-api-real.vercel.app/.well-known/jwks.json` publishes one Ed25519 verification key, with `keyId` `alias/parmana-prod`. Its public key (`MCowBQYDK2VwAyEAMEVLc85qBUiOWQelvmkrHnH243O1j5SE+pkBWE9LL1U=`) is identical to the public key of KMS key `7b0c7156…` shown in the console's Public key tab. Key `2787acce…` is not published. So production publishes the key created on 13 November, through the alias, and the server's key ID is the alias `alias/parmana-prod`, not a raw key ID.
+- **Correction.** An earlier note said the environment variable holds a key ID rather than an alias. The published `keyId` shows the server uses the alias. The variable's exact value is still hidden by Vercel, but the published key confirms what production signs with.
+- **Secondary key source (2026-11-21, Vercel, Production scope).** `PARMANA_KEY_MATERIAL_JSON` is set (added 21 October). `PARMANA_SECONDARY_KEY_SECRET_ID` is not set. The operator reports that `PARMANA_KEY_MATERIAL_JSON` has no `default-secondary` entry. The earlier note that it did came from the runbook, not from the variable, and is withdrawn. Where, if anywhere, production's secondary key is stored is open. The runbook's 10 November deadline to move keys out of that variable still applies to any keys that are in it.
+- **Crypto mode (2026-11-21, operator report).** `CRYPTO_MODE` is set for Production (added 11 September) and is `single`. Hybrid signing was never turned on in production. `PARMANA_HYBRID_KMS` is not set. So the secondary (dilithium3) key is not used to sign anything in production. The code paths that use it (the hybrid signer and hybrid receipt signing) run only in hybrid mode. The secondary key is not used to sign in production. The operator reports that `PARMANA_KEY_MATERIAL_JSON` has no `default-secondary` entry, so no secondary key is held in Vercel.
+- **Previously recorded.** Production has a live Ed25519 signing key that predates the Terraform work, and a second key with the alias the Terraform created. Which key the production server signs with has not been confirmed from this record. The state's alias points to the second key.
+- **Not done.** No key was disabled, deleted or re-aliased. Nothing in this record changes production's signing.
+- **Decision for the owner.** Confirm which key the production server uses, and whether `7b0c7156…` is needed. Until then, neither key is to be disabled, deleted or re-aliased.
 
 ### F20. A partial review state crashed the decision route, and a test left one behind (fixed)
 

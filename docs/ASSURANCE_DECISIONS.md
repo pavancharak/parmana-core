@@ -149,17 +149,18 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 ## Record
 
-| Decision | Owner decision                                | Date       | Recorded by                              |
-| -------- | --------------------------------------------- | ---------- | ---------------------------------------- |
-| D7       | In scope                                      | 2026-11-14 | Recorded in session at owner's direction |
-| D8       | Define as proposed                            | 2026-11-14 | Recorded in session at owner's direction |
-| D9       | Reject non-canonical encodings                | 2026-11-14 | Recorded in session at owner's direction |
-| D10      | Pending                                       |            |                                          |
-| D11      | Pending                                       |            |                                          |
-| D12      | Pending                                       |            |                                          |
-| D13      | Adopted: permanent direction                  | 2026-11-14 | Recorded in session at owner's direction |
-| D14      | Adopted: razorpay:refund policy version       | 2026-11-14 | Owner confirmed version 1.3.0            |
-| D23      | Partly adopted: G-77 change; the rest pending | 2026-11-19 | Recorded in session at owner's direction |
+| Decision | Owner decision                                                 | Date       | Recorded by                              |
+| -------- | -------------------------------------------------------------- | ---------- | ---------------------------------------- |
+| D7       | In scope                                                       | 2026-11-14 | Recorded in session at owner's direction |
+| D8       | Define as proposed                                             | 2026-11-14 | Recorded in session at owner's direction |
+| D9       | Reject non-canonical encodings                                 | 2026-11-14 | Recorded in session at owner's direction |
+| D10      | Pending                                                        |            |                                          |
+| D11      | Pending                                                        |            |                                          |
+| D12      | Pending                                                        |            |                                          |
+| D13      | Adopted: permanent direction                                   | 2026-11-14 | Recorded in session at owner's direction |
+| D14      | Adopted: razorpay:refund policy version                        | 2026-11-14 | Owner confirmed version 1.3.0            |
+| D23      | Partly adopted: G-77 change; the rest pending                  | 2026-11-19 | Recorded in session at owner's direction |
+| D24      | Decided: v3 only, v2 discarded (implementation pending review) | 2026-11-21 | Section D24 below                        |
 
 ---
 
@@ -366,3 +367,29 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 4. **Commit signing.** Commits made in this session are signed off but not signed. Signing must be fixed before any merge.
 
 **Effect:** no code or policy changes beyond part 1. D15 stays in force until a target is chosen. The earlier proposal documents (`CAPABILITY-BINDING-PERMANENT-FIX.md` and `RAZORPAY-REFUND-POLICY-DRAFT.md`) are removed. This record and the guide replace them.
+
+---
+
+## D24. Record integrity for single-mode records (proposed, awaiting owner decision)
+
+- **Reference:** D24
+- **Source:** the verifier's `docs/OPERATING-MODES.md`, and the frozen-core rule in `docs/assurance/FROZEN_CORE.md`
+- **Date recorded:** 2026-11-21
+- **Owner:** Pavan Charak
+
+**Question:** Production runs `CRYPTO_MODE=single`. Its records carry a schema version that is not signed, so a stored record can be changed to version 2 and checked against fewer fields. Which record integrity should single-mode records have?
+
+**Options considered:**
+
+1. Keep schema version 2 for single mode, and accept it with `allowLegacyV2`. No code change. The downgrade gap stays, and it closes only when hybrid is on.
+2. Add a single-signature whole-record format: schema version 3, signed with the primary key over the whole record, including the version. The verifier accepts it under a named flag. This closes the gap without post-quantum keys. It changes frozen signing code, needs the frozen-core review, and needs both verifiers and the test vectors to change together.
+3. Turn on hybrid mode with a cutover date (`hybridRequiredFrom`). This closes the gap for new records and adds a second key to manage.
+4. Single ML-DSA-65 (dilithium3) as the only signature. The config accepts it, but KMS signs only Ed25519, and the verifier has not been tested with a single ML-DSA-65 record.
+
+**Recommendation:** Option 2, scheduled deliberately, not as part of an incident fix. Option 1 is the interim position, and option 3 is the route when hybrid is funded. Option 4 needs its own test before anyone relies on it.
+
+**Owner decision (2026-11-21):** Discard schema version 2 completely. Every trust record is schema version 3. The record is signed with one algorithm (Ed25519 or ML-DSA-65) in single mode, or with both in hybrid mode, and the policy names the required algorithms. The owner confirmed there are no customers, vendors or live traffic, so no existing record needs to stay verifiable. **Still required before code lands:** the frozen-core review (`docs/assurance/FROZEN_CORE.md`), a regenerated manifest, the Python and TypeScript verifiers changed together, and new test vectors.
+
+**Effect on the documents:** none until decided. The verifier's `docs/OPERATING-MODES.md` describes the current position.
+
+**Not changed by this decision:** the score policy, the exit criteria and the acceptance principles.

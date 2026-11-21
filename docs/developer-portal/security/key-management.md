@@ -48,6 +48,33 @@ Restrict who may read or change the secret. Anyone who can read it can sign reco
 
 When the secondary key is a file, the deployment writes it into `PARMANA_KEY_DIR` before the server starts. The server does not fetch files. Make the directory readable only by the server's user, and do not commit the files.
 
+## Infrastructure for the secondary key secret
+
+The Terraform stack in `infra/parmana-prod-signing/main.tf` creates the secret, its own KMS key, and the policies that limit who can read the secret. It is a reviewed draft. It has been applied to a separate test account (`infra/parmana-test-signing`, a copy of the same file) and checked there, as recorded in `docs/internal/runbooks/TEST-ACCOUNT-SECRET-CHECK.md`. The secret stack has not been applied to production. The original alias and runtime policy were applied to production from the same folder on 2026-11-13, and the owner check is open (PROD-1). Each stack refuses to run in any account except the one its variable file names.
+
+What it creates:
+
+- A KMS key used only for the secret. The server role may decrypt with it. Key administration goes to `secret_key_admin_arn`, which must not be the server role.
+- The secret named `secondary_key_secret_name`, encrypted with that key.
+- A resource policy on the secret that **denies** `GetSecretValue` to every principal except the server role. The deny covers the account root, so a broad IAM grant elsewhere does not allow a read.
+- A rotation writer, only if `rotation_role_arn` is set. That role can write a new value and describe the secret. It cannot read the value.
+- An inline policy on the server role that allows reading that one secret and decrypting with its key.
+
+What it does not create, and why:
+
+- **The secret's value.** It is the dilithium3 private key as PEM. Create it outside Terraform, with a command that reads the PEM from a file that is then deleted, so the key never appears in Terraform state or in this repository. The file must not be in a shared folder.
+- **The CloudTrail alert.** Reads of the secret are logged only if a trail records Secrets Manager data events. Add an alert on `GetSecretValue` from any principal other than the server role. This is an operator step.
+
+Before applying, run `terraform plan` and check that the resource policy and the KMS key policy name only the intended roles.
+
+## Checking what a deployment runs
+
+Each time the API starts, it logs one line with `"event": "effective_crypto_config"`. It shows the settings that decide how the process signs: `cryptoMode`, the signature providers, `hybridSchemaVersion`, `hybridSignatureRequired`, `keyProvider`, `hybridKmsPrimary`, and `secondaryKeySource` (`none`, `file` or `secret`). It never shows secret values, secret names, ARNs or key material.
+
+Which trust policy an integrator should use to verify a deployment's records depends on this mode. See the verifier's `docs/OPERATING-MODES.md`.
+
+To check a deployment, open its startup logs and find the most recent `effective_crypto_config` line. Don't rely on the environment-variable screen, because the values there are hidden after they are saved.
+
 ## Verifying a key
 
 Obtain a key's fingerprint with `parmana-verify key-fingerprint <public-key.pem>`, and check it out of band before pinning it in a trust file. A verifier accepts a record only under a key it has pinned.
@@ -76,10 +103,11 @@ Obtain a key's fingerprint with `parmana-verify key-fingerprint <public-key.pem>
 
 ## What is not covered
 
-- Not run against real AWS KMS or real Secrets Manager. The code paths are tested with fakes and with the verifier; the first real run needs a sandbox account and a KMS key.
+- Not run against real AWS KMS. The code paths are tested with fakes and with the verifier.
+- Secrets Manager: run once in a test account on 2026-11-21. The server role read the secret from an EC2 instance, and the stored key was ML-DSA-65. Not run against production. The record is in `TEST-ACCOUNT-SECRET-CHECK.md`.
 - The server does not check the trust file. Each verifier is updated by hand.
 - Rotation is not automated.
-- The startup check that reads the secret has no unit test of its own.
+- The startup check that reads the secret has unit tests with an injected reader. The same read and the same key-type test were run by hand on the test account (see above). The check function itself was not run inside the API server.
 - The classical key is not read from a secret. Only the secondary key can be.
 
 Decisions for the owner: lifting the refusal of hybrid with KMS by default (after a real KMS run), who may read the secondary key's secret, and whether the classical key should also move to a secret store.
