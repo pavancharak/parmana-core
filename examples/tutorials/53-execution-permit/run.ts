@@ -127,9 +127,9 @@ console.log(JSON.stringify(trustRecord, null, 2));
 
 console.log();
 
-console.log("Legacy signature (unchanged shape, always present)");
-console.log(`  algorithm : ${trustRecord.signature.algorithm}`);
-console.log(`  keyId     : ${trustRecord.signature.keyId}`);
+console.log("Signature (first entry of the signatures array)");
+console.log(`  algorithm : ${trustRecord.signatures?.[0]?.algorithm}`);
+console.log(`  keyId     : ${trustRecord.signatures?.[0]?.keyId}`);
 
 console.log();
 
