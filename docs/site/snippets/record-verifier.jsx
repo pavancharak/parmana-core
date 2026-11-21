@@ -68,7 +68,6 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
       businessTransactionId: record.businessTransactionId,
       transaction: record.transaction,
       authorization: record.authorization,
-      overrides: record.overrides,
       executions: record.executions,
       createdAt: record.createdAt,
     };

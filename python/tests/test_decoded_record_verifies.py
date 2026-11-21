@@ -35,21 +35,25 @@ def test_the_record_carries_an_explicit_null() -> None:
     assert RECORD["executions"][0]["previousChainHash"] is None
 
 
-def test_the_raw_json_hash_matches() -> None:
-    # This record is schema version 2, which is discarded (decision D24), so it is
-    # refused. Its hash still matches, which is what this regression test guards.
+def test_the_raw_json_is_refused() -> None:
+    # This record was signed before overrides left the record format (decision D24
+    # and the frozen canonical view), so its stored hash no longer matches. It is
+    # schema version 2 as well, which is refused in any case. It is kept as the real
+    # sandbox sample.
     result = verify_execution_trust_record_offline(RECORD, KEYS)
 
-    assert result.hash_valid is True
     assert result.valid is False
 
 
-def test_the_decoded_model_hash_matches() -> None:
+def test_the_decoded_model_gives_the_same_result_as_the_raw_json() -> None:
+    raw = verify_execution_trust_record_offline(RECORD, KEYS)
     model = decode(RECORD, ExecutionTrustRecord)
 
     result = verify_execution_trust_record_offline(model, KEYS)
 
-    assert result.hash_valid is True, result.errors
+    assert result.hash_valid == raw.hash_valid
+    assert result.valid == raw.valid
+    assert result.errors == raw.errors
 
 
 def test_a_decoded_model_encodes_back_to_the_servers_json() -> None:
@@ -59,9 +63,11 @@ def test_a_decoded_model_encodes_back_to_the_servers_json() -> None:
 def test_encoding_returns_a_copy_so_the_model_cannot_be_changed_through_it() -> None:
     model = decode(RECORD, ExecutionTrustRecord)
 
+    before = verify_execution_trust_record_offline(model, KEYS).hash_valid
+
     encode(model)["trustRecordHash"] = "0" * 64
 
-    assert verify_execution_trust_record_offline(model, KEYS).hash_valid is True
+    assert verify_execution_trust_record_offline(model, KEYS).hash_valid == before
 
 
 def test_a_changed_model_is_encoded_from_its_fields_and_fails() -> None:

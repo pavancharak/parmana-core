@@ -138,7 +138,6 @@ def _canonical_execution_trust_record(record: dict[str, Any]) -> dict[str, Any]:
         "businessTransactionId",
         "transaction",
         "authorization",
-        "overrides",
         "executions",
         "createdAt",
     )

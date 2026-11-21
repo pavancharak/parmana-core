@@ -81,7 +81,6 @@ const TRUST_RECORD_FIELDS = [
   "businessTransactionId",
   "transaction",
   "authorization",
-  "overrides",
   "executions",
   "createdAt",
 ] as const;
