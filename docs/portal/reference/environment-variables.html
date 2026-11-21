@@ -358,6 +358,22 @@
 <td>Without it, hybrid execution releases the action and then fails to record it (observed: <code>500</code>).</td>
 </tr>
 <tr>
+<td><code>PARMANA_HYBRID_KMS</code></td>
+<td><code>false</code></td>
+<td><code>true</code> lets hybrid signing use a KMS primary key</td>
+<td>No</td>
+<td>Implemented, not verified against a real KMS key</td>
+<td>Refuses <code>CRYPTO_MODE=hybrid</code> with <code>KEY_PROVIDER=aws-kms</code> unless set. See F25.</td>
+</tr>
+<tr>
+<td><code>PARMANA_SECONDARY_KEY_SECRET_ID</code></td>
+<td>none</td>
+<td>AWS Secrets Manager secret (name or ARN) holding the secondary private key as PEM; read in <code>AWS_REGION</code></td>
+<td>No</td>
+<td>Implemented, not verified against real Secrets Manager</td>
+<td>The key is read at startup and cached 5 minutes; it is not written to disk. Its key files are not required. See F26.</td>
+</tr>
+<tr>
 <td><code>HASH_PROVIDER</code></td>
 <td><code>sha256</code></td>
 <td><code>sha256</code>, <code>sha3-512</code>, <code>blake3</code></td>

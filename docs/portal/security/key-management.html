@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Key management · Parmana developer docs</title>
-<meta name="description" content="Key management Portal home · Security · Schema version 3 · Verifier This page sets out how the keys that sign Execution Trust Records are held, rotated and retired. It describes what the code does today. Where a practice needs something the">
+<meta name="description" content="Key management Portal home · Security · Schema version 3 · Verifier · Environment variables This page describes how the keys that sign Execution Trust Records are held, started, rotated and retired. It describes what the code does on this b">
 <link rel="icon" href="../logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../portal.css">
 </head>
@@ -39,69 +39,149 @@
     <div class="crumb"><span>Concepts</span><span class="sep">/</span><span>Key management</span></div>
     <article>
 <h1 id="key-management">Key management<a class="anchor" href="#key-management" aria-label="Link to this section">#</a></h1>
-<p><a href="../index.html">Portal home</a> · <a href="index.html">Security</a> · <a href="schema-v3.html">Schema version 3</a> · <a href="../sdk/verifier.html">Verifier</a></p>
-<p>This page sets out how the keys that sign Execution Trust Records are held, rotated and retired. It describes what the code does today. Where a practice needs something the code does not do, the page says so.</p>
-<h2 id="what-the-code-supports">What the code supports<a class="anchor" href="#what-the-code-supports" aria-label="Link to this section">#</a></h2>
+<p><a href="../index.html">Portal home</a> · <a href="index.html">Security</a> · <a href="schema-v3.html">Schema version 3</a> · <a href="../sdk/verifier.html">Verifier</a> · <a href="../reference/environment-variables.html">Environment variables</a></p>
+<p>This page describes how the keys that sign Execution Trust Records are held, started, rotated and retired. It describes what the code does on this branch. Where something is not verified against a real cloud account, the page says so.</p>
+<h2 id="the-two-signing-modes">The two signing modes<a class="anchor" href="#the-two-signing-modes" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Single mode</strong> (<code>CRYPTO_MODE=single</code>, the default). One signature, from <code>PRIMARY_SIGNATURE_PROVIDER</code> (<code>ed25519</code> by default). The key is either a file in <code>PARMANA_KEY_DIR</code> (<code>KEY_PROVIDER=local</code>) or a KMS key (<code>KEY_PROVIDER=aws-kms</code>).</li>
+<li><strong>Hybrid mode</strong> (<code>CRYPTO_MODE=hybrid</code>). Two signatures on every record: the primary (ed25519) and the secondary (<code>SECONDARY_SIGNATURE_PROVIDER</code>, <code>dilithium3</code> in production). The record is schema version 3 by default. A verifier that accepts it must have both keys pinned.</li>
+</ul>
+<h2 id="where-each-key-can-live">Where each key can live<a class="anchor" href="#where-each-key-can-live" aria-label="Link to this section">#</a></h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
-<th>Need</th>
-<th>Supported today</th>
-<th>How</th>
+<th>Key</th>
+<th>Option</th>
+<th>Settings</th>
+<th>Status</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>Classical signing key in a cloud key service</td>
-<td>Yes, in <code>CRYPTO_MODE=single</code> only</td>
-<td><code>KEY_PROVIDER=aws-kms</code>. The Doctor check refuses <code>CRYPTO_MODE=hybrid</code> with <code>aws-kms</code>.</td>
+<td>Primary (ed25519), single mode</td>
+<td>KMS</td>
+<td><code>KEY_PROVIDER=aws-kms</code>, <code>AWS_REGION</code></td>
+<td>Supported. The server signs through <code>KmsSigner</code>; the private key never leaves KMS.</td>
 </tr>
 <tr>
-<td>Hybrid signing (ed25519 plus dilithium3)</td>
-<td>Yes, with file keys</td>
-<td><code>CRYPTO_MODE=hybrid</code> with <code>KEY_PROVIDER=local</code>. Key files are read from <code>PARMANA_KEY_DIR</code>.</td>
+<td>Primary (ed25519), hybrid mode</td>
+<td>KMS</td>
+<td><code>KEY_PROVIDER=aws-kms</code>, <code>CRYPTO_MODE=hybrid</code>, <code>PARMANA_HYBRID_KMS=true</code></td>
+<td>Built, not verified against a real KMS key. Off by default. Without the flag, the server refuses this combination.</td>
 </tr>
 <tr>
-<td>Signing keys read from a secrets manager</td>
-<td><strong>No</strong></td>
-<td>The secrets manager setting (<code>aws-secrets-manager</code>) resolves connector credentials, not signing keys. A deployment must put signing key files into <code>PARMANA_KEY_DIR</code> itself.</td>
+<td>Primary (ed25519), any mode</td>
+<td>File</td>
+<td><code>KEY_PROVIDER=local</code>, <code>PARMANA_KEY_DIR</code></td>
+<td>Supported.</td>
 </tr>
 <tr>
-<td>Pinned fingerprints and validity windows</td>
-<td>Yes, in the verifier</td>
-<td>The trust file lists each key with <code>keyId</code>, <code>algorithm</code>, <code>fingerprint</code>, <code>validFrom</code>, <code>validUntil</code> and <code>compromised</code>.</td>
+<td>Secondary (dilithium3), hybrid mode</td>
+<td>Secrets Manager</td>
+<td><code>PARMANA_SECONDARY_KEY_SECRET_ID</code>, <code>AWS_REGION</code></td>
+<td>Built, not verified against a real Secrets Manager secret. The key is never written to disk.</td>
+</tr>
+<tr>
+<td>Secondary (dilithium3), hybrid mode</td>
+<td>File</td>
+<td><code>PARMANA_KEY_DIR</code> (<code>default-secondary.private.pem</code>, <code>.public.pem</code>)</td>
+<td>Supported.</td>
 </tr>
 </tbody></table></div>
-<h2 id="interim-policy">Interim policy<a class="anchor" href="#interim-policy" aria-label="Link to this section">#</a></h2>
-<ol>
-<li><strong>Single-mode signing:</strong> keep the classical key in the cloud key service, with <code>KEY_PROVIDER=aws-kms</code> and <code>AWS_REGION</code> set. Do not set <code>CRYPTO_MODE=hybrid</code> with it.</li>
-<li><strong>Hybrid signing:</strong> keep both key files in <code>PARMANA_KEY_DIR</code> with <code>KEY_PROVIDER=local</code>. The deployment writes them there at start-up from a secrets manager. The secrets manager holds the files; it is not the server&#39;s signing-key source. Restrict who can read the folder, and make the files readable only by the server&#39;s user.</li>
-<li><strong>Pinning:</strong> every verifier pins each key by fingerprint. Obtain a fingerprint with <code>parmana-verify key-fingerprint &lt;public-key.pem&gt;</code>, and check it out of band before adding it to a trust file.</li>
-</ol>
+<p>The secrets manager configured by <code>PARMANA_SECRETS_PROVIDER</code> resolves connector credentials, not signing keys. It is not the source of the primary key. The secondary key is read from a secret only when <code>PARMANA_SECONDARY_KEY_SECRET_ID</code> is set.</p>
+<h2 id="starting-the-server">Starting the server<a class="anchor" href="#starting-the-server" aria-label="Link to this section">#</a></h2>
+<p><strong>Single mode with KMS.</strong> The KMS key must be an <code>ECC_NIST_EDWARDS25519</code> key, with the <code>SIGN_VERIFY</code> usage, and the server&#39;s role must be allowed <code>kms:Sign</code>, <code>kms:GetPublicKey</code> and <code>kms:DescribeKey</code> on it. The key is referred to by the alias <code>alias/&lt;keyId&gt;</code> with dots turned into slashes; the default key is <code>alias/default</code>. The signer uses the <code>ED25519_SHA_512</code> algorithm with the <code>RAW</code> message type. Messages over 4096 bytes are signed as a fixed-size commitment, which the verifier accepts.</p>
+<p><strong>Hybrid mode with KMS for the primary key.</strong> Set <code>CRYPTO_MODE=hybrid</code>, <code>KEY_PROVIDER=aws-kms</code>, <code>PARMANA_HYBRID_KMS=true</code>, <code>SECONDARY_SIGNATURE_PROVIDER=dilithium3</code>, and either a secondary key file or <code>PARMANA_SECONDARY_KEY_SECRET_ID</code>. The primary signature is then made through KMS, and the primary private key is never read into the process. Without <code>PARMANA_HYBRID_KMS=true</code>, the server refuses <code>CRYPTO_MODE=hybrid</code> with <code>KEY_PROVIDER=aws-kms</code>, and the Doctor check says so.</p>
+<p><strong>Hybrid mode with the secondary key in a secret.</strong> Set <code>PARMANA_SECONDARY_KEY_SECRET_ID</code> to the name or ARN of the secret. The secret&#39;s value must be the dilithium3 private key as PEM (PKCS#8). The server:</p>
+<ul>
+<li>reads and parses the secret at start-up, and stops if it cannot;</li>
+<li>does not require <code>default-secondary.*.pem</code> files in <code>PARMANA_KEY_DIR</code>;</li>
+<li>reads the secret on first use and again after five minutes, so a rotated secret is picked up without a restart.</li>
+</ul>
+<p>The secret is read in <code>AWS_REGION</code>. If <code>AWS_REGION</code> is not set, start-up stops with a message that says so.</p>
+<h2 id="permissions-a-deployment-needs">Permissions a deployment needs<a class="anchor" href="#permissions-a-deployment-needs" aria-label="Link to this section">#</a></h2>
+<p>These are the actions the code calls. Grant only these.</p>
+<ul>
+<li><code>kms:Sign</code>, <code>kms:GetPublicKey</code>, <code>kms:DescribeKey</code> on the signing key (single mode, and hybrid mode with <code>PARMANA_HYBRID_KMS=true</code>).</li>
+<li><code>secretsmanager:GetSecretValue</code> on the secondary key secret only (when <code>PARMANA_SECONDARY_KEY_SECRET_ID</code> is set).</li>
+</ul>
+<p>Restrict who may read or change the secret. Anyone who can read it can sign records under the secondary key.</p>
+<h2 id="putting-the-key-files-in-place">Putting the key files in place<a class="anchor" href="#putting-the-key-files-in-place" aria-label="Link to this section">#</a></h2>
+<p>When the secondary key is a file, the deployment writes it into <code>PARMANA_KEY_DIR</code> before the server starts. The server does not fetch files. Make the directory readable only by the server&#39;s user, and do not commit the files.</p>
+<h2 id="infrastructure-for-the-secondary-key-secret">Infrastructure for the secondary key secret<a class="anchor" href="#infrastructure-for-the-secondary-key-secret" aria-label="Link to this section">#</a></h2>
+<p>The Terraform stack in <code>infra/parmana-prod-signing/main.tf</code> creates the secret, its own KMS key, and the policies that limit who can read the secret. It is a reviewed draft: it validates, and it has not been planned or applied against an AWS account.</p>
+<p>What it creates:</p>
+<ul>
+<li>A KMS key used only for the secret. The server role may decrypt with it. Key administration goes to <code>secret_key_admin_arn</code>, which must not be the server role.</li>
+<li>The secret named <code>secondary_key_secret_name</code>, encrypted with that key.</li>
+<li>A resource policy on the secret that <strong>denies</strong> <code>GetSecretValue</code> to every principal except the server role. The deny covers the account root, so a broad IAM grant elsewhere does not allow a read.</li>
+<li>A rotation writer, only if <code>rotation_role_arn</code> is set. That role can write a new value and describe the secret. It cannot read the value.</li>
+<li>An inline policy on the server role that allows reading that one secret and decrypting with its key.</li>
+</ul>
+<p>What it does not create, and why:</p>
+<ul>
+<li><strong>The secret&#39;s value.</strong> It is the dilithium3 private key as PEM. Create it outside Terraform, with a command that reads the PEM from a file that is then deleted, so the key never appears in Terraform state or in this repository. The file must not be in a shared folder.</li>
+<li><strong>The CloudTrail alert.</strong> Reads of the secret are logged only if a trail records Secrets Manager data events. Add an alert on <code>GetSecretValue</code> from any principal other than the server role. This is an operator step.</li>
+</ul>
+<p>Before applying, run <code>terraform plan</code> and check that the resource policy and the KMS key policy name only the intended roles.</p>
+<h2 id="verifying-a-key">Verifying a key<a class="anchor" href="#verifying-a-key" aria-label="Link to this section">#</a></h2>
+<p>Obtain a key&#39;s fingerprint with <code>parmana-verify key-fingerprint &lt;public-key.pem&gt;</code>, and check it out of band before pinning it in a trust file. A verifier accepts a record only under a key it has pinned.</p>
 <h2 id="rotation">Rotation<a class="anchor" href="#rotation" aria-label="Link to this section">#</a></h2>
 <ol>
-<li>Generate the new key with a new <code>keyId</code>. Do not reuse an old <code>keyId</code>.</li>
-<li>Add the new key to each trust file with its fingerprint and a <code>validFrom</code> at or before the first record it will sign.</li>
-<li>Point the server at the new key, and keep the old key in the trust file until its records are no longer needed.</li>
+<li>Create the new key with a new <code>keyId</code>. Never reuse an old <code>keyId</code>. For KMS, create the new key and point the alias <code>alias/&lt;keyId&gt;</code> at it.</li>
+<li>Add the new key to each verifier&#39;s trust file, with its fingerprint and a <code>validFrom</code> at or before the first record it will sign.</li>
+<li>Point the server at the new key. For a secret, update the secret&#39;s value; the server picks it up within five minutes.</li>
+<li>Keep the old key in every trust file until no record signed under it still needs to be checked.</li>
 </ol>
 <h2 id="retirement">Retirement<a class="anchor" href="#retirement" aria-label="Link to this section">#</a></h2>
 <ul>
-<li><strong>Routine retirement:</strong> set the key&#39;s <code>validUntil</code> in the trust file. The window excludes that instant, so records created at or after it are not accepted under that key.</li>
-<li><strong>Compromise:</strong> set <code>compromised: true</code> in the trust file. Verifiers then refuse that key for every record. Records signed before the compromise are refused too, so decide before doing this whether those records need re-issuing.</li>
+<li><strong>Routine retirement:</strong> set the key&#39;s <code>validUntil</code> in the trust file. The window excludes that instant, so records at or after it are not accepted under that key.</li>
+<li><strong>Compromise:</strong> set <code>compromised: true</code> in the trust file. Verifiers then refuse that key for every record, including records signed before the compromise. Decide before doing this whether those records need to be signed again.</li>
 </ul>
-<h2 id="what-this-policy-does-not-cover-yet">What this policy does not cover yet<a class="anchor" href="#what-this-policy-does-not-cover-yet" aria-label="Link to this section">#</a></h2>
+<h2 id="failure-modes">Failure modes<a class="anchor" href="#failure-modes" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CRYPTO_MODE=hybrid</code> with <code>aws-kms</code> and no <code>PARMANA_HYBRID_KMS</code></td>
+<td>Refused at start-up.</td>
+</tr>
+<tr>
+<td>Secret named but not readable or not a PEM key</td>
+<td>Refused at start-up.</td>
+</tr>
+<tr>
+<td><code>AWS_REGION</code> unset with a secret or KMS</td>
+<td>Refused at start-up.</td>
+</tr>
+<tr>
+<td>Secret becomes unreadable after start-up</td>
+<td>Signing fails for that record, and the failure is not cached; the next request tries again.</td>
+</tr>
+<tr>
+<td>Verifier does not pin the secondary key</td>
+<td>The record is refused with &quot;no trusted key&quot;.</td>
+</tr>
+</tbody></table></div>
+<h2 id="what-is-not-covered">What is not covered<a class="anchor" href="#what-is-not-covered" aria-label="Link to this section">#</a></h2>
 <ul>
-<li>The server does not read signing keys from a secrets manager. Until it does, the step that puts the key files in place is an operator procedure, and it needs its own audit.</li>
-<li>Hybrid signing cannot use a cloud key service. A dilithium3 key has no managed service in this code, so it stays a file.</li>
-<li>Rotation is not automated, and the server does not check the trust file. Each verifier must be updated by hand.</li>
+<li>Not run against real AWS KMS or real Secrets Manager. The code paths are tested with fakes and with the verifier; the first real run needs a sandbox account and a KMS key.</li>
+<li>The server does not check the trust file. Each verifier is updated by hand.</li>
+<li>Rotation is not automated.</li>
+<li>The startup check that reads the secret has no unit test of its own.</li>
+<li>The classical key is not read from a secret. Only the secondary key can be.</li>
 </ul>
-<p>The decision to change any of these belongs to the owner.</p>
+<p>Decisions for the owner: lifting the refusal of hybrid with KMS by default (after a real KMS run), who may read the secondary key&#39;s secret, and whether the classical key should also move to a secret store.</p>
 
     </article>
     <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/security/key-management.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
     <nav class="pager" aria-label="Pager"><a class="pn prev" href="../glossary.html"><span>Previous</span>Glossary</a><a class="pn next" href="../policies/index.html"><span>Next</span>Policy management</a></nav>
     <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
   </main>
-  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#what-the-code-supports">What the code supports</a></li><li class="d2"><a href="#interim-policy">Interim policy</a></li><li class="d2"><a href="#rotation">Rotation</a></li><li class="d2"><a href="#retirement">Retirement</a></li><li class="d2"><a href="#what-this-policy-does-not-cover-yet">What this policy does not cover yet</a></li></ul></nav>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#the-two-signing-modes">The two signing modes</a></li><li class="d2"><a href="#where-each-key-can-live">Where each key can live</a></li><li class="d2"><a href="#starting-the-server">Starting the server</a></li><li class="d2"><a href="#permissions-a-deployment-needs">Permissions a deployment needs</a></li><li class="d2"><a href="#putting-the-key-files-in-place">Putting the key files in place</a></li><li class="d2"><a href="#infrastructure-for-the-secondary-key-secret">Infrastructure for the secondary key secret</a></li><li class="d2"><a href="#verifying-a-key">Verifying a key</a></li><li class="d2"><a href="#rotation">Rotation</a></li><li class="d2"><a href="#retirement">Retirement</a></li><li class="d2"><a href="#failure-modes">Failure modes</a></li><li class="d2"><a href="#what-is-not-covered">What is not covered</a></li></ul></nav>
 </div>
 <script>window.PORTAL_ROOT = "../";</script>
 <script src="../search-index.js"></script>
