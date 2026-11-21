@@ -80,20 +80,23 @@ If the server refuses to start with `AWS_ROLE_ARN` or `Secrets Manager` errors, 
 
 This is separate from option A. It holds only the secondary (dilithium3) private key, read through `PARMANA_SECONDARY_KEY_SECRET_ID`. The primary and other keys stay where they are.
 
-1. Review `terraform plan` for `infra/parmana-prod-signing/main.tf`, then apply it. It creates the secret, a KMS key for it, and a policy that lets only the server role read the value. Terraform does not create the value.
-2. Store the PEM as the secret's value from a file, then delete the file:
+Store the key with `scripts/store-secondary-key.mjs`, and only with it. The script generates a fresh key, so the origin of every stored key is known. Don't store a key from `keys/` or any other folder: such a key may be a copy of a production key, and its origin can't be checked afterwards.
+
+1. Apply `infra/parmana-prod-signing/main.tf` (production) or `infra/parmana-test-signing/main.tf` (test) after reviewing `terraform plan`. Terraform creates the secret and its policies. It does not create the key value.
+2. Store a fresh key (Node 24 or later, from the repository root):
 
    ```bash
-   aws secretsmanager put-secret-value --secret-id <secret-name> --secret-string file://secondary.pem
-   rm secondary.pem
+   node scripts/store-secondary-key.mjs --secret-id <secret-name> --region <region>
    ```
 
-3. Set `PARMANA_SECONDARY_KEY_SECRET_ID` and `AWS_REGION`. The server refuses to start if the secret cannot be read or does not parse as a key.
+   To check the key is generated and valid without storing it, add `--dry-run`. The script never prints key material. It prints the secret's ARN and the new version id.
+
+3. Set `PARMANA_SECONDARY_KEY_SECRET_ID` and `AWS_REGION`. The server refuses to start if the secret cannot be read or does not hold an ML-DSA-65 key.
 4. Confirm the server starts, and that CloudTrail shows `GetSecretValue` only from the server role.
 
-Rotation: write a new value (the rotation role, or the owner). The server picks it up after the five-minute cache expires, or on restart.
+Rotation: run step 2 again. The server picks up the new value after the five-minute cache expires, or on restart. Once the new key is trusted everywhere it is needed, retire the old one.
 
-Not done: this has not been run against AWS. Step 4's CloudTrail alert is an operator step.
+Not done: this has not been run against AWS production. Step 4's CloudTrail alert is an operator step.
 
 ## Open checks
 
