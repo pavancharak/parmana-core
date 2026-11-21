@@ -133,7 +133,7 @@ npx vitest run
 
 - **Built, not verified against AWS:** a KMS primary for hybrid signing behind `PARMANA_HYBRID_KMS` (F25). **Partly verified:** the dilithium3 secondary key from Secrets Manager (F26), in a test account only.
 - **Infrastructure:** `infra/parmana-prod-signing/main.tf` adds the secret, its KMS key and its read policy. Applied to the test account only; production not applied (PROD-1). See PR #760.
-- **Owner decisions open:** D17 (lift the hybrid + KMS refusal by default, after a real run) and D18 (confirm the secret's readers). Recorded in `docs/assurance/OPEN_ITEMS.md`.
+- **Owner decisions open:** KM-1 (lift the hybrid + KMS refusal by default, after a real run) and KM-2 (confirm the secret's readers). Recorded in `docs/assurance/OPEN_ITEMS.md`.
 
 ## 10. Update 2026-11-21: test account run
 
