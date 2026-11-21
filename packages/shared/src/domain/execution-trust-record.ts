@@ -1,6 +1,5 @@
 import { BusinessTransaction } from "./business-transaction.js";
 import { Execution } from "./execution.js";
-import { Override } from "./override.js";
 import { Verification } from "./verification.js";
 import { Receipt } from "./receipt.js";
 import { SignatureEntry } from "./signature-entry.js";
@@ -34,15 +33,6 @@ export interface ExecutionTrustRecord {
    * Canonical Business Transaction.
    */
   readonly transaction: BusinessTransaction;
-
-  /**
-   * Optional Override history.
-   *
-   * Business rules currently allow a single accepted
-   * Override, but the history is modeled as an array
-   * to preserve append-only evolution.
-   */
-  readonly overrides: readonly Override[];
 
   /**
    * Execution history.

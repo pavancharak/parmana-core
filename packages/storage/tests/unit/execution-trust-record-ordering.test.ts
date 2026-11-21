@@ -9,14 +9,14 @@ import { MemoryExecutionTrustRecordRepository } from "../../src/memory/MemoryExe
 import {
   buildBusinessTransaction,
   buildReceiptPair,
-  buildSignedMultiExecutionOverrideRecord,
+  buildSignedMultiExecutionRecord,
   buildVerificationPair,
 } from "../fixtures/multi-item-trust-record.js";
 
 /**
  * Reference-behavior counterpart to the Supabase ordering fix. This
  * repository already preserves insertion order via plain array append
- * (see MemoryExecutionTrustRecordRepository.appendExecution/appendOverride/
+ * (see MemoryExecutionTrustRecordRepository.appendExecution/
  * appendVerification/appendReceipt), so it is expected to pass without the
  * ORDER BY / seq changes made to PostgresExecutionTrustRecordRepository.
  * It runs unconditionally, unlike the Supabase counterpart, to guarantee
@@ -28,8 +28,7 @@ describe("ExecutionTrustRecordRepository ordering (in-memory)", () => {
   it("round-trips a Trust Record with 2+ items per collection without breaking hash or signature", async () => {
     const transaction = buildBusinessTransaction(crypto.randomUUID());
 
-    const signedRecord =
-      await buildSignedMultiExecutionOverrideRecord(transaction);
+    const signedRecord = await buildSignedMultiExecutionRecord(transaction);
 
     const repository = new MemoryExecutionTrustRecordRepository();
 
@@ -69,9 +68,6 @@ describe("ExecutionTrustRecordRepository ordering (in-memory)", () => {
     //
     expect(reloaded!.executions.map((e) => e.executionId)).toEqual(
       signedRecord.executions.map((e) => e.executionId),
-    );
-    expect(reloaded!.overrides.map((o) => o.overrideId)).toEqual(
-      signedRecord.overrides.map((o) => o.overrideId),
     );
     expect(reloaded!.verifications.map((v) => v.verificationId)).toEqual([
       verification1.verificationId,

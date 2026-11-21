@@ -124,8 +124,6 @@ export class BusinessTrustRecordBuilder {
         ? { authorization: context.authorization }
         : {}),
 
-      overrides: context.override ? [context.override] : [],
-
       executions: [context.execution],
 
       verifications: context.verification ? [context.verification] : [],

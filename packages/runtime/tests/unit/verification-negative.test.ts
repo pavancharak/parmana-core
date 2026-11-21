@@ -28,7 +28,7 @@ import type { RuntimeContext } from "../../src/context/RuntimeContext.js";
  *
  * Covers three independent mutation shapes: a payload field inside the
  * signed BusinessTransaction, the signature value, and an element inside
- * one of the hash-chain-participating arrays (executions/overrides).
+ * one of the hash-chain-participating arrays (executions).
  */
 
 class InMemoryExecutionTrustRecordRepository implements ExecutionTrustRecordRepository {
@@ -48,8 +48,6 @@ class InMemoryExecutionTrustRecordRepository implements ExecutionTrustRecordRepo
   async appendExecution(): Promise<void> {}
 
   async replaceExecution(): Promise<void> {}
-
-  async appendOverride(): Promise<void> {}
 
   async appendVerification(): Promise<void> {}
 

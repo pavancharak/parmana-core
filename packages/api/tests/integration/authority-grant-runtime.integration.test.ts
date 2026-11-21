@@ -78,7 +78,6 @@ class TrustRecords implements ExecutionTrustRecordRepository {
   }
   async appendExecution(): Promise<void> {}
   async replaceExecution(): Promise<void> {}
-  async appendOverride(): Promise<void> {}
   async appendVerification(): Promise<void> {}
   async appendReceipt(): Promise<void> {}
 }

@@ -37,7 +37,6 @@ function draftRecord(
       status: "RECEIVED",
       createdAt: new Date("2026-01-01T00:00:00Z"),
     } as ExecutionTrustRecord["transaction"],
-    overrides: [],
     executions: [],
     verifications: [],
     receipts: [],

@@ -32,7 +32,6 @@ async function buildSingleRecord(
     trustRecordId: "txn-cutover",
     businessTransactionId: "txn-cutover",
     transaction: { businessTransactionId: "txn-cutover", status: "RECEIVED" },
-    overrides: [],
     executions: [],
     verifications: [],
     receipts: [],

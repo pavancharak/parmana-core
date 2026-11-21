@@ -130,8 +130,6 @@ describe("Replay Engine", () => {
 
       transaction,
 
-      overrides: [],
-
       executions: [execution],
 
       verifications: [],

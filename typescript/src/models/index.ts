@@ -10,7 +10,6 @@ export * from "./caller.js";
 export * from "./execution.js";
 export * from "./execution-intent.js";
 export * from "./intent.js";
-export * from "./override.js";
 export * from "./policy.js";
 export * from "./policy-change.js";
 export * from "./policy-in-effect.js";

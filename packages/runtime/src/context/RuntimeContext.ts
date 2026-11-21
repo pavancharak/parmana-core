@@ -4,7 +4,6 @@ import {
   Execution,
   ExecutionEvidence,
   ExecutionTrustRecord,
-  Override,
   Receipt,
   SignedExecutionAuthorization,
   Verification,
@@ -43,11 +42,6 @@ export interface RuntimeContext {
    * Execution artifact.
    */
   readonly execution?: Execution;
-
-  /**
-   * Optional human override.
-   */
-  readonly override?: Override;
 
   /**
    * Evidence captured during execution.

@@ -52,8 +52,6 @@ class InMemoryExecutionTrustRecordRepository implements ExecutionTrustRecordRepo
 
   async replaceExecution(): Promise<void> {}
 
-  async appendOverride(): Promise<void> {}
-
   async appendVerification(
     _businessTransactionId: string,
     verification: Verification,

@@ -6,38 +6,35 @@ description: "Paste a signed Execution Trust Record and a public key, and check 
 import { RecordVerifier } from "/snippets/record-verifier.jsx";
 
 export const exampleRecord = {
-  trustRecordId: "cross-language-fixture-txn",
-  businessTransactionId: "cross-language-fixture-txn",
+  trustRecordId: "single-record-v3-fixture",
+  businessTransactionId: "single-record-v3-fixture",
   transaction: {
-    businessTransactionId: "cross-language-fixture-txn",
+    businessTransactionId: "single-record-v3-fixture",
     status: "RECEIVED",
-    createdAt: "2026-01-01T00:00:00.000Z",
+    createdAt: "2026-11-21T00:00:00.000Z",
     signals: {
       amount: 100,
-      vendorId: "vendor-café",
     },
   },
   overrides: [],
   executions: [],
-  verifications: [],
-  receipts: [],
-  createdAt: "2026-01-01T00:00:00.000Z",
-  updatedAt: "2026-01-01T00:00:00.000Z",
-  trustRecordHash:
-    "dfc3d4d686244a2f79b120eac15886c7472d55a1708d4c71da898a79c9f9238d",
+  createdAt: "2026-11-21T00:00:00.000Z",
+  updatedAt: "2026-11-21T00:00:00.000Z",
   schemaVersion: 3,
+  trustRecordHash:
+    "eb72ee9c404ea520963bf8e9347a59554148742989bb933c35f629ed6fa8d645",
   signatures: [
     {
       algorithm: "ed25519",
-      keyId: "cross-language-fixture",
+      keyId: "single-record-ed",
       signature:
-        "rPmP0IRIQJkXlyncmeeoSlqi1iQHlvghWjN4AHJRw7Ty+1DzBaXwF7KBDcMJ++CONgHaAPLh4EAY4XYuMsAmAg==",
+        "cLj1WPk9aUgWSzZqQTvrxps6WgEX8EZC5m4iypurRy22uMWbk7NnwztLtfRopd8QJTwCbsqfnpxnFWBg6j4AAA==",
     },
   ],
 };
 
 export const examplePublicKey =
-  "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAnPO+AxhXozslFRAvItTsh7pjAqj+8VUiaxafMAHC4aE=\n-----END PUBLIC KEY-----\n";
+  "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAdVb3c1R+ICNlV691GYYdrf6fTHT6HT1Jc00WJF7NWrI=\n-----END PUBLIC KEY-----\n";
 
 A signed Execution Trust Record proves two things to anyone holding the public key: its
 content has not changed since it was signed, and it was signed by the holder of that key. This

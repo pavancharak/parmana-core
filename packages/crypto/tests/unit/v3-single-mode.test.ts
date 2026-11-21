@@ -13,7 +13,6 @@ async function singleRecord(
     trustRecordId: "trust-single-v3",
     businessTransactionId: "txn-single-v3",
     transaction: { businessTransactionId: "txn-single-v3" },
-    overrides: [],
     executions: [],
     verifications: [],
     receipts: [],

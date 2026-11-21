@@ -2,7 +2,6 @@ import type {
   Execution,
   ExecutionTrustRecord,
   ExecutionTrustRecordRepository,
-  Override,
   Receipt,
   Verification,
 } from "@parmana/shared";
@@ -79,13 +78,11 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
       return null;
     }
 
-    const [executionRows, overrideRows, verificationRows, receiptRows] =
-      await Promise.all([
-        this.pool.query(SELECT_EXECUTIONS_SQL, [businessTransactionId]),
-        this.pool.query(SELECT_OVERRIDES_SQL, [businessTransactionId]),
-        this.pool.query(SELECT_VERIFICATIONS_SQL, [businessTransactionId]),
-        this.pool.query(SELECT_RECEIPTS_SQL, [businessTransactionId]),
-      ]);
+    const [executionRows, verificationRows, receiptRows] = await Promise.all([
+      this.pool.query(SELECT_EXECUTIONS_SQL, [businessTransactionId]),
+      this.pool.query(SELECT_VERIFICATIONS_SQL, [businessTransactionId]),
+      this.pool.query(SELECT_RECEIPTS_SQL, [businessTransactionId]),
+    ]);
 
     return {
       trustRecordId: header.trust_record_id,
@@ -94,10 +91,6 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
 
       executions: (executionRows.rows as { execution_json: Execution }[]).map(
         (row) => row.execution_json,
-      ),
-
-      overrides: (overrideRows.rows as { override_json: Override }[]).map(
-        (row) => row.override_json,
       ),
 
       verifications: (
@@ -152,23 +145,6 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
     ]);
 
     await this.touch(execution.businessTransactionId);
-  }
-
-  /**
-   * Appends an Override.
-   */
-  async appendOverride(
-    businessTransactionId: string,
-    override: Override,
-  ): Promise<void> {
-    await this.pool.query(INSERT_OVERRIDE_SQL, [
-      override.overrideId,
-      businessTransactionId,
-      JSON.stringify(override),
-      override.approvedAt.toISOString(),
-    ]);
-
-    await this.touch(businessTransactionId);
   }
 
   /**
@@ -257,12 +233,6 @@ const SELECT_EXECUTIONS_SQL = `
   ORDER BY created_at ASC, seq ASC
 `;
 
-const SELECT_OVERRIDES_SQL = `
-  SELECT override_json FROM overrides
-  WHERE business_transaction_id = $1
-  ORDER BY created_at ASC, seq ASC
-`;
-
 const SELECT_VERIFICATIONS_SQL = `
   SELECT verification_json FROM verifications
   WHERE business_transaction_id = $1
@@ -282,11 +252,6 @@ const INSERT_EXECUTION_SQL = `
 
 const UPDATE_EXECUTION_SQL = `
   UPDATE executions SET execution_json = $1::jsonb WHERE execution_id = $2
-`;
-
-const INSERT_OVERRIDE_SQL = `
-  INSERT INTO overrides (override_id, business_transaction_id, override_json, created_at)
-  VALUES ($1, $2, $3::jsonb, $4)
 `;
 
 const INSERT_VERIFICATION_SQL = `

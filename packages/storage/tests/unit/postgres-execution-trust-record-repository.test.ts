@@ -12,14 +12,14 @@ import { PostgresExecutionTrustRecordRepository } from "../../src/postgres/Postg
 import {
   buildBusinessTransaction,
   buildReceiptPair,
-  buildSignedMultiExecutionOverrideRecord,
+  buildSignedMultiExecutionRecord,
   buildVerificationPair,
 } from "../fixtures/multi-item-trust-record.js";
 
 /**
  * Fake pg.Pool backing every table
  * PostgresExecutionTrustRecordRepository touches
- * (execution_trust_records, executions, overrides, verifications,
+ * (execution_trust_records, executions, verifications,
  * receipts), with an auto-incrementing `seq` per sub-table -- mirrors
  * the real BIGSERIAL columns
  * (supabase/migrations/20260711120000_add_trust_record_sequence_columns.sql)
@@ -29,7 +29,6 @@ import {
 function createFakePool() {
   const header: { row?: Record<string, unknown> } = {};
   const executions: Record<string, unknown>[] = [];
-  const overrides: Record<string, unknown>[] = [];
   const verifications: Record<string, unknown>[] = [];
   const receipts: Record<string, unknown>[] = [];
   let seq = 0;
@@ -146,33 +145,6 @@ function createFakePool() {
         return Promise.resolve({ rows: [] });
       }
 
-      if (sql.includes("SELECT override_json FROM overrides")) {
-        const [businessTransactionId] = values as [string];
-        return Promise.resolve({
-          rows: selectOrdered(
-            overrides,
-            "override_json",
-            "created_at",
-            businessTransactionId,
-          ),
-        });
-      }
-
-      if (sql.includes("INSERT INTO overrides")) {
-        const [overrideId, businessTransactionId, overrideJson, createdAt] =
-          values as readonly unknown[];
-
-        overrides.push({
-          override_id: overrideId,
-          business_transaction_id: businessTransactionId,
-          override_json: JSON.parse(overrideJson as string),
-          created_at: createdAt,
-          seq: seq++,
-        });
-
-        return Promise.resolve({ rows: [] });
-      }
-
       if (sql.includes("SELECT verification_json FROM verifications")) {
         const [businessTransactionId] = values as [string];
         return Promise.resolve({
@@ -239,25 +211,21 @@ function createFakePool() {
 }
 
 describe("PostgresExecutionTrustRecordRepository", () => {
-  it("creates a Trust Record header and reads back appended executions/overrides in order, with empty verifications/receipts", async () => {
+  it("creates a Trust Record header and reads back appended executions in order, with empty verifications/receipts", async () => {
     const repository = new PostgresExecutionTrustRecordRepository(
       createFakePool(),
     );
     const transaction = buildBusinessTransaction("txn-1");
-    const signedRecord =
-      await buildSignedMultiExecutionOverrideRecord(transaction);
+    const signedRecord = await buildSignedMultiExecutionRecord(transaction);
 
     await expect(repository.create(signedRecord)).resolves.toBe(signedRecord);
 
-    // create() persists only the header -- executions/overrides already
+    // create() persists only the header -- executions already
     // present on the signed record (needed for the canonical hash) are
     // appended afterward, mirroring supabase-execution-trust-record-
     // ordering.integration.test.ts's own established sequencing.
     for (const execution of signedRecord.executions) {
       await repository.appendExecution("txn-1", execution);
-    }
-    for (const override of signedRecord.overrides) {
-      await repository.appendOverride("txn-1", override);
     }
 
     const found = await repository.findByTransactionId("txn-1");
@@ -267,9 +235,6 @@ describe("PostgresExecutionTrustRecordRepository", () => {
     expect(found!.trustRecordHash).toBe(signedRecord.trustRecordHash);
     expect(found!.executions.map((e) => e.executionId)).toEqual(
       signedRecord.executions.map((e) => e.executionId),
-    );
-    expect(found!.overrides.map((o) => o.overrideId)).toEqual(
-      signedRecord.overrides.map((o) => o.overrideId),
     );
     expect(found!.verifications).toEqual([]);
     expect(found!.receipts).toEqual([]);
@@ -290,8 +255,7 @@ describe("PostgresExecutionTrustRecordRepository", () => {
       createFakePool(),
     );
     const transaction = buildBusinessTransaction("txn-2");
-    const signedRecord =
-      await buildSignedMultiExecutionOverrideRecord(transaction);
+    const signedRecord = await buildSignedMultiExecutionRecord(transaction);
 
     await repository.create(signedRecord);
 
@@ -332,8 +296,7 @@ describe("PostgresExecutionTrustRecordRepository", () => {
       createFakePool(),
     );
     const transaction = buildBusinessTransaction("txn-3");
-    const signedRecord =
-      await buildSignedMultiExecutionOverrideRecord(transaction);
+    const signedRecord = await buildSignedMultiExecutionRecord(transaction);
 
     await repository.create(signedRecord);
     for (const execution of signedRecord.executions) {
@@ -397,7 +360,7 @@ describe("PostgresExecutionTrustRecordRepository", () => {
       algorithm: SignatureAlgorithms.ED25519,
     };
 
-    const signedRecord = await buildSignedMultiExecutionOverrideRecord(
+    const signedRecord = await buildSignedMultiExecutionRecord(
       transaction,
       authorization,
     );
@@ -440,7 +403,7 @@ describe("PostgresExecutionTrustRecordRepository", () => {
       createFakePool(),
     );
     const transaction = buildBusinessTransaction("txn-5");
-    const built = await buildSignedMultiExecutionOverrideRecord(transaction);
+    const built = await buildSignedMultiExecutionRecord(transaction);
     // A row that predates schemaVersion and signatures: strip both, as such a row would be.
     const { schemaVersion: _v, signatures: _s, ...signedRecord } = built;
 

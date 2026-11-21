@@ -14,7 +14,6 @@ from datetime import datetime
 from .business_transaction import BusinessTransaction
 from .execution import Execution
 from .execution_authorization import SignedExecutionAuthorization
-from .override import Override
 from .policy import PolicyGovernanceAnchorStatus
 from .receipt import Receipt
 from .signature import SignatureEntry
@@ -39,8 +38,6 @@ class ExecutionTrustRecord:
     business_transaction_id: str
 
     transaction: BusinessTransaction
-
-    overrides: list[Override]
 
     executions: list[Execution]
 

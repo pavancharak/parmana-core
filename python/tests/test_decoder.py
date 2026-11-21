@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime
 
 from parmana.models.execution import Execution
-from parmana.models.override import Override
 from parmana.models.signature import SignatureAlgorithm
 from parmana.models.trust_record import ExecutionTrustRecord
 from parmana.models.verification import VerificationStatus
@@ -158,47 +157,6 @@ def test_decode_execution_trust_record():
 
     assert isinstance(
         record.updated_at,
-        datetime,
-    )
-
-
-def test_decode_override_maps_approved_by():
-    """
-    Real wire shape per packages/shared/src/domain/override.ts.
-
-    Regression test: a previous SDK version modeled this field as
-    `authority_id`, which does not exist on the wire (the real field is
-    `approvedBy`) -- so `decode()` silently produced `authority_id=None`
-    on every real response, discarding who actually approved the override.
-    """
-
-    payload = {
-        "overrideId": "override-001",
-        "businessTransactionId": "tx-001",
-        "approvedBy": "manager-001",
-        "reason": "Regional manager approved the exception.",
-        "justification": "Vendor delivery deadline required an exception.",
-        "approvedAt": "2026-07-01T00:10:00Z",
-    }
-
-    override = decode(
-        payload,
-        Override,
-    )
-
-    assert isinstance(
-        override,
-        Override,
-    )
-
-    assert override.approved_by == "manager-001"
-
-    assert override.reason == ("Regional manager approved the exception.")
-
-    assert override.justification == ("Vendor delivery deadline required an exception.")
-
-    assert isinstance(
-        override.approved_at,
         datetime,
     )
 

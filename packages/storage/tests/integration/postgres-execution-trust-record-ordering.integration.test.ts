@@ -13,7 +13,7 @@ import { resolveDatabaseGate } from "../helpers/database-availability.js";
 import {
   buildBusinessTransaction,
   buildReceiptPair,
-  buildSignedMultiExecutionOverrideRecord,
+  buildSignedMultiExecutionRecord,
   buildVerificationPair,
 } from "../fixtures/multi-item-trust-record.js";
 
@@ -26,7 +26,7 @@ const databaseConfigured = resolveDatabaseGate(
  * (tests/unit/execution-trust-record-ordering.test.ts). Confirms the
  * ORDER BY <timestamp> ASC, seq ASC fix in
  * PostgresExecutionTrustRecordRepository.findByTransactionId reconstructs
- * executions/overrides/verifications/receipts in insertion order against a
+ * executions/verifications/receipts in insertion order against a
  * real database, so a Trust Record with 2+ items per collection still
  * hashes and verifies after a round trip.
  *
@@ -54,8 +54,7 @@ describe.skipIf(!databaseConfigured)(
 
       await businessTransactions.create(transaction);
 
-      const signedRecord =
-        await buildSignedMultiExecutionOverrideRecord(transaction);
+      const signedRecord = await buildSignedMultiExecutionRecord(transaction);
 
       await trustRecords.create(signedRecord);
 
@@ -63,13 +62,6 @@ describe.skipIf(!databaseConfigured)(
         await trustRecords.appendExecution(
           transaction.businessTransactionId,
           execution,
-        );
-      }
-
-      for (const override of signedRecord.overrides) {
-        await trustRecords.appendOverride(
-          transaction.businessTransactionId,
-          override,
         );
       }
 
@@ -109,9 +101,6 @@ describe.skipIf(!databaseConfigured)(
 
       expect(reloaded!.executions.map((e) => e.executionId)).toEqual(
         signedRecord.executions.map((e) => e.executionId),
-      );
-      expect(reloaded!.overrides.map((o) => o.overrideId)).toEqual(
-        signedRecord.overrides.map((o) => o.overrideId),
       );
       expect(reloaded!.verifications.map((v) => v.verificationId)).toEqual([
         verification1.verificationId,

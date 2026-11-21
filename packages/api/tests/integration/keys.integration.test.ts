@@ -106,7 +106,6 @@ describe("Public-key discovery (HTTP boundary)", () => {
         status: "RECEIVED",
         createdAt: new Date(),
       },
-      overrides: [],
       executions: [],
       verifications: [],
       receipts: [],

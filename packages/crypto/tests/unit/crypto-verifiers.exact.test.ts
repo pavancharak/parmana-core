@@ -555,7 +555,6 @@ describe.skipIf(!isMlDsa65Supported())(
         trustRecordId: "t-1",
         businessTransactionId: "t-1",
         transaction: { businessTransactionId: "t-1" },
-        overrides: [],
         executions: [],
         verifications: [],
         receipts: [],

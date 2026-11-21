@@ -52,7 +52,6 @@ function draftRecord(
       status: "RECEIVED",
       createdAt,
     } as ExecutionTrustRecord["transaction"],
-    overrides: [],
     executions: [],
     verifications: [],
     receipts: [],
