@@ -10,11 +10,11 @@ Production runs one policy: `payment-refund`, version `1.0.0`. It governs the ac
 
 The policy has three rules, checked in this order:
 
-| Rule | What it does |
-|------|--------------|
-| `refuse-not-refundable` | Refuses the refund when the payment is not refundable. The signal comes from the payment source (Razorpay). |
+| Rule                         | What it does                                                                                                                |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `refuse-not-refundable`      | Refuses the refund when the payment is not refundable. The signal comes from the payment source (Razorpay).                 |
 | `tier-2-with-exact-approval` | Approves the refund only when a manager approval is present, and that approval is bound to the exact amount in the request. |
-| `reject-by-default` | Rejects any request that no earlier rule approves. |
+| `reject-by-default`          | Rejects any request that no earlier rule approves.                                                                          |
 
 ## What the tests check
 
