@@ -172,3 +172,6 @@ docs/OPEN-SOURCE-WORK.md
 
 # Local development: the caller key and approver key that dev:setup creates.
 .parmana-dev/
+
+# Personal Claude Code settings, not shared
+.claude/settings.local.json
