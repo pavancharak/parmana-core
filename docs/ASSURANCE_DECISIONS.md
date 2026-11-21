@@ -149,18 +149,18 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 ## Record
 
-| Decision | Owner decision                                | Date       | Recorded by                              |
-| -------- | --------------------------------------------- | ---------- | ---------------------------------------- |
-| D7       | In scope                                      | 2026-11-14 | Recorded in session at owner's direction |
-| D8       | Define as proposed                            | 2026-11-14 | Recorded in session at owner's direction |
-| D9       | Reject non-canonical encodings                | 2026-11-14 | Recorded in session at owner's direction |
-| D10      | Pending                                       |            |                                          |
-| D11      | Pending                                       |            |                                          |
-| D12      | Pending                                       |            |                                          |
-| D13      | Adopted: permanent direction                  | 2026-11-14 | Recorded in session at owner's direction |
-| D14      | Adopted: razorpay:refund policy version       | 2026-11-14 | Owner confirmed version 1.3.0            |
-| D23      | Partly adopted: G-77 change; the rest pending | 2026-11-19 | Recorded in session at owner's direction |
-| D24      | Proposed, awaiting owner decision             | 2026-11-21 | Section D24 below                        |
+| Decision | Owner decision                                                 | Date       | Recorded by                              |
+| -------- | -------------------------------------------------------------- | ---------- | ---------------------------------------- |
+| D7       | In scope                                                       | 2026-11-14 | Recorded in session at owner's direction |
+| D8       | Define as proposed                                             | 2026-11-14 | Recorded in session at owner's direction |
+| D9       | Reject non-canonical encodings                                 | 2026-11-14 | Recorded in session at owner's direction |
+| D10      | Pending                                                        |            |                                          |
+| D11      | Pending                                                        |            |                                          |
+| D12      | Pending                                                        |            |                                          |
+| D13      | Adopted: permanent direction                                   | 2026-11-14 | Recorded in session at owner's direction |
+| D14      | Adopted: razorpay:refund policy version                        | 2026-11-14 | Owner confirmed version 1.3.0            |
+| D23      | Partly adopted: G-77 change; the rest pending                  | 2026-11-19 | Recorded in session at owner's direction |
+| D24      | Decided: v3 only, v2 discarded (implementation pending review) | 2026-11-21 | Section D24 below                        |
 
 ---
 
@@ -388,7 +388,7 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 **Recommendation:** Option 2, scheduled deliberately, not as part of an incident fix. Option 1 is the interim position, and option 3 is the route when hybrid is funded. Option 4 needs its own test before anyone relies on it.
 
-**Owner decision:** _Pending._
+**Owner decision (2026-11-21):** Discard schema version 2 completely. Every trust record is schema version 3. The record is signed with one algorithm (Ed25519 or ML-DSA-65) in single mode, or with both in hybrid mode, and the policy names the required algorithms. The owner confirmed there are no customers, vendors or live traffic, so no existing record needs to stay verifiable. **Still required before code lands:** the frozen-core review (`docs/assurance/FROZEN_CORE.md`), a regenerated manifest, the Python and TypeScript verifiers changed together, and new test vectors.
 
 **Effect on the documents:** none until decided. The verifier's `docs/OPERATING-MODES.md` describes the current position.
 
