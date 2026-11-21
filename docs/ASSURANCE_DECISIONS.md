@@ -388,7 +388,7 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 **Recommendation:** Option 2, scheduled deliberately, not as part of an incident fix. Option 1 is the interim position, and option 3 is the route when hybrid is funded. Option 4 needs its own test before anyone relies on it.
 
-**Owner decision (2026-11-21):** Discard schema version 2 completely. Every trust record is schema version 3. The record is signed with one algorithm (Ed25519 or ML-DSA-65) in single mode, or with both in hybrid mode, and the policy names the required algorithms. The owner confirmed there are no customers, vendors or live traffic, so no existing record needs to stay verifiable. **Still required before code lands:** the frozen-core review (`docs/assurance/FROZEN_CORE.md`), a regenerated manifest, the Python and TypeScript verifiers changed together, and new test vectors.
+**Owner decision (2026-11-21):** Discard schema version 2 completely. Every trust record is schema version 3. The default policy in single mode accepts whichever one signature algorithm is configured, Ed25519 or ML-DSA-65. Hybrid mode requires both. The legacy `signature` field, which covers only seven fields, is dropped from v3 records, so each record carries only the `signatures` array. The owner confirmed there are no customers, vendors or live traffic, so no existing record needs to stay verifiable. **Still required before code lands:** the frozen-core review (`docs/assurance/FROZEN_CORE.md`), a regenerated manifest, the Python and TypeScript verifiers changed together, and new test vectors.
 
 **Effect on the documents:** none until decided. The verifier's `docs/OPERATING-MODES.md` describes the current position.
 
