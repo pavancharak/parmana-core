@@ -60,7 +60,6 @@ function createFakePool() {
           businessTransactionId,
           transactionJson,
           hash,
-          signatureJson,
           createdAt,
           updatedAt,
           authorizationJson,
@@ -73,7 +72,6 @@ function createFakePool() {
           business_transaction_id: businessTransactionId,
           transaction_json: JSON.parse(transactionJson as string),
           trust_record_hash: hash,
-          signature_json: JSON.parse(signatureJson as string),
           created_at: createdAt,
           updated_at: updatedAt,
           authorization_json:
@@ -406,19 +404,19 @@ describe("PostgresExecutionTrustRecordRepository", () => {
 
     const withHybridFields = {
       ...signedRecord,
-      schemaVersion: 2,
+      schemaVersion: 3,
       signatures: [
         {
           algorithm: SignatureAlgorithms.ED25519,
           keyId: "default",
           value: "primary-signature",
-          signedAt: signedRecord.signature.signedAt,
+          signedAt: new Date("2026-09-07T00:00:05Z"),
         },
         {
           algorithm: "dilithium3",
           keyId: "default-secondary",
           value: "secondary-signature",
-          signedAt: signedRecord.signature.signedAt,
+          signedAt: new Date("2026-09-07T00:00:05Z"),
         },
       ],
     };
@@ -431,7 +429,7 @@ describe("PostgresExecutionTrustRecordRepository", () => {
     // JSONB as strings, not Date instances -- same quirk already
     // documented for execution_json in the replaceExecution test above.
     expect(found!.authorization).toEqual(authorization);
-    expect(found!.schemaVersion).toBe(2);
+    expect(found!.schemaVersion).toBe(3);
     expect(found!.signatures).toEqual(
       JSON.parse(JSON.stringify(withHybridFields.signatures)),
     );

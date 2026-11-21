@@ -8,7 +8,7 @@ import { ArtifactSigner } from "../../src/ArtifactSigner.js";
 import { canonicalExecutionIntent } from "../../src/ExecutionIntentCanonicalView.js";
 import {
   canonicalExecutionTrustRecord,
-  hybridCanonicalExecutionTrustRecord,
+  hybridSignedCanonicalView,
 } from "../../src/ExecutionTrustRecordCanonicalView.js";
 import {
   verifyExecutionIntentOffline,
@@ -24,12 +24,11 @@ import {
 } from "../../src/support/MlDsaSupport.js";
 
 /**
- * Mutation testing found the offline verifier's hybrid path tested only
- * with a genuine record and a stripped one: a hybrid record with one
- * bad signature, a single entry, a duplicate algorithm, an empty array,
- * or a key that cannot be read could each be accepted by a changed
- * verifier without a test failing. Each case is pinned here, with the
- * exact result an auditor would see.
+ * Mutation testing found the offline verifier's envelope tested only with a genuine record and a
+ * stripped one. Each case is pinned here, with the exact result an auditor would see.
+ *
+ * Schema version 3 only (decision D24): a trust record carries a signatures array covering the whole
+ * record. A single-signed record has one entry; a hybrid record has two. There is no legacy signature.
  */
 
 const ed = new Ed25519SignatureProvider();
@@ -41,7 +40,7 @@ const pem = (key: KeyObject) =>
 const edKeys = generateKeyPairSync("ed25519");
 const otherEdKeys = generateKeyPairSync("ed25519");
 
-async function legacyRecord(id = "txn-exact"): Promise<ExecutionTrustRecord> {
+async function v3Record(id = "txn-exact"): Promise<ExecutionTrustRecord> {
   const draft = {
     trustRecordId: id,
     businessTransactionId: id,
@@ -61,44 +60,39 @@ async function legacyRecord(id = "txn-exact"): Promise<ExecutionTrustRecord> {
     hash: sha,
     signature: ed,
   }).hash(canonicalExecutionTrustRecord(draft));
-  const withHash = {
-    ...draft,
-    trustRecordHash,
-    signature: {
-      algorithm: "ed25519" as const,
-      keyId: "primary",
-      value: "",
-      signedAt: new Date(),
-    },
-  } as ExecutionTrustRecord;
+  const withHash = { ...draft, trustRecordHash } as ExecutionTrustRecord;
   const value = await edSigner.sign(
-    canonicalExecutionTrustRecord(withHash),
+    hybridSignedCanonicalView(withHash, 3),
     edKeys.privateKey,
   );
-  return { ...withHash, signature: { ...withHash.signature, value } };
+  return {
+    ...withHash,
+    schemaVersion: 3,
+    signatures: [
+      { algorithm: "ed25519" as const, keyId: "primary", signature: value },
+    ],
+  } as ExecutionTrustRecord;
 }
 
 const KEYS = { primary: pem(edKeys.publicKey) };
 
-describe("verifyExecutionTrustRecordOffline, exactly", () => {
-  it("reports a genuine legacy record with nothing else", async () => {
+describe("verifyExecutionTrustRecordOffline, exactly (schema version 3)", () => {
+  it("reports a genuine single-signed record with nothing else", async () => {
     expect(
-      await verifyExecutionTrustRecordOffline(await legacyRecord(), KEYS, {
-        allowLegacyOnly: true,
-      }),
+      await verifyExecutionTrustRecordOffline(await v3Record(), KEYS),
     ).toStrictEqual({
       valid: true,
       hashValid: true,
-      legacySignatureValid: true,
+      hybridSignaturesValid: true,
       algorithmsChecked: ["ed25519"],
       errors: [],
     });
   });
 
   it("names both hashes when the record's hash does not match its content", async () => {
-    const record = { ...(await legacyRecord()), trustRecordHash: "deadbeef" };
+    const record = { ...(await v3Record()), trustRecordHash: "deadbeef" };
     const result = await verifyExecutionTrustRecordOffline(record, KEYS);
-    const expected = (await legacyRecord()).trustRecordHash;
+    const expected = (await v3Record()).trustRecordHash;
     expect(result.valid).toBe(false);
     expect(result.hashValid).toBe(false);
     expect(result.errors).toContain(
@@ -107,28 +101,55 @@ describe("verifyExecutionTrustRecordOffline, exactly", () => {
   });
 
   it("names the key whose signature does not verify", async () => {
-    const result = await verifyExecutionTrustRecordOffline(
-      await legacyRecord(),
-      { primary: pem(otherEdKeys.publicKey) },
-      { allowLegacyOnly: true },
-    );
-    expect(result).toMatchObject({ valid: false, legacySignatureValid: false });
+    const result = await verifyExecutionTrustRecordOffline(await v3Record(), {
+      primary: pem(otherEdKeys.publicKey),
+    });
+    expect(result).toMatchObject({
+      valid: false,
+      hybridSignaturesValid: false,
+    });
     expect(result.errors).toEqual([
       'signature verification failed for keyId "primary" (ed25519).',
     ]);
   });
 
   it("reports a key that cannot be read as an error, never as valid", async () => {
-    const result = await verifyExecutionTrustRecordOffline(
-      await legacyRecord(),
-      {
-        primary:
-          "-----BEGIN PUBLIC KEY-----\nnot a key\n-----END PUBLIC KEY-----",
-      },
-    );
-    expect(result).toMatchObject({ valid: false, legacySignatureValid: false });
+    const result = await verifyExecutionTrustRecordOffline(await v3Record(), {
+      primary:
+        "-----BEGIN PUBLIC KEY-----\nnot a key\n-----END PUBLIC KEY-----",
+    });
+    expect(result).toMatchObject({
+      valid: false,
+      hybridSignaturesValid: false,
+    });
     expect(result.errors[0]).toMatch(
       /^error verifying keyId "primary" \(ed25519\): /,
+    );
+  });
+
+  it.each([2, undefined])(
+    "refuses schemaVersion %s: only schemaVersion 3 is accepted (D24)",
+    async (version) => {
+      const { schemaVersion: _v, ...base } = await v3Record();
+      const record = (
+        version === undefined ? base : { ...base, schemaVersion: version }
+      ) as ExecutionTrustRecord;
+      const result = await verifyExecutionTrustRecordOffline(record, KEYS);
+      expect(result.valid).toBe(false);
+      expect(result.errors.join(" ")).toMatch(
+        /schemaVersion|only schemaVersion 3/,
+      );
+    },
+  );
+
+  it("refuses an empty signatures array: a whole-record signature is required", async () => {
+    const result = await verifyExecutionTrustRecordOffline(
+      { ...(await v3Record()), signatures: [] },
+      KEYS,
+    );
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain(
+      "schemaVersion 3 record has no signatures array: a whole-record signature is required.",
     );
   });
 
@@ -142,14 +163,13 @@ describe("verifyExecutionTrustRecordOffline, exactly", () => {
     async (_label, signatures) => {
       const result = await verifyExecutionTrustRecordOffline(
         {
-          ...(await legacyRecord()),
+          ...(await v3Record()),
           signatures,
         } as unknown as ExecutionTrustRecord,
         KEYS,
       );
       expect(result).toMatchObject({
         valid: false,
-        legacySignatureValid: true,
         hybridSignaturesValid: false,
       });
       expect(result.errors).toContain(
@@ -158,57 +178,44 @@ describe("verifyExecutionTrustRecordOffline, exactly", () => {
     },
   );
 
-  it("treats an empty signatures array as no hybrid envelope", async () => {
-    const result = await verifyExecutionTrustRecordOffline(
-      { ...(await legacyRecord()), signatures: [] },
-      KEYS,
-      { allowLegacyOnly: true },
-    );
-    expect(result.valid).toBe(true);
-    expect(result).not.toHaveProperty("hybridSignaturesValid");
-  });
-
   it.each([
-    [
-      "no hash",
-      { signature: { algorithm: "ed25519", keyId: "k", value: "v" } },
-    ],
-    [
-      "a numeric hash",
-      {
-        trustRecordHash: 1,
-        signature: { algorithm: "ed25519", keyId: "k", value: "v" },
-      },
-    ],
-    ["a null signature", { trustRecordHash: "h", signature: null }],
-    ["a string signature", { trustRecordHash: "h", signature: "v" }],
-    [
-      "no algorithm",
-      { trustRecordHash: "h", signature: { keyId: "k", value: "v" } },
-    ],
-    [
-      "no keyId",
-      { trustRecordHash: "h", signature: { algorithm: "ed25519", value: "v" } },
-    ],
-    [
-      "no value",
-      { trustRecordHash: "h", signature: { algorithm: "ed25519", keyId: "k" } },
-    ],
+    ["no hash", {}],
+    ["a numeric hash", { trustRecordHash: 1 }],
   ])("refuses a record with %s, exactly", async (_label, input) => {
     expect(
       await verifyExecutionTrustRecordOffline(
         input as unknown as ExecutionTrustRecord,
-        { k: KEYS.primary },
+        KEYS,
       ),
     ).toStrictEqual({
       valid: false,
       hashValid: false,
-      legacySignatureValid: false,
       algorithmsChecked: [],
       errors: [
-        "malformed input: expected an object with a string trustRecordHash and a signature with algorithm, keyId and value.",
+        "malformed input: expected an object with a string trustRecordHash.",
       ],
     });
+  });
+
+  it("accepts a single-signed record before the cutover", async () => {
+    const result = await verifyExecutionTrustRecordOffline(
+      await v3Record(),
+      KEYS,
+      { hybridRequiredFrom: "2026-02-01T00:00:00Z" },
+    );
+    expect(result.valid).toBe(true);
+  });
+
+  it("refuses a single-signed record at or after the cutover: both hybrid signatures are required", async () => {
+    const result = await verifyExecutionTrustRecordOffline(
+      await v3Record(),
+      KEYS,
+      { hybridRequiredFrom: "2026-01-01T00:00:00Z" },
+    );
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain(
+      "record created at or after hybridRequiredFrom (2026-01-01T00:00:00Z) must carry both hybrid signatures.",
+    );
   });
 
   describe.skipIf(!isMlDsa65Supported())(
@@ -227,9 +234,9 @@ describe("verifyExecutionTrustRecordOffline, exactly", () => {
       });
 
       async function hybridRecord(options: { schemaVersion?: number } = {}) {
-        const base = await legacyRecord("txn-hybrid");
-        const artifact = hybridCanonicalExecutionTrustRecord(base, 2);
-        const record = {
+        const base = await v3Record("txn-hybrid");
+        const artifact = hybridSignedCanonicalView(base, 3);
+        return {
           ...base,
           ...(options.schemaVersion !== undefined
             ? { schemaVersion: options.schemaVersion }
@@ -247,10 +254,9 @@ describe("verifyExecutionTrustRecordOffline, exactly", () => {
             },
           ],
         } as ExecutionTrustRecord;
-        return record;
       }
 
-      it("verifies a genuine hybrid record, schemaVersion 2 by default, checking every algorithm", async () => {
+      it("verifies a genuine hybrid record, checking every algorithm", async () => {
         expect(
           await verifyExecutionTrustRecordOffline(
             await hybridRecord(),
@@ -259,9 +265,8 @@ describe("verifyExecutionTrustRecordOffline, exactly", () => {
         ).toStrictEqual({
           valid: true,
           hashValid: true,
-          legacySignatureValid: true,
           hybridSignaturesValid: true,
-          algorithmsChecked: ["ed25519", "ed25519", "dilithium3"],
+          algorithmsChecked: ["ed25519", "dilithium3"],
           errors: [],
         });
       });
@@ -269,7 +274,7 @@ describe("verifyExecutionTrustRecordOffline, exactly", () => {
       it.each([0, 1])(
         "refuses a hybrid record whose entry %i does not verify, though the others do",
         async (index) => {
-          const record = await hybridRecord({ schemaVersion: 2 });
+          const record = await hybridRecord();
           const signatures = [...record.signatures!];
           const other = signatures[1 - index]!.signature;
           signatures[index] = { ...signatures[index]!, signature: other };
@@ -279,40 +284,41 @@ describe("verifyExecutionTrustRecordOffline, exactly", () => {
           );
           expect(result).toMatchObject({
             valid: false,
-            legacySignatureValid: true,
             hybridSignaturesValid: false,
           });
         },
       );
 
-      it("refuses a hybrid record signed for another schemaVersion", async () => {
+      it("refuses a hybrid record that declares schemaVersion 2 (D24)", async () => {
         const result = await verifyExecutionTrustRecordOffline(
-          await hybridRecord({ schemaVersion: 3 }),
+          await hybridRecord({ schemaVersion: 2 }),
           hybridKeys(),
         );
-        expect(result.hybridSignaturesValid).toBe(false);
+        expect(result.valid).toBe(false);
+        expect(result.errors.join(" ")).toMatch(/only schemaVersion 3/);
       });
 
-      it("refuses a single hybrid entry, though it verifies", async () => {
+      it("refuses three hybrid entries, though every one verifies", async () => {
         const record = await hybridRecord();
+        const [first, second] = record.signatures!;
         const result = await verifyExecutionTrustRecordOffline(
-          { ...record, signatures: [record.signatures![0]!] },
+          { ...record, signatures: [first!, second!, first!] },
           hybridKeys(),
         );
         expect(result).toMatchObject({
           valid: false,
           hybridSignaturesValid: false,
         });
-        expect(result.errors).toEqual([
-          "signatures array has 1 entry, need at least 2 for a hybrid record.",
-        ]);
+        expect(result.errors).toContain(
+          "signatures array has 3 entries; at most 2 are allowed.",
+        );
       });
 
       it("refuses a duplicate algorithm, even when every entry verifies", async () => {
         const record = await hybridRecord();
-        const [first, second] = record.signatures!;
+        const [first] = record.signatures!;
         const result = await verifyExecutionTrustRecordOffline(
-          { ...record, signatures: [first!, first!, second!] },
+          { ...record, signatures: [first!, first!] },
           hybridKeys(),
         );
         expect(result).toMatchObject({
@@ -322,14 +328,10 @@ describe("verifyExecutionTrustRecordOffline, exactly", () => {
         expect(result.errors).toEqual([
           "duplicate algorithm in signatures array: ed25519.",
         ]);
-        expect(result.algorithmsChecked).toEqual([
-          "ed25519",
-          "ed25519",
-          "dilithium3",
-        ]);
+        expect(result.algorithmsChecked).toEqual(["ed25519"]);
       });
 
-      it("refuses two entries of one algorithm, naming the count rule's plural", async () => {
+      it("refuses two entries of one algorithm", async () => {
         const record = await hybridRecord();
         const [first] = record.signatures!;
         const result = await verifyExecutionTrustRecordOffline(
@@ -340,6 +342,19 @@ describe("verifyExecutionTrustRecordOffline, exactly", () => {
         expect(result.errors).toEqual([
           "duplicate algorithm in signatures array: ed25519.",
         ]);
+      });
+
+      it("refuses a single entry from the cutover on, though it verifies", async () => {
+        const record = await hybridRecord();
+        const result = await verifyExecutionTrustRecordOffline(
+          { ...record, signatures: [record.signatures![0]!] },
+          hybridKeys(),
+          { hybridRequiredFrom: "2026-01-01T00:00:00Z" },
+        );
+        expect(result.valid).toBe(false);
+        expect(result.errors).toContain(
+          "record created at or after hybridRequiredFrom (2026-01-01T00:00:00Z) must carry both hybrid signatures.",
+        );
       });
     },
   );
@@ -386,7 +401,6 @@ describe("verifyExecutionIntentOffline, exactly", () => {
     ).toStrictEqual({
       valid: true,
       hashValid: true,
-      legacySignatureValid: true,
       algorithmsChecked: ["ed25519"],
       errors: [],
     });

@@ -47,18 +47,11 @@ async function signRecord(
   const withHash = {
     ...draft,
     trustRecordHash,
-    signature: {
-      algorithm: "ed25519" as const,
-      keyId: "placeholder",
-      value: "",
-      signedAt: new Date(),
-    },
   } as ExecutionTrustRecord;
 
-  const signature = await crypto.sign(withHash);
-  const signatures = await crypto.signWholeRecord({ ...withHash, signature });
+  const signatures = await crypto.signWholeRecord(withHash);
 
-  return { ...withHash, signature, schemaVersion: 3, signatures };
+  return { ...withHash, schemaVersion: 3, signatures };
 }
 
 describe("VerificationCrypto key rotation (PQC audit RED-3)", () => {
@@ -80,7 +73,7 @@ describe("VerificationCrypto key rotation (PQC audit RED-3)", () => {
         "txn-rotation-original",
       );
 
-      expect(originalRecord.signature.keyId).toBe("default");
+      expect(originalRecord.signatures?.[0]?.keyId).toBe("default");
       expect(await beforeRotation.verify(originalRecord)).toBe(true);
 
       // Rotate: mint a brand-new keyId's key pair -- exactly what
@@ -103,9 +96,9 @@ describe("VerificationCrypto key rotation (PQC audit RED-3)", () => {
       const afterRotation = new VerificationCrypto();
       const newRecord = await signRecord(afterRotation, "txn-rotation-new");
 
-      expect(newRecord.signature.keyId).toBe(rotatedKeyId);
-      expect(newRecord.signature.keyId).not.toBe(
-        originalRecord.signature.keyId,
+      expect(newRecord.signatures?.[0]?.keyId).toBe(rotatedKeyId);
+      expect(newRecord.signatures?.[0]?.keyId).not.toBe(
+        originalRecord.signatures?.[0]?.keyId,
       );
 
       // The record signed BEFORE rotation must still verify, using a

@@ -185,10 +185,9 @@ describe("VerificationService negative cases (in-memory, always-on)", () => {
 
     const tamperedRecord: ExecutionTrustRecord = {
       ...trustRecord,
-      signature: {
-        ...trustRecord.signature,
-        value: "not-a-real-signature",
-      },
+      signatures: trustRecord.signatures?.map((entry, index) =>
+        index === 0 ? { ...entry, signature: "not-a-real-signature" } : entry,
+      ),
     };
 
     const repository = new InMemoryExecutionTrustRecordRepository();

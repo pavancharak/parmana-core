@@ -8,7 +8,6 @@ import {
   DecisionOutcome,
   ExecutionMode,
   ExecutionStatus,
-  SignatureAlgorithms,
   VerificationStatus,
   type BusinessTransaction,
   type Execution,
@@ -242,13 +241,6 @@ export async function buildSignedMultiExecutionOverrideRecord(
     ...draft,
 
     trustRecordHash: "",
-
-    signature: {
-      algorithm: SignatureAlgorithms.ED25519,
-      keyId: "default",
-      value: "",
-      signedAt: now,
-    },
   };
 
   const trustRecordHash = await verificationCrypto.hash(
@@ -261,16 +253,10 @@ export async function buildSignedMultiExecutionOverrideRecord(
     trustRecordHash,
   };
 
-  const signature = await verificationCrypto.sign(recordWithHash);
-  const signatures = await verificationCrypto.signWholeRecord({
-    ...recordWithHash,
-    signature,
-  });
+  const signatures = await verificationCrypto.signWholeRecord(recordWithHash);
 
   return {
     ...recordWithHash,
-
-    signature,
 
     schemaVersion: 3,
 

@@ -564,9 +564,9 @@ describe.skipIf(!isMlDsa65Supported())(
       } as unknown as ExecutionTrustRecord;
       const trustRecordHash = await crypto.hash(draft);
       const withHash = { ...draft, trustRecordHash } as ExecutionTrustRecord;
-      const signature = await crypto.sign(withHash);
-      const signatures = await crypto.signHybrid({ ...withHash, signature });
-      return { ...withHash, signature, schemaVersion: 3, signatures };
+      // Schema version 3: both entries sign the whole record (decision D24).
+      const signatures = await crypto.signHybrid(withHash);
+      return { ...withHash, schemaVersion: 3, signatures };
     }
 
     it("verifies a genuine hybrid record", async () => {

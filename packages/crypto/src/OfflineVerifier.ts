@@ -11,7 +11,6 @@ import {
   canonicalExecutionTrustRecord,
   hybridSignedCanonicalView,
   isAtOrAfterCutover,
-  SUPPORTED_HYBRID_SCHEMA_VERSIONS,
   WHOLE_RECORD_SCHEMA_VERSION,
 } from "./ExecutionTrustRecordCanonicalView.js";
 import { SHA256HashProvider } from "./providers/hash/SHA256HashProvider.js";
@@ -132,7 +131,7 @@ export async function verifyExecutionTrustRecordOffline(
     readonly hybridRequiredFrom?: string;
   } = {},
 ): Promise<OfflineVerificationResult> {
-  const malformed = malformedArtifact(trustRecord, "trustRecordHash");
+  const malformed = malformedArtifact(trustRecord, "trustRecordHash", false);
 
   if (malformed !== undefined) {
     return malformed;
@@ -237,7 +236,7 @@ export async function verifyExecutionIntentOffline(
   intent: ExecutionIntent,
   publicKeys: Readonly<Record<string, string>>,
 ): Promise<OfflineVerificationResult> {
-  const malformed = malformedArtifact(intent, "intentHash");
+  const malformed = malformedArtifact(intent, "intentHash", true);
 
   if (malformed !== undefined) {
     return malformed;
@@ -303,6 +302,7 @@ function isSignatureEntry(value: unknown): value is SignatureEntry {
 function malformedArtifact(
   artifact: unknown,
   hashField: "trustRecordHash" | "intentHash",
+  requireSignature: boolean,
 ): OfflineVerificationResult | undefined {
   const record = artifact as Record<string, unknown> | null;
   const signature =
@@ -310,15 +310,18 @@ function malformedArtifact(
       ? (record.signature as Record<string, unknown> | null | undefined)
       : undefined;
 
+  // A trust record carries no legacy signature (decision D24): only its hash is required here.
+  // An execution intent still carries its own signature, which must be well formed.
   const wellFormed =
     typeof record === "object" &&
     record !== null &&
     typeof record[hashField] === "string" &&
-    typeof signature === "object" &&
-    signature !== null &&
-    typeof signature.algorithm === "string" &&
-    typeof signature.keyId === "string" &&
-    typeof signature.value === "string";
+    (!requireSignature ||
+      (typeof signature === "object" &&
+        signature !== null &&
+        typeof signature.algorithm === "string" &&
+        typeof signature.keyId === "string" &&
+        typeof signature.value === "string"));
 
   if (wellFormed) {
     return undefined;
@@ -329,7 +332,9 @@ function malformedArtifact(
     hashValid: false,
     algorithmsChecked: [],
     errors: [
-      `malformed input: expected an object with a string ${hashField} and a signature with algorithm, keyId and value.`,
+      requireSignature
+        ? `malformed input: expected an object with a string ${hashField} and a signature with algorithm, keyId and value.`
+        : `malformed input: expected an object with a string ${hashField}.`,
     ],
   };
 }
@@ -357,7 +362,9 @@ async function verifyEnvelope(
 
   for (const entry of entries) {
     if (seenAlgorithms.has(entry.algorithm)) {
-      errors.push(`duplicate algorithm in signatures array: ${entry.algorithm}.`);
+      errors.push(
+        `duplicate algorithm in signatures array: ${entry.algorithm}.`,
+      );
       allValid = false;
       continue;
     }

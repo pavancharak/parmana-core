@@ -108,12 +108,6 @@ async function buildAndSealDraft(
   const withEmptyHash: ExecutionTrustRecord = {
     ...draft,
     trustRecordHash: "",
-    signature: {
-      algorithm: SignatureAlgorithms.ED25519,
-      keyId: "default",
-      value: "",
-      signedAt: now,
-    },
   };
 
   const trustRecordHash = await verificationCrypto.hash(withEmptyHash);
@@ -121,13 +115,9 @@ async function buildAndSealDraft(
     ...withEmptyHash,
     trustRecordHash,
   };
-  const signature = await verificationCrypto.sign(recordWithHash);
-  const signatures = await verificationCrypto.signWholeRecord({
-    ...recordWithHash,
-    signature,
-  });
+  const signatures = await verificationCrypto.signWholeRecord(recordWithHash);
 
-  return { ...recordWithHash, signature, schemaVersion: 3, signatures };
+  return { ...recordWithHash, schemaVersion: 3, signatures };
 }
 
 describe("VerificationCrypto — authorization envelope coverage (NF-003)", () => {
@@ -217,14 +207,9 @@ describe("VerificationCrypto — authorization envelope coverage (NF-003)", () =
       ...withEmptyHash,
       trustRecordHash,
     };
-    const signature = await verificationCrypto.sign(recordWithHash);
-    const signatures = await verificationCrypto.signWholeRecord({
-      ...recordWithHash,
-      signature,
-    });
+    const signatures = await verificationCrypto.signWholeRecord(recordWithHash);
     const legacyRecord: ExecutionTrustRecord = {
       ...recordWithHash,
-      signature,
       schemaVersion: 3,
       signatures,
     };
