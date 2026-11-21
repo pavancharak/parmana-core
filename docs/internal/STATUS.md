@@ -134,3 +134,10 @@ npx vitest run
 - **Built, not verified against AWS:** a KMS primary for hybrid signing behind `PARMANA_HYBRID_KMS` (F25), and the dilithium3 secondary key from Secrets Manager (F26). Both are tested with fakes only.
 - **Infrastructure drafted:** `infra/parmana-prod-signing/main.tf` adds the secret, its KMS key and its read policy. Validated, not planned or applied. See PR #760.
 - **Owner decisions open:** D17 (lift the hybrid + KMS refusal by default, after a real run) and D18 (confirm the secret's readers). Recorded in `docs/assurance/OPEN_ITEMS.md`.
+
+## 10. Update 2026-11-21: test account run
+
+- The Terraform stack in `infra/parmana-test-signing` was applied in a separate test account. Production was not applied.
+- The server role read the test secret from EC2, and the stored key is ML-DSA-65. Full record: `runbooks/TEST-ACCOUNT-SECRET-CHECK.md`.
+- A key of unknown origin was stored in the test secret and then removed (F27). The store script now generates a fresh key every time.
+- Open: PROD-1 (production state and production key, owner), and CLEAN-1 (terminate the check instance, delete the runner's access key, and related cleanup).

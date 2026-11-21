@@ -6539,6 +6539,18 @@ Items that **were** fixed, and how each was checked, are in [COVERAGE.md](COVERA
 - **Not verified.** Against a real AWS Secrets Manager secret. The startup check now has unit tests (five, with an injected reader): no secret configured, a readable dilithium3 key, an unreadable secret, a value that is not PEM, and an ed25519 key. The check refuses any key that is not ML-DSA-65, and it never puts key material in an error. It has not run against a real secret. The Terraform that sets the read policy is in `infra/parmana-prod-signing/main.tf` (PR #760): validated with terraform 1.9.8, not planned or applied.
 - **Decision for the owner.** Who may read the secret (IAM policy), and whether the same secret store should hold the classical key. This change does not read the classical key from a secret.
 
+### F27. The first test secret held a key of unknown origin; removed from the test account and replaced (contained; production origin not established)
+
+- **Evidence.** `scripts/generate-keypair.ts` refused to create a key because `keys/default-secondary.*` already existed. The operator then stored that existing file as the secret's value. The secret was force-deleted with no recovery window, which removes every version. A new key was generated and stored with `scripts/store-secondary-key.mjs`. Full record: `docs/internal/runbooks/TEST-ACCOUNT-SECRET-CHECK.md` §5.7 and §5.8.
+- **Fix.** The store script generates a fresh key in a temporary folder and never reads `keys/`. The runbook (`SECRETS-MANAGER-KEYS.md`) requires it, so a key of unknown origin can't be stored through the documented steps.
+- **Not established.** Whether the original file was a production key. The test account no longer holds it. Production was not changed by any command in this run. The owner has to check production's secondary key (open item PROD-1).
+
+### F28. The production Terraform folder's state lists production resources, though the stack is documented as never applied (open)
+
+- **Evidence.** A plan in `infra/parmana-prod-signing` showed the state holding `aws_kms_alias.signing [id=alias/parmana-prod]` and `aws_iam_role_policy.runtime [id=parmana-vercel-kms-signer:parmana-prod-kms-signing]`. The stack header and the key-management page say it has not been applied.
+- **Effect.** A plan or apply from that folder with other variables can act on production resources. Nothing was applied by this run.
+- **Decision for the owner.** Find out how that state was produced, and confirm what those production resources are (open item PROD-1).
+
 ### F20. A partial review state crashed the decision route, and a test left one behind (fixed)
 
 - **Evidence.** The integration test `packages/policy/tests/integration/policy-v2-commit.integration.test.ts` saved `{ items: [] }` as the review state. It truncated the tables before each test but not after the last one, so the row stayed in the shared database. The next server start that read it failed: `ReviewQueue.load` read `snapshot.results` of an undefined value, and each decision answered `500`.

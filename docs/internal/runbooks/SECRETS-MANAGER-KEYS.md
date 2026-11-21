@@ -96,6 +96,8 @@ Store the key with `scripts/store-secondary-key.mjs`, and only with it. The scri
 
 Rotation: run step 2 again. The server picks up the new value after the five-minute cache expires, or on restart. Once the new key is trusted everywhere it is needed, retire the old one.
 
+The test account run is recorded in `TEST-ACCOUNT-SECRET-CHECK.md`.
+
 Not done: this has not been run against AWS production. Step 4's CloudTrail alert is an operator step.
 
 ## Open checks
