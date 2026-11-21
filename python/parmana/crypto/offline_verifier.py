@@ -237,7 +237,10 @@ def verify_execution_trust_record_offline(
 
 
 def _is_at_or_after_cutover(created_at: Any, cutover: str) -> bool:
-    """True when createdAt is at or after the cutover (the instant itself is included)."""
+    """True when createdAt is at or after the cutover.
+
+    The cutover instant itself is included.
+    """
     from datetime import datetime
 
     if not isinstance(created_at, str):

@@ -36,8 +36,8 @@ def test_the_record_carries_an_explicit_null() -> None:
 
 
 def test_the_raw_json_hash_matches() -> None:
-    # This record is schema version 2, which is discarded (decision D24), so it is refused. Its hash
-    # still matches, which is what this regression test guards.
+    # This record is schema version 2, which is discarded (decision D24), so it is
+    # refused. Its hash still matches, which is what this regression test guards.
     result = verify_execution_trust_record_offline(RECORD, KEYS)
 
     assert result.hash_valid is True

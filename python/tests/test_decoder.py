@@ -17,7 +17,7 @@ def test_decode_execution_trust_record():
     ExecutionTrustApplication.execute in packages/runtime).
 
     This fixture intentionally includes every field the current
-    @parmana/shared ExecutionTrustRecord requires -- including `signature`,
+    @parmana/shared ExecutionTrustRecord requires -- including `signatures`,
     which the SDK previously had no model field for at all (silently
     dropped on decode).
     """
@@ -84,16 +84,18 @@ def test_decode_execution_trust_record():
         "receipts": [],
         "trustRecordHash": "abc123",
         #
-        # Required per packages/shared/src/domain/execution-trust-record.ts:84.
-        # A previous SDK version had no model field for this at all, so it
-        # was silently dropped on every decode.
+        # Required per packages/shared/src/domain/execution-trust-record.ts.
+        # Schema version 3: one entry in single mode, two in hybrid. Each entry
+        # has algorithm, keyId and signature.
         #
-        "signature": {
-            "algorithm": "ed25519",
-            "keyId": "parmana-signing-key-001",
-            "value": "c2lnbmF0dXJlLWJ5dGVzLWJhc2U2NA==",
-            "signedAt": "2026-07-01T00:05:01Z",
-        },
+        "schemaVersion": 3,
+        "signatures": [
+            {
+                "algorithm": "ed25519",
+                "keyId": "parmana-signing-key-001",
+                "signature": "c2lnbmF0dXJlLWJ5dGVzLWJhc2U2NA==",
+            },
+        ],
         "createdAt": "2026-07-01T00:00:00Z",
         "updatedAt": "2026-07-01T00:00:00Z",
     }
@@ -127,27 +129,23 @@ def test_decode_execution_trust_record():
     assert record.trust_record_hash == "abc123"
 
     #
-    # The trust record signature must survive decoding.
+    # The trust record signatures must survive decoding.
     #
-    assert record.signature is not None
+    assert record.signatures is not None
+    assert len(record.signatures) == 1
 
-    assert record.signature.algorithm == SignatureAlgorithm.ED25519
+    assert record.signatures[0].algorithm == SignatureAlgorithm.ED25519
 
     #
     # Must be a real enum member, not the raw wire string -- otherwise
     # isinstance() checks downstream silently fail even though string
     # equality happens to still hold for str-mixin enums.
     #
-    assert isinstance(record.signature.algorithm, SignatureAlgorithm)
+    assert isinstance(record.signatures[0].algorithm, SignatureAlgorithm)
 
-    assert record.signature.key_id == "parmana-signing-key-001"
+    assert record.signatures[0].key_id == "parmana-signing-key-001"
 
-    assert record.signature.value == "c2lnbmF0dXJlLWJ5dGVzLWJhc2U2NA=="
-
-    assert isinstance(
-        record.signature.signed_at,
-        datetime,
-    )
+    assert record.signatures[0].signature == "c2lnbmF0dXJlLWJ5dGVzLWJhc2U2NA=="
 
     assert record.verifications[0].status == VerificationStatus.VERIFIED
 
