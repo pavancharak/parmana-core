@@ -1,9 +1,5 @@
 import { KeyProviders, loadConfig } from "@parmana/shared";
-import type {
-  ExecutionTrustRecord,
-  Signature,
-  SignatureEntry,
-} from "@parmana/shared";
+import type { ExecutionTrustRecord, SignatureEntry } from "@parmana/shared";
 
 import { CryptoBootstrap } from "./CryptoBootstrap.js";
 import {

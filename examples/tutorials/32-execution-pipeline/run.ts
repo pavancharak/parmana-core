@@ -46,7 +46,9 @@ async function main(): Promise<void> {
 
   console.log(`Trust Record      : ${trustRecord.trustRecordId ? "✓" : "✗"}`);
 
-  console.log(`Signed            : ${(trustRecord.signatures?.length ?? 0) > 0 ? "✓" : "✗"}`);
+  console.log(
+    `Signed            : ${(trustRecord.signatures?.length ?? 0) > 0 ? "✓" : "✗"}`,
+  );
 
   console.log();
   console.log("Pipeline completed successfully.");

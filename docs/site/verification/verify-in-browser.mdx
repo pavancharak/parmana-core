@@ -6,32 +6,34 @@ description: "Paste a signed Execution Trust Record and a public key, and check 
 import { RecordVerifier } from "/snippets/record-verifier.jsx";
 
 export const exampleRecord = {
-  "trustRecordId": "cross-language-fixture-txn",
-  "businessTransactionId": "cross-language-fixture-txn",
-  "transaction": {
-    "businessTransactionId": "cross-language-fixture-txn",
-    "status": "RECEIVED",
-    "createdAt": "2026-01-01T00:00:00.000Z",
-    "signals": {
-      "amount": 100,
-      "vendorId": "vendor-café"
-    }
+  trustRecordId: "cross-language-fixture-txn",
+  businessTransactionId: "cross-language-fixture-txn",
+  transaction: {
+    businessTransactionId: "cross-language-fixture-txn",
+    status: "RECEIVED",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    signals: {
+      amount: 100,
+      vendorId: "vendor-café",
+    },
   },
-  "overrides": [],
-  "executions": [],
-  "verifications": [],
-  "receipts": [],
-  "createdAt": "2026-01-01T00:00:00.000Z",
-  "updatedAt": "2026-01-01T00:00:00.000Z",
-  "trustRecordHash": "dfc3d4d686244a2f79b120eac15886c7472d55a1708d4c71da898a79c9f9238d",
-  "schemaVersion": 3,
-  "signatures": [
+  overrides: [],
+  executions: [],
+  verifications: [],
+  receipts: [],
+  createdAt: "2026-01-01T00:00:00.000Z",
+  updatedAt: "2026-01-01T00:00:00.000Z",
+  trustRecordHash:
+    "dfc3d4d686244a2f79b120eac15886c7472d55a1708d4c71da898a79c9f9238d",
+  schemaVersion: 3,
+  signatures: [
     {
-      "algorithm": "ed25519",
-      "keyId": "cross-language-fixture",
-      "signature": "rPmP0IRIQJkXlyncmeeoSlqi1iQHlvghWjN4AHJRw7Ty+1DzBaXwF7KBDcMJ++CONgHaAPLh4EAY4XYuMsAmAg=="
-    }
-  ]
+      algorithm: "ed25519",
+      keyId: "cross-language-fixture",
+      signature:
+        "rPmP0IRIQJkXlyncmeeoSlqi1iQHlvghWjN4AHJRw7Ty+1DzBaXwF7KBDcMJ++CONgHaAPLh4EAY4XYuMsAmAg==",
+    },
+  ],
 };
 
 export const examplePublicKey =

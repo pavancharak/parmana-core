@@ -2,7 +2,6 @@ import crypto from "node:crypto";
 
 import {
   CryptoBootstrap,
-  currentSigningKeyId,
   TrustRecordHasher,
   VerificationCrypto,
   WHOLE_RECORD_SCHEMA_VERSION,

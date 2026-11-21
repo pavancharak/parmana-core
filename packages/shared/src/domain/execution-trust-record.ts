@@ -3,7 +3,6 @@ import { Execution } from "./execution.js";
 import { Override } from "./override.js";
 import { Verification } from "./verification.js";
 import { Receipt } from "./receipt.js";
-import { Signature } from "./signature.js";
 import { SignatureEntry } from "./signature-entry.js";
 import { SignedExecutionAuthorization } from "./execution-authorization.js";
 import { EvidenceAnchor } from "./evidence-anchor.js";

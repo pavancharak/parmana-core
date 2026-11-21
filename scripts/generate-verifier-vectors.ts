@@ -30,11 +30,16 @@ import { fileURLToPath } from "node:url";
 const [mode, outArg] = process.argv.slice(2);
 
 if ((mode !== "hybrid" && mode !== "single") || !outArg) {
-  console.error("Usage: generate-verifier-vectors.ts <hybrid|single> <out-dir>");
+  console.error(
+    "Usage: generate-verifier-vectors.ts <hybrid|single> <out-dir>",
+  );
   process.exit(2);
 }
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const repoRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+);
 const outDir = path.resolve(outArg);
 
 if (outDir === repoRoot || outDir.startsWith(repoRoot + path.sep)) {
@@ -53,11 +58,23 @@ const mlKeyId = "whole-record-ml";
 const ed = generateKeyPairSync("ed25519");
 const ml = hybrid ? generateKeyPairSync("ml-dsa-65") : undefined;
 
-writeFileSync(`${outDir}/${edKeyId}.private.pem`, ed.privateKey.export({ format: "pem", type: "pkcs8" }));
-writeFileSync(`${outDir}/${edKeyId}.public.pem`, ed.publicKey.export({ format: "pem", type: "spki" }));
+writeFileSync(
+  `${outDir}/${edKeyId}.private.pem`,
+  ed.privateKey.export({ format: "pem", type: "pkcs8" }),
+);
+writeFileSync(
+  `${outDir}/${edKeyId}.public.pem`,
+  ed.publicKey.export({ format: "pem", type: "spki" }),
+);
 if (ml) {
-  writeFileSync(`${outDir}/${mlKeyId}.private.pem`, ml.privateKey.export({ format: "pem", type: "pkcs8" }));
-  writeFileSync(`${outDir}/${mlKeyId}.public.pem`, ml.publicKey.export({ format: "pem", type: "spki" }));
+  writeFileSync(
+    `${outDir}/${mlKeyId}.private.pem`,
+    ml.privateKey.export({ format: "pem", type: "pkcs8" }),
+  );
+  writeFileSync(
+    `${outDir}/${mlKeyId}.public.pem`,
+    ml.publicKey.export({ format: "pem", type: "spki" }),
+  );
 }
 
 // Configuration the server reads from the environment, set before the signing modules load it.
@@ -101,7 +118,10 @@ const draft = {
 
 const trustRecordHash = await crypto.hash(draft);
 // Schema version 3 has no legacy signature: the signatures array covers the whole record (D24).
-const signatures = await crypto.signWholeRecord({ ...draft, trustRecordHash } as never);
+const signatures = await crypto.signWholeRecord({
+  ...draft,
+  trustRecordHash,
+} as never);
 
 const record = { ...draft, trustRecordHash, signatures };
 writeFileSync(`${outDir}/record.json`, JSON.stringify(record, null, 2));
