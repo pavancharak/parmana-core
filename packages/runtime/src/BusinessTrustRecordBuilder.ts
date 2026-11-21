@@ -5,6 +5,7 @@ import {
   currentSigningKeyId,
   TrustRecordHasher,
   VerificationCrypto,
+  WHOLE_RECORD_SCHEMA_VERSION,
 } from "@parmana/crypto";
 
 import {
@@ -169,26 +170,18 @@ export class BusinessTrustRecordBuilder {
     const signature = await this.crypto.sign(recordWithHash);
 
     //
-    // Hybrid Signature Support milestone, Phase A: additive second
-    // signature pass, only when CRYPTO_MODE=hybrid. The legacy
-    // `signature` above is unaffected either way.
+    // Schema version 3 only (decision D24). Single mode carries one signature, for the configured
+    // primary algorithm. Hybrid mode carries one per configured algorithm. The legacy `signature`
+    // field is still present in this stage; it is removed in the next stage.
     //
-    if (this.config.crypto.mode !== "hybrid") {
-      return {
-        ...recordWithHash,
-
-        signature,
-      };
-    }
-
-    const signatures = await this.crypto.signHybrid(recordWithHash);
+    const signatures = await this.crypto.signWholeRecord(recordWithHash);
 
     return {
       ...recordWithHash,
 
       signature,
 
-      schemaVersion: this.config.crypto.hybridSchemaVersion,
+      schemaVersion: WHOLE_RECORD_SCHEMA_VERSION,
 
       signatures,
     };

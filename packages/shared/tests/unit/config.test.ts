@@ -75,11 +75,13 @@ describe("loadConfig hybridSchemaVersion (ADR-0016)", () => {
     expect(loadConfig().crypto.hybridSchemaVersion).toBe(3);
   });
 
-  it("keeps schema version 2 for an explicit rollback", () => {
+  it("refuses schema version 2: it is discarded (D24), so there is no rollback to it", () => {
     process.env.PARMANA_POLICY_DIR = "./policies";
     process.env.HYBRID_SCHEMA_VERSION = "2";
 
-    expect(loadConfig().crypto.hybridSchemaVersion).toBe(2);
+    expect(() => loadConfig()).toThrow(
+      "HYBRID_SCHEMA_VERSION=2 is no longer supported",
+    );
   });
 
   it("accepts schema version 3 without the former acknowledgement", () => {
@@ -95,7 +97,7 @@ describe("loadConfig hybridSchemaVersion (ADR-0016)", () => {
     process.env.HYBRID_SCHEMA_VERSION = "4";
 
     expect(() => loadConfig()).toThrow(
-      'HYBRID_SCHEMA_VERSION must be 2 or 3, got "4".',
+      'HYBRID_SCHEMA_VERSION must be 3, got "4".',
     );
   });
 });

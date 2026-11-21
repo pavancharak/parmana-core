@@ -122,8 +122,12 @@ async function buildAndSealDraft(
     trustRecordHash,
   };
   const signature = await verificationCrypto.sign(recordWithHash);
+  const signatures = await verificationCrypto.signWholeRecord({
+    ...recordWithHash,
+    signature,
+  });
 
-  return { ...recordWithHash, signature };
+  return { ...recordWithHash, signature, schemaVersion: 3, signatures };
 }
 
 describe("VerificationCrypto — authorization envelope coverage (NF-003)", () => {
@@ -214,7 +218,16 @@ describe("VerificationCrypto — authorization envelope coverage (NF-003)", () =
       trustRecordHash,
     };
     const signature = await verificationCrypto.sign(recordWithHash);
-    const legacyRecord: ExecutionTrustRecord = { ...recordWithHash, signature };
+    const signatures = await verificationCrypto.signWholeRecord({
+      ...recordWithHash,
+      signature,
+    });
+    const legacyRecord: ExecutionTrustRecord = {
+      ...recordWithHash,
+      signature,
+      schemaVersion: 3,
+      signatures,
+    };
 
     await expect(verificationCrypto.verify(legacyRecord)).resolves.toBe(true);
 

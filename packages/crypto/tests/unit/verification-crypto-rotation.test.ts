@@ -56,8 +56,9 @@ async function signRecord(
   } as ExecutionTrustRecord;
 
   const signature = await crypto.sign(withHash);
+  const signatures = await crypto.signWholeRecord({ ...withHash, signature });
 
-  return { ...withHash, signature };
+  return { ...withHash, signature, schemaVersion: 3, signatures };
 }
 
 describe("VerificationCrypto key rotation (PQC audit RED-3)", () => {

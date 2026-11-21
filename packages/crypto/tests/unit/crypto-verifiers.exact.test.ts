@@ -526,7 +526,7 @@ describe.skipIf(!isMlDsa65Supported())(
       process.env.SECONDARY_SIGNATURE_PROVIDER = "dilithium3";
       // These records declare schemaVersion 2, so they must be signed as
       // version 2. The default is now 3 (ADR-0016, 2026-11-20).
-      process.env.HYBRID_SCHEMA_VERSION = "2";
+      process.env.HYBRID_SCHEMA_VERSION = "3";
     });
 
     beforeAll(() => {
@@ -566,7 +566,7 @@ describe.skipIf(!isMlDsa65Supported())(
       const withHash = { ...draft, trustRecordHash } as ExecutionTrustRecord;
       const signature = await crypto.sign(withHash);
       const signatures = await crypto.signHybrid({ ...withHash, signature });
-      return { ...withHash, signature, schemaVersion: 2, signatures };
+      return { ...withHash, signature, schemaVersion: 3, signatures };
     }
 
     it("verifies a genuine hybrid record", async () => {
@@ -599,19 +599,19 @@ describe.skipIf(!isMlDsa65Supported())(
       ).resolves.toBe(false);
     });
 
-    it("treats an empty signatures array as legacy when hybrid is not required", async () => {
+    it("refuses an empty signatures array: only schema version 3 is accepted (D24)", async () => {
       const crypto = new VerificationCrypto();
       const record = await hybridRecord(crypto);
       await expect(crypto.verify({ ...record, signatures: [] })).resolves.toBe(
-        true,
+        false,
       );
     });
 
-    it("verifies a hybrid record without schemaVersion against version 2", async () => {
+    it("refuses a hybrid record with no schemaVersion: version 2 is discarded (D24)", async () => {
       const crypto = new VerificationCrypto();
       const { schemaVersion: _v, ...record } = await hybridRecord(crypto);
       await expect(crypto.verify(record as ExecutionTrustRecord)).resolves.toBe(
-        true,
+        false,
       );
     });
 
@@ -671,14 +671,14 @@ describe.skipIf(!isMlDsa65Supported())(
       });
     });
 
-    it("with HYBRID_SIGNATURE_REQUIRED, refuses a record stripped of its hybrid signatures", async () => {
+    it("refuses a record stripped of its hybrid signatures, under any policy (D24)", async () => {
       const signing = new VerificationCrypto();
       const record = await hybridRecord(signing);
       const { signatures: _s, schemaVersion: _v, ...stripped } = record;
 
       await expect(
         signing.verify(stripped as ExecutionTrustRecord),
-      ).resolves.toBe(true);
+      ).resolves.toBe(false);
 
       process.env.HYBRID_SIGNATURE_REQUIRED = "true";
       try {
@@ -711,7 +711,7 @@ describe.skipIf(!isMlDsa65Supported())(
       }
     });
 
-    it("with HYBRID_REQUIRED_FROM after a record's createdAt, still accepts the stripped record (legacy rules)", async () => {
+    it("refuses a stripped record whatever the cutover: version 2 is discarded (D24)", async () => {
       const signing = new VerificationCrypto();
       const record = await hybridRecord(signing);
       const { signatures: _s, schemaVersion: _v, ...stripped } = record;
@@ -720,7 +720,7 @@ describe.skipIf(!isMlDsa65Supported())(
       try {
         await expect(
           new VerificationCrypto().verify(stripped as ExecutionTrustRecord),
-        ).resolves.toBe(true);
+        ).resolves.toBe(false);
       } finally {
         delete process.env.HYBRID_REQUIRED_FROM;
       }

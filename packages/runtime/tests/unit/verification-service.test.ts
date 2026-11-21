@@ -258,7 +258,9 @@ describe("VerificationService (live path)", () => {
     expect(verification.status).toBe(VerificationStatus.FAILED);
     expect(verification.message).toContain("Integrity check failed");
     expect(verification.message).toContain("tampered-hash-value");
-    expect(verification.message).not.toContain("Signature check failed");
+    // Schema version 3 signs the whole record, including the stored hash, so a changed hash also
+    // fails the signature check (decision D24).
+    expect(verification.message).toContain("Signature check failed");
     expect(verification.message).not.toContain(
       "Authorization binding check failed",
     );

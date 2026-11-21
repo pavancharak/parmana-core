@@ -262,11 +262,19 @@ export async function buildSignedMultiExecutionOverrideRecord(
   };
 
   const signature = await verificationCrypto.sign(recordWithHash);
+  const signatures = await verificationCrypto.signWholeRecord({
+    ...recordWithHash,
+    signature,
+  });
 
   return {
     ...recordWithHash,
 
     signature,
+
+    schemaVersion: 3,
+
+    signatures,
   };
 }
 

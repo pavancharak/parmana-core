@@ -442,10 +442,11 @@ describe("PostgresExecutionTrustRecordRepository", () => {
       createFakePool(),
     );
     const transaction = buildBusinessTransaction("txn-5");
-    const signedRecord =
-      await buildSignedMultiExecutionOverrideRecord(transaction);
+    const built = await buildSignedMultiExecutionOverrideRecord(transaction);
+    // A row that predates schemaVersion and signatures: strip both, as such a row would be.
+    const { schemaVersion: _v, signatures: _s, ...signedRecord } = built;
 
-    await repository.create(signedRecord);
+    await repository.create(signedRecord as typeof built);
 
     const found = await repository.findByTransactionId("txn-5");
 

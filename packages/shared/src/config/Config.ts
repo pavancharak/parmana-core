@@ -371,20 +371,22 @@ export interface LoggingConfig {
  * rollback. Any other value throws, so a typo cannot pick a schema version
  * silently. The former HYBRID_SCHEMA_V3_ACKNOWLEDGED gate is no longer read.
  */
-export function parseHybridSchemaVersion(value: string | undefined): 2 | 3 {
+export function parseHybridSchemaVersion(value: string | undefined): 3 {
   if (value === undefined || value.trim() === "") {
     return 3;
-  }
-
-  if (value === "2") {
-    return 2;
   }
 
   if (value === "3") {
     return 3;
   }
 
-  throw new Error(`HYBRID_SCHEMA_VERSION must be 2 or 3, got "${value}".`);
+  if (value === "2") {
+    throw new Error(
+      "HYBRID_SCHEMA_VERSION=2 is no longer supported: schema version 2 is discarded (decision D24). Remove the variable, or set it to 3.",
+    );
+  }
+
+  throw new Error(`HYBRID_SCHEMA_VERSION must be 3, got "${value}".`);
 }
 
 /**

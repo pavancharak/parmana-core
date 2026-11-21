@@ -400,7 +400,7 @@
 <tr>
 <td><code>HYBRID_SCHEMA_VERSION</code></td>
 <td><code>3</code> (unset)</td>
-<td><code>2</code>, <code>3</code></td>
+<td><code>3</code></td>
 <td>No</td>
 <td>Implemented (<code>3</code> exercised)</td>
 <td><code>3</code> covers the whole record (see <a href="../security/index.html#schema-versions-and-coverage">Security</a>).</td>
@@ -628,7 +628,7 @@ PARMANA_API_KEYS='[{"callerId":"…","keyHash":"…","allowedCapabilities":["…
 POLICY_CHANGE_CHECKERS='{"vendor-payment":["…"]}'
 CRYPTO_MODE=hybrid
 SECONDARY_SIGNATURE_PROVIDER=dilithium3
-# HYBRID_SCHEMA_VERSION defaults to 3. Set 2 only to roll back.</code></pre></div>
+# HYBRID_SCHEMA_VERSION is always 3. Schema version 2 is discarded (decision D24); setting 2 is refused at start-up.</code></pre></div>
 <p>This is an illustrative set. The values are placeholders. Check each one against your deployment before you use it.</p>
 
     </article>
