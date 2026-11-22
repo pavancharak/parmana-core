@@ -20,6 +20,8 @@ on:
   pull_request:
   push:
     branches: [main]
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -27,9 +29,10 @@ permissions:
   checks: read
 
 env:
-  # Commit that holds the reviewed engine and policy (PRG-D1). Change only by a
-  # reviewed pull request that also records the decision.
-  ENGINE_SHA: 1173d062744252dc217b779d932c1838f228912e
+  # Commit that holds the reviewed engine and policy. PRG-D1 introduced the engine
+  # at 1173d06; PRG-D2 moves the pin to d93f4d1 (event-scoped checks, G7 wait).
+  # Change only by a reviewed pull request that also records the decision.
+  ENGINE_SHA: d93f4d129a9e2e00087bc706145543ef4f076d1b
 
 concurrency:
   group: production-readiness-${{ github.ref }}
@@ -116,6 +119,7 @@ jobs:
             --manual-root ../base \
             --repo-root . \
             --out "$RUNNER_TEMP/readiness" \
+            --event "$GITHUB_EVENT_NAME" \
             --sha "$GITHUB_SHA"
 
       - name: Upload evidence
