@@ -416,9 +416,9 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 **Effect on the documents:**
 
-| Document | Change |
-| --- | --- |
+| Document                              | Change                                                                    |
+| ------------------------------------- | ------------------------------------------------------------------------- |
 | `docs/assurance/CHALLENGE_MAPPING.md` | Section 4 items 1 to 4 now point to this record. Their status is decided. |
-| `docs/ASSURANCE_RESULTS.md` | No change from this record. Phase status is unchanged. |
+| `docs/ASSURANCE_RESULTS.md`           | No change from this record. Phase status is unchanged.                    |
 
 **Not changed by this decision:** the score policy, the phase exit criteria, the acceptance principles, the frozen-core procedure, and the "needs description" rule as applied to any challenge whose description has not been supplied.
