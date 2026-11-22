@@ -464,6 +464,15 @@ Phase status change: none.
 
 ---
 
+### 2026-11-22: dated note correcting the chain-head open item (2026-11-14 entries)
+
+- **Correction:** the open item "Chain-head check in `CallerAuditChainVerifier.ts` is not covered" (2026-11-14, crypto mutation campaign and re-run) is out of date. Unit tests for the anchored chain head already exist in `packages/crypto/tests/unit/caller-audit-chain-verifier.test.ts` (describe block "anchored chain head", six tests).
+- **Evidence:** a targeted mutation run of that one file on 2026-11-22, Node 24.22.3, `STRYKER_PACKAGE=crypto STRYKER_MUTATE=packages/crypto/src/CallerAuditChainVerifier.ts STRYKER_REPORT_NAME=crypto-chain-head npx stryker run`. Result: 58 of 58 mutants killed, 0 survived, including the anchor-branch conditionals, equality operators and the anchor error string (report `reports/mutation/crypto-chain-head.json`, not committed; gitignored).
+- **Not corrected here:** the 2026-11-14 survivor counts for the full crypto package (114 on the owner's Windows run, 115 on the Linux sandbox). Those came from runs whose reports are not in this repository. They are re-measured by the entry below.
+- **Phase 1 item 2 (chain-head):** the tests already existed. No new test was needed to meet the item's exit criterion, which is that the check is covered and its mutants are re-run. That criterion is met by the run above.
+
+---
+
 ### Entry template
 
 Copy this for each new run.
