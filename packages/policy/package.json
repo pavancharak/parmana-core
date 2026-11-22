@@ -25,7 +25,7 @@
     "@parmana/storage": "4.1.1",
     "express": "^5.3.0",
     "pg": "^8.23.1",
-    "re2": "^1.27.1",
+    "re2": "^1.27.2",
     "vitest": "^5.0.3"
   },
   "devDependencies": {
@@ -33,10 +33,10 @@
     "@types/express": "^5.0.6",
     "@types/pg": "^8.23.1",
     "dotenv": "^18.0.10",
-    "eslint": "^10.14.0",
+    "eslint": "^10.15.0",
     "eslint-config-prettier": "^10.1.8",
     "tsx": "^4.23.15",
-    "typescript-eslint": "^8.72.2"
+    "typescript-eslint": "^8.73.0"
   },
   "license": "Apache-2.0",
   "engines": {
