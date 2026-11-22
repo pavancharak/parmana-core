@@ -30,9 +30,10 @@ permissions:
 
 env:
   # Commit that holds the reviewed engine and policy. PRG-D1 introduced the engine
-  # at 1173d06; PRG-D2 moves the pin to d93f4d1 (event-scoped checks, G7 wait).
+  # at 1173d06; PRG-D2 moved it to d93f4d1 (event-scoped checks, G7 wait); PRG-D3
+  # moves it to 1c4893b (licences from the installed tree).
   # Change only by a reviewed pull request that also records the decision.
-  ENGINE_SHA: d93f4d129a9e2e00087bc706145543ef4f076d1b
+  ENGINE_SHA: 1c4893b
 
 concurrency:
   group: production-readiness-${{ github.ref }}
