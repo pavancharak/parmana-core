@@ -213,7 +213,9 @@
             "build-and-test",
             "verify-policy-approvals",
             "python-reference-drift"
-          ]
+          ],
+          "wait_s": 1500,
+          "poll_s": 30
         }
       ]
     },

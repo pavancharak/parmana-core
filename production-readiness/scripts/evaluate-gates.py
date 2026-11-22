@@ -119,21 +119,45 @@ def github_check_runs(repo: str, sha: str, token: str) -> dict[str, str]:
     return {name: conclusion for name, (_, conclusion) in results.items()}
 
 
+CHECK_RUN_NOT_YET = ("pending", "missing")
+
+
 def check_check_runs(check: dict[str, Any], ctx: dict[str, Any]) -> CheckResult:
+    """Wait for the named check runs to finish, then require every one to succeed.
+
+    A run still in progress ("pending") or not yet created ("missing") is waited
+    for, up to wait_s seconds, polling every poll_s seconds. Without the wait,
+    the gate reads check runs while other workflows are still running and fails
+    for a reason that is not a real failure. A run that is still not finished,
+    or not created, when the wait ends is a failure.
+    """
     token = os.environ.get("GITHUB_TOKEN", "")
     repo = os.environ.get("GITHUB_REPOSITORY", "")
     sha = ctx.get("sha", "")
     if not (token and repo and sha):
         return CheckResult(check, FAIL, "GITHUB_TOKEN, GITHUB_REPOSITORY and --sha are required", {})
-    try:
-        conclusions = github_check_runs(repo, sha, token)
-    except (urllib.error.URLError, OSError, json.JSONDecodeError) as exc:
-        return CheckResult(check, FAIL, f"could not read check runs: {exc}", {})
-    found = {name: conclusions.get(name, "missing") for name in check["names"]}
+    wait_s = int(check.get("wait_s", 900))
+    poll_s = int(check.get("poll_s", 30))
+    deadline = time.monotonic() + wait_s
+    polls = 0
+    while True:
+        try:
+            conclusions = github_check_runs(repo, sha, token)
+        except (urllib.error.URLError, OSError, json.JSONDecodeError) as exc:
+            return CheckResult(check, FAIL, f"could not read check runs: {exc}", {})
+        polls += 1
+        found = {name: conclusions.get(name, "missing") for name in check["names"]}
+        waiting = [n for n, c in found.items() if c in CHECK_RUN_NOT_YET]
+        if not waiting or time.monotonic() >= deadline:
+            break
+        time.sleep(poll_s)
     failing = {name: c for name, c in found.items() if c != "success"}
-    evidence = {"sha": sha, "conclusions": found}
+    evidence = {"sha": sha, "conclusions": found, "polls": polls, "wait_s": wait_s}
     if failing:
-        return CheckResult(check, FAIL, "not successful: " + ", ".join(f"{n}={c}" for n, c in failing.items()), evidence)
+        detail = "not successful: " + ", ".join(f"{n}={c}" for n, c in failing.items())
+        if waiting:
+            detail += f" (still waiting after {wait_s}s)"
+        return CheckResult(check, FAIL, detail, evidence)
     return CheckResult(check, PASS, "all named check runs succeeded", evidence)
 
 

@@ -87,27 +87,63 @@ class CheckRunTests(RepoFixture):
 
     def test_fails_without_token(self):
         with mock.patch.dict(os.environ, {}, clear=True):
-            self.assertEqual(eg.check_check_runs(self.check, self.ctx()).status, eg.FAIL)
+            self.assertEqual(eg.check_check_runs(dict(self.check, wait_s=0), self.ctx()).status, eg.FAIL)
 
     def test_all_success_passes(self):
         env = {"GITHUB_TOKEN": "t", "GITHUB_REPOSITORY": "example/repo"}
         runs = {"build-and-test": "success", "DCO": "success"}
         with mock.patch.dict(os.environ, env, clear=True), mock.patch.object(eg, "github_check_runs", return_value=runs):
-            self.assertEqual(eg.check_check_runs(self.check, self.ctx()).status, eg.PASS)
+            self.assertEqual(eg.check_check_runs(dict(self.check, wait_s=0), self.ctx()).status, eg.PASS)
 
     def test_missing_or_failed_run_fails(self):
         env = {"GITHUB_TOKEN": "t", "GITHUB_REPOSITORY": "example/repo"}
         runs = {"build-and-test": "failure"}
         with mock.patch.dict(os.environ, env, clear=True), mock.patch.object(eg, "github_check_runs", return_value=runs):
-            result = eg.check_check_runs(self.check, self.ctx())
+            result = eg.check_check_runs(dict(self.check, wait_s=0), self.ctx())
         self.assertEqual(result.status, eg.FAIL)
         self.assertIn("DCO=missing", result.detail)
+
+    def test_waits_for_pending_run_then_passes(self):
+        env = {"GITHUB_TOKEN": "t", "GITHUB_REPOSITORY": "example/repo"}
+        sequence = [{"build-and-test": "pending", "DCO": "success"},
+                    {"build-and-test": "success", "DCO": "success"}]
+        with mock.patch.dict(os.environ, env, clear=True), \
+                mock.patch.object(eg, "github_check_runs", side_effect=sequence) as reads, \
+                mock.patch.object(eg.time, "sleep") as sleep:
+            result = eg.check_check_runs(dict(self.check, wait_s=600, poll_s=5), self.ctx())
+        self.assertEqual(result.status, eg.PASS)
+        self.assertEqual(reads.call_count, 2)
+        sleep.assert_called_once_with(5)
+
+    def test_missing_run_that_never_appears_fails_after_the_wait(self):
+        env = {"GITHUB_TOKEN": "t", "GITHUB_REPOSITORY": "example/repo"}
+        runs = {"build-and-test": "success"}
+        with mock.patch.dict(os.environ, env, clear=True), \
+                mock.patch.object(eg, "github_check_runs", return_value=runs) as reads, \
+                mock.patch.object(eg.time, "sleep") as sleep:
+            result = eg.check_check_runs(dict(self.check, wait_s=0, poll_s=30), self.ctx())
+        self.assertEqual(reads.call_count, 1)
+        sleep.assert_not_called()
+        self.assertEqual(result.status, eg.FAIL)
+        self.assertIn("DCO=missing", result.detail)
+        self.assertIn("still waiting", result.detail)
+
+    def test_failed_run_is_not_waited_for(self):
+        env = {"GITHUB_TOKEN": "t", "GITHUB_REPOSITORY": "example/repo"}
+        runs = {"build-and-test": "failure", "DCO": "success"}
+        with mock.patch.dict(os.environ, env, clear=True), \
+                mock.patch.object(eg, "github_check_runs", return_value=runs) as reads, \
+                mock.patch.object(eg.time, "sleep") as sleep:
+            result = eg.check_check_runs(dict(self.check, wait_s=900), self.ctx())
+        self.assertEqual(result.status, eg.FAIL)
+        self.assertEqual(reads.call_count, 1)
+        sleep.assert_not_called()
 
     def test_neutral_or_pending_is_not_success(self):
         env = {"GITHUB_TOKEN": "t", "GITHUB_REPOSITORY": "example/repo"}
         runs = {"build-and-test": "neutral", "DCO": "pending"}
         with mock.patch.dict(os.environ, env, clear=True), mock.patch.object(eg, "github_check_runs", return_value=runs):
-            self.assertEqual(eg.check_check_runs(self.check, self.ctx()).status, eg.FAIL)
+            self.assertEqual(eg.check_check_runs(dict(self.check, wait_s=0), self.ctx()).status, eg.FAIL)
 
 
 class FileAndConfigTests(RepoFixture):
