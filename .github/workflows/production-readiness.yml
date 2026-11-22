@@ -112,7 +112,9 @@ jobs:
       - name: Evaluate the readiness gate
         working-directory: change
         env:
-          GITHUB_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          # Not GITHUB_SHA: GitHub reserves GITHUB_* names and ignores overrides, so
+          # the gate read check runs for the merge commit and always timed out.
+          PRG_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
         run: |
           python3 -I ../trusted/production-readiness/scripts/evaluate-gates.py \
             --policy ../trusted/production-readiness/policies/readiness-policy.json \
@@ -120,7 +122,7 @@ jobs:
             --repo-root . \
             --out "$RUNNER_TEMP/readiness" \
             --event "$GITHUB_EVENT_NAME" \
-            --sha "$GITHUB_SHA"
+            --sha "$PRG_SHA"
 
       - name: Upload evidence
         if: always()
