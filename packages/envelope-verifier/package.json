@@ -1,6 +1,6 @@
 {
   "name": "@parmana/envelope-verifier",
-  "version": "4.1.1",
+  "version": "5.0.0",
   "description": "Verifies that an incoming execution request was authorized by Parmana",
   "type": "module",
   "main": "./dist/index.js",
@@ -27,8 +27,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@parmana/crypto": "4.1.1",
-    "@parmana/shared": "4.1.1"
+    "@parmana/crypto": "5.0.0",
+    "@parmana/shared": "5.0.0"
   },
   "peerDependencies": {
     "express": "^5.3.0"
