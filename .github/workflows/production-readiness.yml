@@ -33,7 +33,7 @@ env:
   # at 1173d06; PRG-D2 moved it to d93f4d1 (event-scoped checks, G7 wait); PRG-D3
   # moves it to 1c4893b (licences from the installed tree).
   # Change only by a reviewed pull request that also records the decision.
-  ENGINE_SHA: 1c4893b
+  ENGINE_SHA: 1c4893bac5bc2cdfc47e014edbcaee348d99f27f
 
 concurrency:
   group: production-readiness-${{ github.ref }}
