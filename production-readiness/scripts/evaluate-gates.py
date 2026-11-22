@@ -37,7 +37,6 @@ import datetime as dt
 import hashlib
 import json
 import os
-import platform
 import re
 import subprocess
 import sys
@@ -205,45 +204,29 @@ def check_env_keys_documented(check: dict[str, Any], ctx: dict[str, Any]) -> Che
     return CheckResult(check, PASS, "all required keys documented", {"required": ctx["policy"]["required_env_keys"]})
 
 
-def _platform_excluded(meta: dict[str, Any]) -> bool:
-    """True when npm would not install this optional package on this platform."""
-    if not meta.get("optional"):
-        return False
-    machine = platform.machine().lower()
-    arch = {"x86_64": "x64", "amd64": "x64", "aarch64": "arm64"}.get(machine, machine)
-    return _os_or_cpu_excludes(meta.get("os"), sys.platform) or _os_or_cpu_excludes(meta.get("cpu"), arch)
-
-
-def _os_or_cpu_excludes(allowed: list[str] | None, current: str) -> bool:
-    if not allowed:
-        return False
-    positives = [a for a in allowed if not a.startswith("!")]
-    negatives = [a[1:] for a in allowed if a.startswith("!")]
-    if current in negatives:
-        return True
-    return bool(positives) and current not in positives
-
-
 def check_licence_policy(check: dict[str, Any], ctx: dict[str, Any]) -> CheckResult:
+    """Check the licence of every production package npm actually installed.
+
+    The source is node_modules/.package-lock.json, which npm writes for the installed
+    tree. package-lock.json lists packages npm may not install on this platform (for
+    example musl or wasm builds), so it is not the source of "installed". A package
+    that is installed and has no readable package.json fails: its licence cannot be
+    verified.
+    """
     root = ctx["root"]
-    lock_path = root / "package-lock.json"
+    installed_path = root / "node_modules" / ".package-lock.json"
     try:
-        packages = json.loads(lock_path.read_text(encoding="utf-8"))["packages"]
+        packages = json.loads(installed_path.read_text(encoding="utf-8"))["packages"]
     except (OSError, KeyError, json.JSONDecodeError) as exc:
-        return CheckResult(check, FAIL, f"cannot read package-lock.json: {exc}", {})
+        return CheckResult(check, FAIL, f"cannot read the installed tree (run npm ci first): {exc}", {})
     denied = set(ctx["policy"]["licence_deny"])
-    problems, checked, excluded = [], 0, []
+    problems, checked = [], 0
     for key, meta in packages.items():
-        # Skip the root project and dev-only packages. devOptional packages can
-        # still ship to production, so they stay in scope.
         if not key or meta.get("dev"):
-            continue
+            continue  # the root project and dev-only packages are out of scope
         pkg_json = root / key / "package.json"
         if not pkg_json.exists():
-            if _platform_excluded(meta):
-                excluded.append(key)  # npm skips optional packages for other platforms
-                continue
-            problems.append(f"{key}: not installed, licence cannot be verified")
+            problems.append(f"{key}: installed, but its package.json is missing")
             continue
         info = json.loads(pkg_json.read_text(encoding="utf-8"))
         licence = info.get("license")
@@ -253,11 +236,13 @@ def check_licence_policy(check: dict[str, Any], ctx: dict[str, Any]) -> CheckRes
         checked += 1
         if licence in denied or any(tok.strip("() ") in denied for tok in re.split(r" OR | AND |/", licence)):
             problems.append(f"{key}: {licence}")
-    evidence = {"production_packages_checked": checked, "platform_excluded": len(excluded)}
+    declared = json.loads((root / "package-lock.json").read_text(encoding="utf-8"))["packages"] if (root / "package-lock.json").exists() else {}
+    not_installed = sum(1 for k, m in declared.items() if k and not m.get("dev") and k not in packages)
+    evidence = {"production_packages_checked": checked, "declared_but_not_installed": not_installed}
     if problems:
         evidence["problems"] = problems[:50]
         return CheckResult(check, FAIL, f"{len(problems)} package(s) with denied or unverifiable licence", evidence)
-    return CheckResult(check, PASS, f"{checked} production packages, none denied", evidence)
+    return CheckResult(check, PASS, f"{checked} installed production packages, none denied", evidence)
 
 
 def check_changelog(check: dict[str, Any], ctx: dict[str, Any]) -> CheckResult:

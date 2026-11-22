@@ -165,37 +165,56 @@ class FileAndConfigTests(RepoFixture):
 
 
 class LicenceTests(RepoFixture):
-    def write_lock(self, packages):
-        (self.root / "package-lock.json").write_text(json.dumps({"packages": packages}))
+    def write_installed(self, packages):
+        """Write node_modules/.package-lock.json, the tree npm actually installed."""
+        (self.root / "node_modules").mkdir(exist_ok=True)
+        (self.root / "node_modules" / ".package-lock.json").write_text(json.dumps({"packages": packages}))
 
     def install(self, path, licence):
         pkg = self.root / path
         pkg.mkdir(parents=True, exist_ok=True)
         (pkg / "package.json").write_text(json.dumps({"name": path, "license": licence}))
 
+    def run_check(self):
+        return eg.check_licence_policy({"id": "l", "type": "licence_policy"}, self.ctx())
+
     def test_permitted_licences_pass_and_dev_packages_are_ignored(self):
-        self.write_lock({"": {}, "node_modules/a": {}, "node_modules/devonly": {"dev": True}})
+        self.write_installed({"node_modules/a": {}, "node_modules/devonly": {"dev": True}})
         self.install("node_modules/a", "MIT")
-        self.install("node_modules/devonly", "AGPL-3.0")  # dev-only, must be ignored
-        result = eg.check_licence_policy({"id": "l", "type": "licence_policy"}, self.ctx())
+        self.install("node_modules/devonly", "AGPL-3.0")
+        result = self.run_check()
         self.assertEqual(result.status, eg.PASS)
         self.assertEqual(result.evidence["production_packages_checked"], 1)
 
     def test_denied_licence_fails(self):
-        self.write_lock({"node_modules/bad": {}})
+        self.write_installed({"node_modules/bad": {}})
         self.install("node_modules/bad", "AGPL-3.0")
-        self.assertEqual(eg.check_licence_policy({"id": "l", "type": "licence_policy"}, self.ctx()).status, eg.FAIL)
+        self.assertEqual(self.run_check().status, eg.FAIL)
 
     def test_denied_licence_inside_an_or_expression_fails(self):
-        self.write_lock({"node_modules/dual": {}})
+        self.write_installed({"node_modules/dual": {}})
         self.install("node_modules/dual", "(MIT OR AGPL-3.0)")
-        self.assertEqual(eg.check_licence_policy({"id": "l", "type": "licence_policy"}, self.ctx()).status, eg.FAIL)
+        self.assertEqual(self.run_check().status, eg.FAIL)
 
-    def test_uninstalled_production_package_fails_closed(self):
-        self.write_lock({"node_modules/notinstalled": {}})
-        result = eg.check_licence_policy({"id": "l", "type": "licence_policy"}, self.ctx())
+    def test_missing_installed_tree_fails_closed(self):
+        result = self.run_check()
         self.assertEqual(result.status, eg.FAIL)
-        self.assertIn("cannot be verified", result.evidence["problems"][0])
+        self.assertIn("npm ci", result.detail)
+
+    def test_installed_package_without_package_json_fails(self):
+        self.write_installed({"node_modules/broken": {}})
+        result = self.run_check()
+        self.assertEqual(result.status, eg.FAIL)
+        self.assertIn("package.json is missing", result.evidence["problems"][0])
+
+    def test_declared_but_not_installed_package_is_out_of_scope(self):
+        (self.root / "package-lock.json").write_text(json.dumps({"packages": {
+            "node_modules/musl-only": {"optional": True, "os": ["linux"]}}}))
+        self.write_installed({"node_modules/a": {}})
+        self.install("node_modules/a", "MIT")
+        result = self.run_check()
+        self.assertEqual(result.status, eg.PASS)
+        self.assertEqual(result.evidence["declared_but_not_installed"], 1)
 
 
 class RepositoryHygieneTests(RepoFixture):
