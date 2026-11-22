@@ -393,3 +393,32 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 **Effect on the documents:** none until decided. The verifier's `docs/OPERATING-MODES.md` describes the current position.
 
 **Not changed by this decision:** the score policy, the exit criteria and the acceptance principles.
+
+---
+
+## D25. Long-term approach to the challenge list and gap fixes (22 November 2026)
+
+- **Reference:** D25
+- **Source:** the four open questions in `docs/assurance/CHALLENGE_MAPPING.md`, section 4; PR #767
+- **Date recorded:** 2026-11-22
+- **Owner:** Pavan Charak
+
+**Question:** How should the proposed challenge list be tested and its gaps fixed, given the four open questions in the mapping?
+
+**Owner direction (2026-11-22):** "best long term permanent fix". Recorded as adopting the durable option for each open question:
+
+1. **Frozen cryptographic core.** Gap fixes in the frozen files follow `docs/assurance/FROZEN_CORE.md` in full: owner review, CODEOWNERS approval, then manifest regeneration in the same diff. No manifest is regenerated without review.
+2. **Full challenge descriptions.** A challenge marked "needs description" gets no test until its full description is in the repository. Titles alone are not a basis for a test. The mapping document is kept current as descriptions arrive.
+3. **Order of work.** The phases in `ASSURANCE_TESTING_PLAN.md` are followed in order, 1 to 5. No phase is skipped to reach another category.
+4. **Scope classes.** The classes in `CHALLENGE_MAPPING.md` section 2 are adopted. "Deployment" items are checked only as repository configuration. Their runtime controls remain the deployer's responsibility, and the mapping says so.
+
+**Readiness.** This record does not make Parmana "production ready". Readiness is the owner's judgement, measured against the exit criteria of all five phases in the plan. Until those criteria are met and recorded in `ASSURANCE_RESULTS.md`, the phase status table is the record.
+
+**Effect on the documents:**
+
+| Document                              | Change                                                                    |
+| ------------------------------------- | ------------------------------------------------------------------------- |
+| `docs/assurance/CHALLENGE_MAPPING.md` | Section 4 items 1 to 4 now point to this record. Their status is decided. |
+| `docs/ASSURANCE_RESULTS.md`           | No change from this record. Phase status is unchanged.                    |
+
+**Not changed by this decision:** the score policy, the phase exit criteria, the acceptance principles, the frozen-core procedure, and the "needs description" rule as applied to any challenge whose description has not been supplied.
