@@ -266,6 +266,42 @@ class ManualRecordTests(RepoFixture):
         self.assertEqual(eg.check_manual(self.check, self.ctx()).status, eg.FAIL)
 
 
+class EventScopeTests(RepoFixture):
+    def gate(self, checks):
+        return base_policy(gates=[{"id": "G1", "name": "A", "checks": checks}])
+
+    def test_check_outside_its_event_is_not_applicable_and_gate_still_passes(self):
+        policy = self.gate([
+            {"id": "ok", "type": "file_exists", "path": "package.json"},
+            {"id": "release-only", "type": "file_exists", "path": "missing", "run_on": ["release"]},
+        ])
+        report = eg.evaluate(policy, self.root, "abc", None, False, event="pull_request")
+        statuses = {c["id"]: c["status"] for c in report["gates"][0]["checks"]}
+        self.assertEqual(statuses, {"ok": eg.PASS, "release-only": eg.NOT_APPLICABLE})
+        self.assertEqual(report["gates"][0]["status"], eg.PASS)
+        self.assertEqual(report["overall"], eg.PASS)
+
+    def test_check_runs_on_its_own_event(self):
+        policy = self.gate([{"id": "release-only", "type": "file_exists", "path": "missing", "run_on": ["release"]}])
+        report = eg.evaluate(policy, self.root, "abc", None, False, event="release")
+        self.assertEqual(report["gates"][0]["checks"][0]["status"], eg.FAIL)
+
+    def test_gate_with_nothing_applicable_fails(self):
+        policy = self.gate([{"id": "release-only", "type": "file_exists", "path": "package.json", "run_on": ["release"]}])
+        report = eg.evaluate(policy, self.root, "abc", None, False, event="pull_request")
+        self.assertEqual(report["gates"][0]["status"], eg.FAIL)
+        self.assertEqual(report["overall"], eg.FAIL)
+
+    def test_failing_applicable_check_still_fails_the_gate(self):
+        policy = self.gate([
+            {"id": "ok", "type": "file_exists", "path": "package.json"},
+            {"id": "bad", "type": "file_exists", "path": "missing"},
+            {"id": "release-only", "type": "file_exists", "path": "package.json", "run_on": ["release"]},
+        ])
+        report = eg.evaluate(policy, self.root, "abc", None, False, event="pull_request")
+        self.assertEqual(report["gates"][0]["status"], eg.FAIL)
+
+
 class EvaluationTests(RepoFixture):
     def test_gate_passes_only_when_all_checks_pass(self):
         policy = base_policy(gates=[{"id": "G1", "name": "Q", "checks": [

@@ -48,7 +48,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 OUTPUT_TAIL_BYTES = 4000
-PASS, FAIL, SKIPPED = "PASS", "FAIL", "SKIPPED"
+PASS, FAIL, SKIPPED, NOT_APPLICABLE = "PASS", "FAIL", "SKIPPED", "NOT_APPLICABLE"
 
 
 class CheckResult:
@@ -321,16 +321,21 @@ HANDLERS: dict[str, Callable[[dict[str, Any], dict[str, Any]], CheckResult]] = {
 
 
 def evaluate(policy: dict[str, Any], root: Path, sha: str, only_gates: set[str] | None, skip_commands: bool,
-             manual_root: Path | None = None) -> dict[str, Any]:
+             manual_root: Path | None = None, event: str = "local") -> dict[str, Any]:
     version = json.loads((root / policy.get("version_source", "package.json")).read_text(encoding="utf-8"))["version"]
     ctx = {"root": root, "manual_root": manual_root or root, "policy": policy, "sha": sha,
-           "version": version, "skip_commands": skip_commands}
+           "version": version, "skip_commands": skip_commands, "event": event}
     gates_out = []
     for gate in policy["gates"]:
         if only_gates and gate["id"] not in only_gates:
             continue
         results = []
         for check in gate["checks"]:
+            run_on = check.get("run_on")
+            if run_on and event not in run_on:
+                # Declared in the policy: this check is not meant for this event.
+                results.append(CheckResult(check, NOT_APPLICABLE, f"runs on {', '.join(run_on)} only (event: {event})", {"run_on": run_on}))
+                continue
             handler = HANDLERS.get(check.get("type", ""))
             if handler is None:
                 results.append(CheckResult(check, FAIL, f"unknown check type {check.get('type')!r}", {}))
@@ -341,10 +346,10 @@ def evaluate(policy: dict[str, Any], root: Path, sha: str, only_gates: set[str] 
                 results.append(CheckResult(check, FAIL, f"check raised {type(exc).__name__}: {exc}", {}))
         if any(r.status == FAIL for r in results):
             status = FAIL
-        elif all(r.status == PASS for r in results):
-            status = PASS
+        elif any(r.status == PASS for r in results) and all(r.status in (PASS, NOT_APPLICABLE) for r in results):
+            status = PASS  # not-applicable checks are excluded by the policy, not skipped
         else:
-            status = FAIL  # a skipped check cannot pass a gate
+            status = FAIL  # a skipped check, or a gate with nothing applicable, cannot pass
         gates_out.append({"id": gate["id"], "name": gate["name"], "status": status,
                           "checks": [r.to_dict() for r in results]})
     overall = PASS if gates_out and all(g["status"] == PASS for g in gates_out) else FAIL
@@ -357,6 +362,7 @@ def evaluate(policy: dict[str, Any], root: Path, sha: str, only_gates: set[str] 
         "version": version,
         "sha": sha or None,
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "event": event,
         "partial_run": bool(only_gates),
         "skip_commands": skip_commands,
         "overall": overall,
@@ -393,6 +399,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--sha", default=os.environ.get("GITHUB_SHA", ""))
     parser.add_argument("--gates", default="", help="comma-separated gate ids for a partial local run")
     parser.add_argument("--skip-commands", action="store_true", help="do not run command checks (local use only)")
+    parser.add_argument("--event", default="local",
+                        help="the event that triggered the gate (github.event_name); checks with run_on use it")
     parser.add_argument("--manual-root", type=Path, default=None,
                         help="tree to read owner records from; CI passes the trusted base branch checkout")
     args = parser.parse_args(argv)
@@ -401,7 +409,7 @@ def main(argv: list[str] | None = None) -> int:
     policy = json.loads(args.policy.read_text(encoding="utf-8"))
     only = {g.strip() for g in args.gates.split(",") if g.strip()} or None
     manual_root = args.manual_root.resolve() if args.manual_root else None
-    report = evaluate(policy, root, args.sha, only, args.skip_commands, manual_root)
+    report = evaluate(policy, root, args.sha, only, args.skip_commands, manual_root, args.event)
 
     args.out.mkdir(parents=True, exist_ok=True)
     (args.out / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
