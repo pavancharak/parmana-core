@@ -316,26 +316,29 @@ Use Node 24 (`.nvmrc`). The pre-commit and pre-push hooks require it.
 
 ## 10. Current status and known gaps
 
-Status as of commit `d93f4d1` (engine and policy, event-scoped checks), on
-`claude/wonderful-wozniak-exparw`, pull request #768:
+Status as of commit `ef7c741` on `claude/wonderful-wozniak-exparw` (pull request #768). The
+pin is `d93f4d1` (PRG-D2). This commit has not yet been run in CI, so the table reports two
+things: what the pinned engine is designed to do, and the last CI result observed.
 
-| Item                     | Status                                                                                                                                                                                   |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Engine unit tests        | 41 pass                                                                                                                                                                                  |
-| G1 code quality          | Passes in CI                                                                                                                                                                             |
-| G2 testing               | Passes in CI (the full suite runs inside the gate)                                                                                                                                       |
-| G3 security              | Fails until the Scorecard check is scoped to `push` in the pinned engine (done in `d93f4d1`, not yet pinned)                                                                             |
-| G4 dependencies          | Fails in CI, passes locally on the same lockfile. The CI detail could not be read from this environment (the evidence file is on a storage host blocked from here). Needs investigation. |
-| G5 configuration         | Passes                                                                                                                                                                                   |
-| G6 reliability           | Passes                                                                                                                                                                                   |
-| G7 governance            | Fails in CI until the wait fix is pinned (`0d1f6a0`, included in `d93f4d1`). Local commands pass.                                                                                        |
-| G8 release               | Fails until owner records exist and the release-only scope is pinned. Expected for a pull request.                                                                                       |
-| Pin                      | `d93f4d1` (PRG-D2). The workflow passes `--event` and runs on `release`. The tag `prg-v1.0.0` is pending owner creation.                                                                 |
-| Required check on `main` | Not yet set (owner action).                                                                                                                                                              |
-| Commit signing           | Not available: the signing key file in this environment is empty.                                                                                                                        |
+| Item                     | Status                                                                                                                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Engine unit tests        | 41 pass locally                                                                                                                                                                            |
+| Pin                      | `d93f4d1`, with `--event` and the `release` trigger (PRG-D2). The tag `prg-v1.0.0` is pending owner creation (GitHub refused the tag push from the build environment).                     |
+| G1 code quality          | Passed in the last CI run observed (on `0d1f6a0`)                                                                                                                                          |
+| G2 testing               | Passed in the last CI run observed (the full suite runs inside the gate)                                                                                                                   |
+| G3 security              | Scorecard is `push`-only from `d93f4d1`. Expected to pass on pull requests now, to be confirmed by CI.                                                                                     |
+| G4 dependencies          | Failed in CI, passes locally on the same lockfile. The CI detail could not be read from the build environment (the evidence file is on a storage host it cannot reach). Not yet diagnosed. |
+| G5 configuration         | Passed in the last CI run observed                                                                                                                                                         |
+| G6 reliability           | Passed in the last CI run observed                                                                                                                                                         |
+| G7 governance            | Wait for pending runs is in `d93f4d1`. Local commands pass. Expected to pass in CI now, to be confirmed.                                                                                   |
+| G8 release               | Runs on `release` only, except DCO and signatures. Fails on release until owner records exist. Not applicable on pull requests.                                                            |
+| Required check on `main` | Not yet set (owner action).                                                                                                                                                                |
+| Commit signing           | Not available: the signing key file in this environment is empty.                                                                                                                          |
 
 Known gaps, by design or in the implementation:
 
+- **G4 is unresolved.** It fails in CI and passes locally on the same lockfile. Read the
+  evidence artifact of a CI run to find the cause before relying on G4.
 - **Secret scanning is not run.** G3.secret-scan-config checks the rules file exists. Add a
   gitleaks step before relying on this for secrets.
 - **Runtime health, infrastructure state, backups and recovery** are covered only by the
