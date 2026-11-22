@@ -120,7 +120,7 @@ The previous challenges Hyperion Vault, Quantum Notary and Twice Is Not Safer ar
 | Aegis Sentinel, Argos Sentinel, House Virtualizer | Not applicable | No binary protection or client-side executable was identified.                                                   | Needs description | Reverse-engineering challenges need their descriptions. |
 | Mobile challenges                                 | Not applicable | No mobile client was identified.                                                                                 | Needs description | As above.                                               |
 
-## 4. Items for owner decision
+## 4. Items for owner decision (decided by D25, see docs/ASSURANCE_DECISIONS.md)
 
 1. **Scope rule.** Should challenges classed as _Deployment_ be tracked in this repository at all, or only in the deployer's assurance? This document assumes they are tracked as repository config checks only.
 2. **Committed Terraform variables.** `infra/parmana-prod-signing/prod.tfvars` is committed and contains an AWS account ID and a signing key ARN. These are identifiers, not credentials. The owner should decide whether that is acceptable for a public repository. No change has been made.
