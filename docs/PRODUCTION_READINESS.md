@@ -27,9 +27,11 @@ data, not code, so changes to a check are visible in review.
 
 ## How it is enforced
 
-1. **Rules come from the base branch.** The workflow checks out the pull
-   request's base commit and runs the engine and policy from there. A pull
-   request cannot weaken its own gate.
+1. **Rules are pinned to a reviewed commit.** The workflow runs the engine and
+   policy from the commit in `ENGINE_SHA`, not from the change under review and
+   not from whatever is on `main`. Changing the pin is a reviewed change, and
+   records a decision under `production-readiness/decisions/`. A pull request
+   cannot weaken its own gate.
 2. **Owner records come from the base branch.** A record counts only after it
    is merged and reviewed. A pull request cannot approve itself.
 3. **No bypass.** The engine has no override or skip flag for a release. A
@@ -40,6 +42,14 @@ data, not code, so changes to a check are visible in review.
    command, exit code and output tail, or the reason the check failed.
 5. **Unexpected errors fail.** An exception inside a check becomes a FAIL for
    that check.
+
+## Bootstrap
+
+The engine is introduced by pull request #768. On that pull request the base
+branch does not have the engine, so the check fails with a message naming the
+pinned commit. The one-time trust decision is recorded in
+[PRG-D1](../production-readiness/decisions/PRG-D1-bootstrap.md). After #768 is
+merged, the pin and the rules are on `main`.
 
 ## Owner actions (cannot be set from code)
 

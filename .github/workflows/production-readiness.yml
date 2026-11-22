@@ -1,8 +1,17 @@
 name: Production readiness gate
 
-# Strict, fail-closed release gate. The rules (policy and engine) come from the
-# trusted base branch, not from the change under review, so a pull request
-# cannot weaken its own gate. Owner records are also read from the base branch.
+# Strict, fail-closed release gate.
+#
+# The engine and policy are pinned to the commit in ENGINE_SHA below. They do
+# not come from whatever is on main, or from the change under review. Changing
+# the pin is a reviewed change to this file (CODEOWNERS), so the rules a commit
+# is judged by are always a reviewed, named version.
+#
+# Owner records are read from the base branch of the pull request, so an
+# approval counts only once it is merged.
+#
+# Bootstrap: the engine's first introduction is recorded in
+# production-readiness/decisions/PRG-D1-bootstrap.md. See docs/PRODUCTION_READINESS.md.
 #
 # pull_request_target is deliberately not used: this job runs the pull request's
 # code, so it must not receive write permissions or secrets from the base.
@@ -16,6 +25,11 @@ on:
 permissions:
   contents: read
   checks: read
+
+env:
+  # Commit that holds the reviewed engine and policy (PRG-D1). Change only by a
+  # reviewed pull request that also records the decision.
+  ENGINE_SHA: 1173d062744252dc217b779d932c1838f228912e
 
 concurrency:
   group: production-readiness-${{ github.ref }}
@@ -50,12 +64,30 @@ jobs:
           persist-credentials: false
           path: change
 
-      - name: Check out the trusted base (rules and owner records)
+      - name: Check out the pinned engine and policy
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           path: trusted
+          ref: ${{ env.ENGINE_SHA }}
+
+      - name: Check out the base branch (owner records)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          path: base
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.sha }}
+
+      - name: Confirm the pinned engine exists
+        run: |
+          engine="trusted/production-readiness/scripts/evaluate-gates.py"
+          policy="trusted/production-readiness/policies/readiness-policy.json"
+          if [ ! -f "$engine" ] || [ ! -f "$policy" ]; then
+            echo "::error::The pinned engine ($ENGINE_SHA) does not contain $engine and $policy."
+            echo "::error::Check ENGINE_SHA in .github/workflows/production-readiness.yml. See docs/PRODUCTION_READINESS.md, section Bootstrap."
+            exit 1
+          fi
+          echo "Pinned engine: $ENGINE_SHA"
 
       - name: Set up Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -81,7 +113,7 @@ jobs:
         run: |
           python3 -I ../trusted/production-readiness/scripts/evaluate-gates.py \
             --policy ../trusted/production-readiness/policies/readiness-policy.json \
-            --manual-root ../trusted \
+            --manual-root ../base \
             --repo-root . \
             --out "$RUNNER_TEMP/readiness" \
             --sha "$GITHUB_SHA"
