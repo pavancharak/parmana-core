@@ -28,3 +28,7 @@
 # that enforces it. A change to either needs the owner's review (decision D8).
 /docs/assurance/frozen-core.manifest.json @pavancharak
 /tests/assurance/frozen-core.test.ts @pavancharak
+
+# Production readiness gate: rules and owner records are security-sensitive.
+/production-readiness/ @pavancharak
+/.github/workflows/production-readiness.yml @pavancharak

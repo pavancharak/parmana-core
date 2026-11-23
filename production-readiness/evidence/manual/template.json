@@ -1,0 +1,9 @@
+{
+  "record": "deployment-verification",
+  "approver": "",
+  "approved_on": "YYYY-MM-DD",
+  "expires_on": "YYYY-MM-DD",
+  "release_version": "",
+  "summary": "",
+  "evidence_url": ""
+}
