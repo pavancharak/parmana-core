@@ -171,7 +171,7 @@ The proposed model treats capabilities as one possible representation of delegat
 
 Recent research has explored runtime policy enforcement for tool-using agents.
 
-Wang, Zhu and Li (2026) propose a policy enforcement point for MCP-based agents, combining declarative runtime rules, information-flow labels and a SHA-256 hash-chained audit log [1]. Their work demonstrates the value of enforcing policies at the tool-call boundary rather than relying exclusively on model instructions.
+Wang, Zhu and Li propose a policy enforcement point for MCP-based agents, combining declarative runtime rules, information-flow labels and a SHA-256 hash-chained audit log [1]. Their work demonstrates the value of enforcing policies at the tool-call boundary rather than relying exclusively on model instructions.
 
 This provides an important foundation for the present research. However, the assurance question extends beyond intercepting a tool call. The relationship between the authorized request and the effect produced by a downstream commercial system must also be evaluated.
 
@@ -976,7 +976,7 @@ The proposed evaluation tests the model against the threats in section 4. Until 
 
 ## References
 
-[1] S. Wang, S. Zhu, and R. Li, "Runtime policy enforcement for MCP-based LLM agents," _Electronics_, 2026, doi: 10.3390/electronics15132829.
+[1] S. Wang, S. Zhu, and R. Li, "Runtime policy enforcement for MCP-based LLM agents," _Electronics_, doi: 10.3390/electronics15132829.
 
 [2] M. Llambí-Morillas and D. Fernández-Fernández, "Cryptographically verifiable authorization for autonomous AI agents: A falsifiable hypothesis and proof of concept," arXiv:2607.21325, Jul. 2026.
 
