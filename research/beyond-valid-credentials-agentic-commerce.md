@@ -526,11 +526,7 @@ The authorization function must not rely on an LLM-generated judgment that the a
 
 For a fixed set of canonical inputs, policy version and authorization state, the authorization function must produce the same decision.
 
-\[
-Authorize(G,X,C,t,\Pi)
-=
-Authorize(G,X,C,t,\Pi)
-\]
+\[ Authorize(G,X,C,t,\Pi) = Authorize(G,X,C,t,\Pi) \]
 
 This property is meaningful only when the inputs are stable and their semantics are defined.
 
