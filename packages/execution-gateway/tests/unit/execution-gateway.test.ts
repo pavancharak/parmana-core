@@ -13,6 +13,7 @@ import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import type { ExecutionRequest } from "@parmana/execution-system";
 
 import {
+  AuthorizationVerificationFailedError,
   checkExecutionCorrespondence,
   NonceAlreadyConsumedError,
   OutcomeUnknownError,
@@ -336,6 +337,45 @@ describe("ExecutionGateway", () => {
       expect(replay).toEqual(first);
       expect(replay.executedAt).toBeInstanceOf(Date);
       expect(replay.metadata).toEqual({ providerRef: "ref-1" });
+    });
+
+    it("rejects a changed-parameter request on first contact, without consuming the nonce, so the correct request still succeeds", async () => {
+      const { privateKey, publicKey } = generateKeyPair();
+      const authorization = await signAuthorization(privateKey);
+
+      const connector = new CountingConnector();
+      const gateway = new ExecutionGateway({
+        // Legacy fixture: predates fail-closed policy binding.
+        allowUnverifiedPolicy: true,
+        publicKey,
+        nonceStore: new MemoryNonceStore(),
+        connector,
+        executionOutcomeStore: new MemoryExecutionOutcomeStore(),
+      });
+
+      const original = buildRequest(SAMPLE_EXECUTABLE_CONTENT, authorization);
+      const tampered = {
+        ...original,
+        parameters: { amount: 15_000 },
+      };
+
+      let caught: unknown;
+
+      try {
+        await gateway.execute(tampered);
+      } catch (error) {
+        caught = error;
+      }
+
+      expect(caught).toBeInstanceOf(AuthorizationVerificationFailedError);
+      expect((caught as Error).message).toContain(
+        "businessTransactionHash mismatch",
+      );
+      expect(connector.calls).toBe(0);
+
+      const result = await gateway.execute(original);
+      expect(result.success).toBe(true);
+      expect(connector.calls).toBe(1);
     });
 
     it("refuses a replay with OutcomeUnknownError when the first connector call did not return", async () => {
