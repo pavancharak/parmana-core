@@ -177,7 +177,7 @@ This provides an important foundation for the present research. However, the ass
 
 ## 2.4 Cryptographically verifiable agent authorization
 
-Llambí-Morillas and Fernández-Fernández (2026) propose a preliminary formal abstraction for cryptographically verifiable agent authorization, with candidate security properties and a zero-knowledge proof of concept [2]. [Verify against the full text: the abstract does not list the five kinds of evidence this sentence previously attributed to the paper.]
+Llambí-Morillas and Fernández-Fernández (2026) propose a preliminary formal abstraction for cryptographically verifiable agent authorization, with candidate security properties and a zero-knowledge proof of concept [2].
 
 It also formalises the structural separation among identity binding, authorization-request binding and runtime execution binding as a central open problem.
 
