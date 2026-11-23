@@ -239,19 +239,19 @@ The components may be implemented as separate services or combined within a trus
 
 Let the system contain the following entities.
 
-| Symbol | Entity | Definition |
-|---|---|---|
-| \(P\) | Principal | Human or organizational authority granting permission |
-| \(A_g\) | Agent | Autonomous software acting under delegated authority |
-| \(G\) | Grant | Explicit representation of delegated authority |
-| \(D\) | Delegation | Transfer or restriction of authority between principals and agents |
-| \(S\) | Scope | Permitted operations, resources and constraints |
-| \(\Pi\) | Policy | Deterministic rules governing authorization |
-| \(X\) | Action | Specific operation requested by an agent |
-| \(C\) | Context | Relevant execution conditions |
-| \(E\) | Effect | Actual change produced in the protected system |
-| \(R\) | Evidence record | Structured record connecting authority, decision and execution |
-| \(V\) | Verifier | Independent component evaluating evidence and correspondence |
+| Symbol  | Entity          | Definition                                                         |
+| ------- | --------------- | ------------------------------------------------------------------ |
+| \(P\)   | Principal       | Human or organizational authority granting permission              |
+| \(A_g\) | Agent           | Autonomous software acting under delegated authority               |
+| \(G\)   | Grant           | Explicit representation of delegated authority                     |
+| \(D\)   | Delegation      | Transfer or restriction of authority between principals and agents |
+| \(S\)   | Scope           | Permitted operations, resources and constraints                    |
+| \(\Pi\) | Policy          | Deterministic rules governing authorization                        |
+| \(X\)   | Action          | Specific operation requested by an agent                           |
+| \(C\)   | Context         | Relevant execution conditions                                      |
+| \(E\)   | Effect          | Actual change produced in the protected system                     |
+| \(R\)   | Evidence record | Structured record connecting authority, decision and execution     |
+| \(V\)   | Verifier        | Independent component evaluating evidence and correspondence       |
 
 ### 3.2.1 Principal
 
@@ -276,11 +276,11 @@ G =
 (
 id,
 P,
-A_g,
+A*g,
 S,
-t_{start},
-t_{expiry},
-v_{\Pi},
+t*{start},
+t*{expiry},
+v*{\Pi},
 status
 )
 \]
@@ -291,9 +291,9 @@ Where:
 - \(P\) is the granting principal.
 - \(A_g\) is the authorized agent.
 - \(S\) is the permitted scope.
-- \(t_{start}\) is the start of validity.
-- \(t_{expiry}\) is the expiration time.
-- \(v_{\Pi}\) identifies the applicable policy version.
+- \(t\_{start}\) is the start of validity.
+- \(t\_{expiry}\) is the expiration time.
+- \(v\_{\Pi}\) identifies the applicable policy version.
 - \(status\) represents the grant's lifecycle state.
 
 The grant may also contain restrictions on delegation, transaction value, frequency, resource ownership and approval requirements.
@@ -348,9 +348,9 @@ For example:
 \[
 X =
 (
-agent\_17,
+agent_17,
 payment.create,
-vendor\_42,
+vendor_42,
 amount=40000,
 currency=INR
 )
@@ -571,7 +571,7 @@ Both conditions must be satisfied if both restrictions are mandatory.
 A grant is temporally valid when:
 
 \[
-t_{start}\leq t < t_{expiry}
+t*{start}\leq t < t*{expiry}
 \]
 
 The system must define the clock source, time precision, permitted skew and treatment of requests that remain in progress when a grant expires.
@@ -758,12 +758,12 @@ On a decision of ALLOW, the authorization component issues an authorization toke
 
 \[
 A =
-Sign_{k}(
+Sign*{k}(
 id_G,
 h_X,
-v_{\Pi},
+v*{\Pi},
 decision,
-t_{auth},
+t\_{auth},
 n
 )
 \]
@@ -772,8 +772,8 @@ Where:
 
 - \(k\) is the signing key of the authorization component.
 - \(id_G\) identifies the grant evaluated.
-- \(v_{\Pi}\) identifies the policy version evaluated.
-- \(t_{auth}\) is the time of the decision.
+- \(v\_{\Pi}\) identifies the policy version evaluated.
+- \(t\_{auth}\) is the time of the decision.
 - \(n\) is a single-use nonce.
 
 The execution enforcement point releases an action only if:
@@ -792,14 +792,14 @@ The binding is only as strong as the enforcement point's guarantee that the acti
 For each release, the system produces an evidence record:
 
 \[
-R_i =
+R*i =
 (
 A,
 h_X,
 result,
-t_{exec},
+t*{exec},
 receipt,
-h_{i-1},
+h\_{i-1},
 \sigma_i
 )
 \]
@@ -808,9 +808,9 @@ Where:
 
 - \(A\) is the authorization token from section 6.7.
 - \(result\) is the execution result from section 6.6.
-- \(t_{exec}\) is the time of execution.
+- \(t\_{exec}\) is the time of execution.
 - \(receipt\) is a reference to any receipt issued by the protected system, or a null value.
-- \(h_{i-1}\) is the hash of the previous record in the append-only log.
+- \(h\_{i-1}\) is the hash of the previous record in the append-only log.
 - \(\sigma_i\) is a signature over the record by the evidence component.
 
 The hash chaining makes certain alterations detectable, including modification of a record and reordering of records. It does not detect omission of a record before it enters the chain (section 4.4). Omission must therefore be addressed by an independent commitment, such as a periodic publication of the chain head to a party that does not operate the log.
@@ -827,12 +827,12 @@ We distinguish three sources of effect evidence:
 2. **Independent observation:** a read of the resulting state by a component that does not operate the enforcement point.
 3. **None:** no effect evidence is available.
 
-Let \(W\) be a witness of the effect, and let \(X_{c}\) be the canonical action whose digest is \(h_X\). The enforcement component retains \(X_{c}\) or a commitment to it, so that the verifier can compare parameters. The correspondence predicate holds when the parameters of the witnessed effect equal those of \(X_{c}\):
+Let \(W\) be a witness of the effect, and let \(X*{c}\) be the canonical action whose digest is \(h_X\). The enforcement component retains \(X*{c}\) or a commitment to it, so that the verifier can compare parameters. The correspondence predicate holds when the parameters of the witnessed effect equal those of \(X\_{c}\):
 
 \[
 Corr(R, W) = TRUE
 \iff
-params(W) = params(X_{c})
+params(W) = params(X\_{c})
 \]
 
 For each record, the verifier assigns one of four outcomes:
@@ -852,7 +852,7 @@ An independent verifier evaluates a record without trusting the runtime or datab
 
 1. Verify the signature on the authorization token under a trusted key.
 2. Verify the signature on the evidence record and the hash chain up to the published head.
-3. Confirm that the grant and policy version in the token existed and were valid at \(t_{auth}\).
+3. Confirm that the grant and policy version in the token existed and were valid at \(t\_{auth}\).
 4. Confirm that the nonce appears once in the chain.
 5. Obtain the witness, if any, and evaluate the correspondence predicate.
 6. Output the verdict, with the claim it supports and the claim it does not.
@@ -886,18 +886,18 @@ Test traces and seeds will be published so that results can be reproduced.
 
 Each threat in section 4.1 is mapped to one or more test scenarios:
 
-| Threat | Scenario | Primary measure |
-|---|---|---|
-| T1 Out-of-scope action | Request outside the grant's operations and resources | False allow rate |
-| T2 Parameter manipulation | Modify the amount or payee after authorization | Divergence detection rate |
-| T3 Expired authority | Use a grant after expiry, and during a request in progress | False allow rate |
-| T4 Revoked authority | Use a grant after revocation, with cached state | Revocation latency; false allow rate |
-| T5 Replay | Resubmit a previously released action | Duplicate execution count |
-| T6 Delegation escalation | Child grant exceeding parent authority | Rejection rate |
-| T7 Evidence modification | Alter, reorder or delete records | Detection rate, by modification type |
-| T8 Execution divergence | Protected system applies different parameters | Divergence detection rate |
-| T9 Enforcement bypass | Route a request around the gateway | Proportion of bypasses that reach the system |
-| T10 Context manipulation | Alter ownership, status or approval fields | False allow rate |
+| Threat                    | Scenario                                                   | Primary measure                              |
+| ------------------------- | ---------------------------------------------------------- | -------------------------------------------- |
+| T1 Out-of-scope action    | Request outside the grant's operations and resources       | False allow rate                             |
+| T2 Parameter manipulation | Modify the amount or payee after authorization             | Divergence detection rate                    |
+| T3 Expired authority      | Use a grant after expiry, and during a request in progress | False allow rate                             |
+| T4 Revoked authority      | Use a grant after revocation, with cached state            | Revocation latency; false allow rate         |
+| T5 Replay                 | Resubmit a previously released action                      | Duplicate execution count                    |
+| T6 Delegation escalation  | Child grant exceeding parent authority                     | Rejection rate                               |
+| T7 Evidence modification  | Alter, reorder or delete records                           | Detection rate, by modification type         |
+| T8 Execution divergence   | Protected system applies different parameters              | Divergence detection rate                    |
+| T9 Enforcement bypass     | Route a request around the gateway                         | Proportion of bypasses that reach the system |
+| T10 Context manipulation  | Alter ownership, status or approval fields                 | False allow rate                             |
 
 ## 7.4 Baselines
 
@@ -967,10 +967,9 @@ The contribution is the composition of these elements: explicit grants, determin
 
 The proposed evaluation tests the model against the threats in section 4. Until it has been run, the model's guarantees are design claims, not empirical findings. We have stated the criteria in advance so that the evaluation can show the model to be wrong as well as right.
 
-
 ## References
 
-[1] S. Wang, S. Zhu, and R. Li, "Runtime policy enforcement for MCP-based LLM agents," *Electronics*, vol. 15, art. no. [to confirm], 2026, doi: 10.3390/electronics15132829.
+[1] S. Wang, S. Zhu, and R. Li, "Runtime policy enforcement for MCP-based LLM agents," _Electronics_, vol. 15, art. no. [to confirm], 2026, doi: 10.3390/electronics15132829.
 
 [2] M. Llambí-Morillas and D. Fernández-Fernández, "Cryptographically verifiable authorization for autonomous AI agents: A falsifiable hypothesis and proof of concept," arXiv:2607.21325, Jul. 2026.
 
@@ -978,4 +977,4 @@ The proposed evaluation tests the model against the threats in section 4. Until 
 
 ---
 
-*Research draft v0.1. Sections 6.6 to 9 are proposed design. No experimental results are reported.*
+_Research draft v0.1. Sections 6.6 to 9 are proposed design. No experimental results are reported._
