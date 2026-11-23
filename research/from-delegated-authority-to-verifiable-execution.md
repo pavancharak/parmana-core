@@ -863,6 +863,8 @@ The verifier does not establish that the signing key belongs to a particular org
 
 # 7. Proposed Evaluation
 
+**Status.** The criteria and thresholds in this section are proposals by the drafting author. They are not agreed targets. The authors must review and adopt them before any data are collected, and any change after data collection must be reported.
+
 This section describes an evaluation that has been designed but not run. No results are reported. The criteria below are stated in advance so that they cannot be adjusted after the data are collected.
 
 ## 7.1 Objectives
