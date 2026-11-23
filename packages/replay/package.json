@@ -1,6 +1,6 @@
 {
   "name": "@parmana/replay",
-  "version": "4.1.1",
+  "version": "5.0.0",
   "description": "Parmana Replay Engine - Deterministic execution reconstruction system",
   "type": "module",
   "main": "./dist/index.js",
@@ -23,18 +23,18 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@parmana/policy": "4.1.1",
-    "@parmana/shared": "4.1.1"
+    "@parmana/policy": "5.0.0",
+    "@parmana/shared": "5.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.19.2",
     "dotenv": "^18.0.10",
-    "eslint": "^10.14.0",
+    "eslint": "^10.15.0",
     "eslint-config-prettier": "^10.1.8",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.72.2",
+    "typescript-eslint": "^8.73.0",
     "vitest": "^5.0.3"
   },
   "engines": {

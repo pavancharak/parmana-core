@@ -1,0 +1,263 @@
+{
+  "$comment": "Production Readiness Gate policy. Changes to this file require CODEOWNERS review. Fail closed: a check that cannot run, times out or has no evidence is a FAIL.",
+  "policy_version": 1,
+  "mode": "strict",
+  "repository": "pavancharak/parmana-core",
+  "version_source": "package.json",
+  "required_env_file": ".env.example",
+  "required_env_keys": ["DATABASE_URL", "PARMANA_DATABASE_CA_FILE"],
+  "licence_deny": [
+    "AGPL-3.0",
+    "AGPL-3.0-only",
+    "AGPL-3.0-or-later",
+    "SSPL-1.0",
+    "UNLICENSED"
+  ],
+  "gates": [
+    {
+      "id": "G1",
+      "name": "Code quality",
+      "checks": [
+        {
+          "id": "G1.lint",
+          "title": "ESLint",
+          "type": "command",
+          "argv": ["npm", "run", "lint"],
+          "timeout_s": 900
+        },
+        {
+          "id": "G1.typecheck",
+          "title": "TypeScript typecheck",
+          "type": "command",
+          "argv": ["npm", "run", "typecheck"],
+          "timeout_s": 900
+        },
+        {
+          "id": "G1.format",
+          "title": "Prettier format check",
+          "type": "command",
+          "argv": ["npm", "run", "format:check"],
+          "timeout_s": 900
+        },
+        {
+          "id": "G1.python-models",
+          "title": "Generated Python models are current",
+          "type": "command",
+          "argv": ["npm", "run", "check:python-models"],
+          "timeout_s": 900
+        }
+      ]
+    },
+    {
+      "id": "G2",
+      "name": "Testing",
+      "checks": [
+        {
+          "id": "G2.unit-and-integration",
+          "title": "Full test suite (requires PostgreSQL and migrations)",
+          "type": "command",
+          "argv": ["npm", "test"],
+          "timeout_s": 3600
+        },
+        {
+          "id": "G2.migrations-applied",
+          "title": "All migrations applied to the test database",
+          "type": "command",
+          "argv": ["npm", "run", "db:migrate", "--", "status"],
+          "timeout_s": 300
+        }
+      ]
+    },
+    {
+      "id": "G3",
+      "name": "Security",
+      "checks": [
+        {
+          "id": "G3.codeql",
+          "title": "CodeQL analysis passed for this commit",
+          "type": "check_run",
+          "names": ["Analyze (javascript-typescript)"]
+        },
+        {
+          "id": "G3.dependency-review",
+          "title": "Dependency review passed for this commit",
+          "type": "check_run",
+          "names": ["dependency-review"]
+        },
+        {
+          "id": "G3.scorecard",
+          "title": "OpenSSF Scorecard analysis passed for this commit",
+          "type": "check_run",
+          "names": ["Scorecard analysis"],
+          "run_on": ["push"]
+        },
+        {
+          "id": "G3.secret-scan-config",
+          "title": "Secret-scanning rules file present",
+          "type": "file_exists",
+          "path": ".gitleaks.toml"
+        }
+      ]
+    },
+    {
+      "id": "G4",
+      "name": "Dependencies",
+      "checks": [
+        {
+          "id": "G4.lockfile-in-sync",
+          "title": "Lockfile matches package.json",
+          "type": "command",
+          "argv": ["npm", "ci", "--ignore-scripts", "--dry-run"],
+          "timeout_s": 600
+        },
+        {
+          "id": "G4.critical-cves",
+          "title": "No critical production vulnerabilities",
+          "type": "command",
+          "argv": ["npm", "audit", "--omit=dev", "--audit-level=critical"],
+          "timeout_s": 300
+        },
+        {
+          "id": "G4.licences",
+          "title": "No denied licences in installed production dependencies",
+          "type": "licence_policy"
+        }
+      ]
+    },
+    {
+      "id": "G5",
+      "name": "Configuration",
+      "checks": [
+        {
+          "id": "G5.required-env-documented",
+          "title": "Required environment variables are documented",
+          "type": "env_keys_documented"
+        },
+        {
+          "id": "G5.no-committed-env-files",
+          "title": "No real .env files are tracked by git",
+          "type": "no_tracked_files",
+          "patterns": [".env", ".env.local", ".env.production", ".env.test"],
+          "allow": [".env.example", ".env.test.example"]
+        }
+      ]
+    },
+    {
+      "id": "G6",
+      "name": "Reliability",
+      "checks": [
+        {
+          "id": "G6.readiness-route",
+          "title": "Readiness route exists",
+          "type": "file_exists",
+          "path": "packages/api/src/routes/ready.ts"
+        },
+        {
+          "id": "G6.sandbox-and-rate-limit",
+          "title": "Rate-limit and sandbox integration tests pass",
+          "type": "command",
+          "argv": [
+            "npx",
+            "vitest",
+            "run",
+            "packages/api/tests/integration/rate-limit.integration.test.ts",
+            "packages/api/tests/integration/sandbox.integration.test.ts"
+          ],
+          "timeout_s": 900
+        }
+      ]
+    },
+    {
+      "id": "G7",
+      "name": "Governance",
+      "checks": [
+        {
+          "id": "G7.authorization-boundaries",
+          "title": "Human-approval and authority-grant tests pass",
+          "type": "command",
+          "argv": [
+            "npx",
+            "vitest",
+            "run",
+            "packages/api/tests/integration/action-without-human-approval.integration.test.ts",
+            "packages/api/tests/integration/authority-grant-runtime.integration.test.ts",
+            "packages/api/tests/integration/authority-grants-governance.integration.test.ts",
+            "packages/api/tests/integration/kill-switch.integration.test.ts"
+          ],
+          "timeout_s": 900
+        },
+        {
+          "id": "G7.audit-evidence",
+          "title": "Audit verification and replay tests pass",
+          "type": "command",
+          "argv": [
+            "npx",
+            "vitest",
+            "run",
+            "packages/api/tests/integration/audit-verify.integration.test.ts",
+            "packages/api/tests/integration/replay.integration.test.ts"
+          ],
+          "timeout_s": 900
+        },
+        {
+          "id": "G7.bypass-probe",
+          "title": "Direct-execution bypass probe",
+          "type": "command",
+          "argv": ["npx", "tsx", "scripts/run-bypass-probe.ts"],
+          "timeout_s": 900
+        },
+        {
+          "id": "G7.ci-required-jobs",
+          "title": "Build-and-test and policy-approval verification passed for this commit",
+          "type": "check_run",
+          "names": [
+            "build-and-test",
+            "verify-policy-approvals",
+            "python-reference-drift"
+          ],
+          "wait_s": 1500,
+          "poll_s": 30
+        }
+      ]
+    },
+    {
+      "id": "G8",
+      "name": "Release",
+      "checks": [
+        {
+          "id": "G8.changelog-entry",
+          "title": "CHANGELOG.md has an entry for the package version",
+          "type": "changelog_has_version",
+          "run_on": ["release"]
+        },
+        {
+          "id": "G8.dco-and-signatures",
+          "title": "DCO and commit-signature checks passed for this commit",
+          "type": "check_run",
+          "names": ["DCO", "verified-commits"]
+        },
+        {
+          "id": "G8.deployment-verification",
+          "title": "Deployment verification record (owner-signed, unexpired)",
+          "type": "manual",
+          "record": "deployment-verification",
+          "run_on": ["release"]
+        },
+        {
+          "id": "G8.backup-and-recovery",
+          "title": "Backup and recovery drill record (owner-signed, unexpired)",
+          "type": "manual",
+          "record": "backup-recovery-drill",
+          "run_on": ["release"]
+        },
+        {
+          "id": "G8.runtime-infrastructure",
+          "title": "Runtime and infrastructure review record (owner-signed, unexpired)",
+          "type": "manual",
+          "record": "runtime-infrastructure-review",
+          "run_on": ["release"]
+        }
+      ]
+    }
+  ]
+}
