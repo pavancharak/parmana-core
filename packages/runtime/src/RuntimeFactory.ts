@@ -20,6 +20,7 @@ import {
   TransactionDeclarationStore,
   TransactionExecutionLock,
 } from "@parmana/shared";
+import type { RefusalRecordOutboxRepository } from "@parmana/shared";
 
 import type { ExecutionSystem } from "@parmana/execution-system";
 
@@ -71,6 +72,7 @@ export class RuntimeFactory {
     transactionStatusEvents?: TransactionStatusEventRepository,
     transactionDeclarations?: TransactionDeclarationStore,
     transactionExecutionLocks?: TransactionExecutionLock,
+    refusalRecordOutbox?: RefusalRecordOutboxRepository,
   ): ExecutionTrustApplication {
     //
     // Application Services
@@ -126,6 +128,10 @@ export class RuntimeFactory {
 
     if (signingReadiness) {
       builder.withSigningReadiness(signingReadiness);
+    }
+
+    if (refusalRecordOutbox) {
+      builder.withRefusalRecordOutbox(refusalRecordOutbox);
     }
 
     if (businessSignalSources) {

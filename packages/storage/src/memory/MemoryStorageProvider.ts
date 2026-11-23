@@ -13,6 +13,7 @@ import type {
   HandbookDownloadLeadRepository,
   PendingPolicyChangeRepository,
   PolicyChangeApprovalRecordRepository,
+  RefusalRecordOutboxRepository,
   RefusalRecordRepository,
   InboundCheckRepository,
   InboundDecisionRepository,
@@ -33,6 +34,7 @@ import { MemoryTransactionStatusEventRepository } from "./MemoryTransactionStatu
 import { MemoryTransactionDeclarationStore } from "./MemoryTransactionDeclarationStore.js";
 import { MemoryTransactionExecutionLock } from "./MemoryTransactionExecutionLock.js";
 import { MemoryRefusalRecordRepository } from "./MemoryRefusalRecordRepository.js";
+import { MemoryRefusalRecordOutboxRepository } from "./MemoryRefusalRecordOutboxRepository.js";
 import { MemoryInboundCheckRepository } from "./MemoryInboundCheckRepository.js";
 import { MemoryInboundDecisionRepository } from "./MemoryInboundDecisionRepository.js";
 import { MemoryInboundOutcomeRepository } from "./MemoryInboundOutcomeRepository.js";
@@ -61,6 +63,7 @@ export class MemoryStorageProvider implements StorageProvider {
   readonly trustRecords: ExecutionTrustRecordRepository;
 
   readonly refusalRecords: RefusalRecordRepository;
+  readonly refusalRecordOutbox: RefusalRecordOutboxRepository;
   readonly inboundDecisions: InboundDecisionRepository;
   readonly inboundChecks: InboundCheckRepository;
   readonly inboundOutcomes: InboundOutcomeRepository;
@@ -94,6 +97,7 @@ export class MemoryStorageProvider implements StorageProvider {
     this.trustRecords = new MemoryExecutionTrustRecordRepository();
 
     this.refusalRecords = new MemoryRefusalRecordRepository();
+    this.refusalRecordOutbox = new MemoryRefusalRecordOutboxRepository();
     this.inboundDecisions = new MemoryInboundDecisionRepository();
     this.inboundChecks = new MemoryInboundCheckRepository();
     this.inboundOutcomes = new MemoryInboundOutcomeRepository();

@@ -23,6 +23,7 @@ import {
   ExecutionTrustRecord,
   JsonValue,
   ParmanaError,
+  RefusalRecordOutboxRepository,
   RefusalRecordRepository,
   toExecutableContent,
 } from "@parmana/shared";
@@ -97,6 +98,12 @@ export interface DecideOptions {
    * in the same transaction. A nonce already consumed fails the decision.
    */
   readonly consumeApprovalsWithStatus?: boolean;
+}
+
+/** What one drain of the refusal outbox did. */
+export interface RefusalOutboxDrainResult {
+  readonly delivered: number;
+  readonly failed: number;
 }
 
 export class RuntimeEngine {
@@ -264,6 +271,13 @@ export class RuntimeEngine {
      * release stops the release.
      */
     private readonly transactionStatus?: TransactionStatusRecorder,
+    /**
+     * Refusal Record outbox (RFC-0021). When a refusal's record cannot be
+     * built or stored at the time, its inputs are saved here and drained later
+     * by drainRefusalOutbox. Optional and trailing. Omitted, a failed write is
+     * only logged, as before.
+     */
+    private readonly refusalRecordOutbox?: RefusalRecordOutboxRepository,
   ) {
     if (!pipeline) {
       throw new Error("RuntimePipeline is required.");
@@ -1263,13 +1277,123 @@ export class RuntimeEngine {
 
       await this.refusalRecordRepository.create(refusalRecord);
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+
       console.error({
         event: "refusal_record_write_failed",
         businessTransactionId: transaction.businessTransactionId,
         decisionId: decision.decisionId,
-        error: error instanceof Error ? error.message : String(error),
+        error: message,
       });
+
+      //
+      // Save the inputs so the record can be built later. This needs the
+      // database; if that is down too, the entry cannot be saved and the
+      // refusal is still enforced (see the migration's known limit).
+      //
+      if (this.refusalRecordOutbox !== undefined) {
+        try {
+          await this.refusalRecordOutbox.enqueue({
+            businessTransactionId: transaction.businessTransactionId,
+            decision,
+            evaluatedIntent: {
+              target: transaction.intent.target,
+              parameters: transaction.intent.parameters,
+            },
+            bindingViolations,
+            submittedBy: transaction.metadata?.submittedBy,
+            policyContentHash,
+            enqueuedAt: new Date(),
+            attempts: 0,
+            lastError: message,
+          });
+        } catch (enqueueError) {
+          console.error({
+            event: "refusal_record_outbox_enqueue_failed",
+            businessTransactionId: transaction.businessTransactionId,
+            decisionId: decision.decisionId,
+            error:
+              enqueueError instanceof Error
+                ? enqueueError.message
+                : String(enqueueError),
+          });
+        }
+      }
     }
+  }
+
+  /**
+   * Builds and stores the Refusal Record for each refusal in the outbox that
+   * is not yet delivered, oldest first. An entry is marked delivered once its
+   * record exists, including when it was already written by an earlier attempt
+   * (the record for a transaction is unique). A failed attempt is recorded and
+   * the entry stays pending. Never calls a connector and never changes a
+   * decision.
+   */
+  public async drainRefusalOutbox(
+    limit = 100,
+  ): Promise<RefusalOutboxDrainResult> {
+    if (
+      this.refusalRecordOutbox === undefined ||
+      this.refusalRecordBuilder === undefined ||
+      this.refusalRecordRepository === undefined
+    ) {
+      return { delivered: 0, failed: 0 };
+    }
+
+    const entries = await this.refusalRecordOutbox.listPending(limit);
+    let delivered = 0;
+    let failed = 0;
+
+    for (const entry of entries) {
+      const id = entry.businessTransactionId;
+
+      try {
+        const existing =
+          await this.refusalRecordRepository.findByTransactionId(id);
+
+        if (existing === null) {
+          const record = await this.refusalRecordBuilder.build(
+            id,
+            entry.decision,
+            entry.evaluatedIntent,
+            entry.bindingViolations,
+            entry.submittedBy,
+            entry.policyContentHash,
+          );
+
+          await this.refusalRecordRepository.create(record);
+        }
+
+        await this.refusalRecordOutbox.markDelivered(id);
+        delivered += 1;
+      } catch (error) {
+        failed += 1;
+
+        const message = error instanceof Error ? error.message : String(error);
+
+        console.error({
+          event: "refusal_record_outbox_delivery_failed",
+          businessTransactionId: id,
+          error: message,
+        });
+
+        try {
+          await this.refusalRecordOutbox.recordFailure(id, message);
+        } catch (recordError) {
+          console.error({
+            event: "refusal_record_outbox_failure_not_recorded",
+            businessTransactionId: id,
+            error:
+              recordError instanceof Error
+                ? recordError.message
+                : String(recordError),
+          });
+        }
+      }
+    }
+
+    return { delivered, failed };
   }
 
   /**

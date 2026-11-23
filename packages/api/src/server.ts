@@ -15,6 +15,7 @@ import { loadKeyMaterialFromSecretsManager } from "./bootstrap/loadKeyMaterialFr
 import { createGracefulShutdown } from "./bootstrap/createGracefulShutdown.js";
 import { createExecutionSystem } from "./bootstrap/createExecutionSystem.js";
 import { createApplication, policyRepository } from "./application.js";
+import { startRefusalOutboxDrain } from "./bootstrap/startRefusalOutboxDrain.js";
 import { createCallerAuthenticator } from "./bootstrap/createCallerAuthenticator.js";
 import { createPolicyChangeStepUpVerifier } from "./bootstrap/createPolicyChangeStepUpVerifier.js";
 import { createPolicyChangeApprovalService } from "./bootstrap/createPolicyChangeApprovalService.js";
@@ -93,6 +94,10 @@ const application = createApplication(
 );
 
 const callerAuth = createCallerAuthenticator();
+
+// RFC-0021: refusals whose record could not be written at the time are
+// written later from the outbox. See startRefusalOutboxDrain.
+const refusalOutboxTimer = startRefusalOutboxDrain(application);
 
 const executeRateLimitStore = createRateLimitStore("execute:");
 
@@ -232,6 +237,7 @@ const shutdown = createGracefulShutdown({
   timeoutMs: SHUTDOWN_TIMEOUT_MS,
   onShutdown: () => {
     if (policyV2SweepTimer !== undefined) clearInterval(policyV2SweepTimer);
+    clearInterval(refusalOutboxTimer);
   },
 });
 
