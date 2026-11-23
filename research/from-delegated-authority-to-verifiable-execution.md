@@ -746,4 +746,12 @@ For a financial transaction
 
 ---
 
+## References
+
+[1] S. Wang, S. Zhu, and R. Li, "Runtime policy enforcement for MCP-based LLM agents," *Electronics*, vol. 15, art. no. [to confirm], 2026, doi: 10.3390/electronics15132829.
+
+[2] M. Llambí-Morillas and D. Fernández-Fernández, "Cryptographically verifiable authorization for autonomous AI agents: A falsifiable hypothesis and proof of concept," arXiv:2607.21325, 2026. [Confirm the arXiv version and author initials against the record.]
+
+[3] [Authors to confirm], "DelegateGuard: Purpose-bound capabilities for delegated LLM agent workflows," arXiv:2610.16005, 2026. [Read the full text before citing its claims.]
+
 > **Draft incomplete.** The text above ends in the middle of section 6.6. Sections 6.6 onward, including the evaluation design and the remaining sections, have not yet been provided. They will be added when the remaining text is available. No experimental results are reported in this draft.
