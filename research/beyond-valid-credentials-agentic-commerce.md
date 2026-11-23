@@ -976,7 +976,7 @@ The proposed evaluation tests the model against the threats in section 4. Until 
 
 ## References
 
-[1] S. Wang, S. Zhu, and R. Li, "Runtime policy enforcement for MCP-based LLM agents," _Electronics_, vol. 15, art. no. [to confirm], 2026, doi: 10.3390/electronics15132829.
+[1] S. Wang, S. Zhu, and R. Li, "Runtime policy enforcement for MCP-based LLM agents," _Electronics_, 2026, doi: 10.3390/electronics15132829.
 
 [2] M. Llambí-Morillas and D. Fernández-Fernández, "Cryptographically verifiable authorization for autonomous AI agents: A falsifiable hypothesis and proof of concept," arXiv:2607.21325, Jul. 2026.
 
