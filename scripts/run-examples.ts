@@ -151,6 +151,10 @@ const LOCAL_DEFAULTS: Record<string, string> = {
   PARMANA_STORAGE: "memory",
   KEY_PROVIDER: "local",
   PRIMARY_SIGNATURE_PROVIDER: "ed25519",
+  // The examples run in local mode (localMode.ts): they set NODE_ENV=test
+  // themselves and rely on the test-fixture connector, which is registered
+  // only in local mode.
+  PARMANA_LOCAL_MODE: "true",
 };
 
 // Examples that approve a fixture policy start with its folder, not the live one.
