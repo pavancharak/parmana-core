@@ -4,9 +4,11 @@ import {
   type Connector,
 } from "@parmana/connector-sdk";
 
+import { localModeEnabled } from "./localMode.js";
+
 /**
- * Creates the generic test-fixture connector, or undefined outside
- * NODE_ENV=test.
+ * Creates the generic test-fixture connector, or undefined outside local
+ * mode (localMode.ts).
  *
  * This exists solely so the shared test fixture
  * (packages/api/tests/fixtures/business-transaction.ts) has a real,
@@ -17,13 +19,13 @@ import {
  * verified. Deliberately named and capability-scoped away from
  * `payments:execute`/`vendor-payment`: this is not a payment capability
  * of any kind, carries no production implication, is never registered
- * outside NODE_ENV=test, and has no entry in
+ * outside local mode, and has no entry in
  * CANONICAL_CAPABILITY_POLICY_BINDINGS (the same "unbound, entirely
  * unaffected by CapabilityPolicyBinder" category every other test/
  * tutorial/example fixture action already falls into).
  */
 export function createTestFixtureConnector(): Connector | undefined {
-  if (process.env.NODE_ENV !== "test") {
+  if (!localModeEnabled()) {
     return undefined;
   }
 

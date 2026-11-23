@@ -90,10 +90,14 @@ async function fixture() {
     authenticationMetadata: {},
   };
 
+  const clock = new ManualClock(new Date("2026-01-01T00:00:00Z"));
+
   const authenticator = new SignedTokenConnectorAuthenticator(
     gatewayIdentity,
     gatewayKeyPair.publicKey,
     [],
+    false,
+    clock,
   );
 
   const sessionIssuanceAuthentication = Object.freeze({});
@@ -139,7 +143,7 @@ async function fixture() {
   });
 
   const signer = new GatewayAttestationSigner(
-    new ManualClock(new Date("2026-01-01T00:00:00Z")),
+    clock,
     new SequentialIdGenerator(),
   );
 

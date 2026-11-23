@@ -60,3 +60,35 @@ describe("createNonceStore", () => {
     expect(createNonceStore()).toBeInstanceOf(PostgresNonceStore);
   });
 });
+
+describe("createNonceStore: NODE_ENV alone does not select memory (Gap C)", () => {
+  const original = Object.fromEntries(
+    ["NODE_ENV", "DATABASE_URL", "PARMANA_LOCAL_MODE"].map((key) => [
+      key,
+      process.env[key],
+    ]),
+  );
+
+  afterEach(() => {
+    for (const [key, value] of Object.entries(original)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  });
+
+  it("refuses to fall back to memory under NODE_ENV=test without local mode", () => {
+    process.env.NODE_ENV = "test";
+    delete process.env.PARMANA_LOCAL_MODE;
+    delete process.env.DATABASE_URL;
+
+    expect(() => createNonceStore()).toThrow(/DATABASE_URL/);
+  });
+
+  it("uses memory only when local mode is on under NODE_ENV=test", () => {
+    process.env.NODE_ENV = "test";
+    process.env.PARMANA_LOCAL_MODE = "true";
+    delete process.env.DATABASE_URL;
+
+    expect(createNonceStore()).toBeInstanceOf(MemoryNonceStore);
+  });
+});

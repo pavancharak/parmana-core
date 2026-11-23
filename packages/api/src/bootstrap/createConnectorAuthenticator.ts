@@ -5,6 +5,7 @@ import {
 
 import { createGatewayIdentity } from "./createGatewayIdentity.js";
 import { createGatewayKeyPair } from "./createGatewayKeyPair.js";
+import { localModeEnabled } from "./localMode.js";
 
 /**
  * Creates the ConnectorAuthenticator used by
@@ -25,13 +26,18 @@ export function createConnectorAuthenticator(): RequestBoundConnectorAuthenticat
   return new SignedTokenConnectorAuthenticator(
     gatewayIdentity,
     publicKey,
-    [
-      {
-        connectorId: "test-fixture",
-        publicIdentity: "spiffe://parmana/connectors/test-fixture",
-        authenticationMetadata: {},
-      },
-    ],
+    // The test-fixture identity is trusted only in local mode. Production
+    // trusts no built-in connector identity: a fixture identity left in a
+    // production bootstrap is a trusted identity nobody reviews.
+    localModeEnabled()
+      ? [
+          {
+            connectorId: "test-fixture",
+            publicIdentity: "spiffe://parmana/connectors/test-fixture",
+            authenticationMetadata: {},
+          },
+        ]
+      : [],
     // External connectors (ADR-0013) are built by the server for approved
     // registrations, so their identities are not known at startup.
     true,

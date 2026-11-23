@@ -57,6 +57,7 @@ def builder_example_server() -> str:
         env = {
             **os.environ,
             "NODE_ENV": "test",
+            "PARMANA_LOCAL_MODE": "true",
             # Approval records for the policies are seeded by
             # test-support/start-test-server.ts (D19).
             # Trusts the local test approver (tests/local_approver.py).

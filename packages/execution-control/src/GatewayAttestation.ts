@@ -8,13 +8,28 @@ import type { IdGenerator } from "./IdGenerator.js";
 const serializer = new CanonicalSerializer();
 
 /**
+ * How long a gateway attestation is accepted after it is issued. An
+ * attestation is minted immediately before one release, so a short window is
+ * enough, and a stolen one stops working within a minute. Expiry is part of
+ * the signed payload, so it cannot be extended after signing.
+ */
+export const GATEWAY_ATTESTATION_TTL_MS = 60_000;
+
+/**
  * Payload the Gateway signs to prove it possesses the Gateway's private
  * key. authorizationId binds the attestation to one specific request so
  * it cannot be replayed to authenticate a DIFFERENT request.
  *
+ * expiresAt bounds replay in time: the verifier refuses an attestation at or
+ * after this instant (SignedTokenConnectorAuthenticator checks it against its
+ * clock). Because it is signed, it cannot be moved forward.
+ *
  * nonce is an entropy/uniqueness field only — nothing in this file or in
  * SignedTokenConnectorAuthenticator records consumed nonces, so it is not
- * itself a replay defense. It exists so two attestations minted for the
+ * itself a replay defense. A per-process seen-nonce set would give false
+ * assurance across instances, so it is not added. The durable single-use
+ * defense for a release is the authorization nonce, consumed by the release
+ * verifier. It exists so two attestations minted for the
  * same authorizationId (e.g. a retried call) are distinguishable, and so
  * the signed payload isn't otherwise fully deterministic from
  * (gatewayId, authorizationId, issuedAt) alone. Replay of the SAME
@@ -32,6 +47,7 @@ export interface GatewayAttestationPayload {
   readonly authorizationId: string;
   readonly nonce: string;
   readonly issuedAt: string;
+  readonly expiresAt: string;
 }
 
 export interface GatewayAttestation {
@@ -58,11 +74,15 @@ export class GatewayAttestationSigner {
     authorizationId: string,
     privateKey: KeyObject,
   ): GatewayAttestation {
+    const issuedAt = this.clock.now();
     const payload: GatewayAttestationPayload = Object.freeze({
       gatewayId,
       authorizationId,
       nonce: this.idGenerator.generate(),
-      issuedAt: this.clock.now().toISOString(),
+      issuedAt: issuedAt.toISOString(),
+      expiresAt: new Date(
+        issuedAt.getTime() + GATEWAY_ATTESTATION_TTL_MS,
+      ).toISOString(),
     });
 
     const signature = sign(
@@ -88,7 +108,8 @@ export function isGatewayAttestation(
     typeof payload.gatewayId === "string" &&
     typeof payload.authorizationId === "string" &&
     typeof payload.nonce === "string" &&
-    typeof payload.issuedAt === "string"
+    typeof payload.issuedAt === "string" &&
+    typeof payload.expiresAt === "string"
   );
 }
 
