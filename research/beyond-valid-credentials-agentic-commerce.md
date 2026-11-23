@@ -11,15 +11,15 @@
 
 ## Abstract
 
-AI agents are increasingly being integrated into commercial systems to perform consequential operations, including procurement, supplier payments, refunds and merchant settlements, including initiating payments, approving refunds, modifying customer records, accessing sensitive information and coordinating actions across enterprise applications. These capabilities introduce a fundamental authorization problem. An agent may possess valid credentials and successfully invoke a business application programming interface without necessarily having the authority to perform the particular action requested.
+AI agents are increasingly being integrated into commercial systems to perform consequential operations, including procurement, supplier payments, refunds and merchant settlements, including initiating payments, approving refunds, modifying customer records, accessing sensitive information and coordinating actions across enterprise applications. These capabilities introduce a fundamental authorization problem. An agent may possess valid credentials and successfully invoke a commercial application programming interface without necessarily having the authority to perform the particular action requested.
 
-Existing approaches address parts of this problem through identity management, access control, capability-based security, runtime policy enforcement and audit logging. However, the existence of a valid identity, credential or authorization decision does not independently establish that the action ultimately executed by a protected business system was identical to the action that was authorized.
+Existing approaches address parts of this problem through identity management, access control, capability-based security, runtime policy enforcement and audit logging. However, the existence of a valid identity, credential or authorization decision does not independently establish that the action ultimately executed by a protected commercial system was identical to the action that was authorized.
 
-This paper proposes a deterministic authorization model that connects delegated business authority to verifiable execution. The model represents authority as an explicit, bounded and revocable grant associated with a principal, an agent, permitted operations, protected resources, constraints and validity conditions. A deterministic authorization function evaluates each consequential action against the applicable grant and execution context before the action reaches the protected system.
+This paper proposes a deterministic authorization model that connects delegated commercial authority to verifiable execution. The model represents authority as an explicit, bounded and revocable grant associated with a principal, an agent, permitted operations, protected resources, constraints and validity conditions. A deterministic authorization function evaluates each consequential action against the applicable grant and execution context before the action reaches the protected system.
 
 The proposed model further introduces an authorization-to-effect evidence relationship. This relationship binds the authority grant, policy version, authorization decision, exact action parameters and execution outcome into a verifiable evidence record. Where supported by the protected system, an execution receipt or independently observed state transition provides evidence of the resulting effect.
 
-The paper defines the system model, threat model, authorization properties, protocol stages and verification conditions. It proposes an experimental evaluation covering out-of-scope operations, expired and revoked authority, parameter manipulation, replay attacks, multi-agent delegation, evidence tampering and divergence between authorized actions and actual business-system effects.
+The paper defines the system model, threat model, authorization properties, protocol stages and verification conditions. It proposes an experimental evaluation covering out-of-scope operations, expired and revoked authority, parameter manipulation, replay attacks, multi-agent delegation, evidence tampering and divergence between authorized actions and actual commercial-system effects.
 
 The central proposition is that consequential agent actions should be authorized independently of the agent's reasoning, enforced at a protected execution boundary and verifiable against evidence of the resulting effect. The paper provides a formal and empirical research agenda for evaluating this proposition.
 
@@ -42,7 +42,7 @@ An agent operating inside a financial institution, for example, may be able to:
 - Create or update an invoice.
 - Delegate part of a workflow to another agent.
 
-These operations are different from generating text. They produce effects in systems that hold business value, personal information, financial resources and operational authority.
+These operations are different from generating text. They produce effects in systems that hold commercial value, personal information, financial resources and operational authority.
 
 A central question therefore emerges:
 
@@ -50,17 +50,17 @@ A central question therefore emerges:
 
 Traditional authentication answers who or what is making a request. Authorization determines whether a particular operation is permitted under a defined set of rules. Auditing provides records of activity.
 
-However, these functions do not automatically establish an end-to-end relationship between the authority granted to an agent, the exact action approved, and the effect produced by the business system.
+However, these functions do not automatically establish an end-to-end relationship between the authority granted to an agent, the exact action approved, and the effect produced by the commercial system.
 
 For example, a procurement agent may receive permission to initiate supplier payments up to ₹50,000. It may possess a valid API credential and successfully authenticate to a payment service. These facts do not establish that a payment of ₹75,000 was authorized.
 
 Similarly, a policy engine may approve a payment request of ₹40,000, but the downstream execution system might receive a modified request, process it twice, or execute a different operation.
 
-The problem is therefore not limited to whether an agent has access to a tool. It concerns whether each consequential action is authorized within explicit business limits and whether the resulting execution can be independently verified.
+The problem is therefore not limited to whether an agent has access to a tool. It concerns whether each consequential action is authorized within explicit commercial limits and whether the resulting execution can be independently verified.
 
 ## 1.2 The authorization gap
 
-We identify four distinct stages in an agent's interaction with a business system:
+We identify four distinct stages in an agent's interaction with a commercial system:
 
 1. **Delegation:** A principal grants an agent a defined set of permissions.
 2. **Authorization:** A specific requested action is evaluated against those permissions.
@@ -69,7 +69,7 @@ We identify four distinct stages in an agent's interaction with a business syste
 
 These stages are frequently implemented by different components.
 
-An identity provider may authenticate an agent. A credential manager may provide access tokens. An orchestration framework may construct tool calls. A policy engine may evaluate requests. A business application may execute operations. An audit service may retain records.
+An identity provider may authenticate an agent. A credential manager may provide access tokens. An orchestration framework may construct tool calls. A policy engine may evaluate requests. A commercial application may execute operations. An audit service may retain records.
 
 The separation of these components creates important assurance questions:
 
@@ -79,7 +79,7 @@ The separation of these components creates important assurance questions:
 - Could the action be modified after authorization?
 - Could a revoked grant still be used through an existing session?
 - Could a delegated agent exceed the authority of its parent?
-- Does the retained evidence establish the actual business-system effect?
+- Does the retained evidence establish the actual commercial-system effect?
 
 A successful authentication event cannot answer all these questions. Neither can a policy decision or an agent-generated execution trace.
 
@@ -87,18 +87,18 @@ The research problem is to connect these stages through explicit authorization s
 
 ## 1.3 Research objective
 
-This paper proposes a deterministic authorization model for AI agents that binds delegated business authority to exact requested actions and connects authorization decisions to evidence of actual execution.
+This paper proposes a deterministic authorization model for AI agents that binds delegated commercial authority to exact requested actions and connects authorization decisions to evidence of actual execution.
 
 The model has four objectives:
 
-1. Represent business authority as explicit, bounded and revocable grants.
+1. Represent commercial authority as explicit, bounded and revocable grants.
 2. Evaluate consequential agent actions through deterministic authorization rules.
 3. Bind authorization decisions cryptographically to the exact action approved.
-4. Enable independent verification of the relationship between the authorized action and the resulting business-system effect.
+4. Enable independent verification of the relationship between the authorized action and the resulting commercial-system effect.
 
 The proposed architecture separates probabilistic agent reasoning from deterministic authorization.
 
-An AI agent may interpret a business request, formulate a plan and propose an operation. However, the agent's interpretation does not itself establish permission to execute that operation.
+An AI agent may interpret a commercial request, formulate a plan and propose an operation. However, the agent's interpretation does not itself establish permission to execute that operation.
 
 Authority must be represented and evaluated independently.
 
@@ -106,7 +106,7 @@ Authority must be represented and evaluated independently.
 
 This study investigates five research questions.
 
-**RQ1:** How can delegated business authority be represented as a machine-verifiable structure for AI agents?
+**RQ1:** How can delegated commercial authority be represented as a machine-verifiable structure for AI agents?
 
 **RQ2:** How can authorization be evaluated deterministically at the execution boundary, independently of an agent's reasoning?
 
@@ -126,7 +126,7 @@ The model in sections 3 to 6 is not specific to commerce. Commerce is used as th
 
 The proposed contributions are:
 
-**C1. Formal representation of delegated business authority.**
+**C1. Formal representation of delegated commercial authority.**
 A structured model representing principals, agents, grants, delegation relationships, scopes, policies, actions and execution contexts.
 
 **C2. Deterministic execution authorization.**
@@ -173,7 +173,7 @@ Recent research has explored runtime policy enforcement for tool-using agents.
 
 Wang, Zhu and Li (2026) propose a policy enforcement point for MCP-based agents, combining declarative runtime rules, information-flow labels and a SHA-256 hash-chained audit log [1]. Their work demonstrates the value of enforcing policies at the tool-call boundary rather than relying exclusively on model instructions.
 
-This provides an important foundation for the present research. However, the assurance question extends beyond intercepting a tool call. The relationship between the authorized request and the effect produced by a downstream business system must also be evaluated.
+This provides an important foundation for the present research. However, the assurance question extends beyond intercepting a tool call. The relationship between the authorized request and the effect produced by a downstream commercial system must also be evaluated.
 
 ## 2.4 Cryptographically verifiable agent authorization
 
@@ -181,7 +181,7 @@ Llambí-Morillas and Fernández-Fernández (2026) propose a preliminary formal a
 
 It also formalises the structural separation among identity binding, authorization-request binding and runtime execution binding as a central open problem.
 
-The present work builds on that distinction. Its focus is the relationship between the authorization decision and the actual effect in the protected business system, including the limitations of evidence when execution and observation occur in separate components.
+The present work builds on that distinction. Its focus is the relationship between the authorization decision and the actual effect in the protected commercial system, including the limitations of evidence when execution and observation occur in separate components.
 
 ## 2.5 Capability delegation and data-flow enforcement
 
@@ -189,7 +189,7 @@ Recent work on purpose-bound capabilities for delegated LLM agent workflows, suc
 
 This illustrates that capability attenuation, policy enforcement and runtime monitoring are active areas of research.
 
-The present study therefore does not claim novelty from the use of capability tokens or delegation constraints alone. It investigates whether the complete relationship between a business grant, a specific action, its authorization and its resulting effect can be established through independently verifiable evidence.
+The present study therefore does not claim novelty from the use of capability tokens or delegation constraints alone. It investigates whether the complete relationship between a commercial grant, a specific action, its authorization and its resulting effect can be established through independently verifiable evidence.
 
 ## 2.6 Research gap
 
@@ -205,7 +205,7 @@ The literature establishes that several individual mechanisms are available:
 
 The remaining research question addressed here is how these mechanisms can be composed into a verifiable execution relationship.
 
-In particular, an authorization record proves that a decision was recorded. A hash chain can reveal certain subsequent alterations to retained records. Neither alone proves that a protected business system executed the exact action represented by that authorization.
+In particular, an authorization record proves that a decision was recorded. A hash chain can reveal certain subsequent alterations to retained records. Neither alone proves that a protected commercial system executed the exact action represented by that authorization.
 
 The proposed model therefore distinguishes three claims:
 
@@ -221,11 +221,11 @@ The third claim is the primary focus of this study.
 
 ## 3.1 System context
 
-We consider an organization that delegates limited business authority to an AI agent.
+We consider a commercial organisation, such as a buyer, merchant or marketplace, that delegates limited purchasing or payment authority to an AI agent.
 
 The agent receives a task and proposes one or more operations against protected resources. A separate authorization mechanism evaluates each consequential operation before it reaches the protected system.
 
-The protected system may be a payment service, CRM, ERP, banking application, customer database or another enterprise service.
+The protected system may be a payment service, a merchant or marketplace order system, an accounts-payable or ERP system, a refund-processing service, or a supplier-onboarding registry.
 
 The system includes the following logical components:
 
@@ -378,7 +378,7 @@ For example, a payment request may result in:
 
 These states must not be treated as interchangeable.
 
-The effect should therefore be represented using the business system's actual execution semantics.
+The effect should therefore be represented using the commercial system's actual execution semantics.
 
 ---
 
@@ -429,6 +429,10 @@ An agent or compromised component attempts to reach the protected system without
 ### T10. Context manipulation
 
 An attacker manipulates contextual attributes used in authorization, such as resource ownership, transaction status, time or approval state.
+
+### T11. Counterparty substitution (commerce hypothesis)
+
+An action is modified after authorization so that the payee, supplier, merchant or recipient account differs from the one approved. This threat is specific to commercial settings. It is listed as a hypothesis for the authors to review and is not yet part of the scenarios in section 7.3.
 
 ## 4.2 Adversary capabilities
 
@@ -556,7 +560,7 @@ R(X)\in R_G
 L(X)\leq L_G
 \]
 
-This is an illustrative simplified expression. Actual scope evaluation may include multiple constraints, resource relationships, transaction limits, approval requirements and business-state conditions.
+This is an illustrative simplified expression. Actual scope evaluation may include multiple constraints, resource relationships, transaction limits, approval requirements and commercial-state conditions.
 
 For a payment action:
 
@@ -748,7 +752,7 @@ The result should distinguish at least:
 - **Reversed:** a completed operation has since been undone by a defined process.
 - **Unknown:** the enforcement point cannot determine the outcome.
 
-For a financial transaction, Accepted and Completed are distinct states. A payment accepted for processing has not necessarily settled. An authorization decision establishes that the request was permitted. It does not establish which of these states the business system eventually reached.
+For a financial transaction, Accepted and Completed are distinct states. A payment accepted for processing has not necessarily settled. An authorization decision establishes that the request was permitted. It does not establish which of these states the commercial system eventually reached.
 
 The result must be bound to the action identifier of the request it answers. A result that cannot be bound to a specific authorized action is recorded as Unknown, not as success.
 
@@ -967,7 +971,7 @@ The overhead of authorization, binding and verification has not been measured. S
 
 # 9. Conclusion
 
-This paper has proposed a deterministic authorization model that connects delegated business authority to the effect produced by a protected system. The model separates the authorization claim, the execution claim and the correspondence claim, and it treats correspondence as the central problem.
+This paper has proposed a deterministic authorization model that connects delegated commercial authority to the effect produced by a protected system. The model separates the authorization claim, the execution claim and the correspondence claim, and it treats correspondence as the central problem.
 
 The contribution is the composition of these elements: explicit grants, deterministic evaluation, a binding between the authorized action and the released action, an evidence record, and a verification procedure that reports what it does and does not establish.
 
