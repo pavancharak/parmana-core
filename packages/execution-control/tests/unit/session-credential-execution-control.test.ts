@@ -96,7 +96,6 @@ async function fixture() {
     gatewayIdentity,
     gatewayKeyPair.publicKey,
     [],
-    false,
     clock,
   );
 

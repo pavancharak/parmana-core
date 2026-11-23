@@ -10,6 +10,11 @@ existed are in the git history.
   and `NODE_ENV` is exactly `test` or `development`. `NODE_ENV` alone no longer
   relaxes any check, and the flag under any other `NODE_ENV` stops startup.
 - The built-in `test-fixture` connector identity is trusted only in local mode.
+- External connector identities are trusted only by the authenticator scoped to
+  the identity of their own active registration. The identity form alone is no
+  longer trusted, and `ExternalConnectorAwareRegistry.get()` returns built-in
+  connectors only, so a revoked external connector is reachable only through the
+  active-registration check.
 - Gateway attestations carry `expiresAt` (60 seconds from issue). The verifier
   refuses an attestation at or after that instant.
 
