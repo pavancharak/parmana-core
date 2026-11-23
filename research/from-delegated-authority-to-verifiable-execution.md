@@ -734,17 +734,237 @@ The protected system returns an execution result.
 
 The result should distinguish at least:
 
-- Accepted.
-- Rejected.
-- Pending.
-- Completed.
-- Failed.
-- Reversed.
-- Unknown.
+- **Accepted:** the system has received the request but has not yet applied it.
+- **Rejected:** the system refused the request.
+- **Pending:** the operation has started but its outcome is not yet final.
+- **Completed:** the system reports the intended state change as final.
+- **Failed:** the operation did not produce the intended state change.
+- **Reversed:** a completed operation has since been undone by a defined process.
+- **Unknown:** the enforcement point cannot determine the outcome.
 
-For a financial transaction
+For a financial transaction, Accepted and Completed are distinct states. A payment accepted for processing has not necessarily settled. An authorization decision establishes that the request was permitted. It does not establish which of these states the business system eventually reached.
 
----
+The result must be bound to the action identifier of the request it answers. A result that cannot be bound to a specific authorized action is recorded as Unknown, not as success.
+
+Unknown is a first-class outcome. An implementation that maps timeouts or missing responses to Failed or Completed, without evidence, overstates what is known about the effect.
+
+## 6.7 Authorization-to-action binding
+
+The authorization decision must be bound to the exact action it evaluated. We propose the following binding.
+
+Let \(h_X = H(canon(X))\) be a cryptographic digest of the canonical form of action \(X\), where \(H\) is a collision-resistant hash function and \(canon\) is the canonicalization function defined in section 6.3.
+
+On a decision of ALLOW, the authorization component issues an authorization token:
+
+\[
+A =
+Sign_{k}(
+id_G,
+h_X,
+v_{\Pi},
+decision,
+t_{auth},
+n
+)
+\]
+
+Where:
+
+- \(k\) is the signing key of the authorization component.
+- \(id_G\) identifies the grant evaluated.
+- \(v_{\Pi}\) identifies the policy version evaluated.
+- \(t_{auth}\) is the time of the decision.
+- \(n\) is a single-use nonce.
+
+The execution enforcement point releases an action only if:
+
+1. The signature on \(A\) verifies under a trusted key.
+2. The digest of the action about to be executed equals \(h_X\) in \(A\).
+3. The nonce \(n\) has not been used before.
+4. The execution time is within the validity window defined by policy.
+
+Requirement 2 addresses parameter manipulation after authorization (threat T2). Requirement 3 addresses replay (threat T5). Requirement 4 limits the window in which an authorization can be used.
+
+The binding is only as strong as the enforcement point's guarantee that the action it executes is the action whose digest it checked. Where the downstream system transforms the request, the transformation must be fixed in the policy and verified. Otherwise the binding protects only the stage before transformation.
+
+## 6.8 Evidence record
+
+For each release, the system produces an evidence record:
+
+\[
+R_i =
+(
+A,
+h_X,
+result,
+t_{exec},
+receipt,
+h_{i-1},
+\sigma_i
+)
+\]
+
+Where:
+
+- \(A\) is the authorization token from section 6.7.
+- \(result\) is the execution result from section 6.6.
+- \(t_{exec}\) is the time of execution.
+- \(receipt\) is a reference to any receipt issued by the protected system, or a null value.
+- \(h_{i-1}\) is the hash of the previous record in the append-only log.
+- \(\sigma_i\) is a signature over the record by the evidence component.
+
+The hash chaining makes certain alterations detectable, including modification of a record and reordering of records. It does not detect omission of a record before it enters the chain (section 4.4). Omission must therefore be addressed by an independent commitment, such as a periodic publication of the chain head to a party that does not operate the log.
+
+Records must not contain credentials, personal data beyond what is necessary, or the agent's internal reasoning. Retention periods and minimisation are policy decisions and are outside the scope of this model.
+
+## 6.9 Effect witness and correspondence
+
+A record shows what was authorized and what the system reported. The correspondence claim requires an additional witness of the effect.
+
+We distinguish three sources of effect evidence:
+
+1. **Protected-system receipt:** a signed statement by the protected system that it applied a specific action with specific parameters.
+2. **Independent observation:** a read of the resulting state by a component that does not operate the enforcement point.
+3. **None:** no effect evidence is available.
+
+Let \(W\) be a witness of the effect, and let \(X_{c}\) be the canonical action whose digest is \(h_X\). The enforcement component retains \(X_{c}\) or a commitment to it, so that the verifier can compare parameters. The correspondence predicate holds when the parameters of the witnessed effect equal those of \(X_{c}\):
+
+\[
+Corr(R, W) = TRUE
+\iff
+params(W) = params(X_{c})
+\]
+
+For each record, the verifier assigns one of four outcomes:
+
+- **Verified:** a witness exists and the correspondence predicate holds.
+- **Divergent:** a witness exists and the correspondence predicate does not hold.
+- **Unverified:** the record exists, but no witness is available.
+- **Unknown:** the witness cannot be obtained or its validity cannot be established.
+
+Only a Verified outcome supports the correspondence claim. An Unverified outcome must be reported as such, and must not be presented as correspondence.
+
+A witness obtained from the same component that produced the record provides weaker assurance than one obtained from an independent source. The verifier must record which source was used.
+
+## 6.10 Verification procedure
+
+An independent verifier evaluates a record without trusting the runtime or database that produced it. The procedure is:
+
+1. Verify the signature on the authorization token under a trusted key.
+2. Verify the signature on the evidence record and the hash chain up to the published head.
+3. Confirm that the grant and policy version in the token existed and were valid at \(t_{auth}\).
+4. Confirm that the nonce appears once in the chain.
+5. Obtain the witness, if any, and evaluate the correspondence predicate.
+6. Output the verdict, with the claim it supports and the claim it does not.
+
+The verdict must state its scope. For example: "The action was authorized under policy version v3 and executed once; the effect was verified against a receipt from the protected system; the policy's correctness is not established by this verdict."
+
+The verifier does not establish that the signing key belongs to a particular organisation. That requires a separate trust-establishment process, which is outside the model.
+
+# 7. Proposed Evaluation
+
+This section describes an evaluation that has been designed but not run. No results are reported. The criteria below are stated in advance so that they cannot be adjusted after the data are collected.
+
+## 7.1 Objectives
+
+The evaluation tests whether the model achieves the three claims in section 2.6: authorization, execution and correspondence. It also tests whether the model's guarantees hold under the threats in section 4.
+
+## 7.2 Test environment
+
+We propose a controlled environment with:
+
+- A simulated payment service and a simulated customer-record service, with defined state transitions.
+- An agent driven by a fixed set of tasks, some benign and some designed to produce unauthorised actions.
+- A policy with explicit amount limits, approved-payee lists and approval thresholds.
+- A protected execution system that issues signed receipts, and a separate observer that reads state.
+
+Test traces and seeds will be published so that results can be reproduced.
+
+## 7.3 Scenarios
+
+Each threat in section 4.1 is mapped to one or more test scenarios:
+
+| Threat | Scenario | Primary measure |
+|---|---|---|
+| T1 Out-of-scope action | Request outside the grant's operations and resources | False allow rate |
+| T2 Parameter manipulation | Modify the amount or payee after authorization | Divergence detection rate |
+| T3 Expired authority | Use a grant after expiry, and during a request in progress | False allow rate |
+| T4 Revoked authority | Use a grant after revocation, with cached state | Revocation latency; false allow rate |
+| T5 Replay | Resubmit a previously released action | Duplicate execution count |
+| T6 Delegation escalation | Child grant exceeding parent authority | Rejection rate |
+| T7 Evidence modification | Alter, reorder or delete records | Detection rate, by modification type |
+| T8 Execution divergence | Protected system applies different parameters | Divergence detection rate |
+| T9 Enforcement bypass | Route a request around the gateway | Proportion of bypasses that reach the system |
+| T10 Context manipulation | Alter ownership, status or approval fields | False allow rate |
+
+## 7.4 Baselines
+
+To show what each component contributes, the evaluation compares the full model against four baselines:
+
+1. **Prompt-only:** the policy is stated in the agent's instructions.
+2. **Permission-only:** the agent holds scoped API credentials, with no per-action check.
+3. **Policy without binding:** a policy engine evaluates requests, but the release is not bound to the evaluated action's digest.
+4. **Full model:** the complete authorization, binding and verification design.
+
+## 7.5 Metrics and criteria
+
+The following criteria are set in advance:
+
+- **False allow rate:** the proportion of unauthorised actions that are executed. The full model should be zero for scenarios where the policy is enforced at the gateway.
+- **False deny rate:** the proportion of authorised actions that are refused. This should be reported, not minimised at the cost of safety.
+- **Divergence detection rate:** the proportion of executions whose effect differs from the authorised action that the verifier labels Divergent.
+- **Tamper detection rate:** the proportion of evidence modifications detected, by type.
+- **Revocation latency:** the time between revocation and the first denied request.
+- **Overhead:** the per-decision latency of authorization and verification.
+
+Negative results must be reported with the same prominence as positive ones.
+
+## 7.6 Reproducibility
+
+Each run records its seed, policy version, scenario identifier and software version. Traces, evidence records and verifier outputs will be published alongside the paper.
+
+# 8. Discussion and Limitations
+
+## 8.1 Complete mediation
+
+The model's strongest claim depends on complete mediation. An agent that reaches a protected system through a path that does not pass the enforcement point is outside the model's guarantees. The model can state this limitation, but it cannot remove it. Assurance requires that the protected resource itself accepts only authorised requests, or that all routes are mediated.
+
+## 8.2 Time of check and time of use
+
+The binding in section 6.7 protects the action from the point of authorization to the point of release. It does not protect the state of the protected system between the two. A payee may be removed from an approved list, or a balance may change, after authorization. Such conditions must be rechecked where they are material.
+
+## 8.3 Revocation consistency
+
+Revocation can be guaranteed only up to the consistency of the revocation mechanism. A revocation recorded at the authority registry but not yet observed by an enforcement point is a window of exposure. Section 5.5 separates these events so that the window can be measured.
+
+## 8.4 Witness trust
+
+The correspondence claim is only as strong as the witness. A receipt from the protected system relies on that system's integrity. An observer relies on its own access and on the state it reads. The verifier reports the witness source so that these dependencies are visible.
+
+## 8.5 Policy correctness
+
+The model establishes that an action satisfied a policy. It does not establish that the policy was correct, lawful or appropriate. Those questions belong to governance and legal review, and the verdict must say so.
+
+## 8.6 Privacy
+
+Evidence records can contain personal data. The model requires minimisation, but it does not specify how records should be protected across organisations or how long they should be kept. These are open questions.
+
+## 8.7 Multi-organisation delegation
+
+The model has been described for delegation within one organisation. Delegation across organisations introduces different trust roots, legal terms and revocation dependencies. Extending the model to that setting is future work.
+
+## 8.8 Performance
+
+The overhead of authorization, binding and verification has not been measured. Section 7.5 proposes to measure it. Claims about latency should not be made until the measurements are available.
+
+# 9. Conclusion
+
+This paper has proposed a deterministic authorization model that connects delegated business authority to the effect produced by a protected system. The model separates the authorization claim, the execution claim and the correspondence claim, and it treats correspondence as the central problem.
+
+The contribution is the composition of these elements: explicit grants, deterministic evaluation, a binding between the authorized action and the released action, an evidence record, and a verification procedure that reports what it does and does not establish.
+
+The proposed evaluation tests the model against the threats in section 4. Until it has been run, the model's guarantees are design claims, not empirical findings. We have stated the criteria in advance so that the evaluation can show the model to be wrong as well as right.
+
 
 ## References
 
@@ -754,4 +974,6 @@ For a financial transaction
 
 [3] P. T. Tran-Truong, H. Vo, N. Tran, K. Vo, and T.-M. Truong, "DelegateGuard: Purpose-bound capabilities for delegated LLM agent workflows," arXiv:2610.16005, Oct. 2026.
 
-> **Draft incomplete.** The text above ends in the middle of section 6.6. Sections 6.6 onward, including the evaluation design and the remaining sections, have not yet been provided. They will be added when the remaining text is available. No experimental results are reported in this draft.
+---
+
+*Research draft v0.1. Sections 6.6 to 9 are proposed design. No experimental results are reported.*
