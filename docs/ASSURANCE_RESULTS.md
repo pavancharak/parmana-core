@@ -492,3 +492,20 @@ Survivor classification: N of M classified.
 Open items:
 1.
 ```
+
+### 2026-11-22: test reach by package, and survivor classification checker
+
+- **Command:** `node scripts/assurance-test-reach.mjs`; `npx tsx scripts/check-survivor-classification.ts crypto-chain-head --strict` (no survivors in that report); a temporary two-survivor report to test the survivor path, deleted afterwards.
+- **Runtime:** Node 24.22.3, Linux sandbox.
+- **Commit tested:** the commit that adds these scripts (recorded in the pull request).
+- **Branch:** `claude/laughing-meitner-cqaxvi`.
+
+**Results:** every package with source has tests that import `src/` directly. No test imports its own package by name, which resolves to `dist/`. Counts are in `docs/assurance/TEST_REACH.md`. The survivor checker counted the temporary report's two survivors correctly, classified both, and reported no stale rows.
+
+**Not measured:** a test that reaches package X's `src/` only through another package's `dist/`. The cross-package limit is recorded in `TEST_REACH.md`.
+
+**Checks not run:** the full mutation campaign for any package other than the one pre-run in the chain-head check. Those are queued (see `scripts/` and the scratchpad queue) and will be recorded when they finish.
+
+**Survivor classification:** not applicable to this run. No survivors were classified.
+
+**Phase status change:** none. These are non-blocking tools. The strict mode is not yet in CI, which needs an owner decision (see EXECUTION_PLAN.md section 9).

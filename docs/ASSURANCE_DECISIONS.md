@@ -422,3 +422,33 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 | `docs/ASSURANCE_RESULTS.md`           | No change from this record. Phase status is unchanged.                    |
 
 **Not changed by this decision:** the score policy, the phase exit criteria, the acceptance principles, the frozen-core procedure, and the "needs description" rule as applied to any challenge whose description has not been supplied.
+
+---
+
+## D26. Permanent answers for mutation scoring and gates (22 November 2026)
+
+- **Reference:** D26
+- **Source:** the limits listed in the session of 22 November 2026, in the order they were raised; `docs/assurance/TEST_REACH.md`; `docs/assurance/REQUIREMENTS_TRACE.md`
+- **Date recorded:** 2026-11-22
+- **Owner:** Pavan Charak
+
+**Question:** Four changes are needed to make mutation results and assurance gates durable. Which permanent answer applies to each?
+
+**Owner direction (2026-11-22):** "best long term fix permanent answer". Recorded as the durable option for each:
+
+1. **Dependent-package tests in mutation runs.** Adopted. A mutant is killed by any test in the package or in a package that depends on it. Scores produced before this change are labelled "own tests only" and are not compared with later scores. Implementation: the command runner in `stryker.config.mjs` adds the dependent packages' test paths. It takes effect for runs started after the current queue finishes, so no run mixes two definitions.
+2. **Requirement gate.** Adopted. A check fails CI if any ATS ID in `REQUIREMENTS_TRACE.md` has no test name that references it. The check is report-only until the phase that owns the requirement meets its exit criteria. From then on it blocks. Nothing is exempted without a new decision record.
+3. **Survivor classification gate.** Adopted. CI fails if any survivor in a critical file has no classification in `docs/assurance/survivors/`. The gate is report-only until Phase 1 classification is complete, then blocks. "Critical" means the packages that enforce authority and verify evidence: `crypto`, `envelope-verifier`, `policy`, `approval`, `execution-gateway`, `execution-control`. The list changes only by a new decision record.
+4. **Timeouts and index files.** Timeouts are reported as their own figure. The headline score counts only killed mutants. `index.ts` files are included in mutation, because a wrong re-export changes the public contract.
+
+**Not changed by this decision:** the plan's score policy (no aggregate threshold defines success), the phase exit criteria, the acceptance principles, and the frozen-core procedure.
+
+**Effect on the documents:**
+
+| Document                                   | Change                                                                        |
+| ------------------------------------------ | ----------------------------------------------------------------------------- |
+| `stryker.config.mjs`                       | Dependent-package tests added to the command runner, after the queue finishes |
+| `scripts/mutation.ts`                      | Timeouts reported separately, after the queue finishes                        |
+| `scripts/check-survivor-classification.ts` | Used as the gate once the phase is complete                                   |
+| `docs/assurance/REQUIREMENTS_TRACE.md`     | Becomes the input to the requirement gate                                     |
+| `docs/assurance/EXECUTION_PLAN.md`         | Section 9 updated: the four items are decided                                 |
