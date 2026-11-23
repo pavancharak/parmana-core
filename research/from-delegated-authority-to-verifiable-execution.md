@@ -171,9 +171,9 @@ This provides an important foundation for the present research. However, the ass
 
 ## 2.4 Cryptographically verifiable agent authorization
 
-Llambí-Morillas and Fernández-Fernández (2026) propose a preliminary model for cryptographically verifiable authorization of autonomous agents [2]. Their work distinguishes identity evidence, delegation evidence, authorization evidence, execution evidence and audit evidence.
+Llambí-Morillas and Fernández-Fernández (2026) propose a preliminary formal abstraction for cryptographically verifiable agent authorization, with candidate security properties and a zero-knowledge proof of concept [2]. [Verify against the full text: the abstract does not list the five kinds of evidence this sentence previously attributed to the paper.]
 
-It also identifies the separation between identity binding, authorization-request binding and runtime execution binding as an important research problem.
+It also formalises the structural separation among identity binding, authorization-request binding and runtime execution binding as a central open problem.
 
 The present work builds on that distinction. Its focus is the relationship between the authorization decision and the actual effect in the protected business system, including the limitations of evidence when execution and observation occur in separate components.
 
@@ -750,8 +750,8 @@ For a financial transaction
 
 [1] S. Wang, S. Zhu, and R. Li, "Runtime policy enforcement for MCP-based LLM agents," *Electronics*, vol. 15, art. no. [to confirm], 2026, doi: 10.3390/electronics15132829.
 
-[2] M. Llambí-Morillas and D. Fernández-Fernández, "Cryptographically verifiable authorization for autonomous AI agents: A falsifiable hypothesis and proof of concept," arXiv:2607.21325, 2026. [Confirm the arXiv version and author initials against the record.]
+[2] M. Llambí-Morillas and D. Fernández-Fernández, "Cryptographically verifiable authorization for autonomous AI agents: A falsifiable hypothesis and proof of concept," arXiv:2607.21325, Jul. 2026.
 
-[3] [Authors to confirm], "DelegateGuard: Purpose-bound capabilities for delegated LLM agent workflows," arXiv:2610.16005, 2026. [Read the full text before citing its claims.]
+[3] P. T. Tran-Truong, H. Vo, N. Tran, K. Vo, and T.-M. Truong, "DelegateGuard: Purpose-bound capabilities for delegated LLM agent workflows," arXiv:2610.16005, Oct. 2026.
 
 > **Draft incomplete.** The text above ends in the middle of section 6.6. Sections 6.6 onward, including the evaluation design and the remaining sections, have not yet been provided. They will be added when the remaining text is available. No experimental results are reported in this draft.
