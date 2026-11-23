@@ -6,6 +6,7 @@ import {
   type GatewayAttestation,
 } from "./GatewayAttestation.js";
 import { isExternalConnectorIdentity } from "./externalConnectorIdentity.js";
+import { SystemClock, type Clock } from "./Clock.js";
 
 import type {
   ConnectorAuthenticator,
@@ -44,6 +45,8 @@ export class SignedTokenConnectorAuthenticator implements RequestBoundConnectorA
      * at startup.
      */
     private readonly trustExternalConnectors = false,
+    /** Source of the time for the attestation expiry check. */
+    private readonly clock: Clock = new SystemClock(),
   ) {}
 
   authenticateGateway(
@@ -89,6 +92,12 @@ export class SignedTokenConnectorAuthenticator implements RequestBoundConnectorA
     }
     if (!isGatewayAttestation(authentication)) return undefined;
     if (authentication.payload.gatewayId !== this.gateway.gatewayId)
+      return undefined;
+    // Expired attestations are refused, with no grace period. The check runs
+    // before the signature so a stale attestation is refused without any
+    // work on the key. An unparseable expiry is refused too.
+    const expiresAt = Date.parse(authentication.payload.expiresAt);
+    if (!Number.isFinite(expiresAt) || this.clock.now().getTime() >= expiresAt)
       return undefined;
     if (
       !verifyGatewayAttestationSignature(authentication, this.gatewayPublicKey)
