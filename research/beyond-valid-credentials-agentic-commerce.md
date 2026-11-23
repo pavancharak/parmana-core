@@ -896,18 +896,19 @@ Test traces and seeds will be published so that results can be reproduced.
 
 Each threat in section 4.1 is mapped to one or more test scenarios:
 
-| Threat                    | Scenario                                                   | Primary measure                              |
-| ------------------------- | ---------------------------------------------------------- | -------------------------------------------- |
-| T1 Out-of-scope action    | Request outside the grant's operations and resources       | False allow rate                             |
-| T2 Parameter manipulation | Modify the amount or payee after authorization             | Divergence detection rate                    |
-| T3 Expired authority      | Use a grant after expiry, and during a request in progress | False allow rate                             |
-| T4 Revoked authority      | Use a grant after revocation, with cached state            | Revocation latency; false allow rate         |
-| T5 Replay                 | Resubmit a previously released action                      | Duplicate execution count                    |
-| T6 Delegation escalation  | Child grant exceeding parent authority                     | Rejection rate                               |
-| T7 Evidence modification  | Alter, reorder or delete records                           | Detection rate, by modification type         |
-| T8 Execution divergence   | Protected system applies different parameters              | Divergence detection rate                    |
-| T9 Enforcement bypass     | Route a request around the gateway                         | Proportion of bypasses that reach the system |
-| T10 Context manipulation  | Alter ownership, status or approval fields                 | False allow rate                             |
+| Threat                                                      | Scenario                                                                      | Primary measure                              |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------- |
+| T1 Out-of-scope action                                      | Request outside the grant's operations and resources                          | False allow rate                             |
+| T2 Parameter manipulation                                   | Modify the amount or payee after authorization                                | Divergence detection rate                    |
+| T3 Expired authority                                        | Use a grant after expiry, and during a request in progress                    | False allow rate                             |
+| T4 Revoked authority                                        | Use a grant after revocation, with cached state                               | Revocation latency; false allow rate         |
+| T5 Replay                                                   | Resubmit a previously released action                                         | Duplicate execution count                    |
+| T6 Delegation escalation                                    | Child grant exceeding parent authority                                        | Rejection rate                               |
+| T7 Evidence modification                                    | Alter, reorder or delete records                                              | Detection rate, by modification type         |
+| T8 Execution divergence                                     | Protected system applies different parameters                                 | Divergence detection rate                    |
+| T9 Enforcement bypass                                       | Route a request around the gateway                                            | Proportion of bypasses that reach the system |
+| T10 Context manipulation                                    | Alter ownership, status or approval fields                                    | False allow rate                             |
+| T11 Counterparty substitution (proposed; for author review) | Change the payee, supplier, merchant or recipient account after authorization | Divergence detection rate                    |
 
 ## 7.4 Baselines
 
