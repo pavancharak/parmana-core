@@ -31,27 +31,21 @@
       "claim": "pr.branch-protected",
       "subject": "target",
       "maxAgeSeconds": 60,
-      "parameters": [
-        "expectedHeadSha"
-      ]
+      "parameters": ["expectedHeadSha"]
     },
     "requiredReviewsCompleted": {
       "source": "github-pull-requests",
       "claim": "pr.reviews-complete",
       "subject": "target",
       "maxAgeSeconds": 60,
-      "parameters": [
-        "expectedHeadSha"
-      ]
+      "parameters": ["expectedHeadSha"]
     },
     "statusChecksPassed": {
       "source": "github-pull-requests",
       "claim": "pr.checks-passing",
       "subject": "target",
       "maxAgeSeconds": 60,
-      "parameters": [
-        "expectedHeadSha"
-      ]
+      "parameters": ["expectedHeadSha"]
     }
   },
   "approvalSignals": {
