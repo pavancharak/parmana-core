@@ -2,10 +2,11 @@
   "policyId": "github-pr-approval",
   "policyVersion": "1.2.0",
   "schemaVersion": "1.0.0",
-  "description": "Authorizes the merge of one GitHub pull request, owner/repo#number, through the GitHub connector (github:pr-merge). A merge needs a signed human approval for that exact pull request and that exact head commit (the expectedHeadSha). If the head has moved since the approval, the merge is refused. The caller-declared safety facts can refuse a merge, never authorize one. A merge is refused when no head commit is given, when the branch is not protected, the repository is not authorized, required reviews are not complete, a status check is not passing, or the risk score is above 3.",
+  "description": "Authorizes the merge of one GitHub pull request, owner/repo#number, through the GitHub connector (github:pr-merge). A merge needs a signed human approval for that exact pull request and that exact head commit (the expectedHeadSha). If the head has moved since the approval, the merge is refused. The caller-declared safety facts can refuse a merge, never authorize one. Only the merge method is allowed. A merge with any other method is refused. A merge is refused when no head commit is given, when the branch is not protected, the repository is not authorized, required reviews are not complete, a status check is not passing, or the risk score is above 3.",
   "signalsSchema": {
     "targetRef": "string",
     "headSha": "string",
+    "mergeMethod": "string",
     "mergeApproved": "boolean",
     "branchProtected": "boolean",
     "repositoryAuthorized": "boolean",
@@ -15,7 +16,8 @@
   },
   "boundSignals": {
     "targetRef": "target",
-    "headSha": "parameters.expectedHeadSha"
+    "headSha": "parameters.expectedHeadSha",
+    "mergeMethod": "parameters.mergeMethod"
   },
   "signalSources": {},
   "approvalSignals": {
@@ -45,6 +47,18 @@
       "outcome": {
         "action": "reject",
         "reason": "Refused: the merge does not name the head commit the approver reviewed (expectedHeadSha)."
+      }
+    },
+    {
+      "id": "reject-not-merge-method",
+      "condition": {
+        "fact": "mergeMethod",
+        "operator": "neq",
+        "value": "merge"
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refused: only the merge method may be used for this policy."
       }
     },
     {
