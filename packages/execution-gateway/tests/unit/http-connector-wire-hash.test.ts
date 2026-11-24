@@ -1,3 +1,4 @@
+import { TrustRecordHasher } from "@parmana/crypto";
 import { generateKeyPairSync } from "node:crypto";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -55,6 +56,7 @@ async function signed(
       businessTransactionId: CONTENT.businessTransactionId,
       policyName: "policy-a",
       policyVersion: "1.0.0",
+      signalsHash: await new TrustRecordHasher(crypto).hash({}),
       executableContent: CONTENT,
     },
     privateKey,

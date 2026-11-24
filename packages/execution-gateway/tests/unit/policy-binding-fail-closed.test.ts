@@ -131,6 +131,7 @@ async function sign(
       businessTransactionId: CONTENT.businessTransactionId,
       policyName: "policy-a",
       policyVersion: "1.0.0",
+      signalsHash: await new TrustRecordHasher(crypto).hash({}),
       ...(policyContentHash !== undefined && { policyContentHash }),
       executableContent: CONTENT,
     },

@@ -369,9 +369,14 @@ describe("ExecutionGateway signal-freshness check (G-31)", () => {
     expect(failed.checks.signalsStillCurrent).toBe(false);
   });
 
-  it("a nonce-replay-only failure is still correctly classified when signalsStillCurrent was skipped", async () => {
+  it("a nonce-replay-only failure is still correctly classified when every signal check passes", async () => {
     const { privateKey, publicKey } = generateKeyPair();
-    const signed = await signAuthorization(privateKey, undefined);
+    // A request without signals is hashed as {}; sign over that so the
+    // first release is a genuine pass rather than a refused legacy hash.
+    const signed = await signAuthorization(
+      privateKey,
+      await signalsHasher.hash({}),
+    );
 
     const gateway = new ExecutionGateway({
       // Legacy fixture: predates fail-closed policy binding.
@@ -384,8 +389,7 @@ describe("ExecutionGateway signal-freshness check (G-31)", () => {
     await gateway.execute(buildRequest(signed));
 
     // Second execution of the exact same authorization: every
-    // side-effect-free check (including the skipped/undefined
-    // signalsStillCurrent) still passes; only nonce consumption fails.
+    // side-effect-free check still passes; only nonce consumption fails.
     await expect(gateway.execute(buildRequest(signed))).rejects.toThrow(
       NonceAlreadyConsumedError,
     );

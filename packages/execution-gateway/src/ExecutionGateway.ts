@@ -491,19 +491,20 @@ export class ExecutionGateway implements ExecutionSystem {
 
     //
     // G-149: an authorization with no signalsHash cannot show that the signals it was decided on
-    // are still current, so it is refused at release when the signal verifier is wired. RuntimeEngine
-    // signs a hash for every authorization it issues now, so only an authorization issued before that
-    // check existed has none. An absent check must never be a pass.
+    // are still current, so it is refused at release regardless of whether a signal verifier is
+    // wired. RuntimeEngine signs a hash for every authorization it issues now, so only an
+    // authorization issued before that check existed has none. An absent check must never be a pass.
     //
-    if (signalsHash === undefined && this.signalStateVerifier !== undefined) {
+    // The hash comparison does not need a verifier, so drift is detected whenever a hash is present.
+    // The verifier is consulted only for divergence from verified external state.
+    //
+    if (signalsHash === undefined) {
       signalsStillCurrent = false;
     } else if (
       passed &&
       businessTransactionHashMatches &&
       policyStillCurrent !== false &&
-      policyGovernanceVerified !== false &&
-      this.signalStateVerifier !== undefined &&
-      signalsHash !== undefined
+      policyGovernanceVerified !== false
     ) {
       //
       // A request without signals is hashed as `{}`, exactly as
@@ -521,7 +522,7 @@ export class ExecutionGateway implements ExecutionSystem {
           expected: signalsHash,
           actual: currentSignalsHash,
         };
-      } else {
+      } else if (this.signalStateVerifier !== undefined) {
         const violations = await this.signalStateVerifier.findViolations(
           {
             action: executableContent.action,

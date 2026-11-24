@@ -1,3 +1,4 @@
+import { TrustRecordHasher } from "@parmana/crypto";
 import { generateKeyPairSync } from "node:crypto";
 
 import { describe, expect, it } from "vitest";
@@ -54,7 +55,7 @@ class RecordingConnector implements Connector {
 
 const inMs = (ms: number) => new Date(NOW.getTime() + ms).toISOString();
 
-function sign(
+async function sign(
   extra: {
     businessConditions?: { validUntil: string; signalKey?: string }[];
     authorityGrant?: { grantId: string; validUntil: string };
@@ -68,6 +69,7 @@ function sign(
       businessTransactionId: CONTENT.businessTransactionId,
       policyName: "policy-a",
       policyVersion: "1.0.0",
+      signalsHash: await new TrustRecordHasher(crypto).hash({}),
       executableContent: CONTENT,
       ...(extra.submittedBy !== undefined && {
         submittedBy: extra.submittedBy,

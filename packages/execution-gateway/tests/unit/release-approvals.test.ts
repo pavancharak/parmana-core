@@ -214,7 +214,7 @@ describe("ExecutionGateway release approvals", () => {
     const control = new RecordingExecutionControl();
     const minted: string[] = [];
     const release = await run({
-      signalsHash: "none",
+      signalsHash: "match",
       control,
       mint: (authorizationId) => {
         minted.push(authorizationId);
@@ -235,7 +235,7 @@ describe("ExecutionGateway release approvals", () => {
 
   it("presents the static gateway token when none is minted", async () => {
     const control = new RecordingExecutionControl();
-    await run({ signalsHash: "none", control });
+    await run({ signalsHash: "match", control });
     expect(control.authentications).toEqual(["test"]);
   });
 });
