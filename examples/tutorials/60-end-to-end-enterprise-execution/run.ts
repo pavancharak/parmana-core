@@ -43,7 +43,21 @@ import {
   PolicyEngine,
   PolicyOutcome,
   type Policy,
+  type SignalStateVerifier,
+  type SignalStateViolation,
 } from "@parmana/policy";
+
+//
+// The release check's live signal source. This demo's signals have not
+// changed between authorization and release, so it reports no violations.
+// A deployment wires a verifier that re-reads real-world state here; the
+// gateway refuses to construct without one (see ExecutionGateway).
+//
+class NothingChangedSignalVerifier implements SignalStateVerifier {
+  async findViolations(): Promise<readonly SignalStateViolation[]> {
+    return [];
+  }
+}
 
 import type { ExecutionRequest } from "@parmana/execution-system";
 import type { ExecutableContent, ExecutionResult } from "@parmana/shared";
@@ -317,7 +331,7 @@ async function main(): Promise<void> {
   console.log("--------------------------------------------------");
 
   const previewGateway = new ExecutionGateway({
-    allowUnverifiedSignals: true,
+    signalStateVerifier: new NothingChangedSignalVerifier(),
     // Legacy fixture: predates fail-closed policy binding.
     allowUnverifiedPolicy: true,
     publicKey: runtimePublicKey,
@@ -386,7 +400,7 @@ async function main(): Promise<void> {
   // reached through the production Gateway's execute().
   //
   const productionGateway = new ExecutionGateway({
-    allowUnverifiedSignals: true,
+    signalStateVerifier: new NothingChangedSignalVerifier(),
     // Legacy fixture: predates fail-closed policy binding.
     allowUnverifiedPolicy: true,
     publicKey: runtimePublicKey,
