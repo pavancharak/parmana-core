@@ -12,7 +12,10 @@ import { describe, expect, it } from "vitest";
 
 const root = path.resolve(import.meta.dirname, "../..");
 
-const LIVE = new Set(["payment-refund"]);
+// Policies the server loads from this folder. github-pr-approval is the standard
+// merge policy: the server loads it from here, and it takes effect only once a
+// maintainer approves the version through the maker and checker flow.
+const LIVE = new Set(["payment-refund", "github-pr-approval"]);
 
 const RETIRED = [
   "access-control",
