@@ -1,0 +1,53 @@
+{
+  "policyId": "github-pr-comment",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes one comment on a GitHub pull request, owner/repo#number, through the GitHub connector (github:comment). A comment is approved only with a signed human approval for that exact pull request, and a body of 1 to 4,000 characters. Any other case is refused.",
+  "signalsSchema": {
+    "targetRef": "string",
+    "body": "string",
+    "commentApproved": "boolean"
+  },
+  "boundSignals": {
+    "targetRef": "target",
+    "body": "parameters.body"
+  },
+  "signalSources": {},
+  "approvalSignals": {
+    "commentApproved": {
+      "resourceId": "target"
+    }
+  },
+  "rules": [
+    {
+      "id": "reject-no-approval",
+      "condition": { "fact": "commentApproved", "operator": "is_false" },
+      "outcome": { "action": "reject", "reason": "Refused: no signed approval covers commenting on this pull request." }
+    },
+    {
+      "id": "reject-bad-body",
+      "condition": {
+        "any": [
+          { "fact": "body", "operator": "length_gt", "value": 4000 },
+          { "fact": "body", "operator": "length_lt", "value": 1 }
+        ]
+      },
+      "outcome": { "action": "reject", "reason": "Refused: the comment body must be 1 to 4,000 characters." }
+    },
+    {
+      "id": "approve-approved-comment",
+      "condition": {
+        "all": [
+          { "fact": "targetRef", "operator": "matches", "value": "^[A-Za-z0-9-]{1,39}/[A-Za-z0-9._-]{1,100}#[0-9]{1,10}$" },
+          { "fact": "commentApproved", "operator": "is_true" }
+        ]
+      },
+      "outcome": { "action": "approve", "reason": "Comment approved: a signed approval covers this pull request." }
+    },
+    {
+      "id": "reject-otherwise",
+      "condition": { "fact": "targetRef", "operator": "matches", "value": "^" },
+      "outcome": { "action": "reject", "reason": "Refused: the target is not a pull request reference." }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "policyId": "github-pr-read",
+  "policyVersion": "1.2.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes a read of one GitHub pull request, owner/repo#number, through the GitHub connector (github:pr-fetch). Reads never change anything. Every read needs a signed human approval for that exact pull request. The target must name a pull request, and anything else is refused.",
+  "signalsSchema": {
+    "targetRef": "string",
+    "readApproved": "boolean"
+  },
+  "boundSignals": {
+    "targetRef": "target"
+  },
+  "signalSources": {},
+  "approvalSignals": {
+    "readApproved": {
+      "resourceId": "target"
+    }
+  },
+  "rules": [
+    {
+      "id": "reject-no-approval",
+      "condition": { "fact": "readApproved", "operator": "is_false" },
+      "outcome": { "action": "reject", "reason": "Refused: no signed approval covers reading this pull request." }
+    },
+    {
+      "id": "approve-approved-pull-request",
+      "condition": {
+        "all": [
+          { "fact": "targetRef", "operator": "matches", "value": "^[A-Za-z0-9-]{1,39}/[A-Za-z0-9._-]{1,100}#[0-9]{1,10}$" },
+          { "fact": "readApproved", "operator": "is_true" }
+        ]
+      },
+      "outcome": { "action": "approve", "reason": "Read approved: a signed approval covers this pull request." }
+    },
+    {
+      "id": "reject-otherwise",
+      "condition": { "fact": "targetRef", "operator": "matches", "value": "^" },
+      "outcome": { "action": "reject", "reason": "Refused: the target is not a pull request reference." }
+    }
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "policyId": "github-pr-approval",
+  "policyVersion": "1.2.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes a merge of one GitHub pull request, owner/repo#number, through the GitHub connector (github:pr-merge). Only a signed human approval for that exact pull request can authorize a merge. The caller-declared safety facts can refuse one, never authorize it. A merge is refused when the branch is not protected, the repository is not authorized, required reviews are not complete, a status check is not passing, or the risk score is above 3. Any other case is refused.",
+  "signalsSchema": {
+    "targetRef": "string",
+    "mergeApproved": "boolean",
+    "branchProtected": "boolean",
+    "repositoryAuthorized": "boolean",
+    "requiredReviewsCompleted": "boolean",
+    "statusChecksPassed": "boolean",
+    "riskScore": "number"
+  },
+  "boundSignals": {
+    "targetRef": "target"
+  },
+  "signalSources": {},
+  "approvalSignals": {
+    "mergeApproved": {
+      "resourceId": "target"
+    }
+  },
+  "rules": [
+    {
+      "id": "reject-no-approval",
+      "condition": {
+        "fact": "mergeApproved",
+        "operator": "is_false"
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refused: no signed approval covers merging this pull request."
+      }
+    },
+    {
+      "id": "reject-unsafe-state",
+      "condition": {
+        "any": [
+          {
+            "fact": "branchProtected",
+            "operator": "is_false"
+          },
+          {
+            "fact": "repositoryAuthorized",
+            "operator": "is_false"
+          },
+          {
+            "fact": "requiredReviewsCompleted",
+            "operator": "is_false"
+          },
+          {
+            "fact": "statusChecksPassed",
+            "operator": "is_false"
+          }
+        ]
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refused: the branch, reviews, status checks or repository do not meet the merge requirements."
+      }
+    },
+    {
+      "id": "reject-high-risk",
+      "condition": {
+        "fact": "riskScore",
+        "operator": "gt",
+        "value": 3
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refused: the risk score is above 3."
+      }
+    },
+    {
+      "id": "approve-approved-merge",
+      "condition": {
+        "all": [
+          {
+            "fact": "targetRef",
+            "operator": "matches",
+            "value": "^[A-Za-z0-9-]{1,39}/[A-Za-z0-9._-]{1,100}#[0-9]{1,10}$"
+          },
+          {
+            "fact": "mergeApproved",
+            "operator": "is_true"
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Merge approved: a signed approval covers this pull request. The caller-declared checks can refuse a merge, but they cannot authorize one."
+      }
+    },
+    {
+      "id": "reject-otherwise",
+      "condition": {
+        "fact": "targetRef",
+        "operator": "matches",
+        "value": "^"
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refused: the target is not a pull request reference."
+      }
+    }
+  ],
+  "unboundSignalReasons": {
+    "branchProtected": "Declared by the caller. No GitHub signal source exists yet to check this fact from GitHub. A caller can declare it true when it is not, so this is a known gap that the merge approval does not close. Until a signal source is built, the signed approval is the control that matters.",
+    "repositoryAuthorized": "Declared by the caller. No GitHub signal source exists yet to check this fact from GitHub. A caller can declare it true when it is not, so this is a known gap that the merge approval does not close. Until a signal source is built, the signed approval is the control that matters.",
+    "requiredReviewsCompleted": "Declared by the caller. No GitHub signal source exists yet to check this fact from GitHub. A caller can declare it true when it is not, so this is a known gap that the merge approval does not close. Until a signal source is built, the signed approval is the control that matters.",
+    "statusChecksPassed": "Declared by the caller. No GitHub signal source exists yet to check this fact from GitHub. A caller can declare it true when it is not, so this is a known gap that the merge approval does not close. Until a signal source is built, the signed approval is the control that matters.",
+    "riskScore": "Declared by the caller. No GitHub signal source exists yet to check this fact from GitHub. A caller can declare it true when it is not, so this is a known gap that the merge approval does not close. Until a signal source is built, the signed approval is the control that matters."
+  }
+}
