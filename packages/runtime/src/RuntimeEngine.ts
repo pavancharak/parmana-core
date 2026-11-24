@@ -796,6 +796,7 @@ export class RuntimeEngine {
       transaction,
       policyDecision,
       assessment,
+      validation.trustedValues,
     );
 
     //
