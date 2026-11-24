@@ -79,13 +79,27 @@ export interface Decision {
    */
   readonly matchedPath?: readonly string[];
   /**
-   * The method that produced the verdict and its version (G-148). Absent on decisions recorded before
+   * The method that produced the verdict and its version (G-148, R3). Set by the policy engine
+   * that produced the verdict, copied verbatim by the runtime. Absent on decisions recorded before
    * this field existed.
    */
   readonly evaluationMethod?: {
     readonly id: string;
     readonly version: string;
   };
+
+  /**
+   * Whether the evidence the verdict was decided on was complete and well-formed (R5). An
+   * insufficient-evidence refusal and an evidenced refusal share the REJECTED outcome; this is what
+   * tells them apart. Absent on decisions recorded before this field existed.
+   */
+  readonly evidence?:
+    | { readonly status: "sufficient" }
+    | {
+        readonly status: "insufficient";
+        readonly missingFacts: readonly string[];
+      }
+    | { readonly status: "invalid"; readonly invalidFacts: readonly string[] };
 
   /**
    * UTC timestamp when evaluation completed.

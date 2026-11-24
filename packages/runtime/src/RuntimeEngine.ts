@@ -106,6 +106,13 @@ export interface RefusalOutboxDrainResult {
   readonly failed: number;
 }
 
+/**
+ * The method behind a refusal the runtime makes itself, before or instead of
+ * PolicyEngine's verdict (R3). The policy engine's method is never claimed for
+ * these: they were not produced by evaluating the policy's rules.
+ */
+const RUNTIME_GATE_METHOD = { id: "runtime-gate", version: "1" } as const;
+
 export class RuntimeEngine {
   private readonly hookRunner: RuntimeHookRunner;
 
@@ -601,6 +608,8 @@ export class RuntimeEngine {
             matchedRuleId: "policy-execution-verification-violation",
             evaluatedRules: 0,
             matchedPath: [],
+            evaluationMethod: RUNTIME_GATE_METHOD,
+            evidence: { status: "sufficient" },
           }
         : capabilityBindingViolation !== undefined
           ? {
@@ -616,6 +625,8 @@ export class RuntimeEngine {
               matchedRuleId: "capability-policy-binding-violation",
               evaluatedRules: 0,
               matchedPath: [],
+              evaluationMethod: RUNTIME_GATE_METHOD,
+              evidence: { status: "sufficient" },
             }
           : authorityGrantRefused
             ? {
@@ -629,6 +640,8 @@ export class RuntimeEngine {
                   .replace(/_/g, "-")}`,
                 evaluatedRules: 0,
                 matchedPath: [],
+                evaluationMethod: RUNTIME_GATE_METHOD,
+                evidence: { status: "sufficient" },
               }
             : bindingViolations.length > 0
               ? {
@@ -647,6 +660,8 @@ export class RuntimeEngine {
                   matchedRuleId: "signal-intent-binding-violation",
                   evaluatedRules: 0,
                   matchedPath: [],
+                  evaluationMethod: RUNTIME_GATE_METHOD,
+                  evidence: { status: "sufficient" },
                 }
               : businessValidationFailed
                 ? {
@@ -657,6 +672,8 @@ export class RuntimeEngine {
                     matchedRuleId: `business-validation-${businessValidation.status.toLowerCase().replace(/_/g, "-")}`,
                     evaluatedRules: 0,
                     matchedPath: [],
+                    evaluationMethod: RUNTIME_GATE_METHOD,
+                    evidence: { status: "sufficient" },
                   }
                 : this.policyEngine.evaluate(policy, evaluatedSignals);
 
@@ -725,6 +742,13 @@ export class RuntimeEngine {
             matchedRuleId: "approval-verifier-not-configured",
             evaluatedRules: 0,
             matchedPath: [],
+            evaluationMethod: RUNTIME_GATE_METHOD,
+            // The signed approval could not be checked, so the evidence needed
+            // to decide is missing (R5), not evidence that it was invalid.
+            evidence: {
+              status: "insufficient",
+              missingFacts: ["approval-verification"],
+            },
           }
         : stateViolations.length > 0
           ? {
@@ -735,6 +759,8 @@ export class RuntimeEngine {
               matchedRuleId: "signal-state-verification-violation",
               evaluatedRules: 0,
               matchedPath: [],
+              evaluationMethod: RUNTIME_GATE_METHOD,
+              evidence: { status: "sufficient" },
             }
           : provisionalDecision;
 

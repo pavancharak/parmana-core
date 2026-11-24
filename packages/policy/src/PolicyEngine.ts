@@ -73,6 +73,13 @@ export class PolicyEngine {
         matchedRuleId: "signal-type-violation",
         evaluatedRules: 0,
         matchedPath: [],
+        evaluationMethod: POLICY_EVALUATION_METHOD,
+        evidence: {
+          status: "invalid",
+          invalidFacts: Array.from(
+            new Set(typeViolations.map((violation) => violation.signalKey)),
+          ).sort(),
+        },
       };
     }
 
@@ -102,6 +109,11 @@ export class PolicyEngine {
           matchedRuleId: "missing-fact",
           evaluatedRules: trace.length,
           matchedPath: trace,
+          evaluationMethod: POLICY_EVALUATION_METHOD,
+          evidence: {
+            status: "insufficient",
+            missingFacts: Array.from(new Set(missing)).sort(),
+          },
         };
       }
 
@@ -120,6 +132,10 @@ export class PolicyEngine {
           evaluatedRules: trace.length,
 
           matchedPath: trace,
+
+          evaluationMethod: POLICY_EVALUATION_METHOD,
+
+          evidence: { status: "sufficient" },
         };
       }
     }
@@ -138,6 +154,10 @@ export class PolicyEngine {
       evaluatedRules: trace.length,
 
       matchedPath: trace,
+
+      evaluationMethod: POLICY_EVALUATION_METHOD,
+
+      evidence: { status: "sufficient" },
     };
   }
 

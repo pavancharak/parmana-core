@@ -48,6 +48,8 @@ class Decision:
 
     evaluation_method: Any | None = None
 
+    evidence: Any | None = None
+
     assessment: DecisionAssessment | None = None
 
 
