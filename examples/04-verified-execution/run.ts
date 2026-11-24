@@ -11,11 +11,12 @@ import { FileKeyProvider } from "@parmana/crypto";
 import { EnvelopeVerifier, MemoryNonceStore } from "@parmana/envelope-verifier";
 import { requireParmanaAuthorization } from "@parmana/envelope-verifier/express";
 
-import {
-  FilePolicyRepository,
-  type SignalStateVerifier,
-  type SignalStateViolation,
+import type {
+  SignalStateVerifier,
+  SignalStateViolation,
 } from "@parmana/policy";
+
+import { governedPolicyDirectory } from "../shared/helpers/demo-policy-governance.js";
 
 //
 // The release check's live signal source. The signals in this demo have not
@@ -265,9 +266,11 @@ async function main(): Promise<void> {
   const transactions = new MemoryBusinessTransactionRepository();
   const trustRecords = new MemoryExecutionTrustRecordRepository();
 
-  const policyRepository = new FilePolicyRepository(
+  // Policy Governance approvals for every fixture policy, on a scratch copy.
+  const governed = await governedPolicyDirectory(
     path.join(repoRoot, "fixtures", "policies"),
   );
+  const policyRepository = governed.policyRepository;
 
   const gatewayPublicKey = await new FileKeyProvider().getPublicKey("default");
 
@@ -277,8 +280,8 @@ async function main(): Promise<void> {
 
   const gateway = new ExecutionGateway({
     signalStateVerifier: new NothingChangedSignalVerifier(),
-    // Legacy fixture: predates fail-closed policy binding.
-    allowUnverifiedPolicy: true,
+    policyRepository,
+    policyApprovalVerifier: governed.policyApprovalVerifier,
     publicKey: gatewayPublicKey,
     nonceStore,
     connector,

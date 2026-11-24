@@ -3,11 +3,12 @@ import crypto from "node:crypto";
 import { FileKeyProvider } from "@parmana/crypto";
 import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import { ExecutionGateway, type Connector } from "@parmana/execution-gateway";
-import {
-  FilePolicyRepository,
-  type SignalStateVerifier,
-  type SignalStateViolation,
+import type {
+  SignalStateVerifier,
+  SignalStateViolation,
 } from "@parmana/policy";
+
+import { governedPolicyDirectory } from "../../shared/helpers/demo-policy-governance.js";
 
 //
 // The release check's live signal source. The signals in this demo have not
@@ -169,9 +170,12 @@ console.log(
 );
 console.log("--------------------------------------------------");
 
+// Policy Governance approvals for every fixture policy, on a scratch copy.
+const governed = await governedPolicyDirectory("fixtures/policies");
+
 const runtime = new RuntimeBuilder()
   .withSignalStateVerifier(demoApprovalSignalVerifier())
-  .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
+  .withPolicyRepository(governed.policyRepository)
   .build(new MemoryExecutionTrustRecordRepository());
 
 const approvedTransaction = {
@@ -210,8 +214,8 @@ const publicKey = await new FileKeyProvider().getPublicKey(
 
 const gateway = new ExecutionGateway({
   signalStateVerifier: new NothingChangedSignalVerifier(),
-  // Legacy fixture: predates fail-closed policy binding.
-  allowUnverifiedPolicy: true,
+  policyRepository: governed.policyRepository,
+  policyApprovalVerifier: governed.policyApprovalVerifier,
   publicKey,
   nonceStore: new MemoryNonceStore(),
   connector: new RecordingConnector(),
@@ -261,8 +265,8 @@ let tamperedIsCoded = true;
 try {
   await new ExecutionGateway({
     signalStateVerifier: new NothingChangedSignalVerifier(),
-    // Legacy fixture: predates fail-closed policy binding.
-    allowUnverifiedPolicy: true,
+    policyRepository: governed.policyRepository,
+    policyApprovalVerifier: governed.policyApprovalVerifier,
     publicKey,
     nonceStore: new MemoryNonceStore(),
     connector: new RecordingConnector(),

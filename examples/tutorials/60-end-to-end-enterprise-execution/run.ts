@@ -47,6 +47,8 @@ import {
   type SignalStateViolation,
 } from "@parmana/policy";
 
+import { governedPolicyObjects } from "../../shared/helpers/demo-policy-governance.js";
+
 //
 // The release check's live signal source. This demo's signals have not
 // changed between authorization and release, so it reports no violations.
@@ -162,6 +164,9 @@ async function main(): Promise<void> {
 
   const crypto = CryptoBootstrap.create();
 
+  // Policy Governance approval for this example's policy, on a scratch copy.
+  const governed = await governedPolicyObjects([policy]);
+
   console.log("Stage 3 - Signed Authorization");
 
   console.log("--------------------------------------------------");
@@ -173,6 +178,13 @@ async function main(): Promise<void> {
       businessTransactionId: content.businessTransactionId,
       policyName: policy.policyId,
       policyVersion: policy.policyVersion,
+      // The hash the Gateway recomputes from the stored policy at release.
+      policyContentHash: await new TrustRecordHasher(crypto).hash(
+        await governed.policyRepository.load(
+          policy.policyId,
+          policy.policyVersion,
+        ),
+      ),
       // Signed over the empty signals this example's requests carry.
       signalsHash: await new TrustRecordHasher(crypto).hash({}),
       executableContent: content,
@@ -332,8 +344,8 @@ async function main(): Promise<void> {
 
   const previewGateway = new ExecutionGateway({
     signalStateVerifier: new NothingChangedSignalVerifier(),
-    // Legacy fixture: predates fail-closed policy binding.
-    allowUnverifiedPolicy: true,
+    policyRepository: governed.policyRepository,
+    policyApprovalVerifier: governed.policyApprovalVerifier,
     publicKey: runtimePublicKey,
     nonceStore: new MemoryNonceStore(),
     connector: {
@@ -401,8 +413,8 @@ async function main(): Promise<void> {
   //
   const productionGateway = new ExecutionGateway({
     signalStateVerifier: new NothingChangedSignalVerifier(),
-    // Legacy fixture: predates fail-closed policy binding.
-    allowUnverifiedPolicy: true,
+    policyRepository: governed.policyRepository,
+    policyApprovalVerifier: governed.policyApprovalVerifier,
     publicKey: runtimePublicKey,
     nonceStore: new MemoryNonceStore(),
     executionControl: {
