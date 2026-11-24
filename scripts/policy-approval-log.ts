@@ -1,7 +1,13 @@
 import "dotenv/config";
 
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -55,10 +61,18 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // be the root of its own governance. A relative value is resolved from the
 // current directory, as PARMANA_POLICY_DIR is for the server.
 function resolveDir(value: string | undefined, fallback: string): string {
-  return value !== undefined && value.trim() !== "" ? path.resolve(process.cwd(), value) : fallback;
+  return value !== undefined && value.trim() !== ""
+    ? path.resolve(process.cwd(), value)
+    : fallback;
 }
-const governanceDir = resolveDir(process.env.PARMANA_GOVERNANCE_DIR, path.join(root, "governance"));
-const policiesDir = resolveDir(process.env.PARMANA_POLICY_DIR, path.join(root, "policies"));
+const governanceDir = resolveDir(
+  process.env.PARMANA_GOVERNANCE_DIR,
+  path.join(root, "governance"),
+);
+const policiesDir = resolveDir(
+  process.env.PARMANA_POLICY_DIR,
+  path.join(root, "policies"),
+);
 const LOG_FILE = "policy-approvals.jsonl";
 const KEYS_FILE = "policy-approval-keys.json";
 const LOG_PATH = path.join(governanceDir, LOG_FILE);
@@ -252,10 +266,7 @@ async function exportOrCheck(write: boolean, only?: string): Promise<number> {
   }
   mkdirSync(governanceDir, { recursive: true });
   writeFileSync(LOG_PATH, serializeLog(entries));
-  writeFileSync(
-    KEYS_PATH,
-    `${JSON.stringify(keys, null, 2)}\n`,
-  );
+  writeFileSync(KEYS_PATH, `${JSON.stringify(keys, null, 2)}\n`);
   console.log(
     `Appended ${added} approval(s); the log now holds ${entries.length}.`,
   );

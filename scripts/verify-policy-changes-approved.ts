@@ -270,7 +270,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // The governance folder defaults to this checkout. PARMANA_GOVERNANCE_DIR points it at
 // another repository's governance folder, so an organization can verify its own log.
 const governanceDir =
-  process.env.PARMANA_GOVERNANCE_DIR !== undefined && process.env.PARMANA_GOVERNANCE_DIR.trim() !== ""
+  process.env.PARMANA_GOVERNANCE_DIR !== undefined &&
+  process.env.PARMANA_GOVERNANCE_DIR.trim() !== ""
     ? path.resolve(process.cwd(), process.env.PARMANA_GOVERNANCE_DIR)
     : path.join(root, "governance");
 const LOG_PATH = path.join(governanceDir, "policy-approvals.jsonl");
