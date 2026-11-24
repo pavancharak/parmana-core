@@ -13,8 +13,8 @@ import { StaticCredentialProvider } from "@parmana/connector-sdk";
 
 import type {
   ConnectorRegistry,
-  ConnectorAuthenticator,
   ExecutionAuditSink,
+  RequestBoundConnectorAuthenticator,
 } from "@parmana/execution-control";
 
 import {
@@ -44,7 +44,7 @@ import { assertConnectorCapabilitiesBound } from "./assertConnectorCapabilitiesB
  * fail-closed startup error, not a runtime surprise.
  */
 export function createConnectorRegistry(
-  authenticator: ConnectorAuthenticator,
+  authenticator: RequestBoundConnectorAuthenticator,
   sessions: InMemoryGatewaySessionStore,
   audit: ExecutionAuditSink,
   gatewayAuthentication: unknown,
@@ -155,7 +155,13 @@ export function createConnectorRegistry(
             [identity.connectorId]: {},
           }),
 
-          policy: new DefaultConnectorPolicy(authenticator, sessions),
+          // Trusts exactly this registration's identity. The identity is built
+          // only for an active registration (findActive above), so a
+          // revoked registration cannot pass this policy.
+          policy: new DefaultConnectorPolicy(
+            authenticator.scopedTo([identity]),
+            sessions,
+          ),
 
           gatewayAuthentication,
 

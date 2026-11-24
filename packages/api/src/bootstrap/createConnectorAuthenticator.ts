@@ -38,8 +38,5 @@ export function createConnectorAuthenticator(): RequestBoundConnectorAuthenticat
           },
         ]
       : [],
-    // External connectors (ADR-0013) are built by the server for approved
-    // registrations, so their identities are not known at startup.
-    true,
   );
 }

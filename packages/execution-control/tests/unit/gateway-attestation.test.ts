@@ -61,7 +61,6 @@ function fixture() {
     gatewayIdentity,
     publicKey,
     [connectorIdentity],
-    false,
     clock,
   );
 

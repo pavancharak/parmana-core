@@ -140,7 +140,9 @@ describe("ExternalConnectorAwareRegistry", () => {
     expect(second).toBe(first);
     expect(build).toHaveBeenCalledTimes(1);
     expect(findActive).toHaveBeenCalledTimes(2);
-    expect(registry.get("ext-erp:create-invoice")).toBe(first);
+    // get() is built-in only: an external connector is reached through
+    // resolveCapability, which checks the registration is still active.
+    expect(() => registry.get("ext-erp:create-invoice")).toThrow();
     expect(registry.get("hubspot").connectorId).toBe("hubspot");
   });
 

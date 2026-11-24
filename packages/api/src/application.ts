@@ -31,6 +31,7 @@ import {
   transactionDeclarationStore,
   transactionExecutionLockStore,
   executionTrustRecordRepository,
+  refusalRecordOutboxRepository,
   refusalRecordRepository,
   businessSignalSourceRepository,
   authorityGrantRepository,
@@ -153,5 +154,6 @@ export function createApplication(
     transactionStatusEventRepository,
     transactionDeclarationStore,
     transactionExecutionLockStore,
+    refusalRecordOutboxRepository,
   );
 }

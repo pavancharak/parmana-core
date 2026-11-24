@@ -145,9 +145,19 @@ These are not defended. A review should state them as assumptions:
 7. Policies are written correctly. Parmana proves which policy decided, not that it is right.
 8. The host, container runtime, image and source Parmana runs from are not attacker
    controlled. Image provenance (T17) can be checked before deployment; integrity after that
-   is the hosting platform's responsibility.
+   is the hosting platform's responsibility. Autonomous agents now find and
+   exploit zero-days in internet-facing open-source software (AWS Threat Intelligence,
+   November 2026, reported an agent that gained root on a server in about 11 minutes).
+   Any host that runs an exposed AI or open-source service is a realistic entry point.
+   The signing keys, approver keys and connector credentials must not be on such a
+   host, and a host found compromised must be treated as holding none of its
+   credentials.
 9. Agents reach governed systems only through Parmana: they hold no credentials of their own
-   to those systems. This is a deployment property, not something Parmana enforces.
+   to those systems. This is a deployment property, not something Parmana enforces. An agent with
+   shell access on any host (see assumption 8) can use credentials it finds there and
+   bypass Parmana entirely (A8). Keep downstream credentials out of agent environments,
+   and limit agent network reach so a compromised agent cannot contact governed systems
+   directly.
 
 ## 7. Prompt injection, specifically
 

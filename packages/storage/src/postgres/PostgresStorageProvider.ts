@@ -13,6 +13,7 @@ import type {
   HandbookDownloadLeadRepository,
   PendingPolicyChangeRepository,
   PolicyChangeApprovalRecordRepository,
+  RefusalRecordOutboxRepository,
   RefusalRecordRepository,
   InboundCheckRepository,
   InboundDecisionRepository,
@@ -36,6 +37,7 @@ import { PostgresApprovalNonceStore } from "./PostgresApprovalNonceStore.js";
 import { PostgresTransactionDeclarationStore } from "./PostgresTransactionDeclarationStore.js";
 import { PostgresTransactionExecutionLock } from "./PostgresTransactionExecutionLock.js";
 import { PostgresRefusalRecordRepository } from "./PostgresRefusalRecordRepository.js";
+import { PostgresRefusalRecordOutboxRepository } from "./PostgresRefusalRecordOutboxRepository.js";
 import { PostgresInboundCheckRepository } from "./PostgresInboundCheckRepository.js";
 import { PostgresInboundDecisionRepository } from "./PostgresInboundDecisionRepository.js";
 import { PostgresInboundOutcomeRepository } from "./PostgresInboundOutcomeRepository.js";
@@ -67,6 +69,7 @@ export class PostgresStorageProvider implements StorageProvider {
   readonly businessTransactions: BusinessTransactionRepository;
   readonly trustRecords: ExecutionTrustRecordRepository;
   readonly refusalRecords: RefusalRecordRepository;
+  readonly refusalRecordOutbox: RefusalRecordOutboxRepository;
   readonly inboundDecisions: InboundDecisionRepository;
   readonly inboundChecks: InboundCheckRepository;
   readonly inboundOutcomes: InboundOutcomeRepository;
@@ -95,6 +98,7 @@ export class PostgresStorageProvider implements StorageProvider {
     this.trustRecords = new PostgresExecutionTrustRecordRepository(pool);
 
     this.refusalRecords = new PostgresRefusalRecordRepository(pool);
+    this.refusalRecordOutbox = new PostgresRefusalRecordOutboxRepository(pool);
     this.inboundDecisions = new PostgresInboundDecisionRepository(pool);
     this.inboundChecks = new PostgresInboundCheckRepository(pool);
     this.inboundOutcomes = new PostgresInboundOutcomeRepository(pool);
