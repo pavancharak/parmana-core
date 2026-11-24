@@ -2,7 +2,7 @@
   "policyId": "github-pr-approval",
   "policyVersion": "1.2.0",
   "schemaVersion": "1.0.0",
-  "description": "Authorizes the merge of one GitHub pull request, owner/repo#number, through the GitHub connector (github:pr-merge). A merge needs a signed human approval for that exact pull request and that exact head commit (the expectedHeadSha). If the head has moved since the approval, the merge is refused. The branch protection, repository authorization, required reviews and status checks are read from GitHub by a signal source, and each must hold. Only the merge method is allowed. A merge with any other method is refused. A merge is refused when no head commit is given, when the branch is not protected, the repository is not authorized, required reviews are not complete, a status check is not passing,.",
+  "description": "Authorizes the merge of one GitHub pull request, owner/repo#number, through the GitHub connector (github:pr-merge). A merge needs a signed human approval for that exact pull request and that exact head commit (the expectedHeadSha). If the head has moved since the approval, the merge is refused. The branch protection, repository authorization, required reviews and status checks are read from GitHub by a signal source, and each must hold. Only the merge method is allowed. A merge with any other method is refused. A merge is refused when no head commit is given, when the branch is not protected, the repository is not authorized, required reviews are not complete, a status check is not passing.",
   "signalsSchema": {
     "targetRef": "string",
     "headSha": "string",
