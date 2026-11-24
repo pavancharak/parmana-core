@@ -252,6 +252,7 @@ describe("ExecutionGateway signal-freshness check (G-31)", () => {
     const signed = await signAuthorization(privateKey, originalHash);
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -296,6 +297,7 @@ describe("ExecutionGateway signal-freshness check (G-31)", () => {
     const signed = await signAuthorization(privateKey, undefined);
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -379,6 +381,7 @@ describe("ExecutionGateway signal-freshness check (G-31)", () => {
     );
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,

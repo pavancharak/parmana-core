@@ -103,6 +103,7 @@ function gatewayFor(
   store = new MemoryExecutionOutcomeStore(),
 ) {
   return new ExecutionGateway({
+    allowUnverifiedSignals: true,
     // Legacy fixture: predates fail-closed policy binding. The outcome
     // behaviour under test does not depend on policy binding.
     allowUnverifiedPolicy: true,

@@ -120,9 +120,11 @@ async function run(options: {
     allowUnverifiedPolicy: true,
     publicKey,
     nonceStore: new MemoryNonceStore(),
+    // Without a verifier this fixture needs the named test opt-out; the
+    // "no verifier" case below checks that nothing is listed without one.
     ...(options.verifier !== undefined
       ? { signalStateVerifier: options.verifier }
-      : {}),
+      : { allowUnverifiedSignals: true }),
     executionControl: {
       service: control,
       gatewayAuthentication: "test",

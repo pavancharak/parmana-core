@@ -132,6 +132,7 @@ describe("ExecutionGateway policy-freshness check (Gap 1B)", () => {
     );
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -159,6 +160,7 @@ describe("ExecutionGateway policy-freshness check (Gap 1B)", () => {
     );
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -185,6 +187,7 @@ describe("ExecutionGateway policy-freshness check (Gap 1B)", () => {
     );
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -206,6 +209,7 @@ describe("ExecutionGateway policy-freshness check (Gap 1B)", () => {
     const policyRepository = new MapPolicyRepository(new Map());
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -226,6 +230,7 @@ describe("ExecutionGateway policy-freshness check (Gap 1B)", () => {
     const signed = await signAuthorization(privateKey, originalHash);
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -248,6 +253,7 @@ describe("ExecutionGateway policy-freshness check (Gap 1B)", () => {
     );
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -267,6 +273,7 @@ describe("ExecutionGateway policy-freshness check (Gap 1B)", () => {
     const signed = await signAuthorization(privateKey, undefined);
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,

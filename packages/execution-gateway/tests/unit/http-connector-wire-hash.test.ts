@@ -93,6 +93,7 @@ describe("HttpConnector wire hash", () => {
     const authorization = await signed(privateKey);
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       allowUnverifiedPolicy: true,
       publicKey,
       nonceStore: new MemoryNonceStore(),

@@ -102,6 +102,7 @@ async function fixture() {
     gatewayIdentity: gatewayPresentation,
   });
   const gateway = new ExecutionGateway({
+    allowUnverifiedSignals: true,
     // Legacy fixture: predates fail-closed policy binding.
     allowUnverifiedPolicy: true,
     publicKey,

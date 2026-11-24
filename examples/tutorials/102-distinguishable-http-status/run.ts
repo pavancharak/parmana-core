@@ -178,9 +178,14 @@ const approvedTransaction = {
   },
 };
 
-const { context } = await runtime.execute(
-  await withDemoApproval(approvedTransaction as never),
-);
+// withDemoApproval adds a signed approval artifact to the signals. The
+// runtime signs its authorization over the signals as they stand after that,
+// so the gateway request must carry that same object, not the pre-approval one.
+const approvedForRuntime = (await withDemoApproval(
+  approvedTransaction as never,
+)) as typeof approvedTransaction;
+
+const { context } = await runtime.execute(approvedForRuntime as never);
 if (!context.authorization)
   throw new Error("Execution Authorization was not generated.");
 
@@ -189,6 +194,7 @@ const publicKey = await new FileKeyProvider().getPublicKey(
 );
 
 const gateway = new ExecutionGateway({
+  allowUnverifiedSignals: true,
   // Legacy fixture: predates fail-closed policy binding.
   allowUnverifiedPolicy: true,
   publicKey,
@@ -201,6 +207,9 @@ const gatewayRequest = {
   action: approvedTransaction.intent.action,
   target: approvedTransaction.intent.target,
   parameters: approvedTransaction.intent.parameters,
+  // The signals the authorization was decided on, so the release check can
+  // confirm they are unchanged.
+  signals: approvedForRuntime.signals,
   authorization: context.authorization,
 };
 
@@ -236,6 +245,7 @@ const tampered = {
 let tamperedIsCoded = true;
 try {
   await new ExecutionGateway({
+    allowUnverifiedSignals: true,
     // Legacy fixture: predates fail-closed policy binding.
     allowUnverifiedPolicy: true,
     publicKey,

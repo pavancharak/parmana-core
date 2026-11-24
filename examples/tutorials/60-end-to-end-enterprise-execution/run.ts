@@ -159,6 +159,8 @@ async function main(): Promise<void> {
       businessTransactionId: content.businessTransactionId,
       policyName: policy.policyId,
       policyVersion: policy.policyVersion,
+      // Signed over the empty signals this example's requests carry.
+      signalsHash: await new TrustRecordHasher(crypto).hash({}),
       executableContent: content,
     },
     runtimePrivateKey,
@@ -315,6 +317,7 @@ async function main(): Promise<void> {
   console.log("--------------------------------------------------");
 
   const previewGateway = new ExecutionGateway({
+    allowUnverifiedSignals: true,
     // Legacy fixture: predates fail-closed policy binding.
     allowUnverifiedPolicy: true,
     publicKey: runtimePublicKey,
@@ -383,6 +386,7 @@ async function main(): Promise<void> {
   // reached through the production Gateway's execute().
   //
   const productionGateway = new ExecutionGateway({
+    allowUnverifiedSignals: true,
     // Legacy fixture: predates fail-closed policy binding.
     allowUnverifiedPolicy: true,
     publicKey: runtimePublicKey,

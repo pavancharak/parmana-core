@@ -116,6 +116,7 @@ describe.skipIf(!isMlDsa65Supported())(
 
       const connector = new RecordingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -152,6 +153,7 @@ describe.skipIf(!isMlDsa65Supported())(
 
       const connector = new RecordingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -187,6 +189,7 @@ describe.skipIf(!isMlDsa65Supported())(
 
       const connector = new RecordingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -215,6 +218,7 @@ describe.skipIf(!isMlDsa65Supported())(
 
       const connector = new RecordingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -237,6 +241,7 @@ describe.skipIf(!isMlDsa65Supported())(
       const connector = new RecordingConnector();
       const nonceStore = new MemoryNonceStore();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -274,6 +279,7 @@ describe.skipIf(!isMlDsa65Supported())(
 
       const connector = new RecordingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -309,6 +315,7 @@ describe.skipIf(!isMlDsa65Supported())(
 
       const connector = new RecordingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -338,6 +345,7 @@ describe.skipIf(!isMlDsa65Supported())(
 
       const connector = new RecordingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -369,6 +377,7 @@ describe.skipIf(!isMlDsa65Supported())(
       const nonceStore = new MemoryNonceStore();
       const connector = new RecordingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,

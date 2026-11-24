@@ -104,6 +104,7 @@ describe("ExecutionGateway", () => {
     expect(
       () =>
         new ExecutionGateway({
+          allowUnverifiedSignals: true,
           // Legacy fixture: predates fail-closed policy binding.
           allowUnverifiedPolicy: true,
           publicKey,
@@ -118,6 +119,7 @@ describe("ExecutionGateway", () => {
     expect(
       () =>
         new ExecutionGateway({
+          allowUnverifiedSignals: true,
           // Legacy fixture: predates fail-closed policy binding.
           allowUnverifiedPolicy: true,
           publicKey,
@@ -137,6 +139,7 @@ describe("ExecutionGateway", () => {
 
     const connector = new RecordingConnector();
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -178,6 +181,7 @@ describe("ExecutionGateway", () => {
 
     const connector = new RecordingConnector();
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -211,6 +215,7 @@ describe("ExecutionGateway", () => {
 
     const connector = new RecordingConnector();
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -239,6 +244,7 @@ describe("ExecutionGateway", () => {
 
     const connector = new RecordingConnector();
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -261,6 +267,7 @@ describe("ExecutionGateway", () => {
     const connector = new RecordingConnector();
     const nonceStore = new MemoryNonceStore();
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -322,6 +329,7 @@ describe("ExecutionGateway", () => {
 
       const connector = new CountingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -347,6 +355,7 @@ describe("ExecutionGateway", () => {
 
       const connector = new CountingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -386,6 +395,7 @@ describe("ExecutionGateway", () => {
 
       const connector = new CountingConnector(true);
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -424,6 +434,7 @@ describe("ExecutionGateway", () => {
 
       const connector = new CountingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -463,6 +474,7 @@ describe("ExecutionGateway", () => {
 
     const connector = new RecordingConnector();
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -498,6 +510,7 @@ describe("ExecutionGateway", () => {
 
     const connector = new RecordingConnector();
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -525,6 +538,7 @@ describe("ExecutionGateway", () => {
 
     const connector = new RecordingConnector();
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -554,6 +568,7 @@ describe("ExecutionGateway", () => {
     const nonceStore = new MemoryNonceStore();
     const connector = new RecordingConnector();
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -585,6 +600,7 @@ describe("ExecutionGateway correspondence", () => {
 
     const connector = new RecordingConnector();
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       allowUnverifiedPolicy: true,
       publicKey,
       nonceStore: new MemoryNonceStore(),
@@ -613,6 +629,7 @@ describe("ExecutionGateway correspondence", () => {
     const authorization = await signAuthorization(privateKey);
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       allowUnverifiedPolicy: true,
       publicKey,
       nonceStore: new MemoryNonceStore(),
@@ -639,6 +656,7 @@ describe("ExecutionGateway correspondence", () => {
     const authorization = await signAuthorization(privateKey);
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       allowUnverifiedPolicy: true,
       publicKey,
       nonceStore: new MemoryNonceStore(),

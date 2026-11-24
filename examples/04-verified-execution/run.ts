@@ -261,6 +261,7 @@ async function main(): Promise<void> {
   const connector = new RecordingHttpConnector(RECEIVING_SIDE_URL);
 
   const gateway = new ExecutionGateway({
+    allowUnverifiedSignals: true,
     // Legacy fixture: predates fail-closed policy binding.
     allowUnverifiedPolicy: true,
     publicKey: gatewayPublicKey,

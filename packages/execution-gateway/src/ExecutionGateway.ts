@@ -148,6 +148,18 @@ export interface ExecutionGatewayOptions {
   readonly allowUnverifiedPolicy?: boolean;
 
   /**
+   * Explicit, loudly named opt out from fail-closed signal binding.
+   * By default the Gateway REQUIRES a signalStateVerifier at
+   * construction. Without one it cannot establish that the signals an
+   * authorization was decided on are still current, and it refuses
+   * construction rather than releasing unverified. Only test fixtures
+   * that exercise other behaviour should set this; production bootstrap
+   * must not. With it set and no verifier, a matching signalsHash is
+   * compared but signalsStillCurrent stays "not run", never a pass.
+   */
+  readonly allowUnverifiedSignals?: boolean;
+
+  /**
    * Optional Signal/State Verifier used for the signal-freshness check
    * (G-31): independently re-deriving, at the execution boundary, the
    * real-world facts an authorization's signals declared, and rejecting
@@ -337,6 +349,23 @@ export class ExecutionGateway implements ExecutionSystem {
         "ExecutionGateway requires a policyRepository and a " +
           "policyApprovalVerifier: it fails closed on policy binding. " +
           "Set allowUnverifiedPolicy only for legacy fixtures, never in production.",
+      );
+    }
+
+    //
+    // G-149 permanent fix: signal binding fails closed in the same way.
+    // Without a verifier the release cannot establish that the signals are
+    // still current, so construction is refused unless the named test
+    // opt-out is set.
+    //
+    if (
+      options.signalStateVerifier === undefined &&
+      options.allowUnverifiedSignals !== true
+    ) {
+      throw new Error(
+        "ExecutionGateway requires a signalStateVerifier: it fails closed on " +
+          "signal freshness. Set allowUnverifiedSignals only for test " +
+          "fixtures, never in production.",
       );
     }
 

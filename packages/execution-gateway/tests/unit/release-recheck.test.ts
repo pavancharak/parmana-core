@@ -127,6 +127,7 @@ function gateway(grants?: {
   return {
     connector,
     gateway: new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Policy binding is covered elsewhere; this file is about phase 4.
       allowUnverifiedPolicy: true,
       publicKey: keys.publicKey,
