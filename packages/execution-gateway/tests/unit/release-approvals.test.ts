@@ -120,9 +120,11 @@ async function run(options: {
     allowUnverifiedPolicy: true,
     publicKey,
     nonceStore: new MemoryNonceStore(),
+    // Without a verifier this fixture needs the named test opt-out; the
+    // "no verifier" case below checks that nothing is listed without one.
     ...(options.verifier !== undefined
       ? { signalStateVerifier: options.verifier }
-      : {}),
+      : { allowUnverifiedSignals: true }),
     executionControl: {
       service: control,
       gatewayAuthentication: "test",
@@ -214,7 +216,7 @@ describe("ExecutionGateway release approvals", () => {
     const control = new RecordingExecutionControl();
     const minted: string[] = [];
     const release = await run({
-      signalsHash: "none",
+      signalsHash: "match",
       control,
       mint: (authorizationId) => {
         minted.push(authorizationId);
@@ -235,7 +237,7 @@ describe("ExecutionGateway release approvals", () => {
 
   it("presents the static gateway token when none is minted", async () => {
     const control = new RecordingExecutionControl();
-    await run({ signalsHash: "none", control });
+    await run({ signalsHash: "match", control });
     expect(control.authentications).toEqual(["test"]);
   });
 });

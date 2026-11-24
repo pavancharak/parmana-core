@@ -122,6 +122,7 @@ function gatewayWith(
 ) {
   const connector = new CountingConnector();
   const gateway = new ExecutionGateway({
+    allowUnverifiedSignals: true,
     publicKey,
     nonceStore: new MemoryNonceStore(),
     policyRepository: repository,
@@ -215,6 +216,7 @@ describe("ExecutionGateway refuses an incomplete setup", () => {
     expect(
       () =>
         new ExecutionGateway({
+          allowUnverifiedSignals: true,
           publicKey,
           nonceStore: new MemoryNonceStore(),
           policyApprovalVerifier: approvedPolicy,
@@ -231,6 +233,7 @@ describe("ExecutionGateway refuses an incomplete setup", () => {
     async (_label, partial) => {
       const { privateKey, publicKey } = generateKeyPairSync("ed25519");
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         publicKey,
         nonceStore: new MemoryNonceStore(),
         policyRepository: repository,

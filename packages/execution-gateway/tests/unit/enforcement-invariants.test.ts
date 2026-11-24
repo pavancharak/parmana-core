@@ -1,3 +1,4 @@
+import { TrustRecordHasher } from "@parmana/crypto";
 import { generateKeyPairSync } from "node:crypto";
 
 import { describe, expect, it } from "vitest";
@@ -60,6 +61,7 @@ async function sign(
       businessTransactionId: CONTENT.businessTransactionId,
       policyName: "policy-a",
       policyVersion: "1.0.0",
+      signalsHash: await new TrustRecordHasher(crypto).hash({}),
       executableContent: CONTENT,
     },
     privateKey,
@@ -88,6 +90,7 @@ describe("enforcement invariants: decision outcome", () => {
     const connector = new CountingConnector();
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -121,6 +124,7 @@ describe("enforcement invariants: verificationOnlyKeys", () => {
     const connector = new CountingConnector();
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -146,6 +150,7 @@ describe("enforcement invariants: verificationOnlyKeys", () => {
     const connector = new CountingConnector();
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -168,6 +173,7 @@ describe("enforcement invariants: verificationOnlyKeys", () => {
     const authorization = await sign(privateKey);
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -194,6 +200,7 @@ describe("enforcement invariants: nonce under executionControl", () => {
     const releases: unknown[] = [];
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding. The nonce
       // behaviour under test does not depend on policy binding.
       allowUnverifiedPolicy: true,

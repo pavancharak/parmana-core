@@ -1,3 +1,4 @@
+import { TrustRecordHasher } from "@parmana/crypto";
 import { generateKeyPairSync } from "node:crypto";
 
 import { describe, expect, it } from "vitest";
@@ -82,6 +83,7 @@ async function signAuthorization(
       businessTransactionId: executableContent.businessTransactionId,
       policyName: "policy-a",
       policyVersion: "1.0.0",
+      signalsHash: await new TrustRecordHasher(crypto).hash({}),
       executableContent,
     },
     privateKey,
@@ -114,6 +116,7 @@ describe.skipIf(!isMlDsa65Supported())(
 
       const connector = new RecordingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -150,6 +153,7 @@ describe.skipIf(!isMlDsa65Supported())(
 
       const connector = new RecordingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -185,6 +189,7 @@ describe.skipIf(!isMlDsa65Supported())(
 
       const connector = new RecordingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -213,6 +218,7 @@ describe.skipIf(!isMlDsa65Supported())(
 
       const connector = new RecordingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -235,6 +241,7 @@ describe.skipIf(!isMlDsa65Supported())(
       const connector = new RecordingConnector();
       const nonceStore = new MemoryNonceStore();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -272,6 +279,7 @@ describe.skipIf(!isMlDsa65Supported())(
 
       const connector = new RecordingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -307,6 +315,7 @@ describe.skipIf(!isMlDsa65Supported())(
 
       const connector = new RecordingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -336,6 +345,7 @@ describe.skipIf(!isMlDsa65Supported())(
 
       const connector = new RecordingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,
@@ -367,6 +377,7 @@ describe.skipIf(!isMlDsa65Supported())(
       const nonceStore = new MemoryNonceStore();
       const connector = new RecordingConnector();
       const gateway = new ExecutionGateway({
+        allowUnverifiedSignals: true,
         // Legacy fixture: predates fail-closed policy binding.
         allowUnverifiedPolicy: true,
         publicKey,

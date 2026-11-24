@@ -252,6 +252,7 @@ describe("ExecutionGateway signal-freshness check (G-31)", () => {
     const signed = await signAuthorization(privateKey, originalHash);
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -282,6 +283,30 @@ describe("ExecutionGateway signal-freshness check (G-31)", () => {
 
     const { result } = await gateway.verify(
       buildRequest(signed, ORIGINAL_SIGNALS),
+    );
+
+    expect(result.valid).toBe(false);
+    expect(result.checks.signalsStillCurrent).toBe(false);
+  });
+
+  // Regression for the G-149 gap: with no signal verifier configured, an
+  // authorization that carries no signalsHash skipped the signal check and
+  // released. Missing evidence must never count as a pass.
+  it("refuses at release when the authorization carries no signalsHash and no signal verifier is configured (G-149 regression)", async () => {
+    const { privateKey, publicKey } = generateKeyPair();
+    const signed = await signAuthorization(privateKey, undefined);
+
+    const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
+      // Legacy fixture: predates fail-closed policy binding.
+      allowUnverifiedPolicy: true,
+      publicKey,
+      nonceStore: new MemoryNonceStore(),
+      connector: new RecordingConnector(),
+    });
+
+    const { result } = await gateway.verify(
+      buildRequest(signed, CHANGED_SIGNALS),
     );
 
     expect(result.valid).toBe(false);
@@ -346,11 +371,17 @@ describe("ExecutionGateway signal-freshness check (G-31)", () => {
     expect(failed.checks.signalsStillCurrent).toBe(false);
   });
 
-  it("a nonce-replay-only failure is still correctly classified when signalsStillCurrent was skipped", async () => {
+  it("a nonce-replay-only failure is still correctly classified when every signal check passes", async () => {
     const { privateKey, publicKey } = generateKeyPair();
-    const signed = await signAuthorization(privateKey, undefined);
+    // A request without signals is hashed as {}; sign over that so the
+    // first release is a genuine pass rather than a refused legacy hash.
+    const signed = await signAuthorization(
+      privateKey,
+      await signalsHasher.hash({}),
+    );
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding.
       allowUnverifiedPolicy: true,
       publicKey,
@@ -361,8 +392,7 @@ describe("ExecutionGateway signal-freshness check (G-31)", () => {
     await gateway.execute(buildRequest(signed));
 
     // Second execution of the exact same authorization: every
-    // side-effect-free check (including the skipped/undefined
-    // signalsStillCurrent) still passes; only nonce consumption fails.
+    // side-effect-free check still passes; only nonce consumption fails.
     await expect(gateway.execute(buildRequest(signed))).rejects.toThrow(
       NonceAlreadyConsumedError,
     );
