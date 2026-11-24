@@ -2,7 +2,7 @@
   "policyId": "github-pr-approval",
   "policyVersion": "1.2.0",
   "schemaVersion": "1.0.0",
-  "description": "Authorizes the merge of one GitHub pull request, owner/repo#number, through the GitHub connector (github:pr-merge). A merge needs a signed human approval for that exact pull request and that exact head commit (the expectedHeadSha). If the head has moved since the approval, the merge is refused. The caller-declared safety facts can refuse a merge, never authorize one. Only the merge method is allowed. A merge with any other method is refused. A merge is refused when no head commit is given, when the branch is not protected, the repository is not authorized, required reviews are not complete, a status check is not passing, or the risk score is above 3.",
+  "description": "Authorizes the merge of one GitHub pull request, owner/repo#number, through the GitHub connector (github:pr-merge). A merge needs a signed human approval for that exact pull request and that exact head commit (the expectedHeadSha). If the head has moved since the approval, the merge is refused. The branch protection, repository authorization, required reviews and status checks are read from GitHub by a signal source, and each must hold. The risk score is declared by the caller and can refuse a merge, never authorize one. Only the merge method is allowed. A merge with any other method is refused. A merge is refused when no head commit is given, when the branch is not protected, the repository is not authorized, required reviews are not complete, a status check is not passing, or the risk score is above 3.",
   "signalsSchema": {
     "targetRef": "string",
     "headSha": "string",
@@ -19,7 +19,42 @@
     "headSha": "parameters.expectedHeadSha",
     "mergeMethod": "parameters.mergeMethod"
   },
-  "signalSources": {},
+  "signalSources": {
+    "repositoryAuthorized": {
+      "source": "github-pull-requests",
+      "claim": "repo.authorized",
+      "subject": "target",
+      "maxAgeSeconds": 60,
+      "parameters": []
+    },
+    "branchProtected": {
+      "source": "github-pull-requests",
+      "claim": "pr.branch-protected",
+      "subject": "target",
+      "maxAgeSeconds": 60,
+      "parameters": [
+        "expectedHeadSha"
+      ]
+    },
+    "requiredReviewsCompleted": {
+      "source": "github-pull-requests",
+      "claim": "pr.reviews-complete",
+      "subject": "target",
+      "maxAgeSeconds": 60,
+      "parameters": [
+        "expectedHeadSha"
+      ]
+    },
+    "statusChecksPassed": {
+      "source": "github-pull-requests",
+      "claim": "pr.checks-passing",
+      "subject": "target",
+      "maxAgeSeconds": 60,
+      "parameters": [
+        "expectedHeadSha"
+      ]
+    }
+  },
   "approvalSignals": {
     "mergeApproved": {
       "resourceId": "target",
@@ -116,12 +151,28 @@
           {
             "fact": "headSha",
             "operator": "is_not_null"
+          },
+          {
+            "fact": "branchProtected",
+            "operator": "is_true"
+          },
+          {
+            "fact": "repositoryAuthorized",
+            "operator": "is_true"
+          },
+          {
+            "fact": "requiredReviewsCompleted",
+            "operator": "is_true"
+          },
+          {
+            "fact": "statusChecksPassed",
+            "operator": "is_true"
           }
         ]
       },
       "outcome": {
         "action": "approve",
-        "reason": "Merge approved: a signed approval covers this pull request at this head commit."
+        "reason": "Merge approved: a signed approval covers this pull request at this head commit, and GitHub confirms the branch, repository, reviews and checks."
       }
     },
     {
@@ -138,10 +189,6 @@
     }
   ],
   "unboundSignalReasons": {
-    "branchProtected": "Declared by the caller. No GitHub signal source exists yet to check this fact from GitHub. A caller can declare it true when it is not, so it can only refuse a merge, never authorize one.",
-    "repositoryAuthorized": "Declared by the caller. No GitHub signal source exists yet to check this fact from GitHub. A caller can declare it true when it is not, so it can only refuse a merge, never authorize one.",
-    "requiredReviewsCompleted": "Declared by the caller. No GitHub signal source exists yet to check this fact from GitHub. A caller can declare it true when it is not, so it can only refuse a merge, never authorize one.",
-    "statusChecksPassed": "Declared by the caller. No GitHub signal source exists yet to check this fact from GitHub. A caller can declare it true when it is not, so it can only refuse a merge, never authorize one.",
     "riskScore": "Declared by the caller. No GitHub signal source exists yet to check this fact from GitHub. A caller can declare it true when it is not, so it can only refuse a merge, never authorize one."
   }
 }
