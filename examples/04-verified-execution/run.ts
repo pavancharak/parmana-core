@@ -11,7 +11,22 @@ import { FileKeyProvider } from "@parmana/crypto";
 import { EnvelopeVerifier, MemoryNonceStore } from "@parmana/envelope-verifier";
 import { requireParmanaAuthorization } from "@parmana/envelope-verifier/express";
 
-import { FilePolicyRepository } from "@parmana/policy";
+import {
+  FilePolicyRepository,
+  type SignalStateVerifier,
+  type SignalStateViolation,
+} from "@parmana/policy";
+
+//
+// The release check's live signal source. The signals in this demo have not
+// changed between authorization and release, so it reports no violations. A
+// deployment wires a verifier that re-reads real-world state here.
+//
+class NothingChangedSignalVerifier implements SignalStateVerifier {
+  async findViolations(): Promise<readonly SignalStateViolation[]> {
+    return [];
+  }
+}
 
 import {
   MemoryBusinessTransactionRepository,
@@ -261,7 +276,7 @@ async function main(): Promise<void> {
   const connector = new RecordingHttpConnector(RECEIVING_SIDE_URL);
 
   const gateway = new ExecutionGateway({
-    allowUnverifiedSignals: true,
+    signalStateVerifier: new NothingChangedSignalVerifier(),
     // Legacy fixture: predates fail-closed policy binding.
     allowUnverifiedPolicy: true,
     publicKey: gatewayPublicKey,

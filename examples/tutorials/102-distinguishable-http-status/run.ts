@@ -3,7 +3,22 @@ import crypto from "node:crypto";
 import { FileKeyProvider } from "@parmana/crypto";
 import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import { ExecutionGateway, type Connector } from "@parmana/execution-gateway";
-import { FilePolicyRepository } from "@parmana/policy";
+import {
+  FilePolicyRepository,
+  type SignalStateVerifier,
+  type SignalStateViolation,
+} from "@parmana/policy";
+
+//
+// The release check's live signal source. The signals in this demo have not
+// changed between authorization and release, so it reports no violations. A
+// deployment wires a verifier that re-reads real-world state here.
+//
+class NothingChangedSignalVerifier implements SignalStateVerifier {
+  async findViolations(): Promise<readonly SignalStateViolation[]> {
+    return [];
+  }
+}
 import { RuntimeBuilder } from "@parmana/runtime";
 import { MemoryExecutionTrustRecordRepository } from "@parmana/storage";
 import {
@@ -194,7 +209,7 @@ const publicKey = await new FileKeyProvider().getPublicKey(
 );
 
 const gateway = new ExecutionGateway({
-  allowUnverifiedSignals: true,
+  signalStateVerifier: new NothingChangedSignalVerifier(),
   // Legacy fixture: predates fail-closed policy binding.
   allowUnverifiedPolicy: true,
   publicKey,
@@ -245,7 +260,7 @@ const tampered = {
 let tamperedIsCoded = true;
 try {
   await new ExecutionGateway({
-    allowUnverifiedSignals: true,
+    signalStateVerifier: new NothingChangedSignalVerifier(),
     // Legacy fixture: predates fail-closed policy binding.
     allowUnverifiedPolicy: true,
     publicKey,
