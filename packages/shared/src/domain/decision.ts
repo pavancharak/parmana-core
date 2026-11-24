@@ -93,7 +93,13 @@ export interface Decision {
    * insufficient-evidence refusal and an evidenced refusal share the REJECTED outcome; this is what
    * tells them apart. Absent on decisions recorded before this field existed.
    */
-  readonly evidence?: DecisionEvidence;
+  readonly evidence?:
+    | { readonly status: "sufficient" }
+    | {
+        readonly status: "insufficient";
+        readonly missingFacts: readonly string[];
+      }
+    | { readonly status: "invalid"; readonly invalidFacts: readonly string[] };
 
   /**
    * UTC timestamp when evaluation completed.
@@ -107,22 +113,6 @@ export interface Decision {
    */
   readonly assessment?: DecisionAssessment;
 }
-
-/**
- * Completeness of the evidence a Decision was decided on (R5). Mirrors the policy engine's
- * PolicyEvidenceStatus.
- *
- * - sufficient: every fact the evaluation read was present with its declared type.
- * - insufficient: a needed fact was not sent; missingFacts names them.
- * - invalid: a fact was sent with a type the policy does not declare; invalidFacts names them.
- */
-export type DecisionEvidence =
-  | { readonly status: "sufficient" }
-  | {
-      readonly status: "insufficient";
-      readonly missingFacts: readonly string[];
-    }
-  | { readonly status: "invalid"; readonly invalidFacts: readonly string[] };
 
 /**
  * Canonical Decision outcomes.
