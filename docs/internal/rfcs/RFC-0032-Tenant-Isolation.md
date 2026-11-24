@@ -169,6 +169,16 @@ Each step is merged on its own, and the single-tenant deployment is tested after
 4. **Operator access.** Can a deployment operator read a tenant's records, and under what approval?
 5. **Existing multi-organization deployments.** None is known to exist, so the migration assumes one default tenant per existing deployment.
 
+# Proposed answers to the open questions
+
+These are proposals for the owner, Pavan Charak, to accept or change. None is decided.
+
+1. **Tenant limits.** Propose no hard limit in the first release. Before any public install, load-test the scoped queries and indexes with 1,000 tenants and record the result here. Propose a soft limit of 100 tenants per deployment until that test passes.
+2. **Default tenant id.** Propose `default`. It meets the id rule in Section 1 and is the id existing rows are backfilled with.
+3. **Deletion.** Propose agreeing with the default: no deletion. A tenant is suspended, never removed. A tenant can ask for an export of its own records. Any future deletion is its own RFC, with its own retention decision.
+4. **Operator access.** Propose that no operator has standing read access to a tenant's records. A read by an operator is a governed action, recorded in that tenant's log. For access that must happen without a tenant's checker, propose two operators acting together, with the reason recorded.
+5. **Existing multi-organization deployments.** None is known. Propose confirming this with the owner before phase 3. If one exists, it is migrated as a separate deployment with its own default tenant, not merged into another.
+
 # Changes from revision 1
 
 - **Row-level security:** the application now connects as a non-owner role, with forced row-level security on every governed table (Section 3, threat model, tests). Revision 1 assumed the owner was subject to it.
