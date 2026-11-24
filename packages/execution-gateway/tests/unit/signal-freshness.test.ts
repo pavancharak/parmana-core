@@ -288,6 +288,29 @@ describe("ExecutionGateway signal-freshness check (G-31)", () => {
     expect(result.checks.signalsStillCurrent).toBe(false);
   });
 
+  // Regression for the G-149 gap: with no signal verifier configured, an
+  // authorization that carries no signalsHash skipped the signal check and
+  // released. Missing evidence must never count as a pass.
+  it("refuses at release when the authorization carries no signalsHash and no signal verifier is configured (G-149 regression)", async () => {
+    const { privateKey, publicKey } = generateKeyPair();
+    const signed = await signAuthorization(privateKey, undefined);
+
+    const gateway = new ExecutionGateway({
+      // Legacy fixture: predates fail-closed policy binding.
+      allowUnverifiedPolicy: true,
+      publicKey,
+      nonceStore: new MemoryNonceStore(),
+      connector: new RecordingConnector(),
+    });
+
+    const { result } = await gateway.verify(
+      buildRequest(signed, CHANGED_SIGNALS),
+    );
+
+    expect(result.valid).toBe(false);
+    expect(result.checks.signalsStillCurrent).toBe(false);
+  });
+
   it("fails with a named hash mismatch when the authorization was signed over signals and the request omits them", async () => {
     const { privateKey, publicKey } = generateKeyPair();
     const originalHash = await signalsHasher.hash(ORIGINAL_SIGNALS);
