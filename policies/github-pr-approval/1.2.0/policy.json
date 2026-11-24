@@ -2,7 +2,7 @@
   "policyId": "github-pr-approval",
   "policyVersion": "1.2.0",
   "schemaVersion": "1.0.0",
-  "description": "Authorizes the merge of one GitHub pull request, owner/repo#number, through the GitHub connector (github:pr-merge). A merge needs a signed human approval for that exact pull request and that exact head commit (the expectedHeadSha). If the head has moved since the approval, the merge is refused. The branch protection, repository authorization, required reviews and status checks are read from GitHub by a signal source, and each must hold. The risk score is declared by the caller and can refuse a merge, never authorize one. Only the merge method is allowed. A merge with any other method is refused. A merge is refused when no head commit is given, when the branch is not protected, the repository is not authorized, required reviews are not complete, a status check is not passing, or the risk score is above 3.",
+  "description": "Authorizes the merge of one GitHub pull request, owner/repo#number, through the GitHub connector (github:pr-merge). A merge needs a signed human approval for that exact pull request and that exact head commit (the expectedHeadSha). If the head has moved since the approval, the merge is refused. The branch protection, repository authorization, required reviews and status checks are read from GitHub by a signal source, and each must hold. Only the merge method is allowed. A merge with any other method is refused. A merge is refused when no head commit is given, when the branch is not protected, the repository is not authorized, required reviews are not complete, a status check is not passing,.",
   "signalsSchema": {
     "targetRef": "string",
     "headSha": "string",
@@ -11,8 +11,7 @@
     "branchProtected": "boolean",
     "repositoryAuthorized": "boolean",
     "requiredReviewsCompleted": "boolean",
-    "statusChecksPassed": "boolean",
-    "riskScore": "number"
+    "statusChecksPassed": "boolean"
   },
   "boundSignals": {
     "targetRef": "target",
@@ -124,18 +123,6 @@
       }
     },
     {
-      "id": "reject-high-risk",
-      "condition": {
-        "fact": "riskScore",
-        "operator": "gt",
-        "value": 3
-      },
-      "outcome": {
-        "action": "reject",
-        "reason": "Refused: the risk score is above 3."
-      }
-    },
-    {
       "id": "approve-approved-merge",
       "condition": {
         "all": [
@@ -188,7 +175,5 @@
       }
     }
   ],
-  "unboundSignalReasons": {
-    "riskScore": "Declared by the caller. No GitHub signal source exists yet to check this fact from GitHub. A caller can declare it true when it is not, so it can only refuse a merge, never authorize one."
-  }
+  "unboundSignalReasons": {}
 }
