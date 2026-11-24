@@ -1,5 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { cpSync, mkdtempSync, readdirSync, statSync, existsSync } from "node:fs";
+import {
+  cpSync,
+  mkdtempSync,
+  readdirSync,
+  statSync,
+  existsSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -43,7 +49,9 @@ const DEMO_CHECKER = "example-checker";
 export async function governedPolicyDirectory(
   sourceDirectory: string,
 ): Promise<GovernedPolicies> {
-  const directory = mkdtempSync(path.join(tmpdir(), "parmana-example-policies-"));
+  const directory = mkdtempSync(
+    path.join(tmpdir(), "parmana-example-policies-"),
+  );
   cpSync(sourceDirectory, directory, { recursive: true });
 
   const policyRepository = new FilePolicyRepository(directory);
@@ -73,7 +81,9 @@ export async function governedPolicyDirectory(
 export async function governedPolicyObjects(
   policies: readonly Policy[],
 ): Promise<GovernedPolicies> {
-  const directory = mkdtempSync(path.join(tmpdir(), "parmana-example-policies-"));
+  const directory = mkdtempSync(
+    path.join(tmpdir(), "parmana-example-policies-"),
+  );
   const policyRepository = new FilePolicyRepository(directory);
 
   for (const policy of policies) {
@@ -111,7 +121,8 @@ async function approveAll(
       pendingPolicyChangeId: randomUUID(),
       policyName: name,
       policyVersion: version,
-      proposedContent: policy as unknown as PendingPolicyChange["proposedContent"],
+      proposedContent:
+        policy as unknown as PendingPolicyChange["proposedContent"],
       proposedBy: DEMO_MAKER,
       proposedAt: new Date(),
       status: PendingPolicyChangeStatus.PENDING_APPROVAL,
