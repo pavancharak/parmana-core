@@ -44,6 +44,8 @@ export interface InboundCheckRecord {
   readonly expiresAt: string;
   readonly audience: string;
   readonly signature: string;
+  /** The same canonical bytes signed with ML-DSA-65 (post-quantum). Absent when no secondary signer is configured. */
+  readonly secondarySignature?: string;
   readonly issuedAt: Date;
   /** Who approved the request, when a verified human approval decided it (G-143). */
   readonly approvedBy?: string;

@@ -176,6 +176,8 @@ export interface CreateAppOptions {
   readonly inboundDecisions?: {
     readonly audience: string;
     readonly sign: (canonicalBytes: Buffer) => Promise<string>;
+    /** Optional ML-DSA-65 signature over the same canonical bytes, returned and stored with each check. */
+    readonly signSecondary?: (canonicalBytes: Buffer) => Promise<string>;
   };
 
   /**
@@ -579,6 +581,9 @@ export function createApp(
       createInboundCheckRouter({
         audience: options.inboundDecisions.audience,
         sign: options.inboundDecisions.sign,
+        ...(options.inboundDecisions.signSecondary
+          ? { signSecondary: options.inboundDecisions.signSecondary }
+          : {}),
         findGrant: (callerId, capability) =>
           authorityGrantRepository.findActive(callerId, capability),
         policyInEffect: (capability) =>

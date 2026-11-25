@@ -2,7 +2,7 @@ import { createPrivateKey, sign } from "node:crypto";
 import "dotenv/config";
 
 import { parsePolicyChangeCheckers } from "./governance/policyChangeCheckers.js";
-import { PolicyChangeCrypto } from "@parmana/crypto";
+import { DEFAULT_SECONDARY_KEY_ID, PolicyChangeCrypto } from "@parmana/crypto";
 import { describeEffectiveCrypto, loadConfig } from "@parmana/shared";
 
 import { assertStorageConfigured } from "./bootstrap/assertStorageConfigured.js";
@@ -133,9 +133,20 @@ function inboundDecisionOptions():
     );
   }
   const privateKey = createPrivateKey(pem);
+  // The post-quantum secondary signature (ML-DSA-65) over the same canonical bytes. Fail closed: a
+  // missing secondary key stops startup, so no decision can ever be issued with only one signature.
+  const secondaryPem = material?.[DEFAULT_SECONDARY_KEY_ID]?.privateKeyPem;
+  if (!secondaryPem) {
+    throw new Error(
+      `INBOUND_AUDIENCE is set, but PARMANA_KEY_MATERIAL_JSON does not hold the ${DEFAULT_SECONDARY_KEY_ID} (ML-DSA-65) private key.`,
+    );
+  }
+  const secondaryPrivateKey = createPrivateKey(secondaryPem);
   return {
     audience,
     sign: async (bytes) => sign(null, bytes, privateKey).toString("base64"),
+    signSecondary: async (bytes) =>
+      sign(null, bytes, secondaryPrivateKey).toString("base64"),
   };
 }
 

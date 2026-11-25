@@ -50,6 +50,13 @@ export interface InboundCheckFields {
   readonly approvedAt?: string;
 }
 
+/**
+ * The same decision, signed a second time with a post-quantum algorithm (ML-DSA-65) over the same
+ * canonical bytes. Stored with the decision and returned in the response. Absent when no secondary
+ * signer is configured.
+ */
+export type InboundSecondarySignature = string;
+
 /** A verified human approval that decided a request (G-143). */
 export interface InboundApprovalUse {
   readonly approvalId: string;
@@ -102,14 +109,29 @@ export interface InboundCheckDependencies {
   /** Signs the canonical bytes of a decision, returning a base64 signature. */
   readonly sign: (canonicalBytes: Buffer) => Promise<string>;
   /** Appends every issued decision. */
+  /**
+   * Optional second signature (ML-DSA-65) over the same canonical bytes. When set, every decision carries
+   * it. A failure here refuses the request: no decision is issued without both signatures.
+   */
+  readonly signSecondary?: (
+    canonicalBytes: Buffer,
+  ) => Promise<InboundSecondarySignature>;
   readonly store: {
-    append(record: InboundCheckFields & { signature: string }): Promise<void>;
+    append(
+      record: InboundCheckFields & {
+        signature: string;
+        secondarySignature?: InboundSecondarySignature;
+      },
+    ): Promise<void>;
     /**
      * Writes the decision and consumes the approvals it used, in one unit (G-143, O1). Required whenever a
      * decision used an approval. Without it, such a decision fails closed.
      */
     appendConsumingApprovals?(
-      record: InboundCheckFields & { signature: string },
+      record: InboundCheckFields & {
+        signature: string;
+        secondarySignature?: InboundSecondarySignature;
+      },
       approvals: readonly ConsumedApprovalNonce[],
     ): Promise<void>;
   };
@@ -309,6 +331,13 @@ export function createInboundCheckRouter(
         const consumed = approved ? (decision.approvals ?? []) : [];
         let recorded = fields;
         let signature = await deps.sign(canonicalCheckBytes(recorded));
+        let secondarySignature = deps.signSecondary
+          ? await deps.signSecondary(canonicalCheckBytes(recorded))
+          : undefined;
+        const withSecondary = (
+          value: string | undefined,
+        ): { secondarySignature?: string } =>
+          value === undefined ? {} : { secondarySignature: value };
         try {
           if (consumed.length > 0) {
             if (deps.store.appendConsumingApprovals === undefined) {
@@ -317,23 +346,38 @@ export function createInboundCheckRouter(
               );
             }
             await deps.store.appendConsumingApprovals(
-              { ...recorded, signature },
+              { ...recorded, signature, ...withSecondary(secondarySignature) },
               consumed.map((use) => ({
                 nonce: use.nonce,
                 expiresAt: use.expiresAt,
               })),
             );
           } else {
-            await deps.store.append({ ...recorded, signature });
+            await deps.store.append({
+              ...recorded,
+              signature,
+              ...withSecondary(secondarySignature),
+            });
           }
         } catch (error) {
           if (!(error instanceof ApprovalAlreadyUsedError)) throw error;
           recorded = refusedBecauseUsed(fields);
           signature = await deps.sign(canonicalCheckBytes(recorded));
-          await deps.store.append({ ...recorded, signature });
+          secondarySignature = deps.signSecondary
+            ? await deps.signSecondary(canonicalCheckBytes(recorded))
+            : undefined;
+          await deps.store.append({
+            ...recorded,
+            signature,
+            ...withSecondary(secondarySignature),
+          });
         }
 
-        res.status(201).json({ ...recorded, signature });
+        res.status(201).json({
+          ...recorded,
+          signature,
+          ...withSecondary(secondarySignature),
+        });
       } catch (error) {
         next(error);
       }

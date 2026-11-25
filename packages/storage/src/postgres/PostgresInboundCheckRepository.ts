@@ -82,6 +82,7 @@ function insertParams(record: InboundCheckRecord): unknown[] {
     record.approvedKeyId ?? null,
     record.approvalId ?? null,
     record.approvedAt ?? null,
+    record.secondarySignature ?? null,
   ];
 }
 
@@ -105,6 +106,9 @@ function rowToRecord(row: Row): InboundCheckRecord {
     expiresAt: new Date(row.expires_at).toISOString(),
     audience: row.audience,
     signature: row.signature,
+    ...(row.secondary_signature
+      ? { secondarySignature: row.secondary_signature }
+      : {}),
     issuedAt: new Date(row.issued_at),
   };
 }
@@ -126,6 +130,7 @@ interface Row {
   expires_at: string | Date;
   audience: string;
   signature: string;
+  secondary_signature: string | null;
   issued_at: string | Date;
 }
 
@@ -138,14 +143,15 @@ const INSERT_SQL = `
   INSERT INTO inbound_decisions (
     decision_id, outcome, reason, partner_id, expires_at, audience, signature,
     issued_at, capability, target, amount, policy_name, policy_version,
-    approved_by, approved_key_id, approval_id, approved_at, check_status
-  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 'verified')
+    approved_by, approved_key_id, approval_id, approved_at, check_status,
+    secondary_signature
+  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 'verified', $18)
 `;
 
 const SELECT_SQL = `
   SELECT decision_id, outcome, reason, partner_id, capability, target, amount,
          expires_at, audience, signature, issued_at, policy_name, policy_version,
-         approved_by, approved_key_id, approval_id, approved_at
+         approved_by, approved_key_id, approval_id, approved_at, secondary_signature
   FROM inbound_decisions
   WHERE decision_id = $1 AND capability IS NOT NULL
 `;
