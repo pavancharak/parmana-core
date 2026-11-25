@@ -28,27 +28,43 @@ If a route into your system does not call the check, that route is not covered, 
 
 ### Responses
 
-| Status | Body                                | Meaning                                                                                                                          | What you do                                                     |
-| ------ | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| `201`  | The decision fields and `signature` | A decision was made and recorded. Read `outcome`.                                                                                | Act only if `outcome` is `approved` and the signature verifies. |
-| `400`  | `error`                             | The request is malformed: capability pattern, audience, target, parameters or signals wrong, or a limit's value is not a number. | Fix the request. Do not retry the same one.                     |
-| `401`  | `unauthenticated`                   | No partner identity was presented.                                                                                               | Check the partner's credentials.                                |
-| `403`  | `no_active_grant`                   | The partner holds no current grant for this capability.                                                                          | Refuse the action.                                              |
-| `403`  | `grant_limit_incomplete`            | A limit on the grant cannot be evaluated.                                                                                        | Refuse the action and tell the partner.                         |
-| `403`  | `no_policy_bound`                   | No policy is bound to this capability. A capability with no policy is refused, so nothing is approved on grant limits alone.     | Refuse the action.                                              |
-| `403`  | `policy_unavailable`                | The bound policy could not be loaded. The `reason` says why.                                                                     | Refuse the action and retry the check later.                    |
+| Status | Body                                                      | Meaning                                                                                                                          | What you do                                                     |
+| ------ | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `201`  | The decision fields, `signature` and `secondarySignature` | A decision was made and recorded. Read `outcome`.                                                                                | Act only if `outcome` is `approved` and both signatures verify. |
+| `400`  | `error`                                                   | The request is malformed: capability pattern, audience, target, parameters or signals wrong, or a limit's value is not a number. | Fix the request. Do not retry the same one.                     |
+| `401`  | `unauthenticated`                                         | No partner identity was presented.                                                                                               | Check the partner's credentials.                                |
+| `403`  | `no_active_grant`                                         | The partner holds no current grant for this capability.                                                                          | Refuse the action.                                              |
+| `403`  | `grant_limit_incomplete`                                  | A limit on the grant cannot be evaluated.                                                                                        | Refuse the action and tell the partner.                         |
+| `403`  | `no_policy_bound`                                         | No policy is bound to this capability. A capability with no policy is refused, so nothing is approved on grant limits alone.     | Refuse the action.                                              |
+| `403`  | `policy_unavailable`                                      | The bound policy could not be loaded. The `reason` says why.                                                                     | Refuse the action and retry the check later.                    |
 
 A `201` with `outcome: "rejected"` is a normal refusal. Its `reason` says why (for example, `policy_rejected`, or `exceeded` when a grant limit was passed).
 
 ### The decision fields
 
-Each decision carries these fields, and the signature covers them:
+Each decision carries these fields, and both signatures cover them:
 
 - `decisionId`, `outcome` (`approved` or `rejected`), and `reason` when rejected
 - `partnerId`, `capability`, `target`, and `amount` when a limit applies
 - `policyName` and `policyVersion`, the policy that decided it
 - `expiresAt`, ten minutes after the decision was made
 - `audience`
+- `approvedBy`, `approvedKeyId`, `approvalId` and `approvedAt`, when a verified human approval decided it
+
+### The two signatures
+
+Every decision is signed twice, over the same canonical bytes:
+
+| Field                | Algorithm                | Key                                         | Purpose                                                  |
+| -------------------- | ------------------------ | ------------------------------------------- | -------------------------------------------------------- |
+| `signature`          | Ed25519                  | The gateway key (`PARMANA_GATEWAY_KEY_ID`)  | The classical signature.                                 |
+| `secondarySignature` | ML-DSA-65 (post-quantum) | The `default-secondary` key in key material | Keeps the decision verifiable if Ed25519 is ever broken. |
+
+The canonical bytes are every field of the decision except `signature` and `secondarySignature`, with keys sorted at the top level and compact JSON. Both signatures are base64. A decision is valid only when both verify.
+
+Decisions issued before the ML-DSA-65 signature was added have no `secondarySignature`. Treat them as Ed25519-only, and check them again if you need the stronger guarantee.
+
+Parmana refuses to start with inbound checks enabled (`INBOUND_AUDIENCE` set) unless the ML-DSA-65 key is present, so every decision it issues carries both signatures.
 
 Act on a decision only before `expiresAt`. After that, check again.
 
@@ -56,7 +72,7 @@ Act on a decision only before `expiresAt`. After that, check again.
 
 1. **Call the check before any action** that an external agent requests. Do not call it after.
 2. **Refuse anything that is not `approved`**, including on a network error or a timeout. A timeout is not an approval.
-3. **Verify the signature** over the decision fields, using Parmana's public key, before acting on an approval. The canonical bytes are defined by `canonicalCheckBytes` in core's [`packages/api/src/routes/inbound-checks.ts`](https://github.com/pavancharak/parmana-core/blob/main/packages/api/src/routes/inbound-checks.ts).
+3. **Verify both signatures** over the decision fields, using Parmana's Ed25519 gateway public key and its ML-DSA-65 public key, before acting on an approval. Refuse the decision if either is missing or does not verify. The canonical bytes are defined by `canonicalCheckBytes` in core's [`packages/api/src/routes/inbound-checks.ts`](https://github.com/pavancharak/parmana-core/blob/main/packages/api/src/routes/inbound-checks.ts). Partner examples are in the connectors repository under `src/connectors/razorpay/partner-org-a/`.
 4. **Check `expiresAt`** and refuse an expired decision.
 5. **Keep your own record** of the decision id next to the action it allowed, so the two can be matched later.
 6. **Run the no-bypass check** described below, once it exists in your environment.
