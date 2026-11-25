@@ -107,11 +107,17 @@ describe("Business signal source changes (HTTP boundary)", () => {
     return `orders-${Date.now()}-${sequence}`;
   }
 
+  function withoutKey(body: Record<string, unknown>): Record<string, unknown> {
+    const { publicKeyPem: _key, ...rest } = body;
+    return rest;
+  }
+
   function registration(name: string): Record<string, unknown> {
     return {
       action: "register",
       name,
       endpointUrl: "https://orders.example.com/parmana/signals",
+      publicKeyPem: sourcePublicKeyPem,
     };
   }
 
@@ -180,6 +186,15 @@ describe("Business signal source changes (HTTP boundary)", () => {
       expect(response.body.code).toBe("SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE");
     });
 
+    it("refuses a source registered without a key, since its answers could not be trusted", async () => {
+      const app = governanceApp();
+      const response = await propose(
+        app,
+        withoutKey(registration(uniqueName())),
+      );
+      expect(response.status).toBe(400);
+    });
+
     it("refuses an approval with no step up, or a step up for the other action", async () => {
       const app = governanceApp();
       const errors = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -240,7 +255,7 @@ describe("Business signal source changes (HTTP boundary)", () => {
         { ...valid, publicKeyPem: "not a key" },
         { ...valid, publicKeyPem: rsa },
         { ...valid, publicKeyPem: 42 },
-        { ...valid, keyId: "orders-2026" },
+        { ...withoutKey(valid), keyId: "orders-2026" },
         { ...valid, publicKeyPem: sourcePublicKeyPem, keyId: "has space" },
         { ...valid, reason: " " },
         { action: "revoke", name, endpointUrl: valid.endpointUrl },

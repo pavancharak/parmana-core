@@ -290,16 +290,18 @@ export class HttpBusinessSignalSource implements BusinessSignalSource {
   }
 
   /**
-   * For a source registered with a key: the signature, verified, or a
-   * throw. For one without: undefined, and any signature is ignored,
-   * since there is nothing to check it against.
+   * Anything not signed is untrusted. A source with no registered key cannot sign its answers, so its
+   * answers are refused, not accepted as observed facts. A source with a key must sign every answer,
+   * and the signature must verify, or the answer is refused by a throw.
    */
   private verifySignature(
     answer: BusinessSignalAnswerMessage,
     signature: BusinessSignalAnswerEnvelope["signature"],
-  ): { value: string } | undefined {
+  ): { value: string } {
     if (this.publicKey === undefined) {
-      return undefined;
+      throw new Error(
+        "the source has no registered key, so its answer is unsigned and cannot be trusted",
+      );
     }
 
     if (
