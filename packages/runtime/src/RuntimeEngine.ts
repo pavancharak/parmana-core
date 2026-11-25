@@ -94,6 +94,11 @@ export interface DecideOptions {
   /** Inbound checks consume approvals with their decision record, not here (G-143, O1). */
   readonly deferApprovalConsumption?: boolean;
   /**
+   * A probe decides without side effects: approvals are checked but not consumed, and no refusal record is
+   * written. Used to test a decision with the caller's declared facts removed.
+   */
+  readonly probe?: boolean;
+  /**
    * Execute with status events on (decision D24): approvals are checked here but consumed by the APPROVED status write,
    * in the same transaction. A nonce already consumed fails the decision.
    */
@@ -715,6 +720,7 @@ export class RuntimeEngine {
               },
               deferApprovalConsumption:
                 options.deferApprovalConsumption === true ||
+                options.probe === true ||
                 options.consumeApprovalsWithStatus === true,
               checkApprovalNonce: options.consumeApprovalsWithStatus === true,
             },
@@ -812,12 +818,14 @@ export class RuntimeEngine {
     // none of which reach this point at all.
     //
     if (decision.outcome !== DecisionOutcome.APPROVED) {
-      await this.writeRefusalRecord(
-        transaction,
-        decision,
-        bindingViolations,
-        policyContentHash,
-      );
+      if (options.probe !== true) {
+        await this.writeRefusalRecord(
+          transaction,
+          decision,
+          bindingViolations,
+          policyContentHash,
+        );
+      }
 
       // Only a refusal by the policy's own rules, or by an approval
       // that did not verify, can be cured by an approval. A binding,
@@ -868,11 +876,42 @@ export class RuntimeEngine {
     });
 
     //
+    // Declared facts may refuse, never approve. The caller's declared signals are evaluated above. If the
+    // decision approves only because of them, the policy is run again with them removed; anything not
+    // approved then is refused. Facts from a trusted source are still resolved inside decide(), so they
+    // are unaffected.
+    //
+    // Set when the APPROVED write loses a race for an approval, or when declared facts alone carried the
+    // approval: the refusal that is enforced below instead.
+    let refusal: typeof decision | undefined;
+
+    if (
+      decision.outcome === DecisionOutcome.APPROVED &&
+      Object.keys(transaction.signals ?? {}).length > 0
+    ) {
+      const probe = await this.decide(
+        { ...transaction, signals: {} },
+        { probe: true },
+      );
+      if (probe.decision.outcome !== DecisionOutcome.APPROVED) {
+        refusal = {
+          ...decision,
+          outcome: DecisionOutcome.REJECTED,
+          reason: "requires_trusted_facts",
+        };
+        await this.writeRefusalRecord(
+          transaction,
+          refusal,
+          bindingViolations,
+          policyContentHash,
+        );
+      }
+    }
+
+    //
     // Status: the policy decision (D23). A decision that does not allow
     // execution is recorded as REJECTED before the enforce below refuses it.
     //
-    // Set when the APPROVED write loses a race for an approval: the refusal that is enforced below instead.
-    let refusal: typeof decision | undefined;
 
     if (this.transactionStatus) {
       const businessTransactionId = transaction.businessTransactionId;
@@ -883,7 +922,7 @@ export class RuntimeEngine {
         "decide",
       );
 
-      if (this.executionGate.canExecute(decision)) {
+      if (this.executionGate.canExecute(refusal ?? decision)) {
         const approvalNonces = usedApprovals.map((approval) => ({
           nonce: approval.nonce,
           expiresAt: approval.expiresAt,
@@ -927,7 +966,10 @@ export class RuntimeEngine {
           businessTransactionId,
           "REJECTED",
           "decide",
-          { reason: decision.reason ?? "Policy rejected execution." },
+          {
+            reason:
+              (refusal ?? decision).reason ?? "Policy rejected execution.",
+          },
         );
       }
     }
