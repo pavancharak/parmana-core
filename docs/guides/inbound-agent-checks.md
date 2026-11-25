@@ -38,9 +38,9 @@ If a route into your system does not call the check, that route is not covered, 
 | `403`  | `no_policy_bound`                                         | No policy is bound to this capability. A capability with no policy is refused, so nothing is approved on grant limits alone.     | Refuse the action.                                              |
 | `403`  | `policy_unavailable`                                      | The bound policy could not be loaded. The `reason` says why.                                                                     | Refuse the action and retry the check later.                    |
 
-A `201` with `outcome: "rejected"` is a normal refusal. Its `reason` says why: `policy_rejected`, `approval_required` when a grant's maximum was passed, or `below_limit_minimum` when a grant's minimum was not reached.
+A `201` with `outcome: "rejected"` is a normal refusal. Its `reason` says why: `policy_rejected`; `approval_required` when a grant's maximum was passed; `below_limit_minimum` when a grant's minimum was not reached; or `requires_trusted_facts` when the policy approves only because of facts the partner declared. Declared facts can cause a refusal, never an approval.
 
-A limited value (for example `parameters.amount`) must be greater than zero. A zero or negative value is refused with `400` and `"<path> must be greater than zero"`, whatever the grant's maximum, so a negative amount can never be approved.
+A limited value (for example `parameters.amount`) must be a whole number greater than zero. A fractional value is refused with `400` and `"<path> must be a whole number"`. A zero or negative value is refused with `400` and `"<path> must be greater than zero"`, whatever the grant's maximum, so a negative amount can never be approved.
 
 ### The decision fields
 

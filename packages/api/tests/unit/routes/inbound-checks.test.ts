@@ -131,9 +131,13 @@ describe("POST /v1/inbound/checks", () => {
   it("gives the policy the partner as submitter, the declared signals, and no authority", async () => {
     const { app, seen } = buildApp({ callerId: "partner-a" });
     await request(app).post("/v1/inbound/checks").send(body);
-    expect(seen.decideRequests).toHaveLength(1);
+    // The policy runs with the declared facts, and again without them (a declared fact may refuse, not approve).
+    expect(seen.decideRequests).toHaveLength(2);
     const sent = seen.decideRequests[0] as Record<string, unknown>;
     expect(sent.signals).toEqual({ orderStatus: "CONFIRMED" });
+    expect((seen.decideRequests[1] as Record<string, unknown>).signals).toEqual(
+      {},
+    );
     expect(sent.policy).toEqual(POLICY);
     expect((sent.metadata as Record<string, unknown>).submittedBy).toBe(
       "partner-a",
