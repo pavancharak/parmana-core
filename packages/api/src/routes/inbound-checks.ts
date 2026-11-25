@@ -230,25 +230,41 @@ export function createInboundCheckRouter(
         }
 
         // Grant limits. Fail closed: a limit with no maximum cannot be checked.
-        const limits: Array<[string, number]> = [];
+        const limits: Array<[string, { min?: number; max: number }]> = [];
         for (const [path, limit] of Object.entries(grant.limits ?? {})) {
           if (typeof limit.max !== "number") {
             res.status(403).json({ error: "grant_limit_incomplete" });
             return;
           }
-          limits.push([path, limit.max]);
+          limits.push([
+            path,
+            typeof limit.min === "number"
+              ? { min: limit.min, max: limit.max }
+              : { max: limit.max },
+          ]);
         }
         const root = { target: body.target, parameters: body.parameters };
         let exceeded = false;
+        let belowMinimum = false;
         let amount: number | undefined;
-        for (const [path, max] of limits) {
+        for (const [path, bounds] of limits) {
           const value = valueAtPath(root, path);
           if (typeof value !== "number" || !Number.isFinite(value)) {
             res.status(400).json({ error: `${path} must be a number` });
             return;
           }
+          // A limited value must be greater than zero. A negative amount is always below the maximum, so
+          // a maximum alone cannot stop it (the check approved -500000 under a 100000 maximum before this).
+          if (value <= 0) {
+            res
+              .status(400)
+              .json({ error: `${path} must be greater than zero` });
+            return;
+          }
           if (amount === undefined) amount = value;
-          if (value > max) exceeded = true;
+          if (value > bounds.max) exceeded = true;
+          if (bounds.min !== undefined && value < bounds.min)
+            belowMinimum = true;
         }
 
         // The policy bound to the capability. No binding means nothing can approve the request.
@@ -289,12 +305,14 @@ export function createInboundCheckRouter(
           createdAt: issuedAt,
         });
 
-        const approved = !exceeded && decision.approved;
-        const reason = exceeded
-          ? "approval_required"
-          : approved
-            ? undefined
-            : (decision.reason ?? "policy_rejected");
+        const approved = !exceeded && !belowMinimum && decision.approved;
+        const reason = belowMinimum
+          ? "below_limit_minimum"
+          : exceeded
+            ? "approval_required"
+            : approved
+              ? undefined
+              : (decision.reason ?? "policy_rejected");
 
         // G-143: record the approval only when the decision is approved and exactly one approval decided it.
         // Several approvals on one decision is open decision O3; in that case no approval fields are written.
