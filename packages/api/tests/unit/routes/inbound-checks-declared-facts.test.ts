@@ -40,7 +40,13 @@ function buildApp(decide: Decide) {
       audience: AUDIENCE,
       findGrant: async () => grant,
       policyInEffect: async () => ({ kind: "in-effect", policy: POLICY }),
-      decide: async (req) => decide(req.signals as Record<string, unknown>),
+      // A probe keeps only verified facts, which this policy's stub does not model: it sees none.
+      decide: async (req, options) =>
+        decide(
+          options?.probe === true
+            ? {}
+            : (req.signals as Record<string, unknown>),
+        ),
       sign: async (bytes) =>
         sign(null, bytes, parmana.privateKey).toString("base64"),
       store: { append: async () => undefined },

@@ -591,8 +591,8 @@ export function createApp(
           authorityGrantRepository.findActive(callerId, capability),
         policyInEffect: (capability) =>
           inboundPolicyBinder.policyInEffect(capability),
-        decide: async (request) => {
-          const result = await application.decideInbound(request);
+        decide: async (request, options) => {
+          const result = await application.decideInbound(request, options);
           return {
             approved: result.decision.outcome === DecisionOutcome.APPROVED,
             ...(result.decision.reason !== undefined

@@ -100,7 +100,10 @@ export interface InboundCheckDependencies {
     capability: string,
   ) => Promise<InboundPolicyLookup | undefined>;
   /** Decides a request without executing it, through the runtime's decide step. */
-  readonly decide: (request: DecisionRequest) => Promise<{
+  readonly decide: (
+    request: DecisionRequest,
+    options?: { readonly probe?: boolean },
+  ) => Promise<{
     readonly approved: boolean;
     readonly reason?: string;
     /** The verified approvals that decided the request, if any. */
@@ -296,28 +299,31 @@ export function createInboundCheckRouter(
 
         // The policy decides. Nothing is executed: the runtime's decide step only decides.
         const checkId = `chk-${randomUUID()}`;
-        const runDecision = (signals: Record<string, unknown>) =>
-          deps.decide({
-            businessTransactionId: checkId,
-            metadata: {
+        const runDecision = (signals: Record<string, unknown>, probe = false) =>
+          deps.decide(
+            {
               businessTransactionId: checkId,
-              submittedBy: partnerId,
-              submittedAt: issuedAt,
-            },
-            // A check issues no authorization; decide() never reads one.
-            intent: {
-              intentId: `${checkId}-intent`,
-              authorizationId: "",
-              action: capability,
-              target: typeof body.target === "string" ? body.target : "",
-              parameters: (body.parameters ?? {}) as Record<string, unknown>,
+              metadata: {
+                businessTransactionId: checkId,
+                submittedBy: partnerId,
+                submittedAt: issuedAt,
+              },
+              // A check issues no authorization; decide() never reads one.
+              intent: {
+                intentId: `${checkId}-intent`,
+                authorizationId: "",
+                action: capability,
+                target: typeof body.target === "string" ? body.target : "",
+                parameters: (body.parameters ?? {}) as Record<string, unknown>,
+                createdAt: issuedAt,
+              },
+              policy: lookup.policy,
+              signals,
+              status: BusinessTransactionStatus.RECEIVED,
               createdAt: issuedAt,
             },
-            policy: lookup.policy,
-            signals,
-            status: BusinessTransactionStatus.RECEIVED,
-            createdAt: issuedAt,
-          });
+            probe ? { probe: true } : undefined,
+          );
 
         const declaredSignals = (body.signals ?? {}) as Record<string, unknown>;
         const decision = await runDecision(declaredSignals);
@@ -327,7 +333,7 @@ export function createInboundCheckRouter(
         const declaredAny = Object.keys(declaredSignals).length > 0;
         const policyApproved =
           decision.approved &&
-          (!declaredAny || (await runDecision({})).approved);
+          (!declaredAny || (await runDecision(declaredSignals, true)).approved);
 
         const approved = !exceeded && !belowMinimum && policyApproved;
         const reason = belowMinimum

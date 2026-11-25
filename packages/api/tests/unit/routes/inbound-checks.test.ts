@@ -135,8 +135,12 @@ describe("POST /v1/inbound/checks", () => {
     expect(seen.decideRequests).toHaveLength(2);
     const sent = seen.decideRequests[0] as Record<string, unknown>;
     expect(sent.signals).toEqual({ orderStatus: "CONFIRMED" });
+    // The second run is a probe. It is sent the same declared signals, and the runtime keeps only the facts the
+    // policy verifies.
     expect((seen.decideRequests[1] as Record<string, unknown>).signals).toEqual(
-      {},
+      {
+        orderStatus: "CONFIRMED",
+      },
     );
     expect(sent.policy).toEqual(POLICY);
     expect((sent.metadata as Record<string, unknown>).submittedBy).toBe(

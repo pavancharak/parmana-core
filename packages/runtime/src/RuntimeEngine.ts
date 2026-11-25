@@ -95,7 +95,7 @@ export interface DecideOptions {
   readonly deferApprovalConsumption?: boolean;
   /**
    * A probe decides without side effects: approvals are checked but not consumed, and no refusal record is
-   * written. Used to test a decision with the caller's declared facts removed.
+   * written. It also removes every declared fact that nothing verifies (see decide()).
    */
   readonly probe?: boolean;
   /**
@@ -353,7 +353,7 @@ export class RuntimeEngine {
     // Runtime signals
     //
 
-    const signals = (transaction.signals ?? {}) as Record<string, JsonValue>;
+    let signals = (transaction.signals ?? {}) as Record<string, JsonValue>;
 
     //
     // Policy loading
@@ -365,6 +365,26 @@ export class RuntimeEngine {
       transaction.policy.name,
       transaction.policy.version,
     );
+
+    //
+    // A probe keeps only the declared facts that something verifies: a fact the policy checks against the
+    // Intent (boundSignals), or a fact backed by a verified approval (approvalSignals). Every other declared
+    // fact is removed, so the probe approves only on facts nothing verified. Sourced facts are resolved
+    // from their trusted source below, whatever the caller declared.
+    //
+    if (options.probe === true) {
+      // An approval-backed signal keeps its approval artifact too: the artifact is what verifies it.
+      const verified = new Set([
+        ...Object.keys(policy.boundSignals ?? {}),
+        ...Object.keys(policy.approvalSignals ?? {}),
+        ...Object.values(policy.approvalSignals ?? {}).map(
+          (declaration) => declaration.artifact ?? "approvalArtifact",
+        ),
+      ]);
+      signals = Object.fromEntries(
+        Object.entries(signals).filter(([key]) => verified.has(key)),
+      );
+    }
 
     await this.hookRunner.afterPolicyLoad(transaction, policy);
 
@@ -860,6 +880,22 @@ export class RuntimeEngine {
     context: RuntimeContext;
     trustRecord: ExecutionTrustRecord;
   }> {
+    //
+    // Declared facts may refuse, never approve. When the caller declared facts, a probe decides with only the
+    // facts that something verifies. It runs first, before any approval is consumed, so the probe sees the
+    // approvals as unused. If the probe does not approve, the request is refused, and the real decision
+    // does not consume its approvals.
+    //
+    const declaredAny = Object.keys(transaction.signals ?? {}).length > 0;
+    const probeRefused =
+      declaredAny &&
+      (
+        await this.decide(transaction, {
+          probe: true,
+          deferApprovalConsumption: true,
+        })
+      ).decision.outcome !== DecisionOutcome.APPROVED;
+
     const {
       decision,
       policyContentHash,
@@ -873,6 +909,7 @@ export class RuntimeEngine {
     } = await this.decide(transaction, {
       // With status events on, the APPROVED write consumes the approvals (decision D24).
       consumeApprovalsWithStatus: this.transactionStatus !== undefined,
+      deferApprovalConsumption: probeRefused,
     });
 
     //
@@ -885,27 +922,18 @@ export class RuntimeEngine {
     // approval: the refusal that is enforced below instead.
     let refusal: typeof decision | undefined;
 
-    if (
-      decision.outcome === DecisionOutcome.APPROVED &&
-      Object.keys(transaction.signals ?? {}).length > 0
-    ) {
-      const probe = await this.decide(
-        { ...transaction, signals: {} },
-        { probe: true },
+    if (probeRefused && decision.outcome === DecisionOutcome.APPROVED) {
+      refusal = {
+        ...decision,
+        outcome: DecisionOutcome.REJECTED,
+        reason: "requires_trusted_facts",
+      };
+      await this.writeRefusalRecord(
+        transaction,
+        refusal,
+        bindingViolations,
+        policyContentHash,
       );
-      if (probe.decision.outcome !== DecisionOutcome.APPROVED) {
-        refusal = {
-          ...decision,
-          outcome: DecisionOutcome.REJECTED,
-          reason: "requires_trusted_facts",
-        };
-        await this.writeRefusalRecord(
-          transaction,
-          refusal,
-          bindingViolations,
-          policyContentHash,
-        );
-      }
     }
 
     //
