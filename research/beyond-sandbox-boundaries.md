@@ -1,6 +1,6 @@
 # Beyond Sandbox Boundaries: Verifiable Binding of Authorization Decisions to AI Agent Business Effects
 
-*An Execution-Boundary Architecture for Binding Delegated Business Authority to Recorded Effects in Autonomous Systems*
+_An Execution-Boundary Architecture for Binding Delegated Business Authority to Recorded Effects in Autonomous Systems_
 
 **Research affiliation:** Parmana Systems Private Limited
 **Research status:** Proposed architecture. Experimental results pending. No formal proofs or comparative measurements are reported in this version.
@@ -25,7 +25,7 @@ We define a formal authorization model, state security invariants, develop an ex
 
 ## 1. Introduction
 
-AI agents are moving from generating recommendations to executing actions on behalf of individuals and organizations. An enterprise agent may initiate payments, modify customer records, approve refunds, update vendor information or call external services. These capabilities separate two things that are often conflated: the *ability* to perform an operation and the *authority* to perform it.
+AI agents are moving from generating recommendations to executing actions on behalf of individuals and organizations. An enterprise agent may initiate payments, modify customer records, approve refunds, update vendor information or call external services. These capabilities separate two things that are often conflated: the _ability_ to perform an operation and the _authority_ to perform it.
 
 A system may technically permit an agent to execute a transaction that the business never delegated to it. Identity management, access control, sandboxing and policy enforcement each address part of this problem. Agentic systems add complexity because the agent chooses actions dynamically, sequences operations and may invoke tools and subordinate agents.
 
@@ -82,77 +82,77 @@ This section compares the proposed architecture with prior work in several famil
 
 Capability systems treat authority as an unforgeable reference that carries the right to perform an operation, rather than deriving authority from the identity of the caller [Dennis and Van Horn, 1966] [verified]. Object-capability designs extend this to composition: a holder can delegate a reference, and authority flows only along explicit reference-passing paths [Miller, 2006, PhD thesis] [verified].
 
-*What it establishes:* authority is explicit, cannot be ambient, and can be narrowed by construction when a reference is handed on.
+_What it establishes:_ authority is explicit, cannot be ambient, and can be narrowed by construction when a reference is handed on.
 
-*What it does not establish:* capability systems govern which references exist, not whether a particular request built from a reference fits the business terms under which it was delegated. Nor do they, by themselves, produce evidence that binds a decision to an observed effect. A capability granted to an agent is still usable for any operation the capability's target accepts.
+_What it does not establish:_ capability systems govern which references exist, not whether a particular request built from a reference fits the business terms under which it was delegated. Nor do they, by themselves, produce evidence that binds a decision to an observed effect. A capability granted to an agent is still usable for any operation the capability's target accepts.
 
-*Relation to this work:* the delegation attenuation relation in §4.6 borrows the intuition that a derived grant cannot exceed its parent. The proposal adds request-level binding (the canonical hash h_X), which capabilities at the reference level do not provide.
+_Relation to this work:_ the delegation attenuation relation in §4.6 borrows the intuition that a derived grant cannot exceed its parent. The proposal adds request-level binding (the canonical hash h_X), which capabilities at the reference level do not provide.
 
 ### 2.1.2 Attenuable bearer credentials (Macaroons)
 
 Macaroons are bearer tokens to which holders can add caveats that restrict use, while anyone can verify the chain with a shared root key [Birgisson et al., NDSS 2014] [verified]. Caveats are checked by the verifying service, which makes attenuation possible without contacting the issuer.
 
-*What it establishes:* offline attenuation of a credential, with verifiable chaining back to a root key.
+_What it establishes:_ offline attenuation of a credential, with verifiable chaining back to a root key.
 
-*What it does not establish:* caveats are predicates evaluated against the request at the service, and the mechanism has no notion of a canonical request hash, an approval state, or a receipt recording the business effect. A holder of a bearer token can also present it for a different request than the one a human approved unless the service enforces request binding separately.
+_What it does not establish:_ caveats are predicates evaluated against the request at the service, and the mechanism has no notion of a canonical request hash, an approval state, or a receipt recording the business effect. A holder of a bearer token can also present it for a different request than the one a human approved unless the service enforces request binding separately.
 
-*Relation to this work:* the subsumption relation in §4.6 is a fixed, checkable form of caveat attenuation. The proposal requires that every token be bound to one canonical request, which removes the freedom that bearer caveats leave to the holder.
+_Relation to this work:_ the subsumption relation in §4.6 is a fixed, checkable form of caveat attenuation. The proposal requires that every token be bound to one canonical request, which removes the freedom that bearer caveats leave to the holder.
 
 ### 2.1.3 Policy engines and decision languages
 
 Policy-as-code systems separate policy from enforcement. Open Policy Agent with the Rego language evaluates structured input against policies [Open Policy Agent, Policy Language documentation] [verified]. Cedar is a policy language designed for authorization with a formal semantics and analysis tools, with its design and evaluation reported by Amazon Web Services [Cedar, OOPSLA 2024, DOI 10.1145/3649835; arXiv:2403.04651] [verified]. The language was modeled in Lean and its properties proved there, and it is the policy language behind Amazon Verified Permissions.
 
-*What it establishes:* deterministic, testable, and sometimes formally analyzable decisions over an explicit request model; separation of policy from application code.
+_What it establishes:_ deterministic, testable, and sometimes formally analyzable decisions over an explicit request model; separation of policy from application code.
 
-*What it does not establish:* a policy engine decides; it does not enforce. Whether the decision reaches the protected operation, and whether the operation's effect is recorded against that decision, is left to the surrounding system. The proposal's execution boundary is the component that supplies this enforcement and the evidence chain.
+_What it does not establish:_ a policy engine decides; it does not enforce. Whether the decision reaches the protected operation, and whether the operation's effect is recorded against that decision, is left to the surrounding system. The proposal's execution boundary is the component that supplies this enforcement and the evidence chain.
 
-*Relation to this work:* the decision function D(X) in §4.2 could be implemented with a policy language such as Cedar or Rego. The contribution here is not the evaluation language but the binding of its decisions to a single request, a nonce, and a receipt.
+_Relation to this work:_ the decision function D(X) in §4.2 could be implemented with a policy language such as Cedar or Rego. The contribution here is not the evaluation language but the binding of its decisions to a single request, a nonce, and a receipt.
 
 ### 2.1.4 Scoped delegated tokens and fine-grained API authorization
 
 OAuth 2.0 issues access tokens with scopes that a resource server checks [RFC 6749] [verified]. Rich Authorization Requests extend scopes to structured authorization details, carried in an `authorization_details` parameter as a JSON array of typed objects [RFC 9396, May 2023, Lodderstedt, Richer and Campbell] [verified].
 
-*What it establishes:* a standard way for a principal to delegate bounded access to a client, with structured detail in the richer form.
+_What it establishes:_ a standard way for a principal to delegate bounded access to a client, with structured detail in the richer form.
 
-*What it does not establish:* the token authorizes a class of requests, not one canonical request. A client holding a valid token can issue any request within the structured detail, and the token does not record the effect of each request. Revocation is typically handled by expiry or introspection, without the epoch-and-residual-window statement in §4.5.
+_What it does not establish:_ the token authorizes a class of requests, not one canonical request. A client holding a valid token can issue any request within the structured detail, and the token does not record the effect of each request. Revocation is typically handled by expiry or introspection, without the epoch-and-residual-window statement in §4.5.
 
-*Relation to this work:* structured authorization details are a natural encoding for the grant G in §4.1. The proposal adds per-request binding and execution-time verification on top.
+_Relation to this work:_ structured authorization details are a natural encoding for the grant G in §4.1. The proposal adds per-request binding and execution-time verification on top.
 
 ### 2.1.5 Signed mandates and transaction-level intent for agent payments
 
 Google's Agent Payments Protocol (AP2) attaches signed mandates to agent-initiated purchases so that a merchant or processor can check the user's authorization [AP2 specification v0.2, ap2-protocol.org] [verified]. The v0.2 specification defines Checkout and Payment Mandates. Each is validated against a user credential or a trust list of agent providers, carries constraints that the verifier checks against the user's intent, and carries an expiry. Earlier coverage used "Intent" and "Cart" mandate terms; the v0.2 specification should be followed over that coverage. These approaches are closest in spirit to the present work because they bind an authorization artifact to a transaction.
 
-*What it establishes:* transaction-level evidence that a user signed an intent, which the counterparty can check.
+_What it establishes:_ transaction-level evidence that a user signed an intent, which the counterparty can check.
 
-*What it does not establish:* the proposal is not, to our knowledge, specified as an enforcement point inside the principal's own systems, and it is not designed to show that the business system executed the transaction with the same canonical content. Scope beyond payments and the verification of the resulting effect in the enforcing system are not addressed. We treat these proposals as the nearest neighbors and will compare explicitly once the specifications are checked.
+_What it does not establish:_ the proposal is not, to our knowledge, specified as an enforcement point inside the principal's own systems, and it is not designed to show that the business system executed the transaction with the same canonical content. Scope beyond payments and the verification of the resulting effect in the enforcing system are not addressed. We treat these proposals as the nearest neighbors and will compare explicitly once the specifications are checked.
 
-*Relation to this work:* the proposal generalizes transaction intent to arbitrary business operations and adds the post-execution effect commitment E_effect (§6).
+_Relation to this work:_ the proposal generalizes transaction intent to arbitrary business operations and adds the post-execution effect commitment E_effect (§6).
 
 ### 2.1.6 Prompt-injection and control-flow defenses for LLM agents
 
 Several recent systems constrain what an LLM agent can do after it is exposed to untrusted data. CaMeL separates a privileged planner from an unprivileged interpreter and enforces data-flow policies over untrusted values [Debenedetti et al., arXiv:2503.18813, 2025] [verified]. On AgentDojo, the paper reports solving 77% of tasks with provable security, against 84% for an undefended system. Other work uses tool-permission prompts, action classifiers, or sandboxed execution of tool calls.
 
-*What it establishes:* these approaches reduce the set of actions an injected instruction can cause, and some give formal guarantees over a defined data-flow model.
+_What it establishes:_ these approaches reduce the set of actions an injected instruction can cause, and some give formal guarantees over a defined data-flow model.
 
-*What it does not establish:* they are designed around the agent's own control flow and tool layer. An action path that bypasses the tool layer, or a permission granted at the tool level, is outside their guarantee. They also do not produce an independently verifiable record of authorization linked to the effect.
+_What it does not establish:_ they are designed around the agent's own control flow and tool layer. An action path that bypasses the tool layer, or a permission granted at the tool level, is outside their guarantee. They also do not produce an independently verifiable record of authorization linked to the effect.
 
-*Relation to this work:* the proposal is complementary. Control-flow defenses reduce the proposals an agent generates; the execution boundary does not depend on them and holds even if they fail. The threat model in §5 includes prompt injection precisely because it is the attack these systems target.
+_Relation to this work:_ the proposal is complementary. Control-flow defenses reduce the proposals an agent generates; the execution boundary does not depend on them and holds even if they fail. The threat model in §5 includes prompt injection precisely because it is the attack these systems target.
 
 ### 2.1.7 Sandboxing and environmental restriction
 
 Sandboxes, containers, and network egress controls restrict where an agent can reach and what resources it can touch. Their security depends on the correctness of the isolation mechanism and on the completeness of the restriction policy.
 
-*What it establishes:* a reduction in the reachable surface, and protection against a class of unintended resource use.
+_What it establishes:_ a reduction in the reachable surface, and protection against a class of unintended resource use.
 
-*What it does not establish:* whether a permitted action is authorized by the principal. An action inside the sandbox can still be unauthorized, which is the case §1 addresses. Sandboxes are not evaluated here as an alternative to the proposal, but as a layer it sits beneath.
+_What it does not establish:_ whether a permitted action is authorized by the principal. An action inside the sandbox can still be unauthorized, which is the case §1 addresses. Sandboxes are not evaluated here as an alternative to the proposal, but as a layer it sits beneath.
 
 ### 2.1.8 Tamper-evident logs and transparency
 
 Append-only logs with Merkle-tree inclusion and consistency proofs are used in certificate transparency. RFC 6962 defined the protocol as experimental; it has since been obsoleted by RFC 9162 [RFC 9162, Certificate Transparency Version 2.0] [verified]. Logs are append-only Merkle hash trees, and submitters receive signed timestamps as proof of logging. These structures let an auditor verify that a log is append-only and that a given entry is included.
 
-*What it establishes:* the evidence ledger in §3 can be made tamper-evident and auditable with known techniques.
+_What it establishes:_ the evidence ledger in §3 can be made tamper-evident and auditable with known techniques.
 
-*What it does not establish:* that the logged events are true. A log records what was submitted; it does not verify that the business system performed the effect. This is the limitation stated in §10, and it is why E_effect must come from the execution system under a stated trust assumption.
+_What it does not establish:_ that the logged events are true. A log records what was submitted; it does not verify that the business system performed the effect. This is the limitation stated in §10, and it is why E_effect must come from the execution system under a stated trust assumption.
 
 ### 2.1.9 Runtime authorization for tool-using agents
 
@@ -160,43 +160,43 @@ Three recent systems place a deterministic enforcement point between an agent an
 
 **Before the Tool Call (OAP).** Uchibeke proposes the Open Agent Passport, a specification and reference implementation that intercepts each tool call synchronously before execution, evaluates it against a declarative policy, and produces a cryptographically signed decision record [Uchibeke, arXiv:2603.20953, March 2026] [verified: author, ID, date, mechanism]. Decisions are signed with Ed25519 and recorded in a hash-chained, write-once audit trail, and the system fails closed when the authorization service is unavailable. The paper reports a median enforcement latency of 53 ms (N=1,000). In an adversarial testbed of 4,437 decisions across 1,151 sessions, social engineering succeeded 74.6% of the time under a permissive policy and 0% of the time across 879 attempts under a restrictive policy [verified against the full text; these are the author's testbed results, from one policy pair, and should be cited as such].
 
-*What it establishes:* pre-action, policy-based enforcement with a signed decision record and a tamper-evident audit trail, at a latency the paper reports as practical.
+_What it establishes:_ pre-action, policy-based enforcement with a signed decision record and a tamper-evident audit trail, at a latency the paper reports as practical.
 
-*What it does not establish:* the full text describes signed decisions and a hash chain over audit records. We did not find a statement that a signed decision is bound to the canonical hash of one request, that execution verifies such a binding, or that the signed decision is single-use. The `canonical_hash` field in the paper's example is the hash of a passport, not of a request. The paper also names limits that the proposal shares: it does not defend against a compromised framework runtime, where the hook itself must be trusted, and it does not evaluate content-level attacks. The record of a permitted action is a signed receipt in its flow figure; the text does not describe a commitment to the business-system effect.
+_What it does not establish:_ the full text describes signed decisions and a hash chain over audit records. We did not find a statement that a signed decision is bound to the canonical hash of one request, that execution verifies such a binding, or that the signed decision is single-use. The `canonical_hash` field in the paper's example is the hash of a passport, not of a request. The paper also names limits that the proposal shares: it does not defend against a compromised framework runtime, where the hook itself must be trusted, and it does not evaluate content-level attacks. The record of a permitted action is a signed receipt in its flow figure; the text does not describe a commitment to the business-system effect.
 
-*Relation to this work:* OAP is the closest prior work on the decision side. The proposal's distinct elements, if the full specification confirms the gaps above, are request-level binding with nonce-based single-use execution, revocation epochs with a residual window, and the two-stage commitment E_auth and E_effect (§6). The paper should be read in full before submission, and the comparison restated against its final specification.
+_Relation to this work:_ OAP is the closest prior work on the decision side. The proposal's distinct elements, if the full specification confirms the gaps above, are request-level binding with nonce-based single-use execution, revocation epochs with a residual window, and the two-stage commitment E_auth and E_effect (§6). The paper should be read in full before submission, and the comparison restated against its final specification.
 
 **Formal Policy Enforcement for Agentic Systems (PCAS / FORGE).** Palumbo, Choudhary, Choi, Amir, Chalasani, Dillig and Jha propose a runtime monitor that enforces declarative policies written in Datalog over event graphs of system state and history. When an agent is about to execute an action, the monitor decides whether the action would violate the policy, and blocks or permits it accordingly [Palumbo et al., arXiv:2602.16708, v4, October 2026] [verified: authors and version from the arXiv listing]. The arXiv listing first appeared under the title "Policy Compiler for Secure Agentic Systems" (system name PCAS); the v4 text uses the title above and calls the system FORGE. Cite the version you read. On AgentDojo, adding the provenance policy to repeat-user prompting reduces attack success from 14.1% to 0.9%. On τ²-Bench, task success rises from 74.7% to 81.5% in airline and from 86.3% to 87.4% in retail [verified against the full text].
 
-*What it establishes:* deterministic, policy-level enforcement at runtime, with a benchmark result showing that a provenance policy reduces attack success without a large loss in task success.
+_What it establishes:_ deterministic, policy-level enforcement at runtime, with a benchmark result showing that a provenance policy reduces attack success without a large loss in task success.
 
-*What it does not establish:* the full text contains no mention of a receipt, a hash, or a nonce. It describes a monitor that decides on actions, not a commitment to the effect in the business system, and it does not describe execution verifying a binding to a decision. The monitor's guarantee depends on it being in the execution path, which the paper also assumes. The abstract frames the work as a step toward provably safe systems, not as a proof of this property.
+_What it does not establish:_ the full text contains no mention of a receipt, a hash, or a nonce. It describes a monitor that decides on actions, not a commitment to the effect in the business system, and it does not describe execution verifying a binding to a decision. The monitor's guarantee depends on it being in the execution path, which the paper also assumes. The abstract frames the work as a step toward provably safe systems, not as a proof of this property.
 
-*Relation to this work:* PCAS/FORGE is the nearest policy-enforcement neighbour. Its Datalog event-graph model is a different formalism from the request model in §4, and the proposal adds the binding and evidence elements listed above.
+_Relation to this work:_ PCAS/FORGE is the nearest policy-enforcement neighbour. Its Datalog event-graph model is a different formalism from the request model in §4, and the proposal adds the binding and evidence elements listed above.
 
 **AgentCap.** Suresh and Gao present AgentCap, a runtime authorization layer that mediates every tool invocation through an MCP wrapper. Each request declares an intent, and policy constraints cover trust, workflow prerequisites, mutually exclusive authority and argument provenance. Authorized requests receive short-lived, budget-bounded capability tokens, signed with Ed25519 and encoded as JWTs, which are validated at the tool boundary. Delegation is a signed attenuation chain that preserves action and resource and cannot increase lifetime or budget [Suresh and Gao, arXiv:2611.00729, October 2026] [verified: authors and ID from the arXiv listing; mechanism from the full text]. Across AgentDojo and InjecAgent, the paper reports zero attack success with GPT-5.4 and reductions in attack success for every evaluated model-benchmark pair. In controlled scenarios it reports blocking every attempted unauthorized execution while preserving legitimate operations [verified against the full text].
 
-*What it establishes:* signed, short-lived capabilities checked at a gateway before a tool call is forwarded, with explicit attenuation in delegation and a declarative policy language usable both at runtime and for predeployment analysis.
+_What it establishes:_ signed, short-lived capabilities checked at a gateway before a tool call is forwarded, with explicit attenuation in delegation and a declarative policy language usable both at runtime and for predeployment analysis.
 
-*What it does not establish:* the full text contains no mention of a canonical request, a receipt, a nonce or a replay. The gateway checks the token's action and resource against the requested call, so binding is to action and resource, not to a hash of the full canonical request. It describes no record that links the authorization to an effect in the business system.
+_What it does not establish:_ the full text contains no mention of a canonical request, a receipt, a nonce or a replay. The gateway checks the token's action and resource against the requested call, so binding is to action and resource, not to a hash of the full canonical request. It describes no record that links the authorization to an effect in the business system.
 
-*Relation to this work:* AgentCap is the closest token-based neighbour. It supports the claim that signed authority checked at a gateway is practical, and it gives the proposal a comparison point on the same benchmarks. The proposal's distinct elements are the request-level binding and the effect commitment E_effect (§6).
+_Relation to this work:_ AgentCap is the closest token-based neighbour. It supports the claim that signed authority checked at a gateway is practical, and it gives the proposal a comparison point on the same benchmarks. The proposal's distinct elements are the request-level binding and the effect commitment E_effect (§6).
 
 ### 2.1.10 Summary
 
-| Family | Establishes | Does not establish | Complement in this proposal |
-|---|---|---|---|
-| Capabilities / ocap | Explicit, attenuable authority | Request-level terms and effect evidence | Attenuation intuition (§4.6) |
-| Macaroons | Offline attenuation with chained verification | Request binding and effect receipts | Subsumption as fixed caveats (§4.6) |
-| Policy engines (Cedar, Rego) | Deterministic, analyzable decisions | Enforcement and evidence | Decision function D(X) (§4.2) |
-| OAuth / RAR | Bounded delegated access | Per-request binding and effect record | Encoding for grant G (§4.1) |
-| Signed mandates (AP2) | Transaction-level signed intent | Enforcement in the principal's system; general effect verification | Nearest neighbor; extended to E_effect (§6) |
-| Control-flow defenses (CaMeL) | Reduced injected-action surface | Guarantee outside the tool layer; verifiable evidence | Independent of agent behavior (§5) |
-| Sandboxing | Reduced reachable surface | Authorization of permitted actions | Layer beneath the boundary |
-| Tamper-evident logs | Auditable append-only record | Truth of logged events | Evidence ledger (§3) |
-| OAP (Before the Tool Call) | Pre-action policy enforcement; signed decisions; hash-chained audit | Request-hash binding, single-use execution and effect commitment not described in full text | Closest prior work on the decision side |
-| PCAS / FORGE | Runtime policy enforcement over event graphs | Receipt, hash or nonce not in full text | Nearest policy-enforcement neighbour |
-| AgentCap | Signed, short-lived capabilities checked at a gateway | Request-hash binding, replay, and effect record not in full text | Nearest token-based neighbour |
+| Family                        | Establishes                                                         | Does not establish                                                                          | Complement in this proposal                 |
+| ----------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Capabilities / ocap           | Explicit, attenuable authority                                      | Request-level terms and effect evidence                                                     | Attenuation intuition (§4.6)                |
+| Macaroons                     | Offline attenuation with chained verification                       | Request binding and effect receipts                                                         | Subsumption as fixed caveats (§4.6)         |
+| Policy engines (Cedar, Rego)  | Deterministic, analyzable decisions                                 | Enforcement and evidence                                                                    | Decision function D(X) (§4.2)               |
+| OAuth / RAR                   | Bounded delegated access                                            | Per-request binding and effect record                                                       | Encoding for grant G (§4.1)                 |
+| Signed mandates (AP2)         | Transaction-level signed intent                                     | Enforcement in the principal's system; general effect verification                          | Nearest neighbor; extended to E_effect (§6) |
+| Control-flow defenses (CaMeL) | Reduced injected-action surface                                     | Guarantee outside the tool layer; verifiable evidence                                       | Independent of agent behavior (§5)          |
+| Sandboxing                    | Reduced reachable surface                                           | Authorization of permitted actions                                                          | Layer beneath the boundary                  |
+| Tamper-evident logs           | Auditable append-only record                                        | Truth of logged events                                                                      | Evidence ledger (§3)                        |
+| OAP (Before the Tool Call)    | Pre-action policy enforcement; signed decisions; hash-chained audit | Request-hash binding, single-use execution and effect commitment not described in full text | Closest prior work on the decision side     |
+| PCAS / FORGE                  | Runtime policy enforcement over event graphs                        | Receipt, hash or nonce not in full text                                                     | Nearest policy-enforcement neighbour        |
+| AgentCap                      | Signed, short-lived capabilities checked at a gateway               | Request-hash binding, replay, and effect record not in full text                            | Nearest token-based neighbour               |
 
 ### 2.1.11 Position
 
@@ -355,6 +355,7 @@ The architecture separates action generation, authorization, execution and verif
    E_auth = H_com(DOMAIN_AUTH ‖ enc(P) ‖ enc(G) ‖ enc(π) ‖ enc(h_X) ‖ enc(D) ‖ enc(seq))
 
    where enc(·) is length-prefixed and DOMAIN_AUTH is a fixed domain-separation tag. E_auth is computed **before** execution.
+
 5. The execution component verifies the token (§4.3) and consumes N atomically with the execution attempt.
 6. The execution component produces an effect receipt ρ describing the business-system outcome. The receipt is committed as
 

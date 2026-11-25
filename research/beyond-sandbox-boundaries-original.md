@@ -1,6 +1,6 @@
 # Beyond Sandbox Boundaries: Deterministic Authorization and Cryptographic Proof of AI Agent Execution
 
-*An Execution-Boundary Architecture for Enforcing Delegated Business Authority in Autonomous Systems*
+_An Execution-Boundary Architecture for Enforcing Delegated Business Authority in Autonomous Systems_
 
 **Research affiliation:** Parmana Systems Private Limited
 **Research status:** Proposed architecture and experimental research. Empirical results pending.
@@ -81,14 +81,14 @@ RQ5: What performance and operational costs are introduced by deterministic enfo
 
 The proposed system contains the following entities:
 
-* **Principal:** The individual or organization delegating authority.
-* **Agent:** The autonomous system proposing an action.
-* **Delegation Grant:** The explicit authority assigned to the agent.
-* **Policy:** The deterministic rules defining permitted operations.
-* **Authorization Engine:** The component evaluating whether an action is permitted.
-* **Execution Boundary:** The enforcement component controlling access to the protected business system.
-* **Evidence Ledger:** The append-only record of authorization and execution events.
-* **Verifier:** An independent component validating the integrity and relationships of recorded evidence.
+- **Principal:** The individual or organization delegating authority.
+- **Agent:** The autonomous system proposing an action.
+- **Delegation Grant:** The explicit authority assigned to the agent.
+- **Policy:** The deterministic rules defining permitted operations.
+- **Authorization Engine:** The component evaluating whether an action is permitted.
+- **Execution Boundary:** The enforcement component controlling access to the protected business system.
+- **Evidence Ledger:** The append-only record of authorization and execution events.
+- **Verifier:** An independent component validating the integrity and relationships of recorded evidence.
 
 The agent is treated as an untrusted action proposer. Its generated reasoning is not accepted as proof of authorization.
 
@@ -122,15 +122,15 @@ A change to any authorization-relevant request field invalidates the previous de
 
 The architecture considers the following threats:
 
-* Prompt injection attempting to expand delegated authority.
-* Task completion pressure encouraging unauthorized actions.
-* Transaction modification after authorization.
-* Credential misuse and privilege escalation.
-* Replay of previously authorized requests.
-* Use of expired or revoked grants.
-* Unauthorized delegation to subordinate agents.
-* Alternative tool paths bypassing the intended authorization boundary.
-* Inconsistent evidence between authorization and actual execution.
+- Prompt injection attempting to expand delegated authority.
+- Task completion pressure encouraging unauthorized actions.
+- Transaction modification after authorization.
+- Credential misuse and privilege escalation.
+- Replay of previously authorized requests.
+- Use of expired or revoked grants.
+- Unauthorized delegation to subordinate agents.
+- Alternative tool paths bypassing the intended authorization boundary.
+- Inconsistent evidence between authorization and actual execution.
 
 The architecture assumes that the protected execution boundary and its cryptographic trust roots are correctly implemented. Compromise of these trusted components is considered separately.
 
@@ -152,17 +152,17 @@ The verifier independently validates the integrity of the authorization and exec
 
 The evidence structure associates:
 
-* Principal identity.
-* Agent identity.
-* Delegation grant identifier.
-* Grant version.
-* Policy version.
-* Canonical request hash.
-* Authorization decision.
-* Authorization timestamp or trusted sequence information.
-* Execution identifier.
-* Business-system effect receipt.
-* Cryptographic signatures and integrity-chain references.
+- Principal identity.
+- Agent identity.
+- Delegation grant identifier.
+- Grant version.
+- Policy version.
+- Canonical request hash.
+- Authorization decision.
+- Authorization timestamp or trusted sequence information.
+- Execution identifier.
+- Business-system effect receipt.
+- Cryptographic signatures and integrity-chain references.
 
 A proposed evidence commitment is:
 
@@ -190,12 +190,12 @@ All benchmark scenarios, policies, oracle decisions and experimental configurati
 
 The architecture aims to establish the following properties:
 
-* **Authorization completeness:** Every protected effect passes through the enforcement boundary.
-* **Request binding:** Authorization applies only to the exact canonical request evaluated.
-* **Delegation attenuation:** A subordinate agent cannot acquire more authority than its delegator.
-* **Revocation enforcement:** Revoked authority cannot authorize new protected execution.
-* **Replay resistance:** Previously authorized requests cannot be reused outside their permitted execution conditions.
-* **Evidence integrity:** Recorded authorization and execution evidence can be independently checked for cryptographic integrity.
+- **Authorization completeness:** Every protected effect passes through the enforcement boundary.
+- **Request binding:** Authorization applies only to the exact canonical request evaluated.
+- **Delegation attenuation:** A subordinate agent cannot acquire more authority than its delegator.
+- **Revocation enforcement:** Revoked authority cannot authorize new protected execution.
+- **Replay resistance:** Previously authorized requests cannot be reused outside their permitted execution conditions.
+- **Evidence integrity:** Recorded authorization and execution evidence can be independently checked for cryptographic integrity.
 
 These properties require explicit assumptions and formal or experimental verification. They should not be treated as proven solely by the proposed architecture.
 
