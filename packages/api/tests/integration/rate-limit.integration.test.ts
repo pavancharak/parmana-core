@@ -11,6 +11,8 @@ import { InMemoryCallerAuditSink } from "../../src/auth/InMemoryCallerAuditSink.
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * HTTP-level proof of the two rate limiters
@@ -32,7 +34,13 @@ describe("Rate limiting (HTTP boundary)", () => {
     const { executionSystem, auditSink: executionAuditSink } =
       createInspectableExecutionSystem();
 
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     const authenticator = new StaticKeyAuthenticator([
       {
@@ -326,7 +334,13 @@ describe("Rate limiting (HTTP boundary)", () => {
   describe("caller-auth disabled: /execute rate limiting is skipped entirely", () => {
     it("no caller identity to key off, so the limiter is not mounted at all", async () => {
       const { executionSystem } = createInspectableExecutionSystem();
-      const application = createApplication(executionSystem);
+      const application = createApplication(
+        executionSystem,
+        undefined,
+        undefined,
+        undefined,
+        trustedFacts.registry,
+      );
 
       const app = createApp(application, {
         callerAuth: "disabled",
@@ -348,7 +362,13 @@ describe("Rate limiting (HTTP boundary)", () => {
   describe("omitted rateLimit option falls back to sane defaults", () => {
     it("createApp without a rateLimit option still applies the health/ready limiter with its default", async () => {
       const { executionSystem } = createInspectableExecutionSystem();
-      const application = createApplication(executionSystem);
+      const application = createApplication(
+        executionSystem,
+        undefined,
+        undefined,
+        undefined,
+        trustedFacts.registry,
+      );
 
       const authenticator = new StaticKeyAuthenticator([
         {

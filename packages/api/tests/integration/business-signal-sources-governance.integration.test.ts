@@ -19,6 +19,8 @@ import { InMemoryCallerAuditSink } from "../../src/auth/InMemoryCallerAuditSink.
 import { PolicyChangeStepUpVerifier } from "../../src/auth/PolicyChangeStepUpVerifier.js";
 
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * Business signal sources registered without a deploy (RFC-0023 phase
@@ -90,13 +92,22 @@ describe("Business signal source changes (HTTP boundary)", () => {
       },
     ]);
 
-    return createApp(createApplication(executionSystem), {
-      callerAuth: { authenticator, auditSink: new InMemoryCallerAuditSink() },
-      stepUpVerifier: new PolicyChangeStepUpVerifier({
-        nonceStore: new MemoryNonceStore(),
-      }),
-      externalEndpointLookup: lookup,
-    });
+    return createApp(
+      createApplication(
+        executionSystem,
+        undefined,
+        undefined,
+        undefined,
+        trustedFacts.registry,
+      ),
+      {
+        callerAuth: { authenticator, auditSink: new InMemoryCallerAuditSink() },
+        stepUpVerifier: new PolicyChangeStepUpVerifier({
+          nonceStore: new MemoryNonceStore(),
+        }),
+        externalEndpointLookup: lookup,
+      },
+    );
   }
 
   let sequence = 0;

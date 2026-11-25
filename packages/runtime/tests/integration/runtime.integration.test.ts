@@ -12,6 +12,9 @@ import {
   testApprovalSignalVerifier,
   withTestApproval,
 } from "../../../../test-support/approvals.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+
+const trustedFacts = createTrustedFacts();
 
 describe("Runtime Integration", () => {
   it("executes a complete vendor payment transaction", async () => {
@@ -22,6 +25,7 @@ describe("Runtime Integration", () => {
     const trustRecords = new MemoryExecutionTrustRecordRepository();
 
     const runtime = new RuntimeBuilder()
+      .withBusinessSignalSources(trustedFacts.registry)
       .withPolicyRepository(policyRepository)
       .withSignalStateVerifier(testApprovalSignalVerifier())
       .build(trustRecords);

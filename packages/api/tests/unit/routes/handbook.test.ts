@@ -4,12 +4,20 @@ import { describe, expect, it } from "vitest";
 import { createApplication } from "../../../src/application.js";
 import { createApp } from "../../../src/app.js";
 import { createExecutionSystem } from "../../../src/bootstrap/createExecutionSystem.js";
+import { createTrustedFacts } from "../../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 const PDF_URL = "https://parmana-api-real.vercel.app/parmana-handbook.pdf";
 
 async function buildApp() {
   const executionSystem = await createExecutionSystem();
-  const application = createApplication(executionSystem);
+  const application = createApplication(
+    executionSystem,
+    undefined,
+    undefined,
+    undefined,
+    trustedFacts.registry,
+  );
   return createApp(application, { callerAuth: "disabled" });
 }
 

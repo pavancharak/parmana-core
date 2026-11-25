@@ -13,6 +13,9 @@ import {
   testApprovalSignalVerifier,
   withTestApproval,
 } from "../../../../test-support/approvals.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+
+const trustedFacts = createTrustedFacts();
 
 /**
  * A kill switch tripped after a request passed the HTTP guard, but before the
@@ -26,6 +29,7 @@ describe("Runtime release refused by a kill switch", () => {
     );
 
     const runtime = new RuntimeBuilder()
+      .withBusinessSignalSources(trustedFacts.registry)
       .withPolicyRepository(policyRepository)
       .withSignalStateVerifier(testApprovalSignalVerifier())
       .addHook({

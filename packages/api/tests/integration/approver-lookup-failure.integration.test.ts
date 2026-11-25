@@ -25,6 +25,8 @@ import {
   withTestApproval,
   type TestApprovalSigner,
 } from "../../../../test-support/approvals.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * The approver table cannot be read. The approval comes from an approver that
@@ -74,9 +76,18 @@ function appWith(repository: ApprovalIssuerRepository) {
     nonceStore: new MemoryApprovalNonceLedger(),
   });
   const { executionSystem, auditSink } = createInspectableExecutionSystem();
-  const app = createApp(createApplication(executionSystem, approvalVerifier), {
-    callerAuth: "disabled",
-  });
+  const app = createApp(
+    createApplication(
+      executionSystem,
+      approvalVerifier,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    ),
+    {
+      callerAuth: "disabled",
+    },
+  );
   return { app, auditSink };
 }
 

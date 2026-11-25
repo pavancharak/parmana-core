@@ -10,6 +10,8 @@ import { InMemoryCallerAuditSink } from "../../src/auth/InMemoryCallerAuditSink.
 
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * Investigation-only test, not part of any fix. caller-scoping.integration.test.ts
@@ -26,7 +28,13 @@ describe("Caller scoping (HTTP boundary): GET /refusal/:id", () => {
 
   function buildApp() {
     const { executionSystem } = createInspectableExecutionSystem();
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     const authenticator = new StaticKeyAuthenticator([
       {

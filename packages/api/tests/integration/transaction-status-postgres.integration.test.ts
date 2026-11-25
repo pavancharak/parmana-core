@@ -13,6 +13,8 @@ import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 import { resolveDatabaseGate } from "../helpers/database-availability.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * The route flow of decision D23 on a real Postgres database, through the
@@ -113,7 +115,13 @@ describe.skipIf(!databaseConfigured)(
       // earlier runs: every id it writes is unique to the run, and every assertion
       // reads its own transaction by id.
       const { executionSystem } = createInspectableExecutionSystem();
-      const application = createApplication(executionSystem);
+      const application = createApplication(
+        executionSystem,
+        undefined,
+        undefined,
+        undefined,
+        trustedFacts.registry,
+      );
       const authenticator = new StaticKeyAuthenticator([
         {
           callerId: "pg-caller",

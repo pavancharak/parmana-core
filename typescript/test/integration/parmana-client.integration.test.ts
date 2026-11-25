@@ -49,6 +49,9 @@ import { NotFoundError } from "../../src/errors/NotFoundError.js";
 import { ConflictError } from "../../src/errors/ConflictError.js";
 import { withTestApproval } from "../../../test-support/approvals.js";
 import { seedPolicyGovernanceApprovals } from "../../../test-support/policy-governance.js";
+import { createTrustedFacts } from "../../../packages/api/tests/helpers/trusted-facts.js";
+
+const trustedFacts = createTrustedFacts();
 
 const RAW_API_KEY = "ts-sdk-integration-test-key";
 
@@ -64,6 +67,13 @@ function buildTransaction(
     principalId?: string;
   } = {},
 ): Promise<BusinessTransaction> {
+  trustedFacts.set({
+    vendorVerified: true,
+    invoiceVerified: true,
+    paymentApproved: true,
+    sufficientFunds: true,
+    riskScore: overrides.riskScore ?? 10,
+  });
   const businessTransactionId =
     overrides.businessTransactionId ?? crypto.randomUUID();
   const authorityId = crypto.randomUUID();
@@ -173,7 +183,13 @@ beforeAll(async () => {
   const { createApp } = await import("../../../packages/api/src/app.js");
 
   const executionSystem = await createExecutionSystem();
-  const application = createApplication(executionSystem);
+  const application = createApplication(
+    executionSystem,
+    undefined,
+    undefined,
+    undefined,
+    trustedFacts.registry,
+  );
 
   const authenticator = new StaticKeyAuthenticator([
     {

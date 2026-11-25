@@ -30,6 +30,8 @@ import { PolicyChangeApprovalService } from "../../src/governance/PolicyChangeAp
 import type { PolicyChangeCheckerScope } from "../../src/governance/policyChangeCheckers.js";
 
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * HTTP-level proof for the Policy Governance (maker-checker) batch:
@@ -173,7 +175,13 @@ describe("Policy Governance: isHumanCaller, maker != checker, step-up (HTTP boun
 
   function buildApp() {
     const { executionSystem } = createInspectableExecutionSystem();
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     const scratchPolicyDir = mkdtempSync(
       path.join(tmpdir(), "parmana-governance-policies-"),
@@ -785,7 +793,13 @@ describe("Policy Governance: isHumanCaller, maker != checker, step-up (HTTP boun
 
     it("fails closed (never resolves the pending change) when PolicyChangeApprovalService is not configured", async () => {
       const { executionSystem } = createInspectableExecutionSystem();
-      const application = createApplication(executionSystem);
+      const application = createApplication(
+        executionSystem,
+        undefined,
+        undefined,
+        undefined,
+        trustedFacts.registry,
+      );
 
       const authenticator = new StaticKeyAuthenticator([
         {

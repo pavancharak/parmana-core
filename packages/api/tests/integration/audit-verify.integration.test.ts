@@ -12,6 +12,8 @@ import { StaticKeyAuthenticator } from "../../src/auth/StaticKeyAuthenticator.js
 import { InMemoryCallerAuditSink } from "../../src/auth/InMemoryCallerAuditSink.js";
 
 import type { CallerAuditEvent } from "../../src/auth/CallerAuditSink.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * HTTP-level proof of the audit-sink signing milestone: a signed
@@ -22,7 +24,13 @@ import type { CallerAuditEvent } from "../../src/auth/CallerAuditSink.js";
 describe("Audit event signature verification (HTTP boundary)", () => {
   function buildApp() {
     const { executionSystem } = createInspectableExecutionSystem();
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     return createApp(application, {
       callerAuth: "disabled",
@@ -83,7 +91,13 @@ describe("Audit event signature verification (HTTP boundary)", () => {
 
   it("requires no caller authentication at all, even when caller-auth is enabled for every other route", async () => {
     const { executionSystem } = createInspectableExecutionSystem();
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     const authenticator = new StaticKeyAuthenticator([
       {

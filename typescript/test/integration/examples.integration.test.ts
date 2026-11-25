@@ -27,6 +27,13 @@ import { fileURLToPath } from "node:url";
 
 import { signTestApproval } from "../../../test-support/approvals.js";
 import { seedPolicyGovernanceApprovals } from "../../../test-support/policy-governance.js";
+import {
+  createTrustedFacts,
+  PAYMENT_FACTS,
+} from "../../../packages/api/tests/helpers/trusted-facts.js";
+
+// The examples declare riskScore 5, so the trusted source answers that value.
+const trustedFacts = createTrustedFacts({ ...PAYMENT_FACTS, riskScore: 5 });
 
 /**
  * What a trusted approver signs for both examples: this capability,
@@ -63,7 +70,13 @@ beforeAll(async () => {
     await import("../../../packages/api/src/bootstrap/createExecutionSystem.js");
 
   const executionSystem = await createExecutionSystem();
-  const application = createApplication(executionSystem);
+  const application = createApplication(
+    executionSystem,
+    undefined,
+    undefined,
+    undefined,
+    trustedFacts.registry,
+  );
 
   // callerAuth: "disabled", no apiKey -- matches the example's own
   // ParmanaClient construction exactly (it never sets one either), and

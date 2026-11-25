@@ -7,6 +7,8 @@ import { createApp } from "../../src/app.js";
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * EV-10: a connector's credential never reaches the caller, the decision
@@ -38,9 +40,18 @@ describe("Credential non-exposure (HTTP boundary)", () => {
       },
     });
 
-    const app = createApp(createApplication(executionSystem), {
-      callerAuth: "disabled",
-    });
+    const app = createApp(
+      createApplication(
+        executionSystem,
+        undefined,
+        undefined,
+        undefined,
+        trustedFacts.registry,
+      ),
+      {
+        callerAuth: "disabled",
+      },
+    );
 
     const response = await request(app)
       .post("/execute")
@@ -64,9 +75,18 @@ describe("Credential non-exposure (HTTP boundary)", () => {
       },
     });
 
-    const app = createApp(createApplication(executionSystem), {
-      callerAuth: "disabled",
-    });
+    const app = createApp(
+      createApplication(
+        executionSystem,
+        undefined,
+        undefined,
+        undefined,
+        trustedFacts.registry,
+      ),
+      {
+        callerAuth: "disabled",
+      },
+    );
 
     const response = await request(app)
       .post("/execute")

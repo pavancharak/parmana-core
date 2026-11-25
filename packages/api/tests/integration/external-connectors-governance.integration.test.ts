@@ -19,6 +19,8 @@ import { PolicyChangeStepUpVerifier } from "../../src/auth/PolicyChangeStepUpVer
 import { BUILT_IN_CAPABILITY_NAMESPACES } from "../../src/routes/external-connectors.js";
 
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * External connectors registered without a deploy (ADR-0013): human
@@ -92,13 +94,22 @@ describe("External connector changes (HTTP boundary)", () => {
       },
     ]);
 
-    return createApp(createApplication(executionSystem), {
-      callerAuth: { authenticator, auditSink: new InMemoryCallerAuditSink() },
-      stepUpVerifier: new PolicyChangeStepUpVerifier({
-        nonceStore: new MemoryNonceStore(),
-      }),
-      externalEndpointLookup: lookup,
-    });
+    return createApp(
+      createApplication(
+        executionSystem,
+        undefined,
+        undefined,
+        undefined,
+        trustedFacts.registry,
+      ),
+      {
+        callerAuth: { authenticator, auditSink: new InMemoryCallerAuditSink() },
+        stepUpVerifier: new PolicyChangeStepUpVerifier({
+          nonceStore: new MemoryNonceStore(),
+        }),
+        externalEndpointLookup: lookup,
+      },
+    );
   }
 
   let sequence = 0;
