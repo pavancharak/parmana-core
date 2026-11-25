@@ -15,7 +15,6 @@ import type { Policy } from "@parmana/policy";
 import { MemoryApprovalNonceLedger } from "@parmana/storage";
 import type { BusinessTransaction } from "@parmana/shared";
 import { recordDemoFacts } from "./demo-trusted-sources.js";
-import { demoTrustedSources } from "./demo-trusted-sources.js";
 
 /**
  * A demo approver for the tutorials.
