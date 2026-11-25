@@ -17,6 +17,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 const root = path.resolve(import.meta.dirname);
 
@@ -44,6 +45,14 @@ const application = RuntimeFactory.create(
   executionSystem,
   undefined,
   demoApprovalSignalVerifier(),
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  demoTrustedSources(),
 );
 
 // --------------------------------------------------

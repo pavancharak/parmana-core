@@ -11,9 +11,7 @@
   "boundSignals": {
     "paymentAmount": "parameters.amount"
   },
-  "unboundSignalReasons": {
-    "capability": "The Intent snapshot boundSignals binds against exposes only { target, parameters } (see SignalIntentBinder), not the executed action itself, so the capability selector has no dot-path to bind to -- it is independently enforced by capability-registry's CANONICAL_CAPABILITY_POLICY_BINDINGS / assertConnectorCapabilitiesBound instead."
-  },
+  "unboundSignalReasons": {},
   "approvalSignals": {
     "humanApproved": {
       "resourceId": "target"
@@ -108,5 +106,12 @@
         "reason": "BLOCK: capability is not explicitly authorized by this reference policy."
       }
     }
-  ]
+  ],
+  "signalSources": {
+    "capability": {
+      "source": "trusted-test",
+      "claim": "fact.capability",
+      "subject": "target"
+    }
+  }
 }

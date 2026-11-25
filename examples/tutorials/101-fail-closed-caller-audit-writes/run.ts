@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 
 import type { BusinessTransaction } from "@parmana/shared";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // docs/internal/CLAIMS.md 2.19: a caller-authentication event (accepted or
@@ -92,7 +93,13 @@ function vendorPaymentTransaction(): BusinessTransaction {
 
 async function startServer(auditSink: FailingCallerAuditSink) {
   const executionSystem = await createExecutionSystem();
-  const application = createApplication(executionSystem);
+  const application = createApplication(
+    executionSystem,
+    undefined,
+    undefined,
+    undefined,
+    demoTrustedSources(),
+  );
   const authenticator = new StaticKeyAuthenticator([
     {
       callerId: "caller-101",

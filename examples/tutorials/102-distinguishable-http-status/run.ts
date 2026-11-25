@@ -32,6 +32,7 @@ import {
   demoApprovalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // docs/internal/CLAIMS.md 2.21: a policy REJECTED decision surfaces as HTTP 403
@@ -138,7 +139,13 @@ const { createApplication } =
 const { createApp } = await import("../../../packages/api/src/app.js");
 
 const executionSystem = await createExecutionSystem();
-const application = createApplication(executionSystem, demoApprovalVerifier());
+const application = createApplication(
+  executionSystem,
+  demoApprovalVerifier(),
+  undefined,
+  undefined,
+  demoTrustedSources(),
+);
 const app = createApp(application, { callerAuth: "disabled" });
 
 const server = await new Promise<import("node:http").Server>((resolve) => {
@@ -174,6 +181,7 @@ console.log("--------------------------------------------------");
 const governed = await governedPolicyDirectory("fixtures/policies");
 
 const runtime = new RuntimeBuilder()
+  .withBusinessSignalSources(demoTrustedSources())
   .withSignalStateVerifier(demoApprovalSignalVerifier())
   .withPolicyRepository(governed.policyRepository)
   .build(new MemoryExecutionTrustRecordRepository());

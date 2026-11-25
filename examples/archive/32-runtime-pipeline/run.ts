@@ -5,6 +5,7 @@ import { RuntimeBuilder } from "@parmana/runtime";
 import { MemoryExecutionTrustRecordRepository } from "@parmana/storage";
 
 import transaction from "./transaction.json" with { type: "json" };
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 async function main(): Promise<void> {
   console.log();
@@ -17,6 +18,7 @@ async function main(): Promise<void> {
   // Build Runtime
   //
   const runtime = new RuntimeBuilder()
+    .withBusinessSignalSources(demoTrustedSources())
     .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
     .build(new MemoryExecutionTrustRecordRepository());
 

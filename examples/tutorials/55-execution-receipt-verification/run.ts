@@ -23,6 +23,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // Historical note: this tutorial previously verified the dead
@@ -94,6 +95,14 @@ const application = RuntimeFactory.create(
   executionSystem,
   undefined,
   demoApprovalSignalVerifier(),
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  demoTrustedSources(),
 );
 
 console.log("========================================");

@@ -20,6 +20,7 @@ import {
 import { AuthorityType, type ExecutableContent } from "@parmana/shared";
 import { writeFileSync } from "node:fs";
 import path from "node:path";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // Tutorial 123: connect a system Parmana has no code for, an ERP here,
@@ -95,30 +96,39 @@ const MAKER = "tutorial-123-maker-key";
 const CHECKER = "tutorial-123-checker-key";
 const checkerStepUp = generateKeyPairSync("ed25519");
 
-const app = createApp(createApplication(await createExecutionSystem()), {
-  callerAuth: {
-    authenticator: new StaticKeyAuthenticator([
-      {
-        callerId: "maker",
-        keyHash: hashApiKey(MAKER),
-        credentialHolderType: AuthorityType.USER,
-      },
-      {
-        callerId: "checker",
-        keyHash: hashApiKey(CHECKER),
-        credentialHolderType: AuthorityType.USER,
-        stepUpPublicKey: checkerStepUp.publicKey
-          .export({ format: "pem", type: "spki" })
-          .toString(),
-      },
-    ]),
-    auditSink: new InMemoryCallerAuditSink(),
+const app = createApp(
+  createApplication(
+    await createExecutionSystem(),
+    undefined,
+    undefined,
+    undefined,
+    demoTrustedSources(),
+  ),
+  {
+    callerAuth: {
+      authenticator: new StaticKeyAuthenticator([
+        {
+          callerId: "maker",
+          keyHash: hashApiKey(MAKER),
+          credentialHolderType: AuthorityType.USER,
+        },
+        {
+          callerId: "checker",
+          keyHash: hashApiKey(CHECKER),
+          credentialHolderType: AuthorityType.USER,
+          stepUpPublicKey: checkerStepUp.publicKey
+            .export({ format: "pem", type: "spki" })
+            .toString(),
+        },
+      ]),
+      auditSink: new InMemoryCallerAuditSink(),
+    },
+    stepUpVerifier: new PolicyChangeStepUpVerifier({
+      nonceStore: new MemoryNonceStore(),
+    }),
+    externalEndpointLookup: lookup,
   },
-  stepUpVerifier: new PolicyChangeStepUpVerifier({
-    nonceStore: new MemoryNonceStore(),
-  }),
-  externalEndpointLookup: lookup,
-});
+);
 
 const api = createServer(app);
 await new Promise<void>((resolve) => api.listen(0, "127.0.0.1", resolve));

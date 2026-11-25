@@ -17,6 +17,7 @@ import {
   type PolicyRepository,
 } from "@parmana/policy";
 import { RuntimeBuilder, RuntimeError } from "@parmana/runtime";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // RFC-0021's Refusal Record write is durable EVIDENCE, not a GATE: a
@@ -149,10 +150,12 @@ try {
   const throwingRefusalRecords = new ThrowingRefusalRecordRepository();
 
   const runtimeWithFailingWrite = new RuntimeBuilder()
+    .withBusinessSignalSources(demoTrustedSources())
     .withPolicyRepository(new FixedPolicyRepository())
     .build(new NullExecutionTrustRecordRepository(), throwingRefusalRecords);
 
   const runtimeWithNoRepository = new RuntimeBuilder()
+    .withBusinessSignalSources(demoTrustedSources())
     .withPolicyRepository(new FixedPolicyRepository())
     .build(new NullExecutionTrustRecordRepository());
 

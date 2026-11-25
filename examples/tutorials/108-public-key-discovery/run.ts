@@ -3,6 +3,7 @@ import {
   verifyExecutionTrustRecordOffline,
 } from "@parmana/crypto";
 import type { ExecutionTrustRecord } from "@parmana/shared";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // PQC audit RED-2 (docs/internal/VERIFICATION-GAPS.md): before GET /keys/:keyId
@@ -30,7 +31,13 @@ console.log("==================================================");
 console.log();
 
 const executionSystem = await createExecutionSystem();
-const application = createApplication(executionSystem);
+const application = createApplication(
+  executionSystem,
+  undefined,
+  undefined,
+  undefined,
+  demoTrustedSources(),
+);
 const app = createApp(application, { callerAuth: "disabled" });
 
 const server = app.listen(0);

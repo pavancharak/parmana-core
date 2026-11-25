@@ -3,7 +3,6 @@
   "policyVersion": "1.0.0",
   "schemaVersion": "1.0.0",
   "description": "Authorizes an autonomous agent's payment to a vendor after validating the vendor is on the agent's allowlist, the payment stays within the agent's credential limit, and the agent has not exceeded its payment velocity limit.",
-
   "signalsSchema": {
     "vendorAllowed": "boolean",
     "withinCredentialLimit": "boolean",
@@ -11,18 +10,11 @@
     "paymentAmount": "number",
     "vendorId": "string"
   },
-
   "boundSignals": {
     "paymentAmount": "parameters.amount",
     "vendorId": "target"
   },
-
-  "unboundSignalReasons": {
-    "vendorAllowed": "Result of checking the vendor against the agent's issued credential scope; not a value the Intent itself declares.",
-    "withinCredentialLimit": "Result of comparing the payment amount against the agent's issued credential limit; computed independently of the Intent.",
-    "withinVelocityLimit": "Result of an independent check against the agent's recent payment activity; not expressible via the Intent's target/parameters."
-  },
-
+  "unboundSignalReasons": {},
   "rules": [
     {
       "id": "approve-agent-payment",
@@ -113,5 +105,22 @@
         "reason": "Agent payment rejected because one or more required policy conditions were not satisfied."
       }
     }
-  ]
+  ],
+  "signalSources": {
+    "vendorAllowed": {
+      "source": "trusted-test",
+      "claim": "fact.vendorAllowed",
+      "subject": "target"
+    },
+    "withinCredentialLimit": {
+      "source": "trusted-test",
+      "claim": "fact.withinCredentialLimit",
+      "subject": "target"
+    },
+    "withinVelocityLimit": {
+      "source": "trusted-test",
+      "claim": "fact.withinVelocityLimit",
+      "subject": "target"
+    }
+  }
 }

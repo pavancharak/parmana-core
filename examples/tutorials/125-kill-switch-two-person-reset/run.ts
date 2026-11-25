@@ -1,4 +1,5 @@
 // Tutorial 125: in production a kill switch reset takes two different
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 // operators. The first request is held as pending, the same operator cannot
 // confirm it, and a second, different operator completes it. Runs against the
 // real app on an ephemeral port with in-memory stores.
@@ -40,7 +41,13 @@ const authenticator = new StaticKeyAuthenticator([
   },
 ]);
 
-const application = createApplication(await createExecutionSystem());
+const application = createApplication(
+  await createExecutionSystem(),
+  undefined,
+  undefined,
+  undefined,
+  demoTrustedSources(),
+);
 const app = createApp(application, {
   callerAuth: { authenticator, auditSink: { record: async () => {} } },
   killSwitch,

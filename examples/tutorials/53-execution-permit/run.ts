@@ -20,6 +20,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // Historical note: this tutorial was originally "Execution Permit",
@@ -33,7 +34,7 @@ import {
 //
 
 //
-// CRYPTO_MODE=hybrid, set before RuntimeFactory.create() constructs
+// CRYPTO_MODE=hybrid, set before RuntimeFactory.create(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, demoTrustedSources()) constructs
 // the runtime's signing components -- Trust Records are additionally
 // signed with SECONDARY_SIGNATURE_PROVIDER (ML-DSA-65) alongside the
 // default Ed25519 signature, requiring both to verify.
@@ -96,6 +97,14 @@ const application = RuntimeFactory.create(
   executionSystem,
   undefined,
   demoApprovalSignalVerifier(),
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  demoTrustedSources(),
 );
 
 // --------------------------------------------------

@@ -16,12 +16,7 @@
     "disbursementAmount": "parameters.amount",
     "loanAccountId": "target"
   },
-  "unboundSignalReasons": {
-    "loanAccountApproved": "Result of checking the loan account against the lender's approved loan records; not a value the Intent itself declares.",
-    "beneficiaryAllowed": "Result of checking the payee against the beneficiary list recorded on the approved loan; not expressible via the Intent's target/parameters.",
-    "withinDisbursementLimit": "Result of comparing the amount against the per-transaction disbursement limit for this lender; computed independently of the Intent.",
-    "withinAggregateVelocityLimit": "Result of an independent check of the lender's disbursements over a rolling window (count and total); not expressible via the Intent's target/parameters."
-  },
+  "unboundSignalReasons": {},
   "approvalSignals": {
     "humanApproved": {
       "resourceId": "target",
@@ -139,5 +134,27 @@
         "reason": "Loan disbursement rejected because one or more required policy conditions were not satisfied."
       }
     }
-  ]
+  ],
+  "signalSources": {
+    "beneficiaryAllowed": {
+      "source": "trusted-test",
+      "claim": "fact.beneficiaryAllowed",
+      "subject": "target"
+    },
+    "loanAccountApproved": {
+      "source": "trusted-test",
+      "claim": "fact.loanAccountApproved",
+      "subject": "target"
+    },
+    "withinAggregateVelocityLimit": {
+      "source": "trusted-test",
+      "claim": "fact.withinAggregateVelocityLimit",
+      "subject": "target"
+    },
+    "withinDisbursementLimit": {
+      "source": "trusted-test",
+      "claim": "fact.withinDisbursementLimit",
+      "subject": "target"
+    }
+  }
 }

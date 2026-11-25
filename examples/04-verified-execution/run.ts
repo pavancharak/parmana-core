@@ -51,6 +51,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../shared/helpers/demo-trusted-sources.js";
 
 //
 // To run this example under the post-quantum provider instead of
@@ -146,7 +147,7 @@ function ensureKeysAvailable(): void {
  * it also records the HTTP response so this example can show it
  * as proof of Scenario 1.
  *
- * This Connector never runs directly: RuntimeFactory.create() is
+ * This Connector never runs directly: RuntimeFactory.create(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, demoTrustedSources()) is
  * wired with an ExecutionGateway wrapping this Connector, so every
  * request is verified (signature, expiry, TTL, content hash,
  * nonce) before this class ever sees it. The Gateway is the only
@@ -294,6 +295,14 @@ async function main(): Promise<void> {
     gateway,
     undefined,
     demoApprovalSignalVerifier(),
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    demoTrustedSources(),
   );
 
   console.log(

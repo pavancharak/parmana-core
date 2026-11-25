@@ -1,4 +1,5 @@
 import { demoApprovalVerifier } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 //
 // Found by adversarial testing: malformed JSON and oversized request
 // bodies both fell through express.json()'s error into the generic
@@ -23,7 +24,13 @@ console.log("==================================================");
 console.log();
 
 const executionSystem = await createExecutionSystem();
-const application = createApplication(executionSystem, demoApprovalVerifier());
+const application = createApplication(
+  executionSystem,
+  demoApprovalVerifier(),
+  undefined,
+  undefined,
+  demoTrustedSources(),
+);
 const app = createApp(application, { callerAuth: "disabled" });
 
 const server = app.listen(0);
