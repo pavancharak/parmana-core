@@ -83,4 +83,10 @@ export interface InboundCheckRepository {
   ): Promise<void>;
 
   findById(decisionId: string): Promise<InboundCheckRecord | null>;
+
+  /**
+   * Redeems an approved decision, once. Returns true the first time and false if it was already redeemed.
+   * The redemption is kept until the decision's expiry, so a redeemed decision cannot be used again.
+   */
+  redeem(decisionId: string, expiresAt: string): Promise<boolean>;
 }

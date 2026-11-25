@@ -55,6 +55,23 @@ export class PostgresInboundCheckRepository implements InboundCheckRepository {
     }
   }
 
+  /**
+   * One redemption per decision. The key is namespaced ("redeem:") so it cannot collide with an approval
+   * nonce in the same table. A second redemption hits the primary key and returns false.
+   */
+  async redeem(decisionId: string, expiresAt: string): Promise<boolean> {
+    try {
+      await this.pool.query(INSERT_CONSUMED_APPROVAL_NONCE_SQL, [
+        `redeem:${decisionId}`,
+        expiresAt,
+      ]);
+      return true;
+    } catch (error) {
+      if (isUniqueViolation(error)) return false;
+      throw error;
+    }
+  }
+
   async findById(decisionId: string): Promise<InboundCheckRecord | null> {
     const { rows } = await this.pool.query(SELECT_SQL, [decisionId]);
     const row = rows[0] as Row | undefined;

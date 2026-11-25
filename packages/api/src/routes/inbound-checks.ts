@@ -137,6 +137,15 @@ export interface InboundCheckDependencies {
   };
   readonly now?: () => Date;
   readonly audience: string;
+  /** Looks up a decision by id, for redemption. Required for POST /:decisionId/redeem. */
+  readonly findCheck?: (decisionId: string) => Promise<{
+    readonly decisionId: string;
+    readonly partnerId: string;
+    readonly outcome: "approved" | "rejected";
+    readonly expiresAt: string;
+  } | null>;
+  /** Redeems a decision once. Returns false if it was already redeemed. Required for redemption. */
+  readonly redeem?: (decisionId: string, expiresAt: string) => Promise<boolean>;
 }
 
 /** Canonical JSON: keys sorted at the top level, every field except signature. */
@@ -412,6 +421,60 @@ export function createInboundCheckRouter(
           ...recorded,
           signature,
           ...withSecondary(secondarySignature),
+        });
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  /**
+   * POST /:decisionId/redeem: the business system calls this before it acts on an approved decision.
+   * A decision is redeemed once. A second redemption is refused, so one approval cannot cover two
+   * actions. Only the partner the decision was issued to may redeem it, and only before it expires.
+   */
+  router.post(
+    "/:decisionId/redeem",
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const partnerId = req.callerId;
+        if (!partnerId) {
+          res.status(401).json({ error: "unauthenticated" });
+          return;
+        }
+        if (!deps.findCheck || !deps.redeem) {
+          res.status(503).json({ error: "redemption_not_configured" });
+          return;
+        }
+        const decisionId = String(req.params.decisionId ?? "");
+        const decision = await deps.findCheck(decisionId);
+        if (!decision) {
+          res.status(404).json({ error: "decision_not_found" });
+          return;
+        }
+        if (decision.partnerId !== partnerId) {
+          res.status(403).json({ error: "not_the_partner_for_this_decision" });
+          return;
+        }
+        if (decision.outcome !== "approved") {
+          res.status(409).json({ error: "decision_not_approved" });
+          return;
+        }
+        if (!(new Date(decision.expiresAt) > now())) {
+          res.status(409).json({ error: "decision_expired" });
+          return;
+        }
+        const first = await deps.redeem(
+          decision.decisionId,
+          decision.expiresAt,
+        );
+        if (!first) {
+          res.status(409).json({ error: "already_redeemed" });
+          return;
+        }
+        res.status(200).json({
+          decisionId: decision.decisionId,
+          redeemedAt: now().toISOString(),
         });
       } catch (error) {
         next(error);

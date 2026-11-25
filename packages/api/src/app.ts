@@ -581,6 +581,9 @@ export function createApp(
       createInboundCheckRouter({
         audience: options.inboundDecisions.audience,
         sign: options.inboundDecisions.sign,
+        findCheck: (decisionId) => inboundCheckRepository.findById(decisionId),
+        redeem: (decisionId, expiresAt) =>
+          inboundCheckRepository.redeem(decisionId, expiresAt),
         ...(options.inboundDecisions.signSecondary
           ? { signSecondary: options.inboundDecisions.signSecondary }
           : {}),

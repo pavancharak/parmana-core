@@ -70,10 +70,28 @@ Parmana refuses to start with inbound checks enabled (`INBOUND_AUDIENCE` set) un
 
 Act on a decision only before `expiresAt`. After that, check again.
 
+### Redeeming a decision (single use)
+
+An approved decision covers one action. Before your system acts on it, it must redeem the decision:
+
+`POST /v1/inbound/checks/{decisionId}/redeem`, authenticated as the partner the decision was issued to.
+
+| Status | Body                                | Meaning                                 | What you do                         |
+| ------ | ----------------------------------- | --------------------------------------- | ----------------------------------- |
+| `200`  | `decisionId`, `redeemedAt`          | The decision is now used up.            | Act once.                           |
+| `409`  | `already_redeemed`                  | The decision was used before.           | Do not act. Ask for a new decision. |
+| `409`  | `decision_not_approved`             | The decision was a refusal.             | Do not act.                         |
+| `409`  | `decision_expired`                  | The decision is older than ten minutes. | Ask for a new decision.             |
+| `403`  | `not_the_partner_for_this_decision` | Another partner's decision.             | Do not act.                         |
+| `404`  | `decision_not_found`                | No such decision.                       | Do not act.                         |
+
+Redeem first, then act. If the action fails after redemption, ask for a new decision; the old one cannot be reused.
+
 ## What your system must do
 
 1. **Call the check before any action** that an external agent requests. Do not call it after.
 2. **Refuse anything that is not `approved`**, including on a network error or a timeout. A timeout is not an approval.
+   2a. **Redeem the decision once, before acting** (see above). A decision you have not redeemed, or that is already redeemed, is not a permission to act.
 3. **Verify both signatures** over the decision fields, using Parmana's Ed25519 gateway public key and its ML-DSA-65 public key, before acting on an approval. Refuse the decision if either is missing or does not verify. The canonical bytes are defined by `canonicalCheckBytes` in core's [`packages/api/src/routes/inbound-checks.ts`](https://github.com/pavancharak/parmana-core/blob/main/packages/api/src/routes/inbound-checks.ts). Partner examples are in the connectors repository under `src/connectors/razorpay/partner-org-a/`.
 4. **Check `expiresAt`** and refuse an expired decision.
 5. **Keep your own record** of the decision id next to the action it allowed, so the two can be matched later.
