@@ -108,7 +108,7 @@ These are tracked outside this repository. Each needs an owner decision:
 
 - Security reports are with the maintainers.
 - G-133: there has been no live run between parmana-core and parmana-connect. Needs a public HTTPS endpoint for the connector.
-- G-134: the production connector key is not pinned. Needs its fingerprint confirmed through a second channel.
+- G-134: the production connector key is not pinned. Code now requires the pin while release-only is on (2026-11-25, parmana-connect branch `claude/g-134-pin-connector-key`). Needs its fingerprint confirmed through a second channel and set on the deployed connector.
 
 ## 4. Checking the repository
 
