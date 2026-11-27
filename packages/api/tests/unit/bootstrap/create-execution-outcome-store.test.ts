@@ -38,7 +38,9 @@ describe("createExecutionOutcomeStore", () => {
     delete process.env.DATABASE_URL;
 
     expect(() => createExecutionOutcomeStore()).toThrow(/DATABASE_URL/);
-    expect(() => createExecutionOutcomeStore()).toThrow(/ExecutionOutcomeStore/);
+    expect(() => createExecutionOutcomeStore()).toThrow(
+      /ExecutionOutcomeStore/,
+    );
   });
 
   it("never falls back to memory in production when DATABASE_URL is unconfigured", () => {
