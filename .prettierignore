@@ -49,3 +49,6 @@ infra/**/*.tfstate*
 # Supabase CLI state written by `supabase link` (ignored by git through supabase/.gitignore).
 # Prettier does not read .gitignore, so it needs its own entry here.
 supabase/.temp/
+
+# Machine-generated end-to-end records (docs/assurance/evidence). Their bytes are the evidence; formatting them would change the files a verifier reads.
+docs/assurance/evidence/

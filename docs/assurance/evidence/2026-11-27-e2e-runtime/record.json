@@ -1,0 +1,279 @@
+{
+  "trustRecordId": "43377b73-ae69-439b-9177-d022e2591f43",
+  "businessTransactionId": "339b6460-9f52-4137-9acb-45ca2c23b11a",
+  "transaction": {
+    "businessTransactionId": "339b6460-9f52-4137-9acb-45ca2c23b11a",
+    "metadata": {
+      "businessTransactionId": "339b6460-9f52-4137-9acb-45ca2c23b11a",
+      "correlationId": "8b732247-4319-49a6-b225-c601f39ed7b1",
+      "createdBy": "integration-test",
+      "createdAt": "2026-11-27T07:46:38.869Z"
+    },
+    "authority": {
+      "authorityId": "035b3f78-bc8a-4355-90b3-9de13563222e",
+      "authorityType": "USER",
+      "principalId": "integration-test",
+      "displayName": "Integration Test",
+      "issuedAt": "2026-11-27T07:46:38.869Z"
+    },
+    "authorization": {
+      "authorizationId": "5b398955-2381-40b1-a3de-9b5bba1e439c",
+      "authorityId": "035b3f78-bc8a-4355-90b3-9de13563222e",
+      "purpose": "Integration Test",
+      "authorizedAt": "2026-11-27T07:46:38.869Z"
+    },
+    "intent": {
+      "intentId": "5b840b5e-9911-4b9c-ba89-d0a0e576f7f0",
+      "authorizationId": "5b398955-2381-40b1-a3de-9b5bba1e439c",
+      "action": "test:fixture-execute",
+      "target": "vendor://payments",
+      "parameters": {
+        "paymentId": "payment-001",
+        "amount": 1000
+      },
+      "createdAt": "2026-11-27T07:46:38.869Z"
+    },
+    "policy": {
+      "name": "payment-limit",
+      "version": "1.0.0",
+      "schemaVersion": "1.0.0",
+      "contentHash": "4d04d7b82dc2111e1d62241970ef22a4903f35300297db36b4b83da49f2a0e60",
+      "governanceAnchor": {
+        "status": "VERIFIED",
+        "approvalRecordId": "eefc6d77-b55f-473b-81a5-a49723db62fc"
+      }
+    },
+    "signals": {
+      "vendorVerified": true,
+      "invoiceVerified": true,
+      "paymentApproved": true,
+      "sufficientFunds": true,
+      "paymentAmount": 1000,
+      "riskScore": 10,
+      "vendorId": "vendor://payments",
+      "humanApproved": true,
+      "approvalArtifact": {
+        "payload": {
+          "version": 1,
+          "approvalId": "023598de-dedb-4d57-bb5a-01b74be509ee",
+          "issuer": {
+            "approverId": "test-approver",
+            "keyId": "test-approver-key-1"
+          },
+          "issuedAt": "2026-11-27T07:46:38.869Z",
+          "expiresAt": "2026-11-27T08:01:38.869Z",
+          "capability": "test:fixture-execute",
+          "resourceId": "vendor://payments",
+          "scope": {
+            "field": "value",
+            "comparator": "lte",
+            "value": 1000
+          },
+          "nonce": "5e820657-6d74-47fd-95d5-22f876f460df"
+        },
+        "signature": {
+          "algorithm": "ed25519",
+          "keyId": "test-approver-key-1",
+          "value": "3t5IRLgypAQU6JCbl1XAvOFOc7kGDkCGb0XhXsfz+n8sU7z2TU2x2RXVnJ1gEilThCNZdq+3A2bAh5YcXUJaAQ==",
+          "signedAt": "2026-11-27T07:46:38.869Z"
+        }
+      }
+    },
+    "status": "RECEIVED",
+    "createdAt": "2026-11-27T07:46:38.891Z"
+  },
+  "authorization": {
+    "payload": {
+      "version": 1,
+      "authorizationId": "777cfac6-17df-4af7-ab4e-8458fc811cde",
+      "nonce": "027d5ae4-17cd-4794-8a1b-f5ed824022c2",
+      "decisionId": "23318746-e66a-49f2-bd5b-0cb2c56cb0fc",
+      "decisionOutcome": "APPROVED",
+      "businessTransactionId": "339b6460-9f52-4137-9acb-45ca2c23b11a",
+      "policyName": "payment-limit",
+      "policyVersion": "1.0.0",
+      "policyContentHash": "4d04d7b82dc2111e1d62241970ef22a4903f35300297db36b4b83da49f2a0e60",
+      "signalsHash": "f10d25b895a423dcd7a245c83a3ac383ea51728eda6951ef8ad212e9fc19d923",
+      "authorizedAt": "2026-11-27T07:46:38.899Z",
+      "expiresAt": "2026-11-27T07:48:38.899Z",
+      "businessTransactionHash": "e40977aef400ccf95a69b4465fa72235f3cc9dcddbf86fc15ac374324e0dbf2f"
+    },
+    "signature": "0CsFnFeyp5sElwELKiDf7gtRWJK9nl4vSCcntbYA4Mtdg1Va1EslRuAkofVAGUimQl+eo6lkaoceUPkjX19KBw==",
+    "keyId": "default",
+    "algorithm": "ed25519"
+  },
+  "executions": [
+    {
+      "executionId": "683afe56-1160-4586-98f0-c9b99b3b3566",
+      "businessTransactionId": "339b6460-9f52-4137-9acb-45ca2c23b11a",
+      "decision": {
+        "decisionId": "23318746-e66a-49f2-bd5b-0cb2c56cb0fc",
+        "evaluationMethod": {
+          "id": "deterministic-rules",
+          "version": "2"
+        },
+        "intentId": "5b840b5e-9911-4b9c-ba89-d0a0e576f7f0",
+        "policy": {
+          "name": "payment-limit",
+          "version": "1.0.0",
+          "schemaVersion": "1.0.0"
+        },
+        "signals": {
+          "vendorVerified": true,
+          "invoiceVerified": true,
+          "paymentApproved": true,
+          "sufficientFunds": true,
+          "paymentAmount": 1000,
+          "riskScore": 10,
+          "vendorId": "vendor://payments",
+          "humanApproved": true,
+          "approvalArtifact": {
+            "payload": {
+              "version": 1,
+              "approvalId": "023598de-dedb-4d57-bb5a-01b74be509ee",
+              "issuer": {
+                "approverId": "test-approver",
+                "keyId": "test-approver-key-1"
+              },
+              "issuedAt": "2026-11-27T07:46:38.869Z",
+              "expiresAt": "2026-11-27T08:01:38.869Z",
+              "capability": "test:fixture-execute",
+              "resourceId": "vendor://payments",
+              "scope": {
+                "field": "value",
+                "comparator": "lte",
+                "value": 1000
+              },
+              "nonce": "5e820657-6d74-47fd-95d5-22f876f460df"
+            },
+            "signature": {
+              "algorithm": "ed25519",
+              "keyId": "test-approver-key-1",
+              "value": "3t5IRLgypAQU6JCbl1XAvOFOc7kGDkCGb0XhXsfz+n8sU7z2TU2x2RXVnJ1gEilThCNZdq+3A2bAh5YcXUJaAQ==",
+              "signedAt": "2026-11-27T07:46:38.869Z"
+            }
+          }
+        },
+        "outcome": "APPROVED",
+        "reason": "Vendor payment authorized. Vendor verification, invoice verification, payment approval, funding, and risk assessment requirements were satisfied, with a verified human approval.",
+        "matchedRuleId": "approve-payment",
+        "evaluatedRules": 1,
+        "matchedPath": [
+          "approve-payment"
+        ],
+        "evidence": {
+          "status": "sufficient"
+        },
+        "evaluatedAt": "2026-11-27T07:46:38.899Z",
+        "assessment": {
+          "authority": {
+            "status": "AUTHORIZED",
+            "reason": "Capability \"test:fixture-execute\" is decided under its approved, current policy payment-limit 1.0.0. This says the action may be decided, not that this action is valid or was executed."
+          },
+          "businessValidation": {
+            "status": "NOT_EVALUATED",
+            "reason": "The policy declares no business facts to establish."
+          }
+        }
+      },
+      "status": "COMPLETED",
+      "mode": "SYNC",
+      "startedAt": "2026-11-27T07:46:38.900Z",
+      "metadata": {
+        "authorizationId": "777cfac6-17df-4af7-ab4e-8458fc811cde"
+      },
+      "previousChainHash": null,
+      "chainHash": "85770a1bc61e80406d8ff40aa5d28c3df60809a8ff0f06ce529e931013d6a2b5",
+      "chainSignature": {
+        "algorithm": "ed25519",
+        "keyId": "default",
+        "value": "h1neK6Phy0CuJjW7M/Ig33Hv9pugaPDozjNZWyKjgJxQhb505cRy9dtCXPX06qq+qiABxgc7gxwTR2++yCSQBQ==",
+        "signedAt": "2026-11-27T07:46:38.909Z"
+      },
+      "evidence": {
+        "businessTransactionId": "339b6460-9f52-4137-9acb-45ca2c23b11a",
+        "action": "test:fixture-execute",
+        "target": "vendor://payments",
+        "parameters": {
+          "paymentId": "payment-001",
+          "amount": 1000
+        },
+        "success": true,
+        "executedAt": "2026-11-27T07:46:38.907Z",
+        "attributes": {
+          "connector": {
+            "connectorId": "test-fixture",
+            "connectorVersion": "1.0.0",
+            "capability": "test:fixture-execute",
+            "sanitizedEndpoint": "vendor://payments",
+            "credentialProviderId": "static",
+            "requestSummary": {
+              "businessTransactionId": "339b6460-9f52-4137-9acb-45ca2c23b11a",
+              "action": "test:fixture-execute",
+              "target": "vendor://payments",
+              "parameters": {
+                "paymentId": "payment-001",
+                "amount": 1000
+              }
+            },
+            "responseSummary": {
+              "success": true,
+              "metadata": {}
+            },
+            "startedAt": "2026-11-27T07:46:38.907Z",
+            "completedAt": "2026-11-27T07:46:38.907Z",
+            "vendorConfirmationVerified": false,
+            "connectorEvidenceHash": "c07856e14e64fe56aba6b9eb1e3bf243e50c3a4105e15ed368dc633e23c8847d"
+          }
+        },
+        "correspondence": {
+          "schemaVersion": 1,
+          "authorizationNonce": "027d5ae4-17cd-4794-8a1b-f5ed824022c2",
+          "authorizedContentHash": "e40977aef400ccf95a69b4465fa72235f3cc9dcddbf86fc15ac374324e0dbf2f",
+          "dispatchedContentHash": "e40977aef400ccf95a69b4465fa72235f3cc9dcddbf86fc15ac374324e0dbf2f",
+          "dispatchedHashSource": "gateway",
+          "policyContentHash": "4d04d7b82dc2111e1d62241970ef22a4903f35300297db36b4b83da49f2a0e60"
+        }
+      },
+      "completedAt": "2026-11-27T07:46:38.908Z"
+    }
+  ],
+  "verifications": [
+    {
+      "verificationId": "3f667040-fcbd-45da-8a81-dcf6efcc6b74",
+      "businessTransactionId": "339b6460-9f52-4137-9acb-45ca2c23b11a",
+      "status": "VERIFIED",
+      "message": "Execution Trust Record verified successfully.",
+      "verifiedAt": "2026-11-27T07:46:38.912Z",
+      "trustRecordHash": "89dcc74c28a339d0ae073cc67dd9bc1495f41088a6ee03c4aa5c9728785edd7a"
+    }
+  ],
+  "receipts": [
+    {
+      "receiptId": "a2fc67ed-49c5-45e5-b8ce-a66ee7ae5868",
+      "businessTransactionId": "339b6460-9f52-4137-9acb-45ca2c23b11a",
+      "trustRecordHash": "89dcc74c28a339d0ae073cc67dd9bc1495f41088a6ee03c4aa5c9728785edd7a",
+      "receiptHash": "008b81a9070f7816e96b51a6fedd8b71a260364d378295e0ed7d2ea59e6085a3",
+      "issuedAt": "2026-11-27T07:46:38.913Z",
+      "algorithm": "ed25519",
+      "signature": "mL9RMAyN8f29fmZyxbNDT4MFGmgkwV2+NnKu1tB9jQiFNibh0t/beJy4ITS/1zN0LPhAAtuvYYxz9vXLVtxEDw=="
+    }
+  ],
+  "evidenceAnchor": {
+    "policyContentHash": "4d04d7b82dc2111e1d62241970ef22a4903f35300297db36b4b83da49f2a0e60",
+    "governanceAnchorStatus": "VERIFIED",
+    "connectorEvidenceHash": "c07856e14e64fe56aba6b9eb1e3bf243e50c3a4105e15ed368dc633e23c8847d",
+    "anchorHash": "c6ce3d04153ea4711f3092a68c0ff76ef30676b66bf2677d6f32ca8d00f3b24f"
+  },
+  "createdAt": "2026-11-27T07:46:38.909Z",
+  "updatedAt": "2026-11-27T07:46:38.909Z",
+  "trustRecordHash": "89dcc74c28a339d0ae073cc67dd9bc1495f41088a6ee03c4aa5c9728785edd7a",
+  "schemaVersion": 3,
+  "signatures": [
+    {
+      "algorithm": "ed25519",
+      "keyId": "default",
+      "signature": "wtqUysVw8f4mb8sWChWJvDnfYRuoP+Ex2BsNAccHAECjszSbVf5cQ96WVrRU+KcXHqWzM0lCwWvC0bGEhql8CA=="
+    }
+  ]
+}

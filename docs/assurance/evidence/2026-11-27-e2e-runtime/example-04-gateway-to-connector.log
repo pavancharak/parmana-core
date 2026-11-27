@@ -1,0 +1,518 @@
+========================================
+ Parmana Example 04 - Verified Execution
+========================================
+No keys found at /home/user/parmana-core/keys; generating ed25519 keys into /home/user/parmana-core/examples/04-verified-execution/.keys via generate-keypair.ts ...
+ed25519 keypair generated at /home/user/parmana-core/examples/04-verified-execution/.keys (default.private.pem / default.public.pem).
+
+========================================
+ RECEIVING SIDE: Starting Verification Server
+========================================
+
+Listening on http://127.0.0.1:38893
+
+========================================
+ PARMANA SIDE: Configure Runtime
+========================================
+
+{
+  event: 'runtime_engine_constructed',
+  signalStateVerifierConfigured: true,
+  capabilityPolicyBinderConfigured: true,
+  policyExecutionVerifierConfigured: false,
+  policyGovernanceAnchorResolverConfigured: false,
+  signingReadinessConfigured: false,
+  executionIntentsConfigured: false,
+  refusalRecordingConfigured: false
+}
+Runtime configured with an ExecutionGateway — the sole boundary through which Parmana releases approved requests to a Connector. Every request is verified (signature, expiry, TTL, content hash, nonce) before the Connector ever sees it, which forwards to http://127.0.0.1:38893.
+
+========================================
+ PARMANA SIDE: Submit Approved Business Transaction
+========================================
+
+
+========================================
+ Business Transaction
+========================================
+
+{
+  "businessTransactionId": "txn-verified-000001",
+  "metadata": {
+    "businessTransactionId": "txn-verified-000001",
+    "correlationId": "corr-verified-000001",
+    "submittedBy": "example-04"
+  },
+  "authority": {
+    "authorityId": "authority-001",
+    "authorityType": "USER",
+    "principalId": "john.doe",
+    "displayName": "John Doe",
+    "issuedAt": "2026-01-01T00:00:00Z"
+  },
+  "authorization": {
+    "authorizationId": "authorization-001",
+    "authorityId": "authority-001",
+    "purpose": "Vendor Payment",
+    "issuedAt": "2026-01-01T00:00:00Z"
+  },
+  "intent": {
+    "intentId": "intent-001",
+    "authorizationId": "authorization-001",
+    "action": "payment-limit",
+    "target": "vendor/acme-supplies",
+    "parameters": {
+      "invoiceId": "invoice-1001",
+      "amount": 5000
+    },
+    "createdAt": "2026-01-01T00:00:00Z"
+  },
+  "policy": {
+    "name": "payment-limit",
+    "version": "1.0.0",
+    "schemaVersion": "1.0.0"
+  },
+  "signals": {
+    "vendorVerified": true,
+    "invoiceVerified": true,
+    "paymentApproved": true,
+    "sufficientFunds": true,
+    "paymentAmount": 5000,
+    "riskScore": 10,
+    "vendorId": "vendor/acme-supplies"
+  },
+  "status": "RECEIVED",
+  "createdAt": "2026-01-01T00:00:00Z"
+}
+
+Runtime execution complete. This internally: evaluated the policy, signed the Execution Authorization, forwarded the request to the receiving side (Scenario 1, below), verified the resulting Trust Record, and generated a Receipt.
+
+========================================
+ Signed Execution Authorization attached to the outgoing ConnectorRequest
+========================================
+
+{
+  "payload": {
+    "version": 1,
+    "authorizationId": "32d24ff0-c5b8-4e6b-8161-017aff2310e2",
+    "nonce": "015aa1b0-b023-4ab3-a07a-79e001f05ef4",
+    "decisionId": "f06be4b2-7ca8-4d5f-a315-01155a03ee6b",
+    "decisionOutcome": "APPROVED",
+    "businessTransactionId": "txn-verified-000001",
+    "policyName": "payment-limit",
+    "policyVersion": "1.0.0",
+    "policyContentHash": "4d04d7b82dc2111e1d62241970ef22a4903f35300297db36b4b83da49f2a0e60",
+    "signalsHash": "484bde25733cbf7053b6ebd5815da64ee44dadb5accc226dcbd6a1bb7b9f32dc",
+    "submittedBy": "example-04",
+    "authorizedAt": "2026-11-27T08:00:33.964Z",
+    "expiresAt": "2026-11-27T08:02:33.964Z",
+    "businessTransactionHash": "792214ff6123c60dd0a68d9c2d4321dd6c1fe7462fd3b3a9fd2ec7e3ce70d1a2"
+  },
+  "signature": "4SCQ57B4M5EdTrHTDTWz085Au1kv1lUWyyhkTJ+KNkaHBxUCqhHC3f9YJB1dxd+RdpepRTaCMCHVvhrE8LJjAg==",
+  "keyId": "default",
+  "algorithm": "ed25519"
+}
+
+========================================
+ Gateway verification result (recorded on the ConnectorRequest)
+========================================
+
+{
+  "valid": true,
+  "checks": {
+    "versionSupported": true,
+    "signatureVerified": true,
+    "notExpired": true,
+    "ttlWithinPolicy": true,
+    "businessTransactionHashMatches": true,
+    "decisionApproved": true,
+    "authorizationNotRevoked": true,
+    "verificationKeyScope": true,
+    "policyStillCurrent": true,
+    "policyGovernanceVerified": true,
+    "signalsStillCurrent": true,
+    "nonceUnseen": true
+  }
+}
+
+========================================
+ Execution Trust Record
+========================================
+
+{
+  "trustRecordId": "176a2573-4ec7-4d27-ba1d-16274484ad4b",
+  "businessTransactionId": "txn-verified-000001",
+  "transaction": {
+    "businessTransactionId": "txn-verified-000001",
+    "metadata": {
+      "businessTransactionId": "txn-verified-000001",
+      "correlationId": "corr-verified-000001",
+      "submittedBy": "example-04"
+    },
+    "authority": {
+      "authorityId": "authority-001",
+      "authorityType": "USER",
+      "principalId": "john.doe",
+      "displayName": "John Doe",
+      "issuedAt": "2026-01-01T00:00:00Z"
+    },
+    "authorization": {
+      "authorizationId": "authorization-001",
+      "authorityId": "authority-001",
+      "purpose": "Vendor Payment",
+      "issuedAt": "2026-01-01T00:00:00Z"
+    },
+    "intent": {
+      "intentId": "intent-001",
+      "authorizationId": "authorization-001",
+      "action": "payment-limit",
+      "target": "vendor/acme-supplies",
+      "parameters": {
+        "invoiceId": "invoice-1001",
+        "amount": 5000
+      },
+      "createdAt": "2026-01-01T00:00:00Z"
+    },
+    "policy": {
+      "name": "payment-limit",
+      "version": "1.0.0",
+      "schemaVersion": "1.0.0",
+      "contentHash": "4d04d7b82dc2111e1d62241970ef22a4903f35300297db36b4b83da49f2a0e60"
+    },
+    "signals": {
+      "vendorVerified": true,
+      "invoiceVerified": true,
+      "paymentApproved": true,
+      "sufficientFunds": true,
+      "paymentAmount": 5000,
+      "riskScore": 10,
+      "vendorId": "vendor/acme-supplies",
+      "humanApproved": true,
+      "approvalArtifact": {
+        "payload": {
+          "version": 1,
+          "approvalId": "d34a5ae6-08fb-4427-8786-6c67ac7b4201",
+          "issuer": {
+            "approverId": "demo-approver",
+            "keyId": "demo-approver-key-1"
+          },
+          "issuedAt": "2026-11-27T08:00:33.960Z",
+          "expiresAt": "2026-11-27T08:15:33.960Z",
+          "capability": "payment-limit",
+          "resourceId": "vendor/acme-supplies",
+          "scope": {
+            "field": "value",
+            "comparator": "lte",
+            "value": 5000
+          },
+          "nonce": "57fc38c7-dc49-4b78-a56f-a7df3ca65935"
+        },
+        "signature": {
+          "algorithm": "ed25519",
+          "keyId": "demo-approver-key-1",
+          "value": "CoFZPqjmsoTQNBxN0SHVG+JLmq/6ZAbDCcsnViJkmHbLN7e7TGdi35BJi2TZBNDLim6tFUikgzOMRiqi9YUyDw==",
+          "signedAt": "2026-11-27T08:00:33.960Z"
+        }
+      }
+    },
+    "status": "RECEIVED",
+    "createdAt": "2026-01-01T00:00:00Z"
+  },
+  "authorization": {
+    "payload": {
+      "version": 1,
+      "authorizationId": "32d24ff0-c5b8-4e6b-8161-017aff2310e2",
+      "nonce": "015aa1b0-b023-4ab3-a07a-79e001f05ef4",
+      "decisionId": "f06be4b2-7ca8-4d5f-a315-01155a03ee6b",
+      "decisionOutcome": "APPROVED",
+      "businessTransactionId": "txn-verified-000001",
+      "policyName": "payment-limit",
+      "policyVersion": "1.0.0",
+      "policyContentHash": "4d04d7b82dc2111e1d62241970ef22a4903f35300297db36b4b83da49f2a0e60",
+      "signalsHash": "484bde25733cbf7053b6ebd5815da64ee44dadb5accc226dcbd6a1bb7b9f32dc",
+      "submittedBy": "example-04",
+      "authorizedAt": "2026-11-27T08:00:33.964Z",
+      "expiresAt": "2026-11-27T08:02:33.964Z",
+      "businessTransactionHash": "792214ff6123c60dd0a68d9c2d4321dd6c1fe7462fd3b3a9fd2ec7e3ce70d1a2"
+    },
+    "signature": "4SCQ57B4M5EdTrHTDTWz085Au1kv1lUWyyhkTJ+KNkaHBxUCqhHC3f9YJB1dxd+RdpepRTaCMCHVvhrE8LJjAg==",
+    "keyId": "default",
+    "algorithm": "ed25519"
+  },
+  "executions": [
+    {
+      "executionId": "23e784a6-61f8-4ffc-a311-dd29795353f2",
+      "businessTransactionId": "txn-verified-000001",
+      "decision": {
+        "decisionId": "f06be4b2-7ca8-4d5f-a315-01155a03ee6b",
+        "evaluationMethod": {
+          "id": "deterministic-rules",
+          "version": "2"
+        },
+        "intentId": "intent-001",
+        "policy": {
+          "name": "payment-limit",
+          "version": "1.0.0",
+          "schemaVersion": "1.0.0"
+        },
+        "signals": {
+          "vendorVerified": true,
+          "invoiceVerified": true,
+          "paymentApproved": true,
+          "sufficientFunds": true,
+          "paymentAmount": 5000,
+          "riskScore": 10,
+          "vendorId": "vendor/acme-supplies",
+          "humanApproved": true,
+          "approvalArtifact": {
+            "payload": {
+              "version": 1,
+              "approvalId": "d34a5ae6-08fb-4427-8786-6c67ac7b4201",
+              "issuer": {
+                "approverId": "demo-approver",
+                "keyId": "demo-approver-key-1"
+              },
+              "issuedAt": "2026-11-27T08:00:33.960Z",
+              "expiresAt": "2026-11-27T08:15:33.960Z",
+              "capability": "payment-limit",
+              "resourceId": "vendor/acme-supplies",
+              "scope": {
+                "field": "value",
+                "comparator": "lte",
+                "value": 5000
+              },
+              "nonce": "57fc38c7-dc49-4b78-a56f-a7df3ca65935"
+            },
+            "signature": {
+              "algorithm": "ed25519",
+              "keyId": "demo-approver-key-1",
+              "value": "CoFZPqjmsoTQNBxN0SHVG+JLmq/6ZAbDCcsnViJkmHbLN7e7TGdi35BJi2TZBNDLim6tFUikgzOMRiqi9YUyDw==",
+              "signedAt": "2026-11-27T08:00:33.960Z"
+            }
+          }
+        },
+        "outcome": "APPROVED",
+        "reason": "Vendor payment authorized. Vendor verification, invoice verification, payment approval, funding, and risk assessment requirements were satisfied, with a verified human approval.",
+        "matchedRuleId": "approve-payment",
+        "evaluatedRules": 1,
+        "matchedPath": [
+          "approve-payment"
+        ],
+        "evidence": {
+          "status": "sufficient"
+        },
+        "evaluatedAt": "2026-11-27T08:00:33.964Z",
+        "assessment": {
+          "authority": {
+            "status": "AUTHORIZED",
+            "reason": "Capability \"payment-limit\" is decided under its approved, current policy payment-limit 1.0.0, for caller example-04. This says the action may be decided, not that this action is valid or was executed."
+          },
+          "businessValidation": {
+            "status": "NOT_EVALUATED",
+            "reason": "The policy declares no business facts to establish."
+          }
+        }
+      },
+      "status": "COMPLETED",
+      "mode": "SYNC",
+      "startedAt": "2026-11-27T08:00:33.965Z",
+      "metadata": {
+        "authorizationId": "32d24ff0-c5b8-4e6b-8161-017aff2310e2"
+      },
+      "previousChainHash": null,
+      "chainHash": "a86cc5a2ca8f588f2c7f1de3461ecd1d8bd4b256808c4a8817e136e76e553e9c",
+      "chainSignature": {
+        "algorithm": "ed25519",
+        "keyId": "default",
+        "value": "ng3lj0lkn+pVzrXI53Mt80g/DRZNfEvoB0q/BRuzyFpLlKgOksSv2n8n82wBXTcKa6h17cH6kK1NqOrFCJgpAA==",
+        "signedAt": "2026-11-27T08:00:34.000Z"
+      },
+      "evidence": {
+        "businessTransactionId": "txn-verified-000001",
+        "action": "payment-limit",
+        "target": "vendor/acme-supplies",
+        "parameters": {
+          "invoiceId": "invoice-1001",
+          "amount": 5000
+        },
+        "success": true,
+        "executedAt": "2026-11-27T08:00:33.999Z",
+        "attributes": {
+          "accepted": true,
+          "businessTransactionId": "txn-verified-000001",
+          "checks": {
+            "versionSupported": true,
+            "signatureVerified": true,
+            "notExpired": true,
+            "ttlWithinPolicy": true,
+            "nonceUnseen": true
+          }
+        },
+        "correspondence": {
+          "schemaVersion": 1,
+          "authorizationNonce": "015aa1b0-b023-4ab3-a07a-79e001f05ef4",
+          "authorizedContentHash": "792214ff6123c60dd0a68d9c2d4321dd6c1fe7462fd3b3a9fd2ec7e3ce70d1a2",
+          "dispatchedContentHash": "792214ff6123c60dd0a68d9c2d4321dd6c1fe7462fd3b3a9fd2ec7e3ce70d1a2",
+          "dispatchedHashSource": "gateway",
+          "policyContentHash": "4d04d7b82dc2111e1d62241970ef22a4903f35300297db36b4b83da49f2a0e60"
+        }
+      },
+      "completedAt": "2026-11-27T08:00:34.000Z"
+    }
+  ],
+  "verifications": [
+    {
+      "verificationId": "1201299c-4152-49f8-b8c8-110089b5c6d9",
+      "businessTransactionId": "txn-verified-000001",
+      "status": "VERIFIED",
+      "message": "Execution Trust Record verified successfully.",
+      "verifiedAt": "2026-11-27T08:00:34.002Z",
+      "trustRecordHash": "3b14ab3f09b949c84e7d43a70279da2e513a48e7ec1ed64369e8b5a259584f21"
+    }
+  ],
+  "receipts": [
+    {
+      "receiptId": "5dda5f5c-c816-4ba9-8943-0bdea7ef3412",
+      "businessTransactionId": "txn-verified-000001",
+      "trustRecordHash": "3b14ab3f09b949c84e7d43a70279da2e513a48e7ec1ed64369e8b5a259584f21",
+      "receiptHash": "f3de16facb66d3b3b988414dd215d3716153c86e9509797220eca808b9b8058c",
+      "issuedAt": "2026-11-27T08:00:34.003Z",
+      "algorithm": "ed25519",
+      "signature": "KmZC65C8D5zJxv0mStKtsDkqhXo7hcVnA9XANZ0PHdTwLo/eOv7aHNko2CFAezPmgqr9w6W4kpbCZdohgfXVDw=="
+    }
+  ],
+  "evidenceAnchor": {
+    "policyContentHash": "4d04d7b82dc2111e1d62241970ef22a4903f35300297db36b4b83da49f2a0e60",
+    "anchorHash": "1bd894317e55b315a0ebc53fea6571405dfd6bcee8cd5f608df0ddaea23c5fb4"
+  },
+  "createdAt": "2026-11-27T08:00:34.000Z",
+  "updatedAt": "2026-11-27T08:00:34.000Z",
+  "trustRecordHash": "3b14ab3f09b949c84e7d43a70279da2e513a48e7ec1ed64369e8b5a259584f21",
+  "schemaVersion": 3,
+  "signatures": [
+    {
+      "algorithm": "ed25519",
+      "keyId": "default",
+      "signature": "HPeFyc/+6b3nIJX5y8ht0u9R3+nNEyZD8bArByXWWYnGZszseMz40wJK30A8pOusRSO080Q0F8ECF+bRNRvZDw=="
+    }
+  ]
+}
+
+========================================
+ RECEIVING SIDE: Scenario 1 - Valid envelope (already happened above)
+========================================
+
+HTTP 200
+
+========================================
+ Response body
+========================================
+
+{
+  "accepted": true,
+  "businessTransactionId": "txn-verified-000001",
+  "checks": {
+    "versionSupported": true,
+    "signatureVerified": true,
+    "notExpired": true,
+    "ttlWithinPolicy": true,
+    "nonceUnseen": true
+  }
+}
+
+========================================
+ RECEIVING SIDE: Scenario 2 - Replayed envelope
+========================================
+
+HTTP 403
+
+========================================
+ Response body
+========================================
+
+{
+  "error": "authorization invalid",
+  "checks": {
+    "versionSupported": true,
+    "signatureVerified": true,
+    "notExpired": true,
+    "ttlWithinPolicy": true,
+    "nonceUnseen": false
+  }
+}
+
+========================================
+ RECEIVING SIDE: Scenario 3 - Tampered payload
+========================================
+
+HTTP 403
+
+========================================
+ Response body
+========================================
+
+{
+  "error": "authorization invalid",
+  "checks": {
+    "versionSupported": true,
+    "signatureVerified": false,
+    "notExpired": true,
+    "ttlWithinPolicy": true,
+    "nonceUnseen": false
+  }
+}
+
+========================================
+ RECEIVING SIDE: Scenario 4 - Missing authorization (an agent bypasses Parmana)
+========================================
+
+HTTP 401
+
+========================================
+ Response body
+========================================
+
+{
+  "error": "authorization required"
+}
+
+========================================
+ PARMANA SIDE: Scenario 5 - Authorized envelope + modified payload (rejected at the Gateway, never reaches the Connector)
+========================================
+
+
+========================================
+ Gateway verification result
+========================================
+
+{
+  "valid": false,
+  "checks": {
+    "versionSupported": true,
+    "signatureVerified": true,
+    "notExpired": true,
+    "ttlWithinPolicy": true,
+    "businessTransactionHashMatches": false,
+    "decisionApproved": true,
+    "authorizationNotRevoked": true,
+    "verificationKeyScope": true,
+    "nonceUnseen": false
+  },
+  "hashMismatch": {
+    "expected": "792214ff6123c60dd0a68d9c2d4321dd6c1fe7462fd3b3a9fd2ec7e3ce70d1a2",
+    "actual": "ae3f52c1a2a2377013dbc5efc93fa970979376844608eed950d281180cb77a13"
+  }
+}
+
+Released to Connector: false (businessTransactionHashMatches: false)
+
+========================================
+ Summary
+========================================
+
+1. Valid envelope           -> HTTP 200 (accepted)
+2. Replayed envelope        -> HTTP 403 (nonceUnseen: false)
+3. Tampered payload         -> HTTP 403 (signatureVerified: false)
+4. Missing authorization    -> HTTP 401 (an agent calling directly, bypassing Parmana)
+5. Authorized + modified    -> rejected at the Gateway (valid: false, businessTransactionHashMatches: false)
+
+Example Complete

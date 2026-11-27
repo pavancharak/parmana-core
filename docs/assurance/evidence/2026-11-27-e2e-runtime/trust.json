@@ -1,0 +1,13 @@
+{
+  "keys": [
+    {
+      "keyId": "default",
+      "algorithm": "ed25519",
+      "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAXmnljYOe6q2k1LqQqOWYgchqr5m/45YbNL+xerf4VVo=\n-----END PUBLIC KEY-----\n",
+      "fingerprint": "sha256:ef0860022fc4fe04131b15d60e4e3e406628e93656a5e072d1c98e2a10fe41f3",
+      "validFrom": "2026-01-01T00:00:00.000Z",
+      "validUntil": null,
+      "compromised": false
+    }
+  ]
+}
