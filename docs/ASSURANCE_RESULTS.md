@@ -554,3 +554,38 @@ Open items:
 5. `packages/execution-gateway/` is owned by `@pavancharak` in `.github/CODEOWNERS`. The new test file and the `packages/api` change need that owner's review.
 
 **Phase status change:** none. This work covers one fail-closed item listed under Phase 2, item 3. Phase 2 stays "Not started" because its exit criteria are not met.
+
+### 2026-11-27: full suite and database-backed tests on a local PostgreSQL 16
+
+- **Command:** `npm test` with `DATABASE_URL` and `TEST_DATABASE_URL` set to a local PostgreSQL 16.15 at `127.0.0.1:5432`, migrations applied with `psql -f scripts/apply-all-migrations.sql`. Then `npx vitest run packages/api/tests/integration/replay.integration.test.ts` and `npx vitest run packages/storage/tests/contract packages/api/tests/integration/evidence-append-only.integration.test.ts packages/api/tests/integration/policy-approval-read-grants.integration.test.ts`.
+- **Runtime:** Node 24.22.3, Linux sandbox. PostgreSQL 16.15 (local, trust auth, password set for the test URL). Vitest reported: Duration 105.47s (import 46%, tests 38%, transform 8%, setup 6%, worker 1%).
+- **Commit tested:** `e0e0a98` (documentation on top of `799fcab` and `a197a1b`). The code under test is `799fcab`.
+- **Branch:** `claude/trusting-goodall-djgzgs`
+- **Run by:** session (Claude Code), at the owner's direction
+
+**Results**
+
+| Measurement                                                         | Value                                                    |
+| ------------------------------------------------------------------- | -------------------------------------------------------- |
+| `npm test` test files                                               | 501 passed, 1 skipped (502)                              |
+| `npm test` tests                                                    | 4,659 passed, 1 expected fail, 1 skipped, 2 todo (4,663) |
+| Replay integration                                                  | 2 of 2 pass                                              |
+| Storage contract, evidence append-only, policy-approval read grants | 24 of 24 pass                                            |
+| Exit code                                                           | 0                                                        |
+
+**Checks not run**
+
+- The CI-only steps that need Docker (`postgres:16` image for `psql`), the cross-version Node matrix, and the separate workflows (CodeQL, scorecard, DCO, signatures, dependency review). Not run here.
+- The migration test against a database that already holds old audit rows (a separate CI step). Not run here.
+- The commit signature check on GitHub. The GitHub commit API used here did not return a verification field, so the verified badge was not read.
+
+**Survivor classification:** not applicable. No mutation run.
+
+**Open items**
+
+1. GW-1: production wiring does not pass the gateway's `connector` option, but no test asserts it.
+2. GW-2: the connector boundary is the custody of the release-signing key. The connectors execute endpoint checks an Ed25519 signature over the release (key ID `default`), not the original authorization. Core signs releases in `GatewayExternalAdapter` with the same `SignerBootstrap` signer it uses for authorizations. Open: whether that signer is reachable outside the gateway, and whether the connectors can be called without a release the gateway signed.
+3. GW-3: audit failure after a successful connector call is not verified.
+4. The branch showed no GitHub Actions runs when checked, so CI on `e0e0a98` has not been confirmed.
+
+**Phase status change:** none.
