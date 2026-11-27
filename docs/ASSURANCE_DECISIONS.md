@@ -159,8 +159,9 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 | D12      | Pending                                                        |            |                                          |
 | D13      | Adopted: permanent direction                                   | 2026-11-14 | Recorded in session at owner's direction |
 | D14      | Adopted: razorpay:refund policy version                        | 2026-11-14 | Owner confirmed version 1.3.0            |
-| D23      | Partly adopted: G-77 change; the rest pending                  | 2026-11-19 | Recorded in session at owner's direction |
+| D23      | Adopted: G-77 change; points 1 to 3 resolved by D27            | 2026-11-19 | Recorded in session at owner's direction |
 | D24      | Decided: v3 only, v2 discarded (implementation pending review) | 2026-11-21 | Section D24 below                        |
+| D27      | Adopted: new policy, neutral name now (no window), no tier 1   | 2026-11-19 | Owner approved all three                 |
 
 ---
 
@@ -452,3 +453,28 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 | `scripts/check-survivor-classification.ts` | Used as the gate once the phase is complete                                   |
 | `docs/assurance/REQUIREMENTS_TRACE.md`     | Becomes the input to the requirement gate                                     |
 | `docs/assurance/EXECUTION_PLAN.md`         | Section 9 updated: the four items are decided                                 |
+
+---
+
+## D27. Long-term fix for the razorpay:refund binding (19 November 2026)
+
+- **Reference:** D27
+- **Source:** D23 (open points 1 to 3); docs/guides/policy-writing.md, section 7
+- **Date recorded:** 2026-11-19
+- **Owner:** Pavan Charak
+- **Supersedes:** D16 (capability naming)
+
+**Owner decision (approved, all three):**
+
+1. **Policy.** Write a new policy for the refund action from its rule, not from any existing policy. The draft in `docs/guides/policy-writing.md`, section 7, is the starting point. It goes through maker-checker with its own version before it takes effect. Nothing binds to it until it is approved.
+2. **Name.** Use a neutral capability name, of the form `<domain>:<action>` (for example `payments:refund`). The connector name appears in one registry table only. The old name is removed now, with no transition window and no alias, because there are no existing users or live traffic for it. This supersedes D16, which embedded the connector name.
+3. **Tier 1.** Not added. Every approval keeps a signed human approval, as the validator enforces. Automatic approval within a threshold is not part of this decision and would need its own reviewed change to the validator.
+
+**Steps that follow (each its own change, with its own review):**
+
+1. Maker-checker approves the new policy version (point 1). The owner's approval is needed for the signature.
+2. Rename the old name to the neutral name in live code and tests, in connectors and in parmana-core, in one change per repository. Signed records (policies, evaluations, proof artifacts, the audit log and the decision log) keep the name they were signed with. They are history, not live code.
+3. Bind the new name to the approved policy version in the canonical table, using the G-77 guard as amended by D23.
+4. Bind the neutral name to the approved policy version, once step 1 is approved.
+
+**Not changed by this decision:** the validator, the tier model in the design documents, and the signed records that already exist. Commit signing is a separate open item and is not decided here.
