@@ -589,3 +589,39 @@ Open items:
 4. The branch showed no GitHub Actions runs when checked, so CI on `e0e0a98` has not been confirmed.
 
 **Phase status change:** none.
+
+### 2026-11-27: end-to-end runtime record, checked by the independent verifier
+
+- **Command:** a temporary vitest test (removed afterwards, not committed) ran `POST /execute`, `/receipt`, `/verify` and `/replay` through the API test app, with a local PostgreSQL 16 and migrations applied. The public key was copied from the test key directory. Then `node bin/parmana-verify.mjs record.json trust.json` and the same command on a tampered copy, run from a clone of `pavancharak/parmana-verifier` at commit `4eb6dff`.
+- **Runtime:** Node 24.22.3, Linux sandbox. The verifier reads only the record and the trust file, with no network access.
+- **Commit tested:** `42837e9` (core, branch `claude/trusting-goodall-djgzgs`). Verifier `4eb6dff`.
+- **Branch:** `claude/trusting-goodall-djgzgs`
+- **Run by:** session (Claude Code), at the owner's direction
+
+**Results**
+
+| Measurement                                                             | Value                                                                                                          |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `POST /execute` status                                                  | 200. The response body is an Execution Trust Record, schema version 3, with one Ed25519 signature (`default`). |
+| Independent verifier, runtime record                                    | `valid: true`, exit 0. Trust record hash and signature pass. Correspondence `passed` for one execution.        |
+| Independent verifier, record with one field changed                     | `valid: false`, exit 1. Hash mismatch and signature failure.                                                   |
+| Generator-signed hybrid record (`scripts/generate-verifier-vectors.ts`) | `valid: true`, exit 0. Its tampered copy fails the same way.                                                   |
+
+Evidence: `docs/assurance/evidence/2026-11-27-e2e-runtime/`. It holds the transaction, record, receipt, verify and replay responses, trust file, public key, tampered copy, verifier output, and a README. It contains no private key.
+
+**Checks not run**
+
+- The production signing keys. This run used the test environment's ephemeral key.
+- Out-of-band key pinning. The fingerprint was computed by the verifier from the key this test process produced.
+- An independent review of the verifier.
+- The full flow through the gateway and a real connector. This run covers declare, execute, receipt, verify and replay through the API. It does not show the connector call.
+
+**Survivor classification:** not applicable.
+
+**Open items**
+
+1. Run the same export against a production-like key, with the fingerprint published and checked out of band.
+2. Repeat with a real connector, to cover the executed side effect.
+3. GW-1 to GW-3 from earlier entries remain open.
+
+**Phase status change:** none.
