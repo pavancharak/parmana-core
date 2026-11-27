@@ -625,3 +625,45 @@ Evidence: `docs/assurance/evidence/2026-11-27-e2e-runtime/`. It holds the transa
 3. GW-1 to GW-3 from earlier entries remain open.
 
 **Phase status change:** none.
+
+### 2026-11-27: follow-up on the four limits of the end-to-end run
+
+- **Commands:** `grep` of `docs/` for published public keys and fingerprints; `PARMANA_POLICY_DIR=./fixtures/policies npx tsx examples/04-verified-execution/run.ts`; `npm test` in a clone of `pavancharak/parmana-verifier` at `4eb6dff`.
+- **Runtime:** Node 24.22.3, Linux sandbox.
+- **Commit tested:** `bd2a617` (core). Verifier `4eb6dff`.
+- **Branch:** `claude/trusting-goodall-djgzgs`
+- **Run by:** session (Claude Code), at the owner's direction
+
+**Each limit, and what this run did about it**
+
+1. **Production keys: not closed.** No production public key is published in the repository. The two fingerprints in the docs are a local-run example (`60fb0c…`, in `developer-portal/security/evidence-verification.md`) and a container image digest (`7e17df…`, not a key). Production signing is in AWS KMS, and this session has no AWS access. An operator with that access must export the production public key.
+2. **Key pinning: not closed.** The out-of-band comparison needs a second channel from the owner or operator. Nothing here can perform it.
+3. **Connector call: partly closed.** Example 04 drives the gateway through `RecordingHttpConnector` to a local receiver. Scenario 1 (valid envelope) is accepted with HTTP 200, and the connector receives the authorized request. Scenario 5 (modified payload) is refused at the gateway, and the connector is not called. This is a local receiver, not a vendor, so no real side effect was produced.
+4. **Verifier review: not closed.** The verifier's own suite passes, 103 of 103. That shows its claims reproduce. It is not an independent review.
+
+**Results**
+
+| Measurement                             | Value                                        |
+| --------------------------------------- | -------------------------------------------- |
+| `examples/04-verified-execution/run.ts` | exit 0. Scenarios 1 to 5 as described above. |
+| Verifier `npm test`                     | 103 tests, 103 pass, 0 fail                  |
+
+**Checks not run**
+
+- Production key export from KMS: no AWS access.
+- Out-of-band fingerprint comparison: needs the owner or operator.
+- A connector call to a real vendor.
+- An independent review of the verifier.
+
+**Survivor classification:** not applicable.
+
+**Open items**
+
+1. Export the production public key from KMS and publish its fingerprint.
+2. Compare that fingerprint through a second channel, as the verifier README requires.
+3. Run one real vendor connector call, and check its side effect.
+4. Arrange an independent review of `parmana-verifier`.
+
+Evidence: `docs/assurance/evidence/2026-11-27-e2e-runtime/example-04-gateway-to-connector.log` and `verifier-own-tests.log`. Neither contains a private key.
+
+**Phase status change:** none.
