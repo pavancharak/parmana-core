@@ -43,6 +43,7 @@ A signed approval whose subject is a **scope**, not a single pull request:
 - `approvedBy`, `signature`: the checker's signed approval, as for any approval
 
 It covers a merge only when all of these hold at merge time:
+
 1. The pull request's repository matches.
 2. The changed files match the path rule, and no file matches it as production. (A merge that touches production paths is not covered, and still needs a per-pull-request approval.)
 3. The policy version and the path rule are the ones named.
@@ -52,6 +53,7 @@ It covers a merge only when all of these hold at merge time:
 ## Where the check happens
 
 The policy evaluates the four GitHub facts as today. It also evaluates a fifth sourced fact, `pr.touches-production`, from the signal source. The approve rule then has two branches, each requiring a signed approval:
+
 - a per-pull-request approval (as today), for any merge; or
 - a standing approval whose scope matches, and `pr.touches-production` is false.
 
@@ -87,15 +89,15 @@ Maintainers approve a standard policy once, as a tenant-independent approval. Ea
 
 # Threat model
 
-| Threat | Mitigation |
-| --- | --- |
-| A checker of one tenant approves for another | Checkers are scoped per tenant, and the approval records the tenant |
-| A query reads another tenant's rows | Tenant filter in every query, and row-level security in the database |
-| A standing approval covers a production merge | The path rule is checked against the changed files, and a production match requires a per-pull-request approval |
-| The path list is changed in the pull request it governs | The list is read from the base branch, not the pull request |
-| The path list is missing or unreadable | Treated as production, so the approval requirement applies |
-| A revoked standing approval still matches | Revocation is checked at merge time, and recorded |
-| A shared key signs a tenant's approval | No shared key for governed actions, and a missing tenant key is a refusal |
+| Threat                                                  | Mitigation                                                                                                      |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| A checker of one tenant approves for another            | Checkers are scoped per tenant, and the approval records the tenant                                             |
+| A query reads another tenant's rows                     | Tenant filter in every query, and row-level security in the database                                            |
+| A standing approval covers a production merge           | The path rule is checked against the changed files, and a production match requires a per-pull-request approval |
+| The path list is changed in the pull request it governs | The list is read from the base branch, not the pull request                                                     |
+| The path list is missing or unreadable                  | Treated as production, so the approval requirement applies                                                      |
+| A revoked standing approval still matches               | Revocation is checked at merge time, and recorded                                                               |
+| A shared key signs a tenant's approval                  | No shared key for governed actions, and a missing tenant key is a refusal                                       |
 
 # Migration plan
 
