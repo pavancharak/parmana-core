@@ -56,15 +56,15 @@ Checked against `origin/main`, in `packages/storage`, `packages/policy/src/Polic
 
 Each governed table gets a non-null `tenant_id` column referencing `tenants`. The inventory below is the set to confirm in phase 1. It was built from the migrations on `origin/main`, and it is not yet complete (see phase 1).
 
-| Group | Tables |
-| --- | --- |
-| Policy governance | `policies`, `pending_policy_changes`, `policy_change_approval_records`, `consumed_policy_change_step_up_nonces` |
-| Policy v2 | `policy_v2_state`, `policy_v2_nonces`, `policy_v2_audit`, `policy_v2_delivery_events`, `policy_v2_evidence` |
-| Approvals and nonces | `consumed_approval_nonces`, `consumed_nonces`, `approval_issuers`, `approval_issuer_changes` |
+| Group                  | Tables                                                                                                                                                                                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Policy governance      | `policies`, `pending_policy_changes`, `policy_change_approval_records`, `consumed_policy_change_step_up_nonces`                                                                                                                             |
+| Policy v2              | `policy_v2_state`, `policy_v2_nonces`, `policy_v2_audit`, `policy_v2_delivery_events`, `policy_v2_evidence`                                                                                                                                 |
+| Approvals and nonces   | `consumed_approval_nonces`, `consumed_nonces`, `approval_issuers`, `approval_issuer_changes`                                                                                                                                                |
 | Decisions and evidence | `business_transactions`, `execution_intents`, `execution_trust_records`, `execution_outcomes`, `execution_audit_events`, `executions`, `caller_audit_events`, `transaction_status_events`, `verifications`, `receipts`, `challenge_records` |
-| Refusals | `refusal_records`, `refusal_record_outbox`, `inbound_decisions`, `inbound_outcomes` |
-| Connectors and sources | `external_connectors`, `external_connector_changes`, `business_signal_sources`, `business_signal_source_changes`, `authority_grants`, `authority_grant_changes` |
-| Keys and revocations | `caller_key_revocations` |
+| Refusals               | `refusal_records`, `refusal_record_outbox`, `inbound_decisions`, `inbound_outcomes`                                                                                                                                                         |
+| Connectors and sources | `external_connectors`, `external_connector_changes`, `business_signal_sources`, `business_signal_source_changes`, `authority_grants`, `authority_grant_changes`                                                                             |
+| Keys and revocations   | `caller_key_revocations`                                                                                                                                                                                                                    |
 
 Tables already dropped by later migrations (for example `overrides` and the Razorpay tables) are excluded, and the inventory records each exclusion.
 
@@ -126,18 +126,18 @@ Each step is merged on its own, and the single-tenant deployment is tested after
 
 # Threat model
 
-| Threat | Mitigation |
-| --- | --- |
-| A query reads another tenant's rows | Forced row-level security under a non-owner role, and a required tenant argument in storage |
-| The application's owner role bypasses isolation | The application does not connect as the owner; forced row-level security applies to the owner as well |
-| A pooled connection keeps another tenant's setting | The tenant is set inside each transaction, not per session |
-| A checker of one tenant approves for another | Checkers scoped per tenant; approvals bound to their tenant |
-| A tenant's record is presented as another tenant's | The tenant-bound signature covers the tenant id, so it fails verification elsewhere |
-| A governed action is signed with a shared key | No fallback; a tenant without its own key is refused |
-| A tenant id is spoofed in the request body | The tenant comes from the authenticated key, then is checked against that key's list |
-| A suspended tenant keeps acting | Suspension is refused on every route, and its keys stop working |
-| Existing signatures are broken by the change | No history is re-signed; both signed forms are verified, and the form is recorded |
-| The deployment host is compromised | Out of scope here. KMS-held keys reduce the exposure. |
+| Threat                                             | Mitigation                                                                                            |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| A query reads another tenant's rows                | Forced row-level security under a non-owner role, and a required tenant argument in storage           |
+| The application's owner role bypasses isolation    | The application does not connect as the owner; forced row-level security applies to the owner as well |
+| A pooled connection keeps another tenant's setting | The tenant is set inside each transaction, not per session                                            |
+| A checker of one tenant approves for another       | Checkers scoped per tenant; approvals bound to their tenant                                           |
+| A tenant's record is presented as another tenant's | The tenant-bound signature covers the tenant id, so it fails verification elsewhere                   |
+| A governed action is signed with a shared key      | No fallback; a tenant without its own key is refused                                                  |
+| A tenant id is spoofed in the request body         | The tenant comes from the authenticated key, then is checked against that key's list                  |
+| A suspended tenant keeps acting                    | Suspension is refused on every route, and its keys stop working                                       |
+| Existing signatures are broken by the change       | No history is re-signed; both signed forms are verified, and the form is recorded                     |
+| The deployment host is compromised                 | Out of scope here. KMS-held keys reduce the exposure.                                                 |
 
 # Tests
 
