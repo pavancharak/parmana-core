@@ -32,6 +32,8 @@ function policyDecision(
       "reject-fraud-check",
       "approve-refund",
     ],
+    evaluationMethod: { id: "deterministic-rules", version: "2" },
+    evidence: { status: "sufficient" },
     ...overrides,
   };
 }
@@ -53,6 +55,40 @@ describe("DecisionBuilder", () => {
     expect(decision.evaluationMethod).toEqual({
       id: "deterministic-rules",
       version: "2",
+    });
+  });
+
+  it("takes the evaluation method from the verdict that produced it, not from the builder (R3)", () => {
+    const decision = new DecisionBuilder().build(
+      transaction(),
+      policyDecision({
+        evaluationMethod: { id: "some-other-method", version: "9" },
+      }),
+    );
+
+    expect(decision.evaluationMethod).toEqual({
+      id: "some-other-method",
+      version: "9",
+    });
+  });
+
+  it("keeps an insufficient-evidence refusal distinct from an evidenced refusal (R5)", () => {
+    const decision = new DecisionBuilder().build(
+      transaction(),
+      policyDecision({
+        outcome: PolicyOutcome.REJECT,
+        matchedRuleId: "missing-fact",
+        evidence: {
+          status: "insufficient",
+          missingFacts: ["refundEligible"],
+        },
+      }),
+    );
+
+    expect(decision.outcome).toBe("REJECTED");
+    expect(decision.evidence).toEqual({
+      status: "insufficient",
+      missingFacts: ["refundEligible"],
     });
   });
 

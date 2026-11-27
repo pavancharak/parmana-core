@@ -2,7 +2,11 @@ import { generateKeyPairSync } from "node:crypto";
 
 import { describe, expect, it } from "vitest";
 
-import { AuthorizationSigner, CryptoBootstrap } from "@parmana/crypto";
+import {
+  AuthorizationSigner,
+  CryptoBootstrap,
+  TrustRecordHasher,
+} from "@parmana/crypto";
 import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import {
   ExecutionGateway,
@@ -59,6 +63,8 @@ async function sign(
       businessTransactionId: CONTENT.businessTransactionId,
       policyName: "policy-a",
       policyVersion: "1.0.0",
+      // Signed over the empty signals a request without signals is hashed as.
+      signalsHash: await new TrustRecordHasher(crypto).hash({}),
       executableContent: CONTENT,
     },
     privateKey,
@@ -94,6 +100,7 @@ function productionLikeGateway(
   } as never);
 
   return new ExecutionGateway({
+    allowUnverifiedSignals: true,
     // Legacy fixture: predates fail-closed policy binding. The nonce path
     // under test does not depend on policy binding.
     allowUnverifiedPolicy: true,

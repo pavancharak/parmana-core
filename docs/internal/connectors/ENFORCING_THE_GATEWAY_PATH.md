@@ -24,7 +24,7 @@ A business endpoint should run an action only when Parmana has approved it and r
 
 The connector must check each signed release before it calls the endpoint. In `parmana-connect` these checks run in `src/external-release.ts`:
 
-- **Signature**: verified against the Parmana public key the operator has pinned, not a key taken from the release itself. Set `PARMANA_EXPECTED_KEY_FINGERPRINT` to the `sha256:` fingerprint confirmed through a second channel. The service refuses to start if the key does not match. Without this pin, a replaced key file is not detected.
+- **Signature**: verified against the Parmana public key the operator has pinned, not a key taken from the release itself. Set `PARMANA_EXPECTED_KEY_FINGERPRINT` to the `sha256:` fingerprint confirmed through a second channel. It is required while release-only is on: the service refuses to start without it, and refuses to start if the key does not match. Without this pin, a replaced key file is not detected. Operator steps: parmana-connect `docs/runbooks/KEY-PIN-RUNBOOK.md`.
 - **Audience**: the release names this connector.
 - **Expiry**: the release has not expired.
 - **Replay**: the release has not been used before. A repeated transaction ID is refused. Keep `PARMANA_NONCE_STORE=postgres`, which is the default, and point every instance at the same database. The `memory` store protects one instance only: a release replayed to a second instance would run again.

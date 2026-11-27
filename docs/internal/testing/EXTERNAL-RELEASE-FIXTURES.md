@@ -56,8 +56,9 @@ The seed is the SHA-256 of that label, used as an Ed25519 private key. Anyone ca
 
 That is deliberate, and it is safe only because production does not trust it:
 
-- parmana-connect pins the expected key fingerprint in production with
-  `PARMANA_EXPECTED_KEY_FINGERPRINT`. Startup refuses a different key.
+- parmana-connect requires the expected key fingerprint in production with
+  `PARMANA_EXPECTED_KEY_FINGERPRINT` while release-only is on (added 2026-11-25,
+  branch `claude/g-134-pin-connector-key`). Startup refuses an unset or different key.
 - Nothing in parmana-core's production signing path uses this key. It exists only in the script.
 
 Do not add this key to any production configuration, and do not use it to sign anything except

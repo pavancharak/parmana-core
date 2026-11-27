@@ -48,6 +48,7 @@ describe("forged authorization is a verification failure, not a server fault", (
     );
     const service = { execute: vi.fn() };
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding. The status under test does not depend on it.
       allowUnverifiedPolicy: true,
       publicKey: trusted.publicKey,
