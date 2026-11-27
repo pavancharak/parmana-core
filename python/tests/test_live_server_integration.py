@@ -59,6 +59,11 @@ from tests.local_approver import local_approver_env, sign_local_approval
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 RAW_API_KEY = "python-sdk-integration-test-key"
+
+# Must match test-support/trusted-test-source.ts: the subjects its facts are keyed by.
+APPROVED_TARGET = "vendor/V-python-sdk"
+RISKY_TARGET = "vendor/V-python-sdk-risky"
+DEFAULT_RISK_SCORE = 10
 CALLER_ID = "python-sdk-integration-test"
 
 
@@ -120,12 +125,13 @@ def live_server() -> str:
         env = {
             **os.environ,
             "NODE_ENV": "test",
+            "PARMANA_LOCAL_MODE": "true",
             # Approval records for the policies are seeded by
             # test-support/start-test-server.ts (D19).
             # Trusts the local test approver (tests/local_approver.py).
             **local_approver_env(),
             "PARMANA_STORAGE": "memory",
-            "PARMANA_POLICY_DIR": str(REPO_ROOT / "policies"),
+            "PARMANA_POLICY_DIR": str(REPO_ROOT / "fixtures" / "policies"),
             "PARMANA_API_KEYS": api_keys,
             "PARMANA_KEY_DIR": key_dir,
             # Explicit, not inherited: this test exercises real caller-auth
@@ -187,8 +193,12 @@ def _transaction(
     principal_id: str = CALLER_ID,
     business_transaction_id: str | None = None,
     risk_score: int = 10,
-    target: str = "vendor/V-python-sdk",
+    target: str | None = None,
 ) -> BusinessTransaction:
+    # test-support/trusted-test-source.ts answers each subject from fixed facts.
+    # Only RISKY_TARGET is assessed above the threshold.
+    if target is None:
+        target = RISKY_TARGET if risk_score != DEFAULT_RISK_SCORE else APPROVED_TARGET
     now = datetime.now(UTC)
     btx_id = business_transaction_id or str(uuid.uuid4())
     authority_id = str(uuid.uuid4())
@@ -220,7 +230,7 @@ def _transaction(
         intent=Intent(
             intent_id=intent_id,
             authorization_id=authorization_id,
-            # test:fixture-execute (not payments:execute/vendor-payment,
+            # test:fixture-execute (not payments:execute/payment-limit,
             # removed per docs/internal/VERIFICATION-GAPS.md G-27) -- mirrors
             # typescript/test/integration/parmana-client.integration.test.ts's
             # identical fixture update.
@@ -230,7 +240,7 @@ def _transaction(
             created_at=now,
         ),
         policy=PolicyReference(
-            name="vendor-payment", version="2.1.0", schema_version="1.0.0"
+            name="payment-limit", version="1.0.0", schema_version="1.0.0"
         ),
         signals={
             # Signed by the local test approver: no agent action is

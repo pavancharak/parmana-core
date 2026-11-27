@@ -1,0 +1,4 @@
+# EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+# Read the register audit log
+curl "https://parmana-api-real.vercel.app/v2/register/audit" \
+  -H "Authorization: Bearer $PARMANA_API_KEY"

@@ -91,7 +91,7 @@ const publicKeyPem = readFileSync("default.public.pem", "utf8"); // e.g. from GE
 const result = await verifyExecutionTrustRecordOffline(trustRecord, {
   default: publicKeyPem,
 });
-// { valid: true, hashValid: true, legacySignatureValid: true, algorithmsChecked: ["ed25519"], errors: [] }
+// { valid: true, hashValid: true, hybridSignaturesValid: true, algorithmsChecked: ["ed25519"], errors: [] }
 ```
 
 <Note>

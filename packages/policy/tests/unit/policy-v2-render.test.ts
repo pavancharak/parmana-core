@@ -58,6 +58,7 @@ function sources(): ConsoleSources {
     maxAmount: 50_000,
   });
   reviews.open({
+    decisionRecord: { recordId: "ev-1", hash: "0".repeat(64) },
     capability: CAPABILITY,
     target: "INV-1001",
     requester: "agent-7",

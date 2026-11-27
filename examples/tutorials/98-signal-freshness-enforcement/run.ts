@@ -1,12 +1,13 @@
 import { FileKeyProvider } from "@parmana/crypto";
 
-import {
-  FilePolicyRepository,
-  type PolicySignals,
-  type SignalStateVerificationRequest,
-  type SignalStateVerifier,
-  type SignalStateViolation,
+import type {
+  PolicySignals,
+  SignalStateVerificationRequest,
+  SignalStateVerifier,
+  SignalStateViolation,
 } from "@parmana/policy";
+
+import { governedPolicyDirectory } from "../../shared/helpers/demo-policy-governance.js";
 
 import { RuntimeBuilder } from "@parmana/runtime";
 
@@ -26,6 +27,7 @@ import {
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
 import { withRequiredFields } from "../../shared/helpers/business-transaction.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // A trivial Connector: this tutorial cares about whether the Execution
@@ -98,9 +100,13 @@ async function main(): Promise<void> {
   // Build Runtime and authorize the payment, exactly as any earlier
   // tutorial does -- this is real production code, not a stand-in.
   //
+  // Policy Governance approvals for every fixture policy, on a scratch copy.
+  const governed = await governedPolicyDirectory("fixtures/policies");
+
   const runtime = new RuntimeBuilder()
+    .withBusinessSignalSources(demoTrustedSources())
     .withSignalStateVerifier(demoApprovalSignalVerifier())
-    .withPolicyRepository(new FilePolicyRepository("policies"))
+    .withPolicyRepository(governed.policyRepository)
     .build(new MemoryExecutionTrustRecordRepository());
 
   console.log("Authorizing payment...");
@@ -157,8 +163,8 @@ async function main(): Promise<void> {
   const connectorA = new RecordingConnector();
 
   const gatewayA = new ExecutionGateway({
-    // Legacy fixture: predates fail-closed policy binding.
-    allowUnverifiedPolicy: true,
+    policyRepository: governed.policyRepository,
+    policyApprovalVerifier: governed.policyApprovalVerifier,
     publicKey,
     nonceStore: new MemoryNonceStore(),
     signalStateVerifier: new NothingChangedVerifier(),
@@ -184,8 +190,8 @@ async function main(): Promise<void> {
   const connectorB = new RecordingConnector();
 
   const gatewayB = new ExecutionGateway({
-    // Legacy fixture: predates fail-closed policy binding.
-    allowUnverifiedPolicy: true,
+    policyRepository: governed.policyRepository,
+    policyApprovalVerifier: governed.policyApprovalVerifier,
     publicKey,
     nonceStore: new MemoryNonceStore(),
     signalStateVerifier: new VendorBlockedSinceAuthorizationVerifier(),

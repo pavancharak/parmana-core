@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>@parmana/envelope-verifier: API reference · Parmana developer docs</title>
+<meta name="description" content="@parmana/envelope-verifier : API reference Portal home · Publishing decision · Package README This page describes the package's public API, as it is exported from packages/envelope-verifier/src at version 4.1.1. The package's own README sta">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../security/key-management.html">Key management</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../policies/payment-refund-coverage.html">Coverage of the production policy</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="envelope-verifier-api.html" aria-current="page">@parmana/envelope-verifier: API reference</a></li><li><a href="execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>SDKs and packages</span><span class="sep">/</span><span>@parmana/envelope-verifier: API reference</span></div>
+    <article>
+<h1 id="parmanaenvelope-verifier-api-reference"><code>@parmana/envelope-verifier</code>: API reference<a class="anchor" href="#parmanaenvelope-verifier-api-reference" aria-label="Link to this section">#</a></h1>
+<p><a href="../index.html">Portal home</a> · <a href="publishing-envelope-verifier-and-execution-system.html">Publishing decision</a> · <a href="https://github.com/pavancharak/parmana-core/blob/main/packages/envelope-verifier/README.md">Package README</a></p>
+<p>This page describes the package&#39;s public API, as it is exported from <code>packages/envelope-verifier/src</code> at version 4.1.1. The package&#39;s own README states exactly what a passing verification proves. This page does not repeat those claims; read the README first.</p>
+<p><strong>Requirements:</strong> Node.js 24 or later. Two entry points: <code>@parmana/envelope-verifier</code> (the core) and <code>@parmana/envelope-verifier/express</code> (an Express middleware, which imports Express types).</p>
+<h2 id="what-it-verifies">What it verifies<a class="anchor" href="#what-it-verifies" aria-label="Link to this section">#</a></h2>
+<p>A verifier checks that an execution request was authorized by Parmana. It checks, in order:</p>
+<ol>
+<li>The payload version is supported.</li>
+<li>The signature is valid, against the Parmana public key (or the key for the envelope&#39;s <code>keyId</code>).</li>
+<li>The envelope has not expired, within a clock allowance of 60 seconds.</li>
+<li>The envelope&#39;s time-to-live is within policy (<code>maxTtlSeconds</code>, 300 seconds by default).</li>
+<li>The nonce has not been used before, which is recorded against a <code>NonceStore</code>.</li>
+</ol>
+<p>It does not evaluate policy. A passing result means Parmana authorized the request. It does not mean the action was correct.</p>
+<h2 id="envelopeverifier"><code>EnvelopeVerifier</code><a class="anchor" href="#envelopeverifier" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>ts</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-ts">import { EnvelopeVerifier, MemoryNonceStore } from "@parmana/envelope-verifier";
+
+const verifier = new EnvelopeVerifier({
+  publicKey, // a KeyObject: Parmana's public key, supplied by the caller
+  nonceStore: new MemoryNonceStore(), // see the production warning below
+});
+
+const result = await verifier.verify(authorization);
+if (!result.valid) {
+  // reject; result.checks says which check failed
+}</code></pre></div>
+<h3 id="options-envelopeverifieroptions">Options (<code>EnvelopeVerifierOptions</code>)<a class="anchor" href="#options-envelopeverifieroptions" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>publicKey</code></td>
+<td>Yes</td>
+<td>Parmana&#39;s public key, as a Node <code>KeyObject</code>. The package never reads key material from disk or the network. Used directly when no <code>keyProvider</code> is given, and as a fallback when one fails.</td>
+</tr>
+<tr>
+<td><code>nonceStore</code></td>
+<td>Yes</td>
+<td>A <code>NonceStore</code> that records each nonce. Use a shared, durable store in production.</td>
+</tr>
+<tr>
+<td><code>keyProvider</code></td>
+<td>No</td>
+<td>Resolves the key for each envelope&#39;s <code>keyId</code>, so a rotated key needs no restart. Without it, <code>keyValid</code> is absent from the results.</td>
+</tr>
+<tr>
+<td><code>keyExpiryStore</code></td>
+<td>No</td>
+<td>Key expiry and revocation, checked only when <code>keyProvider</code> is also given. A key with no entry is treated as valid.</td>
+</tr>
+<tr>
+<td><code>maxTtlSeconds</code></td>
+<td>No</td>
+<td>The longest allowed <code>expiresAt - authorizedAt</code>, in seconds. Default 300.</td>
+</tr>
+</tbody></table></div>
+<h3 id="methods">Methods<a class="anchor" href="#methods" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Returns</th>
+<th>Side effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>verify(authorization, now?)</code></td>
+<td><code>EnvelopeVerificationResult</code></td>
+<td>Records the nonce, but only if every other check passed.</td>
+</tr>
+<tr>
+<td><code>verifyChecks(authorization, now?)</code></td>
+<td><code>EnvelopeChecksResult</code></td>
+<td>None. Use it to run your own checks before the nonce is recorded.</td>
+</tr>
+<tr>
+<td><code>consumeNonce(authorization)</code></td>
+<td><code>boolean</code></td>
+<td>Records the nonce. Returns <code>false</code> if it was already used.</td>
+</tr>
+</tbody></table></div>
+<p><code>now</code> defaults to the current time. Pass it to make a verification reproducible in a test.</p>
+<p><strong>Use <code>verify()</code> unless you have a reason not to.</strong> It runs the side-effect-free checks first and records the nonce only if they pass. If you call <code>consumeNonce()</code> yourself, call it only after every other check has passed. Otherwise a forged or expired envelope can record a nonce and cause the legitimate request to be rejected.</p>
+<h3 id="results">Results<a class="anchor" href="#results" aria-label="Link to this section">#</a></h3>
+<p><code>EnvelopeVerificationResult</code> has <code>valid</code> and <code>checks</code>. <code>valid</code> is true only when every check passed and the nonce was unseen. <code>checks</code> has <code>versionSupported</code>, <code>signatureVerified</code>, <code>notExpired</code>, <code>ttlWithinPolicy</code> and <code>nonceUnseen</code>, and <code>keyValid</code> when a <code>keyProvider</code> is configured.</p>
+<p><code>EnvelopeChecksResult</code> (from <code>verifyChecks</code>) has <code>passed</code> and the same checks, without <code>nonceUnseen</code>.</p>
+<h2 id="noncestore-and-memorynoncestore"><code>NonceStore</code> and <code>MemoryNonceStore</code><a class="anchor" href="#noncestore-and-memorynoncestore" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>ts</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-ts">interface NonceStore {
+  checkAndRecord(nonce: string, expiresAt: string): Promise&lt;boolean&gt;;
+}</code></pre></div>
+<p><code>checkAndRecord</code> must be atomic: it records the nonce if it is unseen and returns <code>true</code>, or returns <code>false</code> if the nonce was already seen. A second request with the same nonce must be refused.</p>
+<p><strong>Production warning: <code>MemoryNonceStore</code> is for tests and single-process use.</strong> It keeps nonces in memory, so a restart forgets them, and another process cannot see them. In a deployment with more than one process, or with restarts, an attacker can replay an envelope that another process has not seen. Implement <code>NonceStore</code> against shared, durable storage for production. The package README covers the operational requirements.</p>
+<h2 id="express-middleware">Express middleware<a class="anchor" href="#express-middleware" aria-label="Link to this section">#</a></h2>
+<p>The <code>./express</code> entry point exports <code>requireParmanaAuthorization(verifier)</code>. It reads <code>authorization</code> from the JSON request body and:</p>
+<ul>
+<li>returns <code>401</code> with <code>{ &quot;error&quot;: &quot;authorization required&quot; }</code> when the body has no <code>authorization</code>;</li>
+<li>returns <code>403</code> with <code>{ &quot;error&quot;: &quot;authorization invalid&quot;, &quot;checks&quot;: ... }</code> when verification fails;</li>
+<li>otherwise sets <code>req.parmanaAuthorization</code> to the result and calls <code>next()</code>.</li>
+</ul>
+<p>It depends on Express types, so import it only if you use Express.</p>
+<h2 id="what-is-not-in-this-package">What is not in this package<a class="anchor" href="#what-is-not-in-this-package" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>No policy evaluation.</li>
+<li>No key storage. The caller supplies the public key or a <code>keyProvider</code>.</li>
+<li>No durable nonce store. The caller supplies one.</li>
+</ul>
+<h2 id="before-the-first-public-publish">Before the first public publish<a class="anchor" href="#before-the-first-public-publish" aria-label="Link to this section">#</a></h2>
+<p>This page was written from the source on 2026-11-20. The package has not been published, and the surface above is what 4.1.1 exports. Re-check it against the source before each release.</p>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/packages/envelope-verifier-api.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="../sdk/python-method-index.html"><span>Previous</span>Python SDK method index</a><a class="pn next" href="execution-system-api.html"><span>Next</span>@parmana/execution-system: API reference</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#what-it-verifies">What it verifies</a></li><li class="d2"><a href="#envelopeverifier">EnvelopeVerifier</a></li><li class="d3"><a href="#options-envelopeverifieroptions">Options (EnvelopeVerifierOptions)</a></li><li class="d3"><a href="#methods">Methods</a></li><li class="d3"><a href="#results">Results</a></li><li class="d2"><a href="#noncestore-and-memorynoncestore">NonceStore and MemoryNonceStore</a></li><li class="d2"><a href="#express-middleware">Express middleware</a></li><li class="d2"><a href="#what-is-not-in-this-package">What is not in this package</a></li><li class="d2"><a href="#before-the-first-public-publish">Before the first public publish</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

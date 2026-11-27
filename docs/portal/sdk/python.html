@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Python SDK: parmana · Parmana developer docs</title>
+<meta name="description" content="Python SDK: parmana SDKs · Full method index · TypeScript SDK · Offline verifier About the code on this page. Blocks marked as methods, builders and signing show the call shape. Fragments such as an undefined approval or record are illustra">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../security/key-management.html">Key management</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../policies/payment-refund-coverage.html">Coverage of the production policy</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="index.html">SDKs and packages</a></li><li><a href="typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="python.html" aria-current="page">Python SDK: parmana</a></li><li><a href="cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>SDKs and packages</span><span class="sep">/</span><span>Python SDK: parmana</span></div>
+    <article>
+<h1 id="python-sdk-parmana">Python SDK: <code>parmana</code><a class="anchor" href="#python-sdk-parmana" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">SDKs</a> · <a href="python-method-index.html">Full method index</a> · <a href="typescript.html">TypeScript SDK</a> · <a href="verifier.html">Offline verifier</a></p>
+<blockquote>
+<p><strong>About the code on this page.</strong> Blocks marked as methods, builders and signing show the call shape. Fragments such as an undefined <code>approval</code> or <code>record</code> are <strong>illustrative</strong>, not runnable on their own. The runnable versions are the examples linked under <a href="#examples">Examples</a> (governed_flow.py), which were run for this portal.</p>
+</blockquote>
+<h2 id="package">Package<a class="anchor" href="#package" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Package</td>
+<td><code>parmana</code> (PyPI)</td>
+</tr>
+<tr>
+<td>Version documented</td>
+<td>4.1.1</td>
+</tr>
+<tr>
+<td>Purpose</td>
+<td>Client for the Parmana API: declare and execute Business Transactions, read and verify Execution Trust Records, manage policy and approval changes, and verify records offline.</td>
+</tr>
+<tr>
+<td>Python</td>
+<td>3.10 or later (classifiers list 3.10 to 3.13; the verification run used 3.13)</td>
+</tr>
+<tr>
+<td>Client style</td>
+<td><strong>Synchronous only.</strong> There is no async client.</td>
+</tr>
+<tr>
+<td>Dependencies</td>
+<td><code>requests</code> (runtime). <code>cryptography</code> is needed only for <code>parmana.crypto</code> (signing and offline verification): install the <code>verify</code> extra.</td>
+</tr>
+</tbody></table></div>
+<h2 id="install">Install<a class="anchor" href="#install" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">pip install "parmana==4.1.1"
+
+# Also needed to sign approvals or step-up envelopes, or to verify records offline in Python:
+pip install "parmana[verify]==4.1.1"</code></pre></div>
+<p>Check the install:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">python3 -c "import parmana; print(parmana.__version__)"
+# 4.1.1</code></pre></div>
+<h2 id="initialize-the-client">Initialize the client<a class="anchor" href="#initialize-the-client" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>python</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-python">import os
+from parmana import ParmanaClient
+
+client = ParmanaClient(
+    endpoint="https://parmana.example.com",   # or "http://localhost:3000" for local development
+    api_key=os.environ["PARMANA_API_KEY"],    # the caller's raw API key
+    timeout=30,                               # seconds, default 30
+    max_retries=3,                            # retries for GET requests only, default 3
+    backoff_factor=0.5,                       # default 0.5
+    debug=False,
+)</code></pre></div>
+<p><code>ParmanaClient</code> takes keyword arguments only, after <code>endpoint</code>. It raises <code>ConfigurationError</code> if <code>endpoint</code> is empty. It refuses an endpoint that is not <code>https://</code>, except <code>localhost</code>, <code>127.0.0.1</code> and <code>::1</code>.</p>
+<h3 id="retries">Retries<a class="anchor" href="#retries" aria-label="Link to this section">#</a></h3>
+<p>The transport retries only idempotent <code>GET</code> requests, with exponential backoff, and honors a numeric <code>Retry-After</code> on <code>429</code>. It never retries a <code>POST</code>. Do not add your own retry loop around <code>execute</code>: a retry with the same <code>business_transaction_id</code> returns <code>409</code>, and a retry with a new id runs the action again.</p>
+<h2 id="top-level-names">Top-level names<a class="anchor" href="#top-level-names" aria-label="Link to this section">#</a></h2>
+<p>Everything below is importable from <code>parmana</code>:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Names</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Client and version</td>
+<td><code>ParmanaClient</code>, <code>__version__</code></td>
+</tr>
+<tr>
+<td>Builder</td>
+<td><code>create_business_transaction</code>, <code>PolicyReference</code></td>
+</tr>
+<tr>
+<td>Enumerations and models</td>
+<td><code>AuthorityType</code>, <code>DecisionOutcome</code>, <code>PendingPolicyChangeStatus</code>, <code>VerificationStatus</code>, and the models in <code>parmana.models</code> (for example <code>ExecutionTrustRecord</code>, <code>Receipt</code>, <code>Verification</code>, <code>CallerIdentity</code>, <code>PublicKeyInfo</code>, <code>PolicyInEffect</code>, <code>ApprovalIssuer</code>, <code>AuthorityGrant</code>, <code>ProposedPolicyChange</code>)</td>
+</tr>
+<tr>
+<td>Errors</td>
+<td><code>ParmanaError</code>, <code>ConfigurationError</code>, <code>ParmanaHttpError</code>, <code>ValidationError</code>, <code>AuthenticationError</code>, <code>AuthorizationError</code>, <code>ExecutionRejectedError</code>, <code>NotFoundError</code>, <code>ConflictError</code>, <code>RateLimitError</code>, <code>InternalServerError</code>, <code>NetworkError</code>, <code>TimeoutError</code>, <code>ReplayError</code>, <code>VerificationError</code>, <code>ExecutionPendingError</code></td>
+</tr>
+</tbody></table></div>
+<p>Import the signing and offline functions from <code>parmana.crypto</code>. <code>OfflineVerificationResult</code> is also in <code>parmana.crypto</code>; it is not a top-level name.</p>
+<h2 id="client-surface">Client surface<a class="anchor" href="#client-surface" aria-label="Link to this section">#</a></h2>
+<p><code>ParmanaClient</code> has two ways to call the API. Both send the same request.</p>
+<p><strong>Flat methods</strong> match the TypeScript names in snake_case, for example <code>client.execute(...)</code>, <code>client.trust_record(...)</code>, <code>client.propose_policy_change(...)</code>.</p>
+<p><strong>Namespaces</strong> group the calls by resource, for example <code>client.execution.execute(...)</code>, <code>client.transactions.create(...)</code>, <code>client.policy.propose_change(...)</code>. The namespaces are:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Namespace</th>
+<th>Resource</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>client.execution</code></td>
+<td>Execute and the execution endpoints</td>
+</tr>
+<tr>
+<td><code>client.verification</code></td>
+<td>Verify and latest verification</td>
+</tr>
+<tr>
+<td><code>client.replay</code></td>
+<td>Replay</td>
+</tr>
+<tr>
+<td><code>client.receipt</code></td>
+<td>Receipts</td>
+</tr>
+<tr>
+<td><code>client.transactions</code></td>
+<td>Declare, status, execute, reconcile, list</td>
+</tr>
+<tr>
+<td><code>client.trust_records</code></td>
+<td>Trust record reads and listing</td>
+</tr>
+<tr>
+<td><code>client.policy</code></td>
+<td>Policy in effect, validation, policy changes</td>
+</tr>
+<tr>
+<td><code>client.refusal</code></td>
+<td>Refusal records</td>
+</tr>
+<tr>
+<td><code>client.execution_intents</code></td>
+<td>Execution intents (experimental)</td>
+</tr>
+<tr>
+<td><code>client.audit</code></td>
+<td>Audit event verification</td>
+</tr>
+<tr>
+<td><code>client.callers</code></td>
+<td>The caller&#39;s identity</td>
+</tr>
+<tr>
+<td><code>client.approvers</code></td>
+<td>Approval issuers and their changes</td>
+</tr>
+<tr>
+<td><code>client.external_connectors</code></td>
+<td>External connectors and their changes</td>
+</tr>
+<tr>
+<td><code>client.business_signal_sources</code></td>
+<td>Business signal sources and their changes</td>
+</tr>
+<tr>
+<td><code>client.authority_grants</code></td>
+<td>Authority grants and their changes</td>
+</tr>
+</tbody></table></div>
+<p><code>client.endpoint</code> and <code>client.version</code> are <strong>properties</strong> (no parentheses). <code>client.version</code> is the SDK&#39;s own version string. To ask the server, call <code>client.server_version()</code>, which returns what <code>GET /version</code> reports as a <code>dict</code>. It matches the TypeScript SDK&#39;s <code>version()</code>, which also calls the server (FINDINGS F4).</p>
+<p>The complete list of the 50 public methods, with exact signatures and the request each sends, is in the <a href="python-method-index.html">generated method index</a>.</p>
+<h2 id="methods-used-most-often">Methods used most often<a class="anchor" href="#methods-used-most-often" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Returns</th>
+<th>Request</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>health()</code></td>
+<td><code>dict</code></td>
+<td><code>GET /health</code></td>
+</tr>
+<tr>
+<td><code>caller()</code></td>
+<td><code>CallerIdentity</code></td>
+<td><code>GET /callers/me</code></td>
+</tr>
+<tr>
+<td><code>public_key(key_id=&quot;default&quot;)</code></td>
+<td><code>PublicKeyInfo</code></td>
+<td><code>GET /keys/{keyId}</code></td>
+</tr>
+<tr>
+<td><code>execute(transaction)</code></td>
+<td><code>ExecutionTrustRecord</code></td>
+<td><code>POST /execute</code></td>
+</tr>
+<tr>
+<td><code>declare_transaction(transaction)</code></td>
+<td><code>DeclaredTransaction</code></td>
+<td><code>POST /transactions</code></td>
+</tr>
+<tr>
+<td><code>execute_transaction(business_transaction_id)</code></td>
+<td><code>ExecutionTrustRecord</code></td>
+<td><code>POST /transactions/{id}/execute</code></td>
+</tr>
+<tr>
+<td><code>create_transaction(transaction)</code></td>
+<td><code>ExecutionTrustRecord</code></td>
+<td>Declare, then execute (two requests)</td>
+</tr>
+<tr>
+<td><code>transaction_status(business_transaction_id, *, history=False)</code></td>
+<td><code>TransactionStatusResult</code></td>
+<td><code>GET /transactions/{id}/status</code></td>
+</tr>
+<tr>
+<td><code>reconcile_transaction(business_transaction_id)</code></td>
+<td><code>ReconcileResult</code></td>
+<td><code>POST /transactions/{id}/reconcile</code></td>
+</tr>
+<tr>
+<td><code>verify(business_transaction_id)</code></td>
+<td><code>Verification</code></td>
+<td><code>POST /verify</code></td>
+</tr>
+<tr>
+<td><code>get_latest_verification(business_transaction_id)</code></td>
+<td><code>Verification</code></td>
+<td><code>GET /verification/{id}</code></td>
+</tr>
+<tr>
+<td><code>replay(business_transaction_id)</code></td>
+<td><code>ReplayResult</code></td>
+<td><code>POST /replay</code></td>
+</tr>
+<tr>
+<td><code>receipt(business_transaction_id)</code></td>
+<td><code>Receipt</code></td>
+<td><code>POST /receipt</code></td>
+</tr>
+<tr>
+<td><code>latest_receipt(business_transaction_id)</code></td>
+<td><code>Receipt</code></td>
+<td><code>GET /receipt/latest/{id}</code></td>
+</tr>
+<tr>
+<td><code>trust_record(business_transaction_id)</code></td>
+<td><code>ExecutionTrustRecord</code></td>
+<td><code>GET /trust-records/{id}</code></td>
+</tr>
+<tr>
+<td><code>policy_in_effect(capability)</code></td>
+<td><code>PolicyInEffect</code></td>
+<td><code>GET /policies/in-effect?capability=</code></td>
+</tr>
+<tr>
+<td><code>server_version()</code></td>
+<td><code>dict</code></td>
+<td><code>GET /version</code></td>
+</tr>
+<tr>
+<td><code>validate_policy(policy_id, policy_version)</code></td>
+<td><code>dict</code></td>
+<td><code>POST /policies/validate</code></td>
+</tr>
+<tr>
+<td><code>propose_policy_change(name, version, *, proposed_content, reason)</code></td>
+<td><code>ProposedPolicyChange</code></td>
+<td><code>POST /policies/{name}/{version}/pending-changes</code></td>
+</tr>
+<tr>
+<td><code>policy_changes(status=None)</code></td>
+<td><code>list[PolicyChangeForReview]</code></td>
+<td><code>GET /policies/pending-changes</code></td>
+</tr>
+<tr>
+<td><code>approve_policy_change(pending_policy_change_id, step_up_authorization)</code></td>
+<td><code>PendingPolicyChange</code></td>
+<td><code>POST /policies/pending-changes/{id}/approve</code></td>
+</tr>
+<tr>
+<td><code>reject_policy_change(pending_policy_change_id, rejection_reason, step_up_authorization)</code></td>
+<td><code>PendingPolicyChange</code></td>
+<td><code>POST /policies/pending-changes/{id}/reject</code></td>
+</tr>
+</tbody></table></div>
+<p>Note the keyword-only parameters: <code>propose_policy_change</code> takes <code>proposed_content</code> and <code>reason</code> as keywords.</p>
+<h2 id="methods-not-covered-above">Methods not covered above<a class="anchor" href="#methods-not-covered-above" aria-label="Link to this section">#</a></h2>
+<p>The methods below are public on <code>ParmanaClient</code> and were not described in the sections above. Each sends the request in its row. The full list, with signatures, is in the <a href="python-method-index.html">generated Python method index</a>. The names are as the SDK defines them.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>HTTP</th>
+<th>Path</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>refusal_record</code></td>
+<td>GET</td>
+<td><code>/refusal/{param}</code></td>
+</tr>
+<tr>
+<td><code>verify_refusal_record</code></td>
+<td>POST</td>
+<td><code>/refusal/verify</code></td>
+</tr>
+<tr>
+<td><code>finalize_execution_intent</code></td>
+<td>POST</td>
+<td><code>/execution-intents/{param}/finalize</code></td>
+</tr>
+<tr>
+<td><code>verify_audit_event</code></td>
+<td>POST</td>
+<td><code>/audit/verify</code></td>
+</tr>
+<tr>
+<td><code>policy_v2_review</code></td>
+<td>GET</td>
+<td><code>/v2/reviews/{param}</code></td>
+</tr>
+<tr>
+<td><code>decide_policy_v2_review</code></td>
+<td>POST</td>
+<td><code>/v2/reviews/{param}/decision</code></td>
+</tr>
+<tr>
+<td><code>policy_v2_replay</code></td>
+<td>GET</td>
+<td><code>/v2/evidence/{param}/replay</code></td>
+</tr>
+<tr>
+<td><code>list_approvers</code></td>
+<td>GET</td>
+<td><code>/approval-issuers</code></td>
+</tr>
+<tr>
+<td><code>approve_approver_change</code></td>
+<td>POST</td>
+<td><code>/approval-issuers/changes/{param}/approve</code></td>
+</tr>
+<tr>
+<td><code>reject_approver_change</code></td>
+<td>POST</td>
+<td><code>/approval-issuers/changes/{param}/reject</code></td>
+</tr>
+<tr>
+<td><code>list_external_connectors</code></td>
+<td>GET</td>
+<td><code>/external-connectors</code></td>
+</tr>
+<tr>
+<td><code>approve_external_connector_change</code></td>
+<td>POST</td>
+<td><code>/external-connectors/changes/{param}/approve</code></td>
+</tr>
+<tr>
+<td><code>reject_external_connector_change</code></td>
+<td>POST</td>
+<td><code>/external-connectors/changes/{param}/reject</code></td>
+</tr>
+<tr>
+<td><code>list_business_signal_sources</code></td>
+<td>GET</td>
+<td><code>/business-signal-sources</code></td>
+</tr>
+<tr>
+<td><code>approve_business_signal_source_change</code></td>
+<td>POST</td>
+<td><code>/business-signal-sources/changes/{param}/approve</code></td>
+</tr>
+<tr>
+<td><code>reject_business_signal_source_change</code></td>
+<td>POST</td>
+<td><code>/business-signal-sources/changes/{param}/reject</code></td>
+</tr>
+<tr>
+<td><code>list_authority_grants</code></td>
+<td>GET</td>
+<td><code>/authority-grants</code></td>
+</tr>
+<tr>
+<td><code>approve_authority_grant_change</code></td>
+<td>POST</td>
+<td><code>/authority-grants/changes/{param}/approve</code></td>
+</tr>
+<tr>
+<td><code>reject_authority_grant_change</code></td>
+<td>POST</td>
+<td><code>/authority-grants/changes/{param}/reject</code></td>
+</tr>
+<tr>
+<td><code>execution_intent</code></td>
+<td>GET</td>
+<td><code>/execution-intents/{param}</code></td>
+</tr>
+<tr>
+<td><code>verify_execution_intent</code></td>
+<td>POST</td>
+<td><code>/execution-intents/verify</code></td>
+</tr>
+<tr>
+<td><code>unfinalized_execution_intents</code></td>
+<td>GET</td>
+<td><code>/execution-intents/unfinalized</code></td>
+</tr>
+<tr>
+<td><code>resolve_execution_intent</code></td>
+<td>POST</td>
+<td><code>/execution-intents/{param}/resolve</code></td>
+</tr>
+<tr>
+<td><code>decide_policy_v2</code></td>
+<td>POST</td>
+<td><code>/v2/decisions</code></td>
+</tr>
+<tr>
+<td><code>approver_changes</code></td>
+<td>GET</td>
+<td><code>/approval-issuers/changes</code></td>
+</tr>
+<tr>
+<td><code>external_connector_changes</code></td>
+<td>GET</td>
+<td><code>/external-connectors/changes</code></td>
+</tr>
+<tr>
+<td><code>business_signal_source_changes</code></td>
+<td>GET</td>
+<td><code>/business-signal-sources/changes</code></td>
+</tr>
+<tr>
+<td><code>authority_grant_changes</code></td>
+<td>GET</td>
+<td><code>/authority-grants/changes</code></td>
+</tr>
+</tbody></table></div>
+<h2 id="builder-createbusinesstransaction">Builder: <code>create_business_transaction</code><a class="anchor" href="#builder-createbusinesstransaction" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>python</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-python">from parmana import PolicyReference, create_business_transaction
+
+transaction = create_business_transaction(
+    principal_id="ap-automation-svc",
+    purpose="Authorize vendor payment disbursement",
+    action="payments:execute",
+    target="vendor/V-100",
+    parameters={"amount": 4500, "currency": "USD"},
+    policy=PolicyReference(name="vendor-payment", version="2.1.0", schema_version="1.0.0"),
+    signals={"humanApproved": True, "approvalArtifact": approval, "paymentAmount": 4500},  # see Policy management
+    # optional keyword arguments:
+    business_transaction_id=None,         # a UUID; generated when None
+    authority_type=AuthorityType.SERVICE, # AuthorityType.USER | ROLE | SERVICE | ORGANIZATION
+    display_name=None,
+    correlation_id=None,
+    tenant_id=None,
+    source_system=None,
+    submitted_by=None,
+)</code></pre></div>
+<p>The builder keeps the ids consistent: the same id goes into <code>businessTransactionId</code> and <code>metadata.businessTransactionId</code>, and the authority, authorization and intent ids are linked. The server checks the same relations and returns <code>400</code> if one is wrong.</p>
+<h2 id="human-approvals-signapproval">Human approvals: <code>sign_approval</code><a class="anchor" href="#human-approvals-signapproval" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>python</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-python">from pathlib import Path
+from parmana.crypto import sign_approval
+
+approval = sign_approval(
+    private_key_pem=Path("approver.private.pem").read_text(),  # stays with the approver
+    approver_id="finance-approver-1",    # as registered on the server
+    key_id="finance-approver-key-1",     # as registered on the server
+    capability="payments:execute",       # must match intent.action
+    resource_id="vendor/V-100",          # must match the target the policy names
+    max_amount=5000,                     # optional: the largest amount approved
+    ttl_seconds=900,                     # default 900, at most 86400
+)</code></pre></div>
+<p><code>sign_approval</code> is keyword-only. It returns a <code>dict</code>: put it in <code>signals[&quot;approvalArtifact&quot;]</code> and set <code>signals[&quot;humanApproved&quot;] = True</code>. The same rules as in the TypeScript SDK apply: single use, scoped by <code>max_amount</code> when given, expires after <code>ttl_seconds</code>.</p>
+<h2 id="policy-change-step-up-signpolicychangestepup">Policy change step-up: <code>sign_policy_change_step_up</code><a class="anchor" href="#policy-change-step-up-signpolicychangestepup" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>python</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-python">from parmana.crypto import sign_policy_change_step_up
+
+envelope = sign_policy_change_step_up(
+    pending_policy_change_id="f3bce0b6-1095-492c-a06e-9cb27253bbce",
+    action="approve",                    # or "reject"
+    private_key_pem=Path("checker-stepup.private.pem").read_text(),
+    key_id="checker-step-up-key",
+    ttl_seconds=120,                     # default 120
+)
+client.approve_policy_change(pending_policy_change_id, envelope)</code></pre></div>
+<p>The Python <code>approve_policy_change</code> takes the envelope as a <code>dict</code>. Sign it immediately before you submit it, because it expires.</p>
+<h2 id="offline-verification-verifyexecutiontrustrecordoffline">Offline verification: <code>verify_execution_trust_record_offline</code><a class="anchor" href="#offline-verification-verifyexecutiontrustrecordoffline" aria-label="Link to this section">#</a></h2>
+<p>Records are schema version 3 only (decision D24). A record with one valid signature is accepted, unless it was created at or after <code>hybrid_required_from</code>; from that instant, both hybrid signatures are required. Pass the cutover as <code>hybrid_required_from=&quot;2026-12-01T00:00:00Z&quot;</code>.</p>
+<div class="code"><div class="code-bar"><span>python</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-python">import json
+from parmana.crypto import verify_execution_trust_record_offline
+
+with open("record.json") as f:
+    record = json.load(f)
+
+result = verify_execution_trust_record_offline(record, {"default": public_key_pem})
+print(result.valid, result.hash_valid, result.hybrid_signatures_valid)
+print(result.errors)</code></pre></div>
+<ul>
+<li>Pass either a <code>dict</code> (from <code>json.load</code>) or the <code>ExecutionTrustRecord</code> returned by <code>client.trust_record()</code> or <code>client.execute()</code>.</li>
+<li><code>public_keys</code> maps each <code>keyId</code> to a PEM. Pin these yourself.</li>
+<li><code>result.valid</code> means the hash and signatures check out. <code>result.coverage</code> is <code>&quot;full&quot;</code> for a schema version 3 record and <code>&quot;legacy&quot;</code> otherwise. A version 2 record covers only seven top-level fields. Check <code>coverage</code> if you need the whole record covered.</li>
+</ul>
+<p>Other functions in <code>parmana.crypto</code>: <code>verify_execution_intent_offline</code>, <code>verify_parmana_release</code>, <code>canonical_serialize</code>.</p>
+<h2 id="errors">Errors<a class="anchor" href="#errors" aria-label="Link to this section">#</a></h2>
+<p>Every error is a subclass of <code>ParmanaError</code>. HTTP errors are <code>ParmanaHttpError</code> subclasses and carry:</p>
+<ul>
+<li><code>status_code</code>: the HTTP status.</li>
+<li><code>code</code>: the server&#39;s code, or <code>HTTP_ERROR</code> when the server sent none.</li>
+<li><code>server_code</code>: the server&#39;s own code string where one was sent (for example <code>CAPABILITY_NOT_ALLOWED</code>).</li>
+<li><code>request_id</code>: when the server sent one.</li>
+</ul>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Raised for</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ValidationError</code></td>
+<td>HTTP <code>400</code></td>
+</tr>
+<tr>
+<td><code>AuthenticationError</code></td>
+<td>HTTP <code>401</code></td>
+</tr>
+<tr>
+<td><code>AuthorizationError</code></td>
+<td>HTTP <code>403</code>, including <code>CAPABILITY_NOT_ALLOWED</code>, <code>SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE</code> and <code>STEP_UP_AUTHORIZATION_INVALID</code></td>
+</tr>
+<tr>
+<td><code>ExecutionRejectedError</code></td>
+<td>HTTP <code>403</code> with <code>POLICY_DENIED</code>: the policy refused. Final for that request.</td>
+</tr>
+<tr>
+<td><code>NotFoundError</code></td>
+<td>HTTP <code>404</code></td>
+</tr>
+<tr>
+<td><code>ConflictError</code></td>
+<td>HTTP <code>409</code></td>
+</tr>
+<tr>
+<td><code>RateLimitError</code></td>
+<td>HTTP <code>429</code></td>
+</tr>
+<tr>
+<td><code>InternalServerError</code></td>
+<td>HTTP <code>5xx</code></td>
+</tr>
+<tr>
+<td><code>ExecutionPendingError</code></td>
+<td>HTTP <code>202</code>: released and recorded, status <code>EXECUTING</code>. Reconcile.</td>
+</tr>
+<tr>
+<td><code>NetworkError</code>, <code>TimeoutError</code></td>
+<td>No HTTP response, or the timeout elapsed</td>
+</tr>
+<tr>
+<td><code>ReplayError</code>, <code>VerificationError</code></td>
+<td>A replay or verification step failed</td>
+</tr>
+<tr>
+<td><code>ConfigurationError</code></td>
+<td>Missing or invalid configuration</td>
+</tr>
+</tbody></table></div>
+<p>The observed behaviour of each status is in the <a href="../reference/error-codes.html">error catalogue</a>.</p>
+<div class="code"><div class="code-bar"><span>python</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-python">from parmana import ConflictError, ExecutionRejectedError, ParmanaHttpError
+
+try:
+    record = client.execute(transaction)
+except ExecutionRejectedError as error:
+    # Policy refused. Do not retry this transaction. Record the reason.
+    print("refused:", error)
+except ConflictError as error:
+    # The id was used. Read the existing outcome with trust_record() or transaction_status().
+    print("already used:", error)
+except ParmanaHttpError as error:
+    print(error.status_code, error.server_code, error)
+    raise</code></pre></div>
+<h2 id="examples">Examples<a class="anchor" href="#examples" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Example</th>
+<th>What it shows</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/python/governed_flow.py"><code>governed-quickstart/python/governed_flow.py</code></a></td>
+<td>Propose, refused self-approval, checker approval, execute, verify (server and offline), replay refused</td>
+<td>Run; passed</td>
+</tr>
+<tr>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/python/examples/README.md"><code>python/examples/</code></a> in the repository</td>
+<td>Health, execute, verify, replay, receipts, custom policy, end-to-end</td>
+<td>Part of the repository&#39;s test suite (<code>pytest</code>); the full suite passed 208 of 208</td>
+</tr>
+</tbody></table></div>
+<h2 id="best-practices">Best practices<a class="anchor" href="#best-practices" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Use one client per endpoint and key</strong>, created at start-up.</li>
+<li><strong>Keep <code>POST</code> retries off.</strong> Only the <code>GET</code> retries are automatic.</li>
+<li><strong>Import from <code>parmana.crypto</code></strong> for signing and offline verification. Those functions need the <code>verify</code> extra.</li>
+<li><strong>Read enumerations by value.</strong> <code>DecisionOutcome.APPROVED</code> is a <code>str</code> enum; compare with <code>== DecisionOutcome.APPROVED</code> or use <code>.value</code> for logs.</li>
+<li><strong>Keep private keys out of source code.</strong> Read them from a file or secret store that the signer controls.</li>
+<li><strong>Verify offline when you need proof</strong>, and check <code>coverage</code> before you treat a record as fully covered.</li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/sdk/python.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="typescript.html"><span>Previous</span>TypeScript SDK: @parmana/sdk</a><a class="pn next" href="cli.html"><span>Next</span>Operator CLI: @parmana/cli (parmana-ops)</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#package">Package</a></li><li class="d2"><a href="#install">Install</a></li><li class="d2"><a href="#initialize-the-client">Initialize the client</a></li><li class="d3"><a href="#retries">Retries</a></li><li class="d2"><a href="#top-level-names">Top-level names</a></li><li class="d2"><a href="#client-surface">Client surface</a></li><li class="d2"><a href="#methods-used-most-often">Methods used most often</a></li><li class="d2"><a href="#methods-not-covered-above">Methods not covered above</a></li><li class="d2"><a href="#builder-createbusinesstransaction">Builder: create_business_transaction</a></li><li class="d2"><a href="#human-approvals-signapproval">Human approvals: sign_approval</a></li><li class="d2"><a href="#policy-change-step-up-signpolicychangestepup">Policy change step-up: sign_policy_change_step_up</a></li><li class="d2"><a href="#offline-verification-verifyexecutiontrustrecordoffline">Offline verification: verify_execution_trust_record_offline</a></li><li class="d2"><a href="#errors">Errors</a></li><li class="d2"><a href="#examples">Examples</a></li><li class="d2"><a href="#best-practices">Best practices</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

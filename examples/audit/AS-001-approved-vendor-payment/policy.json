@@ -2,9 +2,7 @@
   "policyId": "vendor-payment",
   "policyVersion": "2.0.0",
   "schemaVersion": "1.0.0",
-
   "description": "Authorizes vendor payments after validating vendor identity, invoice verification, payment approval, available funds, and operational risk.",
-
   "signalsSchema": {
     "vendorVerified": "boolean",
     "invoiceVerified": "boolean",
@@ -13,7 +11,6 @@
     "paymentAmount": "number",
     "riskScore": "number"
   },
-
   "rules": [
     {
       "id": "approve-vendor-payment",
@@ -109,5 +106,32 @@
         "reason": "One or more required policy conditions were not satisfied."
       }
     }
-  ]
+  ],
+  "signalSources": {
+    "invoiceVerified": {
+      "source": "trusted-test",
+      "claim": "fact.invoiceVerified",
+      "subject": "target"
+    },
+    "paymentApproved": {
+      "source": "trusted-test",
+      "claim": "fact.paymentApproved",
+      "subject": "target"
+    },
+    "riskScore": {
+      "source": "trusted-test",
+      "claim": "fact.riskScore",
+      "subject": "target"
+    },
+    "sufficientFunds": {
+      "source": "trusted-test",
+      "claim": "fact.sufficientFunds",
+      "subject": "target"
+    },
+    "vendorVerified": {
+      "source": "trusted-test",
+      "claim": "fact.vendorVerified",
+      "subject": "target"
+    }
+  }
 }

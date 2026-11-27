@@ -1,12 +1,12 @@
 # Contributing, security and community
 
-[Back to the README](../../README.md) · [Developer docs index](README.md)
+[Back to the README](https://github.com/pavancharak/parmana-core/blob/main/README.md) · [Developer docs index](README.md)
 
 ## Contributing and security
 
-- **Contributing:** pull requests from outside Parmana Systems are welcome. Read [CONTRIBUTING.md](../../CONTRIBUTING.md) first. Every commit needs a `Signed-off-by` line (`git commit -s`) under the [Developer Certificate of Origin](https://developercertificate.org).
-- **Security:** do not open a public issue for a vulnerability. Report it privately, as [SECURITY.md](../../SECURITY.md) describes.
-- **Conduct:** everyone in issues, pull requests and other project spaces follows the [Code of Conduct](../../CODE_OF_CONDUCT.md).
+- **Contributing:** pull requests from outside Parmana Systems are welcome. Read [CONTRIBUTING.md](https://github.com/pavancharak/parmana-core/blob/main/CONTRIBUTING.md) first. Every commit needs a `Signed-off-by` line (`git commit -s`) under the [Developer Certificate of Origin](https://developercertificate.org).
+- **Security:** do not open a public issue for a vulnerability. Report it privately, as [SECURITY.md](https://github.com/pavancharak/parmana-core/blob/main/SECURITY.md) describes.
+- **Conduct:** everyone in issues, pull requests and other project spaces follows the [Code of Conduct](https://github.com/pavancharak/parmana-core/blob/main/CODE_OF_CONDUCT.md).
 - **Questions and ideas:** [GitHub Discussions](https://github.com/pavancharak/parmana-core/discussions). **Bugs:** [GitHub Issues](https://github.com/pavancharak/parmana-core/issues).
 
 ## Work with us
@@ -17,7 +17,7 @@ Email **founder@parmanasystems.com** with a line about your use case. The websit
 
 ## License
 
-Parmana is licensed under the [Apache License, Version 2.0](../../LICENSE). The trademark terms are in [NOTICE](../../NOTICE). To cite Parmana, use [CITATION.cff](../../CITATION.cff), or **Cite this repository** on GitHub.
+Parmana is licensed under the [Apache License, Version 2.0](https://github.com/pavancharak/parmana-core/blob/main/LICENSE). The trademark terms are in [NOTICE](https://github.com/pavancharak/parmana-core/blob/main/NOTICE). To cite Parmana, use [CITATION.cff](https://github.com/pavancharak/parmana-core/blob/main/CITATION.cff), or **Cite this repository** on GitHub.
 
 Copyright (c) 2026 Parmana Systems Private Limited.
 

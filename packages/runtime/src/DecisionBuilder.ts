@@ -5,11 +5,7 @@ import type { DecisionAssessment, JsonValue } from "@parmana/shared";
 
 import { Decision, DecisionOutcome } from "@parmana/shared";
 
-import {
-  POLICY_EVALUATION_METHOD,
-  PolicyDecision,
-  PolicyOutcome,
-} from "@parmana/policy";
+import { PolicyDecision, PolicyOutcome } from "@parmana/policy";
 
 /**
  * Builds the canonical Decision artifact.
@@ -34,12 +30,17 @@ export class DecisionBuilder {
     transaction: DecisionRequest,
     policyDecision: PolicyDecision,
     assessment?: DecisionAssessment,
+    trustedValues: Record<string, JsonValue> = {},
   ): Decision {
     return {
       decisionId: crypto.randomUUID(),
+      ...(Object.keys(trustedValues).length > 0 && { trustedValues }),
+      // Copied from the engine that produced the verdict (R3). The runtime
+      // does not name the method itself, so the record cannot disagree with
+      // the verdict about how it was reached.
       evaluationMethod: {
-        id: POLICY_EVALUATION_METHOD.id,
-        version: POLICY_EVALUATION_METHOD.version,
+        id: policyDecision.evaluationMethod.id,
+        version: policyDecision.evaluationMethod.version,
       },
 
       intentId: transaction.intent.intentId,
@@ -61,6 +62,10 @@ export class DecisionBuilder {
       evaluatedRules: policyDecision.evaluatedRules,
 
       matchedPath: policyDecision.matchedPath,
+
+      // Copied verbatim (R5): a reader of the record can tell absent
+      // evidence from a refusal made on complete evidence.
+      evidence: policyDecision.evidence,
 
       evaluatedAt: new Date(),
 

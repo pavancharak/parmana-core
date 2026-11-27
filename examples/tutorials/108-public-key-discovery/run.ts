@@ -3,6 +3,7 @@ import {
   verifyExecutionTrustRecordOffline,
 } from "@parmana/crypto";
 import type { ExecutionTrustRecord } from "@parmana/shared";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // PQC audit RED-2 (docs/internal/VERIFICATION-GAPS.md): before GET /keys/:keyId
@@ -30,7 +31,13 @@ console.log("==================================================");
 console.log();
 
 const executionSystem = await createExecutionSystem();
-const application = createApplication(executionSystem);
+const application = createApplication(
+  executionSystem,
+  undefined,
+  undefined,
+  undefined,
+  demoTrustedSources(),
+);
 const app = createApp(application, { callerAuth: "disabled" });
 
 const server = app.listen(0);
@@ -112,16 +119,12 @@ try {
   const withHash: ExecutionTrustRecord = {
     ...draft,
     trustRecordHash,
-    signature: {
-      algorithm: "ed25519",
-      keyId: "default",
-      value: "",
-      signedAt: new Date(),
-    },
+    schemaVersion: 3,
   };
 
-  const signature = await crypto.sign(withHash);
-  const trustRecord: ExecutionTrustRecord = { ...withHash, signature };
+  // Schema version 3: the signatures array covers the whole record (decision D24).
+  const signatures = await crypto.signWholeRecord(withHash);
+  const trustRecord: ExecutionTrustRecord = { ...withHash, signatures };
 
   // From here on, no further reference to baseUrl, the server, or any
   // Parmana process at all -- only the record and the PEM string

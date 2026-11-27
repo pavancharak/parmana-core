@@ -50,6 +50,13 @@ export interface InboundCheckFields {
   readonly approvedAt?: string;
 }
 
+/**
+ * The same decision, signed a second time with a post-quantum algorithm (ML-DSA-65) over the same
+ * canonical bytes. Stored with the decision and returned in the response. Absent when no secondary
+ * signer is configured.
+ */
+export type InboundSecondarySignature = string;
+
 /** A verified human approval that decided a request (G-143). */
 export interface InboundApprovalUse {
   readonly approvalId: string;
@@ -93,7 +100,10 @@ export interface InboundCheckDependencies {
     capability: string,
   ) => Promise<InboundPolicyLookup | undefined>;
   /** Decides a request without executing it, through the runtime's decide step. */
-  readonly decide: (request: DecisionRequest) => Promise<{
+  readonly decide: (
+    request: DecisionRequest,
+    options?: { readonly probe?: boolean },
+  ) => Promise<{
     readonly approved: boolean;
     readonly reason?: string;
     /** The verified approvals that decided the request, if any. */
@@ -102,19 +112,43 @@ export interface InboundCheckDependencies {
   /** Signs the canonical bytes of a decision, returning a base64 signature. */
   readonly sign: (canonicalBytes: Buffer) => Promise<string>;
   /** Appends every issued decision. */
+  /**
+   * Optional second signature (ML-DSA-65) over the same canonical bytes. When set, every decision carries
+   * it. A failure here refuses the request: no decision is issued without both signatures.
+   */
+  readonly signSecondary?: (
+    canonicalBytes: Buffer,
+  ) => Promise<InboundSecondarySignature>;
   readonly store: {
-    append(record: InboundCheckFields & { signature: string }): Promise<void>;
+    append(
+      record: InboundCheckFields & {
+        signature: string;
+        secondarySignature?: InboundSecondarySignature;
+      },
+    ): Promise<void>;
     /**
      * Writes the decision and consumes the approvals it used, in one unit (G-143, O1). Required whenever a
      * decision used an approval. Without it, such a decision fails closed.
      */
     appendConsumingApprovals?(
-      record: InboundCheckFields & { signature: string },
+      record: InboundCheckFields & {
+        signature: string;
+        secondarySignature?: InboundSecondarySignature;
+      },
       approvals: readonly ConsumedApprovalNonce[],
     ): Promise<void>;
   };
   readonly now?: () => Date;
   readonly audience: string;
+  /** Looks up a decision by id, for redemption. Required for POST /:decisionId/redeem. */
+  readonly findCheck?: (decisionId: string) => Promise<{
+    readonly decisionId: string;
+    readonly partnerId: string;
+    readonly outcome: "approved" | "rejected";
+    readonly expiresAt: string;
+  } | null>;
+  /** Redeems a decision once. Returns false if it was already redeemed. Required for redemption. */
+  readonly redeem?: (decisionId: string, expiresAt: string) => Promise<boolean>;
 }
 
 /** Canonical JSON: keys sorted at the top level, every field except signature. */
@@ -208,25 +242,45 @@ export function createInboundCheckRouter(
         }
 
         // Grant limits. Fail closed: a limit with no maximum cannot be checked.
-        const limits: Array<[string, number]> = [];
+        const limits: Array<[string, { min?: number; max: number }]> = [];
         for (const [path, limit] of Object.entries(grant.limits ?? {})) {
           if (typeof limit.max !== "number") {
             res.status(403).json({ error: "grant_limit_incomplete" });
             return;
           }
-          limits.push([path, limit.max]);
+          limits.push([
+            path,
+            typeof limit.min === "number"
+              ? { min: limit.min, max: limit.max }
+              : { max: limit.max },
+          ]);
         }
         const root = { target: body.target, parameters: body.parameters };
         let exceeded = false;
+        let belowMinimum = false;
         let amount: number | undefined;
-        for (const [path, max] of limits) {
+        for (const [path, bounds] of limits) {
           const value = valueAtPath(root, path);
           if (typeof value !== "number" || !Number.isFinite(value)) {
             res.status(400).json({ error: `${path} must be a number` });
             return;
           }
+          // A limited value must be greater than zero. A negative amount is always below the maximum, so
+          // a maximum alone cannot stop it (the check approved -500000 under a 100000 maximum before this).
+          if (value <= 0) {
+            res
+              .status(400)
+              .json({ error: `${path} must be greater than zero` });
+            return;
+          }
+          if (!Number.isInteger(value)) {
+            res.status(400).json({ error: `${path} must be a whole number` });
+            return;
+          }
           if (amount === undefined) amount = value;
-          if (value > max) exceeded = true;
+          if (value > bounds.max) exceeded = true;
+          if (bounds.min !== undefined && value < bounds.min)
+            belowMinimum = true;
         }
 
         // The policy bound to the capability. No binding means nothing can approve the request.
@@ -245,34 +299,52 @@ export function createInboundCheckRouter(
 
         // The policy decides. Nothing is executed: the runtime's decide step only decides.
         const checkId = `chk-${randomUUID()}`;
-        const decision = await deps.decide({
-          businessTransactionId: checkId,
-          metadata: {
-            businessTransactionId: checkId,
-            submittedBy: partnerId,
-            submittedAt: issuedAt,
-          },
-          // A check issues no authorization; decide() never reads one.
-          intent: {
-            intentId: `${checkId}-intent`,
-            authorizationId: "",
-            action: capability,
-            target: typeof body.target === "string" ? body.target : "",
-            parameters: (body.parameters ?? {}) as Record<string, unknown>,
-            createdAt: issuedAt,
-          },
-          policy: lookup.policy,
-          signals: (body.signals ?? {}) as Record<string, unknown>,
-          status: BusinessTransactionStatus.RECEIVED,
-          createdAt: issuedAt,
-        });
+        const runDecision = (signals: Record<string, unknown>, probe = false) =>
+          deps.decide(
+            {
+              businessTransactionId: checkId,
+              metadata: {
+                businessTransactionId: checkId,
+                submittedBy: partnerId,
+                submittedAt: issuedAt,
+              },
+              // A check issues no authorization; decide() never reads one.
+              intent: {
+                intentId: `${checkId}-intent`,
+                authorizationId: "",
+                action: capability,
+                target: typeof body.target === "string" ? body.target : "",
+                parameters: (body.parameters ?? {}) as Record<string, unknown>,
+                createdAt: issuedAt,
+              },
+              policy: lookup.policy,
+              signals,
+              status: BusinessTransactionStatus.RECEIVED,
+              createdAt: issuedAt,
+            },
+            probe ? { probe: true } : undefined,
+          );
 
-        const approved = !exceeded && decision.approved;
-        const reason = exceeded
-          ? "approval_required"
-          : approved
-            ? undefined
-            : (decision.reason ?? "policy_rejected");
+        const declaredSignals = (body.signals ?? {}) as Record<string, unknown>;
+        const decision = await runDecision(declaredSignals);
+        // Facts the partner declared may cause a refusal, never an approval. So a decision that approves
+        // only with those facts is checked again without them. Facts from a trusted source are still
+        // resolved inside decide(), so they are unaffected.
+        const declaredAny = Object.keys(declaredSignals).length > 0;
+        const policyApproved =
+          decision.approved &&
+          (!declaredAny || (await runDecision(declaredSignals, true)).approved);
+
+        const approved = !exceeded && !belowMinimum && policyApproved;
+        const reason = belowMinimum
+          ? "below_limit_minimum"
+          : exceeded
+            ? "approval_required"
+            : approved
+              ? undefined
+              : decision.approved
+                ? "requires_trusted_facts"
+                : (decision.reason ?? "policy_rejected");
 
         // G-143: record the approval only when the decision is approved and exactly one approval decided it.
         // Several approvals on one decision is open decision O3; in that case no approval fields are written.
@@ -309,6 +381,13 @@ export function createInboundCheckRouter(
         const consumed = approved ? (decision.approvals ?? []) : [];
         let recorded = fields;
         let signature = await deps.sign(canonicalCheckBytes(recorded));
+        let secondarySignature = deps.signSecondary
+          ? await deps.signSecondary(canonicalCheckBytes(recorded))
+          : undefined;
+        const withSecondary = (
+          value: string | undefined,
+        ): { secondarySignature?: string } =>
+          value === undefined ? {} : { secondarySignature: value };
         try {
           if (consumed.length > 0) {
             if (deps.store.appendConsumingApprovals === undefined) {
@@ -317,23 +396,92 @@ export function createInboundCheckRouter(
               );
             }
             await deps.store.appendConsumingApprovals(
-              { ...recorded, signature },
+              { ...recorded, signature, ...withSecondary(secondarySignature) },
               consumed.map((use) => ({
                 nonce: use.nonce,
                 expiresAt: use.expiresAt,
               })),
             );
           } else {
-            await deps.store.append({ ...recorded, signature });
+            await deps.store.append({
+              ...recorded,
+              signature,
+              ...withSecondary(secondarySignature),
+            });
           }
         } catch (error) {
           if (!(error instanceof ApprovalAlreadyUsedError)) throw error;
           recorded = refusedBecauseUsed(fields);
           signature = await deps.sign(canonicalCheckBytes(recorded));
-          await deps.store.append({ ...recorded, signature });
+          secondarySignature = deps.signSecondary
+            ? await deps.signSecondary(canonicalCheckBytes(recorded))
+            : undefined;
+          await deps.store.append({
+            ...recorded,
+            signature,
+            ...withSecondary(secondarySignature),
+          });
         }
 
-        res.status(201).json({ ...recorded, signature });
+        res.status(201).json({
+          ...recorded,
+          signature,
+          ...withSecondary(secondarySignature),
+        });
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  /**
+   * POST /:decisionId/redeem: the business system calls this before it acts on an approved decision.
+   * A decision is redeemed once. A second redemption is refused, so one approval cannot cover two
+   * actions. Only the partner the decision was issued to may redeem it, and only before it expires.
+   */
+  router.post(
+    "/:decisionId/redeem",
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const partnerId = req.callerId;
+        if (!partnerId) {
+          res.status(401).json({ error: "unauthenticated" });
+          return;
+        }
+        if (!deps.findCheck || !deps.redeem) {
+          res.status(503).json({ error: "redemption_not_configured" });
+          return;
+        }
+        const decisionId = String(req.params.decisionId ?? "");
+        const decision = await deps.findCheck(decisionId);
+        if (!decision) {
+          res.status(404).json({ error: "decision_not_found" });
+          return;
+        }
+        if (decision.partnerId !== partnerId) {
+          res.status(403).json({ error: "not_the_partner_for_this_decision" });
+          return;
+        }
+        if (decision.outcome !== "approved") {
+          res.status(409).json({ error: "decision_not_approved" });
+          return;
+        }
+        if (!(new Date(decision.expiresAt) > now())) {
+          res.status(409).json({ error: "decision_expired" });
+          return;
+        }
+        const first = await deps.redeem(
+          decision.decisionId,
+          decision.expiresAt,
+        );
+        if (!first) {
+          res.status(409).json({ error: "already_redeemed" });
+          return;
+        }
+        res.status(200).json({
+          decisionId: decision.decisionId,
+          redeemedAt: now().toISOString(),
+        });
       } catch (error) {
         next(error);
       }

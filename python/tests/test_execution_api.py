@@ -11,7 +11,7 @@ from parmana.models.business_transaction import (
 )
 from parmana.models.intent import Intent
 from parmana.models.policy import PolicyReference
-from parmana.models.signature import Signature, SignatureAlgorithm
+from parmana.models.signature import SignatureAlgorithm, SignatureEntry
 from parmana.models.trust_record import ExecutionTrustRecord
 from parmana.serialization import encode
 
@@ -44,17 +44,17 @@ class FakeTransport:
             trust_record_id="tr-001",
             business_transaction_id="tx-001",
             transaction=None,
-            overrides=[],
             executions=[],
             verifications=[],
             receipts=[],
             trust_record_hash="hash",
-            signature=Signature(
-                algorithm=SignatureAlgorithm.ED25519,
-                key_id="key-001",
-                value="c2lnbmF0dXJl",
-                signed_at=datetime.now(UTC),
-            ),
+            signatures=[
+                SignatureEntry(
+                    algorithm=SignatureAlgorithm.ED25519,
+                    key_id="key-001",
+                    signature="c2lnbmF0dXJl",
+                ),
+            ],
             created_at=datetime.now(UTC),
             updated_at=datetime.now(UTC),
         )
@@ -130,7 +130,7 @@ def test_execute():
         ExecutionTrustRecord,
     )
 
-    assert record.signature.algorithm == SignatureAlgorithm.ED25519
+    assert record.signatures[0].algorithm == SignatureAlgorithm.ED25519
 
 
 def test_execute_raises_execution_pending_on_the_202_answer(monkeypatch):

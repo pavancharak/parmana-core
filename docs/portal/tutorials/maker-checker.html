@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tutorial: maker-checker approval of a policy change · Parmana developer docs</title>
+<meta name="description" content="Tutorial: maker-checker approval of a policy change Tutorials · Policy management · CLI · API: policy changes Goal. No change to a policy takes effect until a second, different person approves it. The maker proposes the change. The checker ">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../security/key-management.html">Key management</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../policies/payment-refund-coverage.html">Coverage of the production policy</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="index.html">Tutorials</a></li><li><a href="maker-checker.html" aria-current="page">Tutorial: maker-checker approval of a policy change</a></li><li><a href="transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Tutorials</span><span class="sep">/</span><span>Tutorial: maker-checker approval of a policy change</span></div>
+    <article>
+<h1 id="tutorial-maker-checker-approval-of-a-policy-change">Tutorial: maker-checker approval of a policy change<a class="anchor" href="#tutorial-maker-checker-approval-of-a-policy-change" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">Tutorials</a> · <a href="../policies/index.html">Policy management</a> · <a href="../sdk/cli.html">CLI</a> · <a href="../api/endpoints.html#policy">API: policy changes</a></p>
+<p><strong>Goal.</strong> No change to a policy takes effect until a second, different person approves it. The <strong>maker</strong> proposes the change. The <strong>checker</strong> approves it with a step-up signature made with their own key. The server refuses the maker&#39;s approval of their own change, and refuses any approval that lacks a valid envelope.</p>
+<p><strong>Verification.</strong> Three runs, all against this repository:</p>
+<ul>
+<li>Tutorial 103 (<a href="https://github.com/pavancharak/parmana-core/blob/main/examples/tutorials/103-policy-governance-maker-checker/run.ts"><code>examples/tutorials/103-policy-governance-maker-checker/run.ts</code></a>) runs the four refusals and the approval over real HTTP. Its outputs: propose <code>201</code>; a service caller <code>403 NON_HUMAN_CALLER_DENIED</code>; the maker&#39;s approval <code>403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE</code>; a checker without an envelope <code>403 STEP_UP_AUTHORIZATION_INVALID</code>; the checker with the envelope <code>200</code>, approved, with the policy file written.</li>
+<li><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/typescript/governed-flow.ts"><code>governed-flow.ts</code></a> and <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/python/governed_flow.py"><code>governed_flow.py</code></a> run the same flow with the public SDKs against a local server.</li>
+<li>The <code>parmana-ops</code> CLI flow ran against a local server (see <a href="../sdk/cli.html#the-maker-checker-flow-with-the-cli">CLI</a>).</li>
+</ul>
+<h2 id="who-does-what">Who does what<a class="anchor" href="#who-does-what" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Party</th>
+<th>Does</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Maker</strong> (a person)</td>
+<td>Writes the new policy version and proposes it with a reason.</td>
+<td>A caller key of type <code>USER</code>.</td>
+</tr>
+<tr>
+<td><strong>Checker</strong> (a different person)</td>
+<td>Reviews the proposal and signs a step-up envelope on their own machine.</td>
+<td>A caller key of type <code>USER</code>, and the step-up <strong>private</strong> key. The public half is registered on the checker&#39;s caller entry.</td>
+</tr>
+<tr>
+<td><strong>Parmana service</strong></td>
+<td>Checks the caller is a human, the maker is not the checker, the checker is listed for this policy, and the envelope verifies. Then stores the approval record and writes the policy file.</td>
+<td>The step-up <strong>public</strong> key (in <code>PARMANA_API_KEYS</code>), and <code>POLICY_CHANGE_CHECKERS</code>.</td>
+</tr>
+<tr>
+<td><strong>Your application</strong></td>
+<td>Nothing. Execution is refused until the version is approved.</td>
+<td>Its own caller key, with no governance rights.</td>
+</tr>
+</tbody></table></div>
+<h2 id="step-1-configure-the-people-and-the-checker">Step 1: configure the people and the checker<a class="anchor" href="#step-1-configure-the-people-and-the-checker" aria-label="Link to this section">#</a></h2>
+<p>The operator sets two things, in the server&#39;s environment:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash"># Who may approve a change to each policy. An empty list means nobody can, so approval is refused.
+POLICY_CHANGE_CHECKERS='{"vendor-payment":["checker"]}'
+
+# The callers. The checker's entry carries the public half of its step-up key.
+PARMANA_API_KEYS='[
+  {"callerId":"maker","keyHash":"&lt;sha256 of the maker key&gt;","credentialHolderType":"USER"},
+  {"callerId":"checker","keyHash":"&lt;sha256 of the checker key&gt;","credentialHolderType":"USER",
+   "stepUpPublicKey":"-----BEGIN PUBLIC KEY-----\n…\n-----END PUBLIC KEY-----\n"}
+]'</code></pre></div>
+<p>The <code>setup.mjs</code> script in <a href="../getting-started.html">Getting started</a> writes exactly this configuration for the local run. The <code>parmana-ops keys generate-api-key --generate-step-up-key</code> command generates a key pair for a checker, and prints the entry to add (see <a href="../sdk/cli.html">CLI</a>). The raw key is shown once. The server stores only its hash.</p>
+<h2 id="step-2-the-maker-proposes">Step 2: the maker proposes<a class="anchor" href="#step-2-the-maker-proposes" aria-label="Link to this section">#</a></h2>
+<p>The maker sends the whole policy document and a reason. The policy&#39;s <code>policyId</code> must equal the name in the URL, and its <code>policyVersion</code> must equal the version.</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import { readFileSync } from "node:fs";
+import { ParmanaClient } from "@parmana/sdk";
+
+const maker = new ParmanaClient({ endpoint, apiKey: process.env.MAKER_KEY });
+const policy = JSON.parse(readFileSync("vendor-payment-2.1.1.json", "utf8"));
+
+const proposal = await maker.proposePolicyChange("vendor-payment", "2.1.1", {
+  proposedContent: policy,
+  reason: "Lower the risk threshold from 20 to 15",
+});
+console.log(proposal.pendingPolicyChangeId, proposal.status); // PENDING_APPROVAL</code></pre></div>
+<p>The change is pending. Nothing is in effect yet. The server stores the proposal and the proposed content, and reports any validator warnings in the response.</p>
+<h2 id="step-3-the-maker-cannot-approve-it">Step 3: the maker cannot approve it<a class="anchor" href="#step-3-the-maker-cannot-approve-it" aria-label="Link to this section">#</a></h2>
+<p>The maker may not approve, or reject, their own change. The server refuses it:</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import { signPolicyChangeStepUp } from "@parmana/sdk";
+
+// Even with a valid envelope, the same caller who proposed the change is refused.
+try {
+  await maker.approvePolicyChange(
+    proposal.pendingPolicyChangeId,
+    signPolicyChangeStepUp({
+      pendingPolicyChangeId: proposal.pendingPolicyChangeId,
+      action: "approve",
+      privateKeyPem: stepUpPrivatePem,
+      keyId: "checker-step-up-key",
+    }),
+  );
+} catch (error) {
+  // AuthorizationError (HTTP 403): ... proposed by this same caller — the proposer (maker) may not also approve or reject it (checker).
+}</code></pre></div>
+<p>Verified: <code>403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE</code>.</p>
+<h2 id="step-4-the-checker-reviews-and-approves">Step 4: the checker reviews and approves<a class="anchor" href="#step-4-the-checker-reviews-and-approves" aria-label="Link to this section">#</a></h2>
+<p>The checker reviews the proposed content (the operator can list pending changes with <code>GET /policies/pending-changes?status=…</code>, or <code>parmana-ops policy status &lt;name&gt; &lt;version&gt;</code>). If the checker agrees, they sign an envelope on their own machine and submit it with their own key:</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">const checker = new ParmanaClient({
+  endpoint,
+  apiKey: process.env.CHECKER_KEY,
+});
+
+const approved = await checker.approvePolicyChange(
+  proposal.pendingPolicyChangeId,
+  signPolicyChangeStepUp({
+    pendingPolicyChangeId: proposal.pendingPolicyChangeId,
+    action: "approve",
+    privateKeyPem: readFileSync("checker-stepup.private.pem", "utf8"), // stays with the checker
+    keyId: "checker-step-up-key",
+    ttlSeconds: 120, // default; signed just before submitting
+  }),
+);
+console.log(approved.status); // APPROVED</code></pre></div>
+<p>The envelope is valid for 120 seconds. Sign it immediately before you submit it. The server checks each of these conditions: the caller is a human, the caller is listed for this policy, the envelope is signed by the checker&#39;s step-up key and is not expired, and the checker is not the maker. Tutorial 103 shows each one refusing a request that passes the others.</p>
+<p>Verified: <code>200</code>, <code>APPROVED</code>, with the approval record stored and the <code>policy.json</code> written to the policy directory.</p>
+<h2 id="step-5-the-version-takes-effect">Step 5: the version takes effect<a class="anchor" href="#step-5-the-version-takes-effect" aria-label="Link to this section">#</a></h2>
+<p>Once approved, the version is the version in effect for its policy name, and the most recently approved version is the one executed. Earlier versions are superseded:</p>
+<blockquote>
+<p><code>policy &quot;vendor-payment&quot;@&quot;2.1.0&quot; was superseded: the version in effect is &quot;2.1.1&quot;, the one most recently approved.</code></p>
+</blockquote>
+<p>Verified: after <code>2.1.1</code> was approved through the CLI, a transaction naming <code>2.1.0</code> was refused with this message. See <a href="../policies/index.html#versions-and-the-version-in-effect">Policy management</a>.</p>
+<h2 id="what-the-refusals-mean">What the refusals mean<a class="anchor" href="#what-the-refusals-mean" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Response</th>
+<th>Meaning</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>403 NON_HUMAN_CALLER_DENIED</code></td>
+<td>A service caller tried to propose or approve.</td>
+<td>Use a human&#39;s key, or do not make the change through this route.</td>
+</tr>
+<tr>
+<td><code>403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE</code></td>
+<td>The maker tried to approve their own change.</td>
+<td>Ask a different, listed checker.</td>
+</tr>
+<tr>
+<td><code>403 STEP_UP_AUTHORIZATION_INVALID</code></td>
+<td>No envelope, a bad signature, an expired envelope, or a wrong action.</td>
+<td>Sign a fresh envelope with the checker&#39;s step-up key, and submit it at once.</td>
+</tr>
+</tbody></table></div>
+<h2 id="the-same-flow-in-one-command-with-the-cli">The same flow in one command with the CLI<a class="anchor" href="#the-same-flow-in-one-command-with-the-cli" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash"># The maker proposes from a file:
+PARMANA_TOKEN="$MAKER_KEY" parmana-ops policy propose vendor-payment-2.1.1.json \
+  --name vendor-payment --version 2.1.1 --reason "Lower the risk threshold"
+
+# The checker signs locally, then submits with their own token:
+parmana-ops approval sign --key-file checker-stepup.private.pem --key-id checker-step-up-key \
+  --pending &lt;id&gt; --action approve --out envelope.json
+PARMANA_TOKEN="$CHECKER_KEY" parmana-ops approval submit --pending &lt;id&gt; --action approve --envelope envelope.json</code></pre></div>
+<p>The published <code>parmana-ops</code> 4.1.1 prints nothing when run as an installed command; the repository&#39;s fix is not yet released. Use <code>node &quot;$(npm root -g)/@parmana/cli/dist/index.js&quot;</code> in its place. See <a href="../sdk/cli.html#the-installed-binary-fixed-in-the-repository-not-yet-in-a-published-release">CLI</a>.</p>
+<h2 id="production-notes">Production notes<a class="anchor" href="#production-notes" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Keep the step-up private key on the checker&#39;s machine. Never put it in a repository, a CI secret, or a shared vault that the maker can read.</li>
+<li>A change to <code>POLICY_CHANGE_CHECKERS</code> is a configuration change. Make it through your normal change process.</li>
+<li>A checker who is not listed for a policy is refused. This check was not captured as a response in this verification; confirm it in your deployment.</li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/tutorials/maker-checker.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="index.html"><span>Previous</span>Tutorials</a><a class="pn next" href="transaction-limits.html"><span>Next</span>Tutorial: enforce transaction limits</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#who-does-what">Who does what</a></li><li class="d2"><a href="#step-1-configure-the-people-and-the-checker">Step 1: configure the people and the checker</a></li><li class="d2"><a href="#step-2-the-maker-proposes">Step 2: the maker proposes</a></li><li class="d2"><a href="#step-3-the-maker-cannot-approve-it">Step 3: the maker cannot approve it</a></li><li class="d2"><a href="#step-4-the-checker-reviews-and-approves">Step 4: the checker reviews and approves</a></li><li class="d2"><a href="#step-5-the-version-takes-effect">Step 5: the version takes effect</a></li><li class="d2"><a href="#what-the-refusals-mean">What the refusals mean</a></li><li class="d2"><a href="#the-same-flow-in-one-command-with-the-cli">The same flow in one command with the CLI</a></li><li class="d2"><a href="#production-notes">Production notes</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

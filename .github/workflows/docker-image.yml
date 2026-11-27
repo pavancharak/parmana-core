@@ -72,7 +72,7 @@ jobs:
         run: |
           docker run -d --name parmana -p 3000:3000 \
             -e NODE_ENV=test \
-            -e PARMANA_ALLOW_UNGOVERNED_POLICY=true \
+            -e PARMANA_LOCAL_MODE=true \
             -e PARMANA_AUTH_DISABLED=true \
             -v "$PWD/keys:/app/keys:ro" \
             parmana-api

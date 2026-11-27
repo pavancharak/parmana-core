@@ -27,6 +27,16 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 2000
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "description": "Required for add, not allowed for revoke: the capability names this approver may approve. The server removes duplicates.",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._:-]{0,127}$"
+      }
     }
   },
   "examples": [
@@ -35,13 +45,44 @@
       "approverId": "approver-example",
       "keyId": "approver-example-key-1",
       "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\n-----END PUBLIC KEY-----\n",
-      "reason": "Priya approves refunds for the West region from October."
+      "reason": "Priya approves refunds for the West region from October.",
+      "capabilities": ["erp:pay-invoice"]
     },
     {
       "action": "revoke",
       "approverId": "approver-example",
       "keyId": "approver-example-key-1",
       "reason": "Priya moved to another team."
+    }
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "action": {
+            "const": "add"
+          }
+        },
+        "required": ["action"]
+      },
+      "then": {
+        "required": ["publicKeyPem", "capabilities"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "action": {
+            "const": "revoke"
+          }
+        },
+        "required": ["action"]
+      },
+      "then": {
+        "not": {
+          "required": ["capabilities"]
+        }
+      }
     }
   ]
 }

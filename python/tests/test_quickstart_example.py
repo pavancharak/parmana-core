@@ -59,12 +59,13 @@ def quickstart_server() -> str:
         env = {
             **os.environ,
             "NODE_ENV": "test",
+            "PARMANA_LOCAL_MODE": "true",
             # Approval records for the policies are seeded by
             # test-support/start-test-server.ts (D19).
             # Trusts the local test approver (tests/local_approver.py).
             **local_approver_env(),
             "PARMANA_STORAGE": "memory",
-            "PARMANA_POLICY_DIR": str(REPO_ROOT / "policies"),
+            "PARMANA_POLICY_DIR": str(REPO_ROOT / "fixtures" / "policies"),
             "PARMANA_KEY_DIR": key_dir,
             # No PARMANA_API_KEYS: this fixture matches the README's
             # documented local server, which runs with auth disabled --
@@ -127,7 +128,7 @@ def test_quickstart_runs_end_to_end_against_a_real_server(quickstart_server, cap
     assert trust_record.trust_record_id
     assert len(trust_record.executions) == 1
     assert trust_record.executions[0].decision.outcome.value == "APPROVED"
-    assert trust_record.signature.algorithm.value == "ed25519"
+    assert trust_record.signatures[0].algorithm.value == "ed25519"
 
     # The example's own printed output is part of what it documents
     # (README.md's "Expected output" section) -- proves that output

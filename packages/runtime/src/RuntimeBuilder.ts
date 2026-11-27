@@ -8,6 +8,7 @@ import type { SigningReadiness } from "./SigningReadiness.js";
 import type { ExecutionIntentService } from "./ExecutionIntentService.js";
 import {
   ExecutionTrustRecordRepository,
+  RefusalRecordOutboxRepository,
   RefusalRecordRepository,
   loadConfig,
 } from "@parmana/shared";
@@ -72,6 +73,7 @@ export class RuntimeBuilder {
   private executionIntents?: ExecutionIntentService;
 
   private transactionStatus?: TransactionStatusRecorder;
+  private refusalRecordOutbox?: RefusalRecordOutboxRepository;
 
   private approvalNeededNotifier?: ApprovalNeededNotifier;
 
@@ -204,6 +206,16 @@ export class RuntimeBuilder {
    * Transaction status events (decision D23). Each execute step is recorded
    * through this recorder.
    */
+  /**
+   * Refusal Record outbox (RFC-0021). Use with a refusal repository: the
+   * outbox saves the inputs of a refusal whose record cannot be written now.
+   */
+  public withRefusalRecordOutbox(outbox: RefusalRecordOutboxRepository): this {
+    this.refusalRecordOutbox = outbox;
+
+    return this;
+  }
+
   public withTransactionStatusRecorder(
     recorder: TransactionStatusRecorder,
   ): this {
@@ -338,6 +350,7 @@ export class RuntimeBuilder {
       new TrustedSignalResolver(this.businessSignalSources),
       new AuthorityGrantEvaluator(this.authorityGrants),
       this.transactionStatus,
+      this.refusalRecordOutbox,
     );
 
     //

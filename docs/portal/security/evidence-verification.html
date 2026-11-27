@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evidence verification · Parmana developer docs</title>
+<meta name="description" content="Evidence verification Security · Offline verifier · TypeScript SDK · Python SDK This page is for the person who needs to check an Execution Trust Record: an auditor, a second team, a regulator, or your own CI. You can do it without Parmana'">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="key-management.html">Key management</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../policies/payment-refund-coverage.html">Coverage of the production policy</a></li><li><a href="index.html">Security and cryptographic verification</a></li><li><a href="evidence-verification.html" aria-current="page">Evidence verification</a></li><li><a href="schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Concepts</span><span class="sep">/</span><span>Evidence verification</span></div>
+    <article>
+<h1 id="evidence-verification">Evidence verification<a class="anchor" href="#evidence-verification" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">Security</a> · <a href="../sdk/verifier.html">Offline verifier</a> · <a href="../sdk/typescript.html">TypeScript SDK</a> · <a href="../sdk/python.html">Python SDK</a></p>
+<p>This page is for the person who needs to check an Execution Trust Record: an auditor, a second team, a regulator, or your own CI. You can do it without Parmana&#39;s server, without the Parmana SDK, and without trusting whoever gave you the file. You need three things: the record, the public keys you trust, and a tool.</p>
+<p>Every command below was run in the verification for this portal, against a record produced by the governed flow.</p>
+<h2 id="what-verification-proves-and-what-it-does-not">What verification proves, and what it does not<a class="anchor" href="#what-verification-proves-and-what-it-does-not" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Verification proves</th>
+<th>Verification does not prove</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The covered fields of the record are unchanged since it was signed.</td>
+<td>That the business action happened as recorded. Check the connector&#39;s own records for that.</td>
+</tr>
+<tr>
+<td>The record was signed by a key you trust, at a time within that key&#39;s validity window.</td>
+<td>That the key belongs to whom it claims. Pin it through a second channel.</td>
+</tr>
+<tr>
+<td>For schema 3: every top-level field except the signatures and the verification and receipt lists is unchanged.</td>
+<td>Anything about the uncovered fields of a schema 2 record. See coverage below.</td>
+</tr>
+<tr>
+<td>The dispatched content matches what was authorized (the correspondence report).</td>
+<td>That the policy was the right policy. Policy review is a human decision, through maker-checker.</td>
+</tr>
+</tbody></table></div>
+<h2 id="step-1-get-the-record">Step 1: get the record<a class="anchor" href="#step-1-get-the-record" aria-label="Link to this section">#</a></h2>
+<p>Get the Execution Trust Record for the business transaction. It is the JSON that <code>POST /execute</code>, <code>GET /trust-records/{businessTransactionId}</code> or <code>client.execute()</code> returned. Keep the file exactly as you received it. Changing any covered value breaks verification. Re-formatting alone does not, because the signature is over canonical JSON (sorted keys, no whitespace).</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s -H "Authorization: Bearer $PARMANA_API_KEY" \
+  "$PARMANA_API_URL/trust-records/$TXN_ID" &gt; record.json</code></pre></div>
+<h2 id="step-2-pin-the-keys-you-trust">Step 2: pin the keys you trust<a class="anchor" href="#step-2-pin-the-keys-you-trust" aria-label="Link to this section">#</a></h2>
+<p>A trust file lists the public keys you accept. Each key is pinned by its fingerprint. The fingerprint must come from a source other than the one that gave you the key.</p>
+<ol>
+<li><p>Get the operator&#39;s public key PEM. For the local run it is <code>keys/default.public.pem</code> in the configuration directory. For a real deployment, the operator publishes it.</p>
+</li>
+<li><p>Compute its fingerprint:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">npx --yes @parmana/verifier@2.0.3 key-fingerprint default.public.pem
+# the output for the local run's key looks like: sha256:60fb0c839fc647914f397bcbe35e99c012d582a718bcaa38e6fa0b46349fe1ab</code></pre></div>
+</li>
+<li><p>Compare that value with the fingerprint the operator gave you, through a second channel (a signed message, or a call to a known number). Compare character by character. If they differ, stop.</p>
+</li>
+<li><p>Write the trust file with the key and its fingerprint.</p>
+</li>
+</ol>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{
+  "keys": [
+    {
+      "keyId": "default",
+      "algorithm": "ed25519",
+      "publicKeyPem": "-----BEGIN PUBLIC KEY-----\n…\n-----END PUBLIC KEY-----\n",
+      "fingerprint": "sha256:60fb0c839fc647914f397bcbe35e99c012d582a718bcaa38e6fa0b46349fe1ab",
+      "validFrom": "2026-01-01T00:00:00.000Z",
+      "validUntil": null,
+      "compromised": false
+    }
+  ],
+  "hybridRequiredFrom": "2026-11-01T00:00:00Z"
+}</code></pre></div>
+<p>Set <code>hybridRequiredFrom</code> to the time from which your deployment signs with a hybrid envelope (schema 3). Records created at or after that time must carry it, so a stripped record is refused. A trust file for a deployment with only schema 2 records needs the legacy settings described in step 3.</p>
+<p>Set <code>compromised: true</code> on a key that has been compromised. Then every signature it made is rejected, whatever the timestamp.</p>
+<h2 id="step-3-verify-with-the-standalone-verifier">Step 3: verify with the standalone verifier<a class="anchor" href="#step-3-verify-with-the-standalone-verifier" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">npx --yes @parmana/verifier@2.0.3 record.json trust.json</code></pre></div>
+<p>The output is one line of JSON. Read <code>valid</code>, <code>coverage</code> and <code>errors</code>:</p>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{"valid":true,"coverage":"full","errors":[],"checks":{"trustRecordHash":true,"signature":true,"hybridSignatures":true},"correspondence":{"status":"passed","executions":[…]}}</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Output</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>valid: true</code>, <code>coverage: full</code></td>
+<td>A schema 3 record. Every top-level field except the excluded lists is covered, and it verified.</td>
+</tr>
+<tr>
+<td><code>valid: true</code>, <code>coverage: legacy</code></td>
+<td>A schema 2 record. Only the seven covered fields are protected (see below).</td>
+</tr>
+<tr>
+<td><code>valid: false</code></td>
+<td>The record did not verify. <code>errors</code> says why. Do not rely on it.</td>
+</tr>
+<tr>
+<td><code>correspondence.status: passed</code></td>
+<td>Every execution&#39;s dispatched content matches the authorization.</td>
+</tr>
+<tr>
+<td><code>correspondence.status: failed</code></td>
+<td>A field differs or is missing: a mismatch. Act on it.</td>
+</tr>
+<tr>
+<td><code>correspondence.status: not_checked</code></td>
+<td>Nothing was compared. This is not a mismatch, and it is never reported as passed.</td>
+</tr>
+</tbody></table></div>
+<p>Exit codes: <code>0</code> valid, <code>1</code> invalid, <code>2</code> usage error.</p>
+<h3 id="schema-2-records-the-defaults-refuse-them-on-purpose">Schema 2 records: the defaults refuse them, on purpose<a class="anchor" href="#schema-2-records-the-defaults-refuse-them-on-purpose" aria-label="Link to this section">#</a></h3>
+<p>The default configuration of this build produces schema 2 records with one signature. The verifier refuses those by default, and names the setting that accepts them. To accept a schema 2 record, you must set both settings in the trust file, knowingly:</p>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{ "allowLegacyV2": true, "allowLegacyOnly": true, "keys": [ … ] }</code></pre></div>
+<p>With those settings, a schema 2 record is accepted with <code>coverage: legacy</code>. <strong>Know what that means.</strong> The signature covers only <code>trustRecordId</code>, <code>businessTransactionId</code>, <code>transaction</code>, <code>authorization</code>, <code>executions</code> and <code>createdAt</code>. A change to <code>updatedAt</code>, <code>evidenceAnchor</code>, <code>verifications</code> or <code>receipts</code> is not detected. This was reproduced in this portal: changing <code>updatedAt</code> left <code>valid: true</code>.</p>
+<p>Prefer schema 3 for records you must rely on. See <a href="index.html#schema-versions-and-coverage">Security: schema versions and coverage</a>.</p>
+<h3 id="tamper-check">Tamper check<a class="anchor" href="#tamper-check" aria-label="Link to this section">#</a></h3>
+<p>Run the same check on a copy with one covered field changed. It must fail:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">node -e 'const fs=require("fs");const r=JSON.parse(fs.readFileSync("record.json","utf8"));
+r.transaction.intent.parameters.amount=999999;fs.writeFileSync("record-tampered.json",JSON.stringify(r,null,2));'
+npx --yes @parmana/verifier@2.0.3 record-tampered.json trust.json   # expect valid: false, exit 1</code></pre></div>
+<p>Verified: the tampered copy returned <code>valid: false</code>, <code>trustRecordHash mismatch</code>, and exit 1.</p>
+<p>The repository script <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/verify-standalone.sh"><code>verify-standalone.sh</code></a> does steps 2 to 3 and this tamper check in one run.</p>
+<h2 id="step-4-verify-in-code-optional">Step 4: verify in code (optional)<a class="anchor" href="#step-4-verify-in-code-optional" aria-label="Link to this section">#</a></h2>
+<p>The SDKs provide the same check. Use them when your code already depends on the SDK.</p>
+<p><strong>TypeScript:</strong></p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import { readFileSync } from "node:fs";
+import { verifyExecutionTrustRecordOffline } from "@parmana/sdk";
+
+const record = JSON.parse(readFileSync("record.json", "utf8"));
+const result = verifyExecutionTrustRecordOffline(record, {
+  default: readFileSync("default.public.pem", "utf8"),
+});
+console.log(result.valid, result.coverage, result.errors);
+if (!result.valid) throw new Error("record did not verify");
+if (result.coverage !== "full")
+  console.warn("schema 2 record: uncovered fields are not protected");</code></pre></div>
+<p><strong>Python:</strong></p>
+<div class="code"><div class="code-bar"><span>python</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-python">import json
+from pathlib import Path
+from parmana.crypto import verify_execution_trust_record_offline
+
+record = json.loads(Path("record.json").read_text())
+result = verify_execution_trust_record_offline(record, {"default": Path("default.public.pem").read_text()})
+print(result.valid, result.coverage, result.errors)</code></pre></div>
+<p>Both were run in this verification on schema 2 and schema 3 records, and gave the same results as the standalone verifier. The SDK functions report <code>valid: true</code> for a schema 2 record without the legacy settings, because they do not apply the verifier&#39;s refuse-by-default rule. <strong>Check <code>coverage</code> in your code</strong> if you need full coverage.</p>
+<h2 id="step-5-read-the-correspondence-report">Step 5: read the correspondence report<a class="anchor" href="#step-5-read-the-correspondence-report" aria-label="Link to this section">#</a></h2>
+<p>The <code>correspondence</code> field answers a different question: did what was dispatched match what was authorized? For each execution, the verifier compares the authorization&#39;s nonce, business transaction hash, policy content hash and authority grant with the execution&#39;s correspondence fields, and compares the dispatched content hash with the authorized one.</p>
+<ul>
+<li><code>passed</code>: every field is present and matches.</li>
+<li><code>failed</code>: a field is missing or differs. A mismatch.</li>
+<li><code>not_checked</code>: nothing to compare, for example because the record does not embed its authorization. Not a mismatch.</li>
+</ul>
+<p>The report does not change <code>valid</code>. Read it together with <code>valid</code>.</p>
+<h2 id="step-6-server-checks-optional-when-you-have-a-key">Step 6: server checks (optional, when you have a key)<a class="anchor" href="#step-6-server-checks-optional-when-you-have-a-key" aria-label="Link to this section">#</a></h2>
+<p>The server can repeat checks on a record it stores. These are useful for operations, and they are not independent evidence, because the server is the party that holds the record.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Route</th>
+<th>What it does</th>
+<th>Verified</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST /verify</code></td>
+<td>Checks the stored record. Returns <code>VERIFIED</code> or <code>FAILED</code>.</td>
+<td>Yes: <code>VERIFIED</code></td>
+</tr>
+<tr>
+<td><code>POST /replay</code></td>
+<td>Checks the stored hash and signature again. Runs no policy and executes nothing.</td>
+<td>Yes: <code>verified: true</code></td>
+</tr>
+<tr>
+<td><code>POST /receipt</code></td>
+<td>Issues a signed receipt for a <code>VERIFIED</code> record.</td>
+<td>Yes: <code>200</code>, <code>409</code> when not verified</td>
+</tr>
+<tr>
+<td><code>GET /receipt/latest/{businessTransactionId}</code></td>
+<td>Returns the latest receipt.</td>
+<td>Yes</td>
+</tr>
+</tbody></table></div>
+<h2 id="keep-the-evidence">Keep the evidence<a class="anchor" href="#keep-the-evidence" aria-label="Link to this section">#</a></h2>
+<p>For each record you rely on, keep together:</p>
+<ul>
+<li>the record JSON, unchanged,</li>
+<li>the trust file you verified it with, and the fingerprint comparison you made,</li>
+<li>the verification output (<code>valid</code>, <code>coverage</code>, <code>correspondence</code>),</li>
+<li>the date you verified it.</li>
+</ul>
+<p>A later verification with the same trust file and record gives the same answer. That is the point of keeping the inputs.</p>
+<h2 id="troubleshooting-verification">Troubleshooting verification<a class="anchor" href="#troubleshooting-verification" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>schemaVersion 2 … refused by default</code></td>
+<td>The record is schema 2, and the trust file does not accept it.</td>
+<td>Set <code>allowLegacyV2</code> and <code>allowLegacyOnly</code> knowingly, or use a schema 3 record.</td>
+</tr>
+<tr>
+<td><code>record has no hybrid envelope</code></td>
+<td>Single-signature record, and <code>allowLegacyOnly</code> is not set.</td>
+<td>As above.</td>
+</tr>
+<tr>
+<td><code>signature verification failed for keyId &quot;default&quot;</code></td>
+<td>The record was signed by a different key, or it was changed.</td>
+<td>Check the key&#39;s fingerprint, and check the record was not altered.</td>
+</tr>
+<tr>
+<td><code>trustRecordHash mismatch</code></td>
+<td>A covered field was changed, or the record was reformatted with changed values.</td>
+<td>Use the original record.</td>
+</tr>
+<tr>
+<td>No key matches the record&#39;s signature</td>
+<td>The record names a key id that your trust file does not list.</td>
+<td>Add the key, pinned by its fingerprint, after you have compared it.</td>
+</tr>
+<tr>
+<td><code>ML-DSA … needs Node 24 or later</code></td>
+<td>A hybrid record on an older runtime.</td>
+<td>Use Node.js 24 with OpenSSL 3.5 or later.</td>
+</tr>
+</tbody></table></div>
+<p>More are in <a href="../troubleshooting/index.html">Troubleshooting</a>.</p>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/security/evidence-verification.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="index.html"><span>Previous</span>Security and cryptographic verification</a><a class="pn next" href="schema-v3.html"><span>Next</span>Schema version 3: whole-record signatures, the cutover and the rollout</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#what-verification-proves-and-what-it-does-not">What verification proves, and what it does not</a></li><li class="d2"><a href="#step-1-get-the-record">Step 1: get the record</a></li><li class="d2"><a href="#step-2-pin-the-keys-you-trust">Step 2: pin the keys you trust</a></li><li class="d2"><a href="#step-3-verify-with-the-standalone-verifier">Step 3: verify with the standalone verifier</a></li><li class="d3"><a href="#schema-2-records-the-defaults-refuse-them-on-purpose">Schema 2 records: the defaults refuse them, on purpose</a></li><li class="d3"><a href="#tamper-check">Tamper check</a></li><li class="d2"><a href="#step-4-verify-in-code-optional">Step 4: verify in code (optional)</a></li><li class="d2"><a href="#step-5-read-the-correspondence-report">Step 5: read the correspondence report</a></li><li class="d2"><a href="#step-6-server-checks-optional-when-you-have-a-key">Step 6: server checks (optional, when you have a key)</a></li><li class="d2"><a href="#keep-the-evidence">Keep the evidence</a></li><li class="d2"><a href="#troubleshooting-verification">Troubleshooting verification</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

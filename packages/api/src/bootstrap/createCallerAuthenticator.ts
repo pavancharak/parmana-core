@@ -3,6 +3,12 @@ import { loadConfig, type Config } from "@parmana/shared";
 import { StaticKeyAuthenticator } from "../auth/StaticKeyAuthenticator.js";
 import type { CallerAuthenticator } from "../auth/CallerAuthenticator.js";
 import type { CallerAuditSink } from "../auth/CallerAuditSink.js";
+
+import {
+  LOCAL_MODE_VARIABLE,
+  assertLocalModeConfigured,
+  localModeEnabled,
+} from "./localMode.js";
 import { callerKeyRevocationRepository } from "../repositories.js";
 
 import { createCallerAuditSink } from "./createCallerAuditSink.js";
@@ -29,17 +35,19 @@ export type CallerAuthBootstrap =
 export function createCallerAuthenticator(
   config: Config = loadConfig(),
 ): CallerAuthBootstrap {
+  assertLocalModeConfigured();
+
   if (config.auth.disabled) {
-    // Fail closed: caller authentication may be disabled only when NODE_ENV
-    // is exactly "development" or "test". Any other value, including unset,
-    // is refused, so a deployment with a missing or unexpected NODE_ENV cannot
-    // run without caller authentication.
-    const nodeEnv = process.env.NODE_ENV;
-    if (nodeEnv !== "development" && nodeEnv !== "test") {
+    // Fail closed: caller authentication may be disabled only in local mode
+    // (PARMANA_LOCAL_MODE=true under NODE_ENV "test" or "development"). NODE_ENV
+    // alone does not disable it, so a misconfigured NODE_ENV cannot run a real
+    // server without caller authentication.
+    if (!localModeEnabled()) {
       throw new Error(
-        "PARMANA_AUTH_DISABLED=true is refused unless NODE_ENV is exactly " +
-          '"development" or "test". Caller authentication cannot be disabled ' +
-          "in any other environment.",
+        "PARMANA_AUTH_DISABLED=true is refused unless local mode is on: " +
+          `${LOCAL_MODE_VARIABLE}=true and NODE_ENV is exactly "test" or ` +
+          '"development". Caller authentication cannot be disabled in any ' +
+          "other environment.",
       );
     }
 

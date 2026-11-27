@@ -113,9 +113,20 @@ export class ExecutionTrustApplication {
    * Decides an inbound request (RFC-0024) without executing it. Runs the same policy, verification
    * and binding checks as execute(), and returns the decision.
    */
-  async decideInbound(request: DecisionRequest) {
+  /** Writes the Refusal Records still pending in the outbox (RFC-0021). */
+  async drainRefusalOutbox(limit?: number) {
+    return this.runtime.drainRefusalOutbox(limit);
+  }
+
+  async decideInbound(
+    request: DecisionRequest,
+    options?: { readonly probe?: boolean },
+  ) {
     // Approvals are consumed with the decision record, in one transaction (G-143, O1).
-    return this.runtime.decide(request, { deferApprovalConsumption: true });
+    return this.runtime.decide(request, {
+      deferApprovalConsumption: true,
+      ...options,
+    });
   }
 
   /**

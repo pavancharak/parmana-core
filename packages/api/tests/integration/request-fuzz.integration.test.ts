@@ -10,6 +10,8 @@ import { StaticKeyAuthenticator } from "../../src/auth/StaticKeyAuthenticator.js
 
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * Fuzzing the request boundary: a valid Business Transaction with one
@@ -23,7 +25,13 @@ const KEY = "request-fuzz-caller-raw-key-for-tests-only";
 
 function buildApp() {
   const { executionSystem } = createInspectableExecutionSystem();
-  const application = createApplication(executionSystem);
+  const application = createApplication(
+    executionSystem,
+    undefined,
+    undefined,
+    undefined,
+    trustedFacts.registry,
+  );
   const app = createApp(application, {
     callerAuth: {
       authenticator: new StaticKeyAuthenticator([

@@ -67,8 +67,8 @@ def run_builder_example(
             "currency": "USD",
         },
         policy=PolicyReference(
-            name="vendor-payment",
-            version="2.1.0",
+            name="payment-limit",
+            version="1.0.0",
             schema_version="1.0.0",
         ),
         signals={
@@ -84,7 +84,7 @@ def run_builder_example(
             "sufficientFunds": True,
             "paymentAmount": 1000,
             "riskScore": 5,
-            # vendor-payment@2.1.0 declares boundSignals: { "vendorId": "target" }.
+            # payment-limit@1.0.0 declares boundSignals: { "vendorId": "target" }.
             # SignalIntentBinder rejects this transaction unless this signal exactly
             # equals intent.target, checked before policy evaluation ever runs (see
             # docs/internal/VERIFICATION-GAPS.md G-24).
@@ -99,7 +99,7 @@ def run_builder_example(
     print(f"\nBusiness Transaction ID: {transaction.business_transaction_id}")
     print(f"Trust Record ID:         {trust_record.trust_record_id}")
     print(f"Trust Record Hash:       {trust_record.trust_record_hash}")
-    print(f"Signature Algorithm:     {trust_record.signature.algorithm}")
+    print(f"Signature Algorithm:     {trust_record.signatures[0].algorithm}")
 
     print("\nFull Execution Trust Record:")
     print(json.dumps(asdict(trust_record), indent=2, default=str))

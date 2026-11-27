@@ -131,6 +131,7 @@ async function sign(
       businessTransactionId: CONTENT.businessTransactionId,
       policyName: "policy-a",
       policyVersion: "1.0.0",
+      signalsHash: await new TrustRecordHasher(crypto).hash({}),
       ...(policyContentHash !== undefined && { policyContentHash }),
       executableContent: CONTENT,
     },
@@ -163,6 +164,7 @@ async function setup(options: {
   const nonceStore = new MemoryNonceStore();
 
   const gateway = new ExecutionGateway({
+    allowUnverifiedSignals: true,
     publicKey,
     nonceStore,
     policyRepository: new MapPolicyRepository(options.livePolicy),
@@ -198,6 +200,7 @@ describe("ExecutionGateway fails closed on policy binding", () => {
     expect(
       () =>
         new ExecutionGateway({
+          allowUnverifiedSignals: true,
           publicKey,
           nonceStore: new MemoryNonceStore(),
           connector: new CountingConnector(),
@@ -207,6 +210,7 @@ describe("ExecutionGateway fails closed on policy binding", () => {
     expect(
       () =>
         new ExecutionGateway({
+          allowUnverifiedSignals: true,
           publicKey,
           nonceStore: new MemoryNonceStore(),
           policyRepository: new MapPolicyRepository(APPROVED_POLICY),
@@ -286,6 +290,7 @@ describe("ExecutionGateway fails closed on policy binding", () => {
     const connector = new CountingConnector();
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       publicKey,
       nonceStore: new MemoryNonceStore(),
       policyRepository: new MapPolicyRepository(APPROVED_POLICY),
@@ -330,6 +335,7 @@ describe("ExecutionGateway fails closed on policy binding", () => {
     const authorization = await sign(privateKey, h);
 
     const broken = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       publicKey,
       nonceStore,
       policyRepository: new MapPolicyRepository(APPROVED_POLICY),
@@ -340,6 +346,7 @@ describe("ExecutionGateway fails closed on policy binding", () => {
     await expect(broken.execute(request(authorization))).rejects.toThrow();
 
     const fixed = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       publicKey,
       nonceStore,
       policyRepository: new MapPolicyRepository(APPROVED_POLICY),
@@ -358,6 +365,7 @@ describe("ExecutionGateway fails closed on policy binding", () => {
     const connector = new CountingConnector();
 
     const legacy = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       publicKey,
       nonceStore: new MemoryNonceStore(),
       allowUnverifiedPolicy: true,

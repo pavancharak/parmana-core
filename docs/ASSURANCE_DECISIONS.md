@@ -149,18 +149,19 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 ## Record
 
-| Decision | Owner decision                                               | Date       | Recorded by                              |
-| -------- | ------------------------------------------------------------ | ---------- | ---------------------------------------- |
-| D7       | In scope                                                     | 2026-11-14 | Recorded in session at owner's direction |
-| D8       | Define as proposed                                           | 2026-11-14 | Recorded in session at owner's direction |
-| D9       | Reject non-canonical encodings                               | 2026-11-14 | Recorded in session at owner's direction |
-| D10      | Pending                                                      |            |                                          |
-| D11      | Pending                                                      |            |                                          |
-| D12      | Pending                                                      |            |                                          |
-| D13      | Adopted: permanent direction                                 | 2026-11-14 | Recorded in session at owner's direction |
-| D14      | Adopted: razorpay:refund policy version                      | 2026-11-14 | Owner confirmed version 1.3.0            |
-| D23      | Adopted: G-77 change; points 1 to 3 resolved by D24          | 2026-11-19 | Recorded in session at owner's direction |
-| D24      | Adopted: new policy, neutral name now (no window), no tier 1 | 2026-11-19 | Owner approved all three                 |
+| Decision | Owner decision                                                 | Date       | Recorded by                              |
+| -------- | -------------------------------------------------------------- | ---------- | ---------------------------------------- |
+| D7       | In scope                                                       | 2026-11-14 | Recorded in session at owner's direction |
+| D8       | Define as proposed                                             | 2026-11-14 | Recorded in session at owner's direction |
+| D9       | Reject non-canonical encodings                                 | 2026-11-14 | Recorded in session at owner's direction |
+| D10      | Pending                                                        |            |                                          |
+| D11      | Pending                                                        |            |                                          |
+| D12      | Pending                                                        |            |                                          |
+| D13      | Adopted: permanent direction                                   | 2026-11-14 | Recorded in session at owner's direction |
+| D14      | Adopted: razorpay:refund policy version                        | 2026-11-14 | Owner confirmed version 1.3.0            |
+| D23      | Adopted: G-77 change; points 1 to 3 resolved by D27            | 2026-11-19 | Recorded in session at owner's direction |
+| D24      | Decided: v3 only, v2 discarded (implementation pending review) | 2026-11-21 | Section D24 below                        |
+| D27      | Adopted: new policy, neutral name now (no window), no tier 1   | 2026-11-19 | Owner approved all three                 |
 
 ---
 
@@ -370,9 +371,94 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 ---
 
-## D24. Long-term fix for the razorpay:refund binding (19 November 2026)
+## D24. Record integrity for single-mode records (proposed, awaiting owner decision)
 
 - **Reference:** D24
+- **Source:** the verifier's `docs/OPERATING-MODES.md`, and the frozen-core rule in `docs/assurance/FROZEN_CORE.md`
+- **Date recorded:** 2026-11-21
+- **Owner:** Pavan Charak
+
+**Question:** Production runs `CRYPTO_MODE=single`. Its records carry a schema version that is not signed, so a stored record can be changed to version 2 and checked against fewer fields. Which record integrity should single-mode records have?
+
+**Options considered:**
+
+1. Keep schema version 2 for single mode, and accept it with `allowLegacyV2`. No code change. The downgrade gap stays, and it closes only when hybrid is on.
+2. Add a single-signature whole-record format: schema version 3, signed with the primary key over the whole record, including the version. The verifier accepts it under a named flag. This closes the gap without post-quantum keys. It changes frozen signing code, needs the frozen-core review, and needs both verifiers and the test vectors to change together.
+3. Turn on hybrid mode with a cutover date (`hybridRequiredFrom`). This closes the gap for new records and adds a second key to manage.
+4. Single ML-DSA-65 (dilithium3) as the only signature. The config accepts it, but KMS signs only Ed25519, and the verifier has not been tested with a single ML-DSA-65 record.
+
+**Recommendation:** Option 2, scheduled deliberately, not as part of an incident fix. Option 1 is the interim position, and option 3 is the route when hybrid is funded. Option 4 needs its own test before anyone relies on it.
+
+**Owner decision (2026-11-21):** Discard schema version 2 completely. Every trust record is schema version 3. The default policy in single mode accepts whichever one signature algorithm is configured, Ed25519 or ML-DSA-65. Hybrid mode requires both. The legacy `signature` field, which covers only seven fields, is dropped from v3 records, so each record carries only the `signatures` array. The owner confirmed there are no customers, vendors or live traffic, so no existing record needs to stay verifiable. **Still required before code lands:** the frozen-core review (`docs/assurance/FROZEN_CORE.md`), a regenerated manifest, the Python and TypeScript verifiers changed together, and new test vectors.
+
+**Effect on the documents:** none until decided. The verifier's `docs/OPERATING-MODES.md` describes the current position.
+
+**Not changed by this decision:** the score policy, the exit criteria and the acceptance principles.
+
+---
+
+## D25. Long-term approach to the challenge list and gap fixes (22 November 2026)
+
+- **Reference:** D25
+- **Source:** the four open questions in `docs/assurance/CHALLENGE_MAPPING.md`, section 4; PR #767
+- **Date recorded:** 2026-11-22
+- **Owner:** Pavan Charak
+
+**Question:** How should the proposed challenge list be tested and its gaps fixed, given the four open questions in the mapping?
+
+**Owner direction (2026-11-22):** "best long term permanent fix". Recorded as adopting the durable option for each open question:
+
+1. **Frozen cryptographic core.** Gap fixes in the frozen files follow `docs/assurance/FROZEN_CORE.md` in full: owner review, CODEOWNERS approval, then manifest regeneration in the same diff. No manifest is regenerated without review.
+2. **Full challenge descriptions.** A challenge marked "needs description" gets no test until its full description is in the repository. Titles alone are not a basis for a test. The mapping document is kept current as descriptions arrive.
+3. **Order of work.** The phases in `ASSURANCE_TESTING_PLAN.md` are followed in order, 1 to 5. No phase is skipped to reach another category.
+4. **Scope classes.** The classes in `CHALLENGE_MAPPING.md` section 2 are adopted. "Deployment" items are checked only as repository configuration. Their runtime controls remain the deployer's responsibility, and the mapping says so.
+
+**Readiness.** This record does not make Parmana "production ready". Readiness is the owner's judgement, measured against the exit criteria of all five phases in the plan. Until those criteria are met and recorded in `ASSURANCE_RESULTS.md`, the phase status table is the record.
+
+**Effect on the documents:**
+
+| Document                              | Change                                                                    |
+| ------------------------------------- | ------------------------------------------------------------------------- |
+| `docs/assurance/CHALLENGE_MAPPING.md` | Section 4 items 1 to 4 now point to this record. Their status is decided. |
+| `docs/ASSURANCE_RESULTS.md`           | No change from this record. Phase status is unchanged.                    |
+
+**Not changed by this decision:** the score policy, the phase exit criteria, the acceptance principles, the frozen-core procedure, and the "needs description" rule as applied to any challenge whose description has not been supplied.
+
+---
+
+## D26. Permanent answers for mutation scoring and gates (22 November 2026)
+
+- **Reference:** D26
+- **Source:** the limits listed in the session of 22 November 2026, in the order they were raised; `docs/assurance/TEST_REACH.md`; `docs/assurance/REQUIREMENTS_TRACE.md`
+- **Date recorded:** 2026-11-22
+- **Owner:** Pavan Charak
+
+**Question:** Four changes are needed to make mutation results and assurance gates durable. Which permanent answer applies to each?
+
+**Owner direction (2026-11-22):** "best long term fix permanent answer". Recorded as the durable option for each:
+
+1. **Dependent-package tests in mutation runs.** Adopted. A mutant is killed by any test in the package or in a package that depends on it. Scores produced before this change are labelled "own tests only" and are not compared with later scores. Implementation: the command runner in `stryker.config.mjs` adds the dependent packages' test paths. It takes effect for runs started after the current queue finishes, so no run mixes two definitions.
+2. **Requirement gate.** Adopted. A check fails CI if any ATS ID in `REQUIREMENTS_TRACE.md` has no test name that references it. The check is report-only until the phase that owns the requirement meets its exit criteria. From then on it blocks. Nothing is exempted without a new decision record.
+3. **Survivor classification gate.** Adopted. CI fails if any survivor in a critical file has no classification in `docs/assurance/survivors/`. The gate is report-only until Phase 1 classification is complete, then blocks. "Critical" means the packages that enforce authority and verify evidence: `crypto`, `envelope-verifier`, `policy`, `approval`, `execution-gateway`, `execution-control`. The list changes only by a new decision record.
+4. **Timeouts and index files.** Timeouts are reported as their own figure. The headline score counts only killed mutants. `index.ts` files are included in mutation, because a wrong re-export changes the public contract.
+
+**Not changed by this decision:** the plan's score policy (no aggregate threshold defines success), the phase exit criteria, the acceptance principles, and the frozen-core procedure.
+
+**Effect on the documents:**
+
+| Document                                   | Change                                                                        |
+| ------------------------------------------ | ----------------------------------------------------------------------------- |
+| `stryker.config.mjs`                       | Dependent-package tests added to the command runner, after the queue finishes |
+| `scripts/mutation.ts`                      | Timeouts reported separately, after the queue finishes                        |
+| `scripts/check-survivor-classification.ts` | Used as the gate once the phase is complete                                   |
+| `docs/assurance/REQUIREMENTS_TRACE.md`     | Becomes the input to the requirement gate                                     |
+| `docs/assurance/EXECUTION_PLAN.md`         | Section 9 updated: the four items are decided                                 |
+
+---
+
+## D27. Long-term fix for the razorpay:refund binding (19 November 2026)
+
+- **Reference:** D27
 - **Source:** D23 (open points 1 to 3); docs/guides/policy-writing.md, section 7
 - **Date recorded:** 2026-11-19
 - **Owner:** Pavan Charak

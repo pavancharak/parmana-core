@@ -22,7 +22,7 @@ describe("Reference Policy Negative Evaluation", () => {
   const cases: TestCase[] = [
     {
       name: "access-control",
-      file: "access-control/1.0.0/policy.json",
+      file: "../refused/access-control/1.0.0/policy.json",
       signals: {
         userAuthenticated: false,
         userAuthorized: false,
@@ -33,7 +33,7 @@ describe("Reference Policy Negative Evaluation", () => {
     },
     {
       name: "customer-refund",
-      file: "customer-refund/1.0.0/policy.json",
+      file: "../refused/customer-refund/1.0.0/policy.json",
       signals: {
         refundEligible: false,
         managerApproved: false,
@@ -43,7 +43,7 @@ describe("Reference Policy Negative Evaluation", () => {
     },
     {
       name: "customer-refund 1.1.0",
-      file: "customer-refund/1.1.0/policy.json",
+      file: "../refused/customer-refund/1.1.0/policy.json",
       signals: {
         refundEligible: true,
         managerApproved: false,
@@ -53,7 +53,7 @@ describe("Reference Policy Negative Evaluation", () => {
     },
     {
       name: "database-change",
-      file: "database-change/3.0.0/policy.json",
+      file: "../refused/database-change/3.0.0/policy.json",
       signals: {
         changeApproved: false,
         migrationValidated: false,
@@ -64,7 +64,7 @@ describe("Reference Policy Negative Evaluation", () => {
     },
     {
       name: "llm-tool-call",
-      file: "llm-tool-call/1.0.0/policy.json",
+      file: "../refused/llm-tool-call/1.0.0/policy.json",
       signals: {
         toolAllowed: false,
         resourceAuthorized: false,
@@ -75,7 +75,7 @@ describe("Reference Policy Negative Evaluation", () => {
     },
     {
       name: "production-deployment",
-      file: "production-deployment/1.0.0/policy.json",
+      file: "../refused/production-deployment/1.0.0/policy.json",
       signals: {
         deploymentApproved: false,
         changeVerified: false,
@@ -86,7 +86,7 @@ describe("Reference Policy Negative Evaluation", () => {
     },
     {
       name: "rag-document-access",
-      file: "rag-document-access/1.0.0/policy.json",
+      file: "../refused/rag-document-access/1.0.0/policy.json",
       signals: {
         requesterAuthenticated: false,
         requesterAuthorized: false,
@@ -96,8 +96,8 @@ describe("Reference Policy Negative Evaluation", () => {
       },
     },
     {
-      name: "vendor-payment",
-      file: "vendor-payment/2.0.0/policy.json",
+      name: "payment-limit",
+      file: "payment-limit/1.0.0/policy.json",
       signals: {
         vendorVerified: false,
         invoiceVerified: false,
@@ -115,7 +115,7 @@ describe("Reference Policy Negative Evaluation", () => {
         readFileSync(
           path.resolve(
             import.meta.dirname,
-            "../../../../policies",
+            "../../../../fixtures/policies",
             testCase.file,
           ),
           "utf8",

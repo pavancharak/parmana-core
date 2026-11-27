@@ -3,6 +3,7 @@ import { generateKeyPairSync } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
 import {
+  GATEWAY_ATTESTATION_TTL_MS,
   GatewayAttestationSigner,
   SignedTokenConnectorAuthenticator,
   type Clock,
@@ -17,6 +18,10 @@ class ManualClock implements Clock {
   now(): Date {
     return this.current;
   }
+
+  set(next: Date): void {
+    this.current = next;
+  }
 }
 
 class SequentialIdGenerator implements IdGenerator {
@@ -28,8 +33,11 @@ class SequentialIdGenerator implements IdGenerator {
   }
 }
 
+const ISSUED_AT = "2026-01-01T00:00:00Z";
+
 function fixture() {
   const { privateKey, publicKey } = generateKeyPairSync("ed25519");
+  const clock = new ManualClock(new Date(ISSUED_AT));
   const { privateKey: wrongPrivateKey } = generateKeyPairSync("ed25519");
 
   const gatewayIdentity: GatewayIdentity = {
@@ -45,7 +53,7 @@ function fixture() {
   };
 
   const signer = new GatewayAttestationSigner(
-    new ManualClock(new Date("2026-01-01T00:00:00Z")),
+    clock,
     new SequentialIdGenerator(),
   );
 
@@ -53,6 +61,7 @@ function fixture() {
     gatewayIdentity,
     publicKey,
     [connectorIdentity],
+    clock,
   );
 
   return {
@@ -62,6 +71,7 @@ function fixture() {
     connectorIdentity,
     signer,
     authenticator,
+    clock,
   };
 }
 
@@ -179,5 +189,101 @@ describe("SignedTokenConnectorAuthenticator", () => {
         authenticationMetadata: {},
       }),
     ).toBe(false);
+  });
+});
+
+describe("gateway attestation expiry (Gap A)", () => {
+  it("accepts an attestation inside its lifetime", () => {
+    const f = fixture();
+    const attestation = f.signer.sign(
+      "gateway-1",
+      "authorization-1",
+      f.privateKey,
+    );
+
+    f.clock.set(
+      new Date(Date.parse(ISSUED_AT) + GATEWAY_ATTESTATION_TTL_MS - 1),
+    );
+
+    expect(
+      f.authenticator.authenticateGatewayForRequest(
+        f.gatewayIdentity,
+        attestation,
+        "authorization-1",
+      ),
+    ).toBe(true);
+  });
+
+  it("refuses an attestation at exactly its expiry instant", () => {
+    const f = fixture();
+    const attestation = f.signer.sign(
+      "gateway-1",
+      "authorization-1",
+      f.privateKey,
+    );
+
+    f.clock.set(new Date(Date.parse(ISSUED_AT) + GATEWAY_ATTESTATION_TTL_MS));
+
+    expect(
+      f.authenticator.authenticateGateway(f.gatewayIdentity, attestation),
+    ).toBe(false);
+  });
+
+  it("refuses an attestation long after it was issued, with no grace period", () => {
+    const f = fixture();
+    const attestation = f.signer.sign(
+      "gateway-1",
+      "authorization-1",
+      f.privateKey,
+    );
+
+    f.clock.set(new Date("2027-01-01T00:00:00Z"));
+
+    expect(
+      f.authenticator.authenticateGatewayForRequest(
+        f.gatewayIdentity,
+        attestation,
+        "authorization-1",
+      ),
+    ).toBe(false);
+  });
+
+  it("refuses an attestation whose expiry was pushed forward after signing", () => {
+    const f = fixture();
+    const attestation = f.signer.sign(
+      "gateway-1",
+      "authorization-1",
+      f.privateKey,
+    );
+    const extended = {
+      ...attestation,
+      payload: {
+        ...attestation.payload,
+        expiresAt: new Date(Date.parse(ISSUED_AT) + 10 * 60_000).toISOString(),
+      },
+    };
+
+    f.clock.set(new Date(Date.parse(ISSUED_AT) + 5 * 60_000));
+
+    expect(
+      f.authenticator.authenticateGateway(f.gatewayIdentity, extended),
+    ).toBe(false);
+  });
+
+  it("refuses an attestation with no parseable expiry", () => {
+    const f = fixture();
+    const attestation = f.signer.sign(
+      "gateway-1",
+      "authorization-1",
+      f.privateKey,
+    );
+    const broken = {
+      ...attestation,
+      payload: { ...attestation.payload, expiresAt: "not-a-date" },
+    };
+
+    expect(f.authenticator.authenticateGateway(f.gatewayIdentity, broken)).toBe(
+      false,
+    );
   });
 });

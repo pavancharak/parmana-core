@@ -8,6 +8,8 @@ import {
 } from "@parmana/approval";
 import { loadConfig } from "@parmana/shared";
 
+import { localModeEnabled } from "./localMode.js";
+
 /**
  * The approvers listed in code. Kept apart from
  * createApprovalIssuerRegistry.ts so code that needs only this list
@@ -88,7 +90,7 @@ const TRUSTED_APPROVAL_ISSUERS: readonly ConfiguredApprovalIssuer[] = [
  */
 const SANDBOX_APPROVER_CAPABILITIES: readonly string[] = [
   "paytm:refund",
-  "razorpay:refund",
+  "payments:refund",
   "hubspot:deal-update",
   "github:pr-merge",
   "erp:invoice-pay",
@@ -107,10 +109,11 @@ export const LOCAL_TEST_APPROVER = {
 
 /**
  * LOCAL_TEST_APPROVER, trusted with the Ed25519 public key in the file
- * PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE names. Only when NODE_ENV is
- * test, the same gate as the test fixture connector
- * (createTestFixtureConnector.ts). Set anywhere else, the server
- * refuses to start rather than trust a key from the environment.
+ * PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE names. Only in local mode
+ * (localMode.ts), the same gate as the test fixture connector
+ * (createTestFixtureConnector.ts). NODE_ENV alone does not open it. Set
+ * anywhere else, the server refuses to start rather than trust a key from
+ * the environment.
  */
 function localTestApproverEntries(): ConfiguredApprovalIssuer[] {
   const file = process.env.PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE;
@@ -119,10 +122,11 @@ function localTestApproverEntries(): ConfiguredApprovalIssuer[] {
     return [];
   }
 
-  if (process.env.NODE_ENV !== "test") {
+  if (!localModeEnabled()) {
     throw new Error(
-      "PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE is set, but NODE_ENV is not test. " +
-        "A test approver is trusted only on a local test server; unset it, or add " +
+      "PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE is set, but local mode is not on " +
+        "(PARMANA_LOCAL_MODE=true under NODE_ENV test or development). A test " +
+        "approver is trusted only on a local test server; unset it, or add " +
         "the approver through maker checker (docs/site/guides/manage-approvers.mdx).",
     );
   }
@@ -136,7 +140,7 @@ function localTestApproverEntries(): ConfiguredApprovalIssuer[] {
       ...LOCAL_TEST_APPROVER,
       revoked: false,
       // The test fixture capability is granted here only: this approver
-      // exists only when NODE_ENV is test (G-50).
+      // exists only in local mode (G-50).
       capabilities: [...SANDBOX_APPROVER_CAPABILITIES, "test:fixture-execute"],
       publicKeyPem: readFileSync(file, "utf8"),
     },

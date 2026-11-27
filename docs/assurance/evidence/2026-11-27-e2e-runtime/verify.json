@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "body": {
+    "verificationId": "34a4ec98-c5bc-4912-b562-e8eb51054481",
+    "businessTransactionId": "339b6460-9f52-4137-9acb-45ca2c23b11a",
+    "status": "VERIFIED",
+    "message": "Execution Trust Record verified successfully.",
+    "verifiedAt": "2026-11-27T07:46:38.927Z",
+    "trustRecordHash": "89dcc74c28a339d0ae073cc67dd9bc1495f41088a6ee03c4aa5c9728785edd7a"
+  }
+}

@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Developer reference · Parmana developer docs</title>
+<meta name="description" content="Developer reference Portal home · Glossary · FAQ This section is the lookup material: where each definition lives, the complete indexes, the configuration, and the error codes. Use it when you know the name of a thing and want its exact def">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../security/key-management.html">Key management</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../policies/payment-refund-coverage.html">Coverage of the production policy</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="index.html" aria-current="page">Developer reference</a></li><li><a href="environment-variables.html">Environment variable reference</a></li><li><a href="error-codes.html">Error code catalogue</a></li><li><a href="error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Operate</span><span class="sep">/</span><span>Developer reference</span></div>
+    <article>
+<h1 id="developer-reference">Developer reference<a class="anchor" href="#developer-reference" aria-label="Link to this section">#</a></h1>
+<p><a href="../index.html">Portal home</a> · <a href="../glossary.html">Glossary</a> · <a href="../faq.html">FAQ</a></p>
+<p>This section is the lookup material: where each definition lives, the complete indexes, the configuration, and the error codes. Use it when you know the name of a thing and want its exact definition.</p>
+<h2 id="indexes">Indexes<a class="anchor" href="#indexes" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Index</th>
+<th>What it lists</th>
+<th>Generated from</th>
+<th>Count</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="../sdk/typescript-method-index.html">TypeScript method index</a></td>
+<td>Every public <code>ParmanaClient</code> method, its signature, its HTTP request</td>
+<td><code>typescript/src/client/*.ts</code> and <code>dist/client/ParmanaClient.d.ts</code></td>
+<td>58</td>
+</tr>
+<tr>
+<td><a href="../sdk/python-method-index.html">Python method index</a></td>
+<td>Every public <code>ParmanaClient</code> method, its signature, its HTTP request</td>
+<td><code>python/parmana/client.py</code> and <code>python/parmana/api/*.py</code></td>
+<td>50</td>
+</tr>
+<tr>
+<td><a href="../api/endpoint-index.html">Endpoint index</a></td>
+<td>Every OpenAPI operation, its auth, its SDK method</td>
+<td><code>openapi/openapi.yaml</code></td>
+<td>66</td>
+</tr>
+<tr>
+<td><a href="error-code-index.html">Error code index</a></td>
+<td>Every error code literal in the server source, and the file that raises it</td>
+<td><code>packages/*/src</code></td>
+<td>105</td>
+</tr>
+<tr>
+<td><a href="error-codes.html">Error code catalogue</a></td>
+<td>The codes that matter most, with observed messages and their meaning</td>
+<td>Hand-written, checked against the observed runs</td>
+<td>—</td>
+</tr>
+<tr>
+<td><a href="environment-variables.html">Environment variable reference</a></td>
+<td>Every server, SDK and CLI setting, with its default and status</td>
+<td>Hand-written, checked against the code</td>
+<td>—</td>
+</tr>
+</tbody></table></div>
+<p>The generated indexes are rebuilt by <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/tools/generate-indexes.mjs">tools/generate-indexes.mjs</a>. They are marked as generated, and should not be edited by hand.</p>
+<h2 id="where-the-definitions-live">Where the definitions live<a class="anchor" href="#where-the-definitions-live" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Thing</th>
+<th>Where to read it</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The REST API, every route</td>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/openapi/openapi.yaml"><code>openapi/openapi.yaml</code></a>. The bundled form is <code>openapi/openapi.bundled.yaml</code>. The server serves it at <code>GET /openapi.yaml</code> and <code>GET /openapi.json</code>.</td>
+</tr>
+<tr>
+<td>Request and response JSON Schemas</td>
+<td><a href="https://github.com/pavancharak/parmana-core/tree/main/schemas/requests/"><code>schemas/requests/</code></a> (17 request schemas), <a href="https://github.com/pavancharak/parmana-core/tree/main/schemas/responses/"><code>schemas/responses/</code></a> (33 response schemas), and <a href="https://github.com/pavancharak/parmana-core/tree/main/schemas/common/"><code>schemas/common/</code></a> (28 shared object schemas, including the policy, the authority, the signals and the execution trust record).</td>
+</tr>
+<tr>
+<td>The Business Transaction request</td>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/schemas/requests/transaction-create-request.schema.json"><code>schemas/requests/transaction-create-request.schema.json</code></a></td>
+</tr>
+<tr>
+<td>The Execution Trust Record</td>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/schemas/common/execution-trust-record.schema.json"><code>schemas/common/execution-trust-record.schema.json</code></a> and the response schema beside it</td>
+</tr>
+<tr>
+<td>TypeScript types</td>
+<td><code>typescript/src/models/*.ts</code> (25 files). The compiled declarations are in <code>typescript/dist/</code> after <code>npm run build</code>.</td>
+</tr>
+<tr>
+<td>Python types</td>
+<td><code>python/parmana/models/*.py</code> (30 files).</td>
+</tr>
+<tr>
+<td>Policy file format</td>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/guides/policy-writing.md">How to write a policy</a> and <code>packages/policy/src/types/Policy.ts</code></td>
+</tr>
+<tr>
+<td>The trust file and record format for the verifier</td>
+<td>The verifier repository&#39;s <code>docs/FORMAT.md</code></td>
+</tr>
+<tr>
+<td>Error mapping in the TypeScript SDK</td>
+<td><code>typescript/src/transport/mapHttpErrorResponse.ts</code></td>
+</tr>
+<tr>
+<td>Configuration parsing</td>
+<td><code>packages/shared/src/config/Config.ts</code> and <code>ConfigValidation.ts</code></td>
+</tr>
+</tbody></table></div>
+<h2 id="core-concepts-quickly">Core concepts, quickly<a class="anchor" href="#core-concepts-quickly" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Short definition</th>
+<th>Full entry</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Business Transaction</td>
+<td>The declared request: authority, authorization, intent, policy, signals.</td>
+<td><a href="../glossary.html#business-transaction">Glossary</a></td>
+</tr>
+<tr>
+<td>Execution Trust Record</td>
+<td>The signed evidence for one transaction.</td>
+<td><a href="../glossary.html#execution-trust-record">Glossary</a></td>
+</tr>
+<tr>
+<td>Policy version in effect</td>
+<td>The most recently approved version of a policy name.</td>
+<td><a href="../glossary.html#policy-version-in-effect">Glossary</a></td>
+</tr>
+<tr>
+<td>Human approval</td>
+<td>A signed artifact from a trusted approver, verified by the server.</td>
+<td><a href="../glossary.html#human-approval">Glossary</a></td>
+</tr>
+<tr>
+<td>Maker-checker</td>
+<td>Two-person approval of a policy change, with a step-up signature.</td>
+<td><a href="../glossary.html#maker-checker">Glossary</a></td>
+</tr>
+</tbody></table></div>
+<h2 id="configuration">Configuration<a class="anchor" href="#configuration" aria-label="Link to this section">#</a></h2>
+<p>Parmana is configured with environment variables. The full reference is in <a href="environment-variables.html">Environment variables</a>. The variables a deployment must set are in <a href="../deployment/index.html#environment-variables">Deployment</a>.</p>
+<p>Configuration errors stop the server at start-up, with a message that names the variable. The messages the verification observed are listed in <a href="../troubleshooting/index.html">Troubleshooting</a>.</p>
+<h2 id="versions">Versions<a class="anchor" href="#versions" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>@parmana/sdk</code>, <code>parmana</code>, <code>@parmana/cli</code>, <code>@parmana/connector-sdk</code>, <code>parmana-connector-sdk</code></td>
+<td>4.1.1</td>
+</tr>
+<tr>
+<td><code>@parmana/verifier</code>, <code>parmana-verifier</code></td>
+<td>2.0.3</td>
+</tr>
+<tr>
+<td>Repository packages (<code>packages/*</code>)</td>
+<td>4.1.1</td>
+</tr>
+<tr>
+<td>OpenAPI document</td>
+<td>API <code>1.0.0</code>, OpenAPI 3.1.0</td>
+</tr>
+<tr>
+<td><code>GET /version</code> on this build</td>
+<td><code>4.1.1</code>, the <code>@parmana/api</code> package version (an earlier build reported a hand-typed <code>0.4.0</code>; fixed)</td>
+</tr>
+<tr>
+<td>Node.js</td>
+<td>24 or later</td>
+</tr>
+<tr>
+<td>Python</td>
+<td>3.10 or later</td>
+</tr>
+</tbody></table></div>
+<h2 id="glossary-and-faq">Glossary and FAQ<a class="anchor" href="#glossary-and-faq" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="../glossary.html">Glossary</a>: the terms used across the portal.</li>
+<li><a href="../faq.html">FAQ</a>: common questions, answered with the verified behaviour.</li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/reference/README.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="../deployment/index.html"><span>Previous</span>Deployment and operations</a><a class="pn next" href="environment-variables.html"><span>Next</span>Environment variable reference</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#indexes">Indexes</a></li><li class="d2"><a href="#where-the-definitions-live">Where the definitions live</a></li><li class="d2"><a href="#core-concepts-quickly">Core concepts, quickly</a></li><li class="d2"><a href="#configuration">Configuration</a></li><li class="d2"><a href="#versions">Versions</a></li><li class="d2"><a href="#glossary-and-faq">Glossary and FAQ</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

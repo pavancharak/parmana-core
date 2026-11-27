@@ -11,7 +11,6 @@ import {
   canonicalExecutionTrustRecord,
   hybridSignedCanonicalView,
   isAtOrAfterCutover,
-  SUPPORTED_HYBRID_SCHEMA_VERSIONS,
   WHOLE_RECORD_SCHEMA_VERSION,
 } from "./ExecutionTrustRecordCanonicalView.js";
 import { SHA256HashProvider } from "./providers/hash/SHA256HashProvider.js";
@@ -89,11 +88,6 @@ export interface OfflineVerificationResult {
   readonly hashValid: boolean;
 
   /**
-   * Whether the always-present legacy `signature` field verifies.
-   */
-  readonly legacySignatureValid: boolean;
-
-  /**
    * Whether the hybrid `signatures` array verifies -- present only
    * when the record actually carries one. `undefined` means "this
    * record has no `signatures` array to check," not "it failed."
@@ -135,15 +129,9 @@ export async function verifyExecutionTrustRecordOffline(
   publicKeys: Readonly<Record<string, string>>,
   options: {
     readonly hybridRequiredFrom?: string;
-    /**
-     * Explicit opt-in to accept a record with no hybrid envelope. Off by
-     * default: a legacy-only record is refused unless it predates a cutover
-     * the caller supplied, or this is set.
-     */
-    readonly allowLegacyOnly?: boolean;
   } = {},
 ): Promise<OfflineVerificationResult> {
-  const malformed = malformedArtifact(trustRecord, "trustRecordHash");
+  const malformed = malformedArtifact(trustRecord, "trustRecordHash", false);
 
   if (malformed !== undefined) {
     return malformed;
@@ -169,24 +157,9 @@ export async function verifyExecutionTrustRecordOffline(
     );
   }
 
-  const legacySignatureValid = await verifyOneEntry(
-    {
-      algorithm: trustRecord.signature.algorithm,
-      keyId: trustRecord.signature.keyId,
-      signature: trustRecord.signature.value,
-    },
-    canonicalExecutionTrustRecord(trustRecord),
-    publicKeys,
-    algorithmsChecked,
-    errors,
-  );
-
-  let hybridSignaturesValid: boolean | undefined;
-
   //
-  // An auditor may hand this anything: a signatures field that is not
-  // an array of { algorithm, keyId, signature } strings is reported as
-  // an invalid hybrid envelope, never read as one (and never thrown).
+  // Schema version 3 only (decision D24). The record has no legacy signature: its signatures
+  // array covers the whole record, including the schema version and the trust record hash.
   //
   const signaturesMalformed =
     trustRecord.signatures !== undefined &&
@@ -194,114 +167,55 @@ export async function verifyExecutionTrustRecordOffline(
     (!Array.isArray(trustRecord.signatures) ||
       !trustRecord.signatures.every(isSignatureEntry));
 
-  const declaredVersion = trustRecord.schemaVersion ?? 2;
+  let envelopeValid = false;
 
-  if (signaturesMalformed) {
+  if (trustRecord.schemaVersion !== WHOLE_RECORD_SCHEMA_VERSION) {
+    errors.push(
+      `unsupported schemaVersion ${String(trustRecord.schemaVersion)}: only schemaVersion 3 is accepted (decision D24).`,
+    );
+  } else if (signaturesMalformed) {
     errors.push(
       "malformed signatures: expected an array of entries with string algorithm, keyId and signature.",
     );
-    hybridSignaturesValid = false;
-  } else if (
-    !(SUPPORTED_HYBRID_SCHEMA_VERSIONS as readonly number[]).includes(
-      declaredVersion,
-    )
-  ) {
-    errors.push(
-      `unsupported schemaVersion ${String(declaredVersion)}: expected 2 or 3.`,
-    );
-    hybridSignaturesValid = false;
   } else if (
     trustRecord.signatures === undefined ||
     trustRecord.signatures === null ||
     trustRecord.signatures.length === 0
   ) {
-    //
-    // A schema version 3 record declares that it is whole-record signed,
-    // so a missing signatures array is a failure, not a legacy-only pass.
-    //
-    if (declaredVersion === WHOLE_RECORD_SCHEMA_VERSION) {
-      errors.push(
-        "schemaVersion 3 record has no signatures array: a whole-record signature is required.",
-      );
-      hybridSignaturesValid = false;
-    }
-  } else {
-    const hybridArtifact = hybridSignedCanonicalView(
-      trustRecord,
-      declaredVersion,
-    );
-
-    const seenAlgorithms = new Set<string>();
-    let allValid = trustRecord.signatures.length >= 2;
-
-    if (!allValid) {
-      errors.push(
-        `signatures array has ${trustRecord.signatures.length} entr${trustRecord.signatures.length === 1 ? "y" : "ies"}, need at least 2 for a hybrid record.`,
-      );
-    }
-
-    for (const entry of trustRecord.signatures) {
-      if (seenAlgorithms.has(entry.algorithm)) {
-        errors.push(
-          `duplicate algorithm in signatures array: ${entry.algorithm}.`,
-        );
-        allValid = false;
-        continue;
-      }
-
-      seenAlgorithms.add(entry.algorithm);
-
-      const entryValid = await verifyOneEntry(
-        entry,
-        hybridArtifact,
-        publicKeys,
-        algorithmsChecked,
-        errors,
-      );
-
-      allValid = allValid && entryValid;
-    }
-
-    hybridSignaturesValid = allValid;
-  }
-
-  //
-  // A record with no hybrid envelope is accepted only when the caller
-  // allows it: explicitly (allowLegacyOnly), or because the record predates
-  // a cutover the caller supplied (ADR-0016). Otherwise it is refused, so a
-  // stripped envelope can never pass by default. An envelope that is present
-  // has already been judged above.
-  //
-  const predatesCutover =
-    options.hybridRequiredFrom !== undefined &&
-    !isAtOrAfterCutover(trustRecord.createdAt, options.hybridRequiredFrom);
-
-  // With a cutover, the cutover alone decides; allowLegacyOnly applies only when none is given.
-  const legacyOnlyAllowed =
-    options.hybridRequiredFrom !== undefined
-      ? predatesCutover
-      : options.allowLegacyOnly === true;
-
-  const hybridOk =
-    hybridSignaturesValid === undefined
-      ? legacyOnlyAllowed
-      : hybridSignaturesValid;
-
-  if (hybridSignaturesValid === undefined && !legacyOnlyAllowed) {
     errors.push(
-      options.hybridRequiredFrom === undefined
-        ? "record has no hybrid envelope: pass hybridRequiredFrom or allowLegacyOnly to accept a legacy-only record."
-        : `record created at or after hybridRequiredFrom (${options.hybridRequiredFrom}) has no valid hybrid envelope.`,
+      "schemaVersion 3 record has no signatures array: a whole-record signature is required.",
+    );
+  } else {
+    envelopeValid = await verifyEnvelope(
+      trustRecord.signatures,
+      hybridSignedCanonicalView(trustRecord, WHOLE_RECORD_SCHEMA_VERSION),
+      publicKeys,
+      algorithmsChecked,
+      errors,
     );
   }
 
-  const valid = hashValid && legacySignatureValid && hybridOk;
+  //
+  // The cutover decides whether one signature is enough. From hybridRequiredFrom on, a record must
+  // carry both hybrid signatures (ADR-0016). Before it, one valid signature is accepted.
+  //
+  const hybridRequired =
+    options.hybridRequiredFrom !== undefined &&
+    isAtOrAfterCutover(trustRecord.createdAt, options.hybridRequiredFrom);
+
+  if (hybridRequired && envelopeValid && trustRecord.signatures?.length !== 2) {
+    errors.push(
+      `record created at or after hybridRequiredFrom (${options.hybridRequiredFrom}) must carry both hybrid signatures.`,
+    );
+    envelopeValid = false;
+  }
+
+  const valid = hashValid && envelopeValid;
 
   return {
     valid,
     hashValid,
-    legacySignatureValid,
-    ...(hybridSignaturesValid !== undefined ? { hybridSignaturesValid } : {}),
+    hybridSignaturesValid: envelopeValid,
     algorithmsChecked,
     errors,
   };
@@ -322,7 +236,7 @@ export async function verifyExecutionIntentOffline(
   intent: ExecutionIntent,
   publicKeys: Readonly<Record<string, string>>,
 ): Promise<OfflineVerificationResult> {
-  const malformed = malformedArtifact(intent, "intentHash");
+  const malformed = malformedArtifact(intent, "intentHash", true);
 
   if (malformed !== undefined) {
     return malformed;
@@ -348,7 +262,7 @@ export async function verifyExecutionIntentOffline(
     );
   }
 
-  const legacySignatureValid = await verifyOneEntry(
+  const signatureValid = await verifyOneEntry(
     {
       algorithm: intent.signature.algorithm,
       keyId: intent.signature.keyId,
@@ -361,9 +275,8 @@ export async function verifyExecutionIntentOffline(
   );
 
   return {
-    valid: hashValid && legacySignatureValid,
+    valid: hashValid && signatureValid,
     hashValid,
-    legacySignatureValid,
     algorithmsChecked,
     errors,
   };
@@ -389,6 +302,7 @@ function isSignatureEntry(value: unknown): value is SignatureEntry {
 function malformedArtifact(
   artifact: unknown,
   hashField: "trustRecordHash" | "intentHash",
+  requireSignature: boolean,
 ): OfflineVerificationResult | undefined {
   const record = artifact as Record<string, unknown> | null;
   const signature =
@@ -396,15 +310,18 @@ function malformedArtifact(
       ? (record.signature as Record<string, unknown> | null | undefined)
       : undefined;
 
+  // A trust record carries no legacy signature (decision D24): only its hash is required here.
+  // An execution intent still carries its own signature, which must be well formed.
   const wellFormed =
     typeof record === "object" &&
     record !== null &&
     typeof record[hashField] === "string" &&
-    typeof signature === "object" &&
-    signature !== null &&
-    typeof signature.algorithm === "string" &&
-    typeof signature.keyId === "string" &&
-    typeof signature.value === "string";
+    (!requireSignature ||
+      (typeof signature === "object" &&
+        signature !== null &&
+        typeof signature.algorithm === "string" &&
+        typeof signature.keyId === "string" &&
+        typeof signature.value === "string"));
 
   if (wellFormed) {
     return undefined;
@@ -413,12 +330,59 @@ function malformedArtifact(
   return {
     valid: false,
     hashValid: false,
-    legacySignatureValid: false,
     algorithmsChecked: [],
     errors: [
-      `malformed input: expected an object with a string ${hashField} and a signature with algorithm, keyId and value.`,
+      requireSignature
+        ? `malformed input: expected an object with a string ${hashField} and a signature with algorithm, keyId and value.`
+        : `malformed input: expected an object with a string ${hashField}.`,
     ],
   };
+}
+
+/**
+ * Verifies a signatures array over one artifact (decision D24): one or two entries, no algorithm
+ * repeated, and every entry must verify against its own key. Anything else is a failure.
+ */
+async function verifyEnvelope(
+  entries: readonly SignatureEntry[],
+  artifact: unknown,
+  publicKeys: Readonly<Record<string, string>>,
+  algorithmsChecked: string[],
+  errors: string[],
+): Promise<boolean> {
+  if (entries.length > 2) {
+    errors.push(
+      `signatures array has ${entries.length} entries; at most 2 are allowed.`,
+    );
+    return false;
+  }
+
+  const seenAlgorithms = new Set<string>();
+  let allValid = true;
+
+  for (const entry of entries) {
+    if (seenAlgorithms.has(entry.algorithm)) {
+      errors.push(
+        `duplicate algorithm in signatures array: ${entry.algorithm}.`,
+      );
+      allValid = false;
+      continue;
+    }
+
+    seenAlgorithms.add(entry.algorithm);
+
+    const entryValid = await verifyOneEntry(
+      entry,
+      artifact,
+      publicKeys,
+      algorithmsChecked,
+      errors,
+    );
+
+    allValid = allValid && entryValid;
+  }
+
+  return allValid;
 }
 
 async function verifyOneEntry(

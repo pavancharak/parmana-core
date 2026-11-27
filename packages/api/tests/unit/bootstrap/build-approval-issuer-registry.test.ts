@@ -178,6 +178,7 @@ describe("createCodeApprovalIssuerRegistry: the local test approver", () => {
   const saved = {
     file: process.env.PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE,
     nodeEnv: process.env.NODE_ENV,
+    local: process.env.PARMANA_LOCAL_MODE,
   };
 
   afterAll(() => {
@@ -191,6 +192,11 @@ describe("createCodeApprovalIssuerRegistry: the local test approver", () => {
       process.env.PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE = saved.file;
     }
     process.env.NODE_ENV = saved.nodeEnv;
+    if (saved.local === undefined) {
+      delete process.env.PARMANA_LOCAL_MODE;
+    } else {
+      process.env.PARMANA_LOCAL_MODE = saved.local;
+    }
   }
 
   it("is not trusted when the variable is unset", () => {
@@ -208,9 +214,10 @@ describe("createCodeApprovalIssuerRegistry: the local test approver", () => {
     }
   });
 
-  it("is trusted on a test server", () => {
+  it("is trusted in local mode on a test server", () => {
     process.env.PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE = file;
     process.env.NODE_ENV = "test";
+    process.env.PARMANA_LOCAL_MODE = "true";
 
     try {
       expect(
@@ -224,15 +231,30 @@ describe("createCodeApprovalIssuerRegistry: the local test approver", () => {
     }
   });
 
+  it("is not trusted on NODE_ENV=test alone, without local mode", () => {
+    process.env.PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE = file;
+    process.env.NODE_ENV = "test";
+    delete process.env.PARMANA_LOCAL_MODE;
+
+    try {
+      expect(() => createCodeApprovalIssuerRegistry()).toThrow(
+        /local mode is not on/,
+      );
+    } finally {
+      restore();
+    }
+  });
+
   it.each(["production", "development"])(
-    "stops the server when set with NODE_ENV %s",
+    "stops the server when set without local mode under NODE_ENV %s",
     (nodeEnv) => {
       process.env.PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE = file;
       process.env.NODE_ENV = nodeEnv;
+      delete process.env.PARMANA_LOCAL_MODE;
 
       try {
         expect(() => createCodeApprovalIssuerRegistry()).toThrow(
-          /NODE_ENV is not test/,
+          /local mode is not on/,
         );
       } finally {
         restore();

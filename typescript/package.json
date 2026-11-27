@@ -1,6 +1,6 @@
 {
   "name": "@parmana/sdk",
-  "version": "4.1.1",
+  "version": "5.0.0",
   "private": false,
   "description": "Official Parmana TypeScript SDK",
   "license": "Apache-2.0",
@@ -23,7 +23,7 @@
   "scripts": {
     "build": "node ../node_modules/typescript7/bin/tsc -p tsconfig.json",
     "typecheck": "node ../node_modules/typescript7/bin/tsc --noEmit",
-    "test": "vitest run",
+    "test": "cd .. && vitest run --dir typescript",
     "clean": "rimraf dist"
   },
   "keywords": [

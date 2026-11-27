@@ -17,6 +17,13 @@ export class MemoryInboundCheckRepository implements InboundCheckRepository {
     this.records.set(record.decisionId, record);
   }
 
+  async redeem(decisionId: string, _expiresAt: string): Promise<boolean> {
+    const key = `redeem:${decisionId}`;
+    if (this.consumedNonces.has(key)) return false;
+    this.consumedNonces.add(key);
+    return true;
+  }
+
   /**
    * Checks every approval and records the decision in one synchronous step, so nothing can interleave.
    * Refuses without writing anything if an approval was already used.

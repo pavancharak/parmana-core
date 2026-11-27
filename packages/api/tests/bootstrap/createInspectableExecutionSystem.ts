@@ -159,6 +159,7 @@ export function createInspectableExecutionSystem(
   });
 
   const gateway = new ExecutionGateway({
+    allowUnverifiedSignals: true,
     // Legacy fixture: predates fail-closed policy binding.
     allowUnverifiedPolicy: true,
     publicKey: gatewayPublicKey,

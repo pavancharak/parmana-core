@@ -21,7 +21,6 @@ function sampleRecord(overrides: Record<string, unknown> = {}) {
     businessTransactionId: "txn-1",
     transaction: { amount: 100 },
     authorization: { decision: "APPROVED" },
-    overrides: [],
     executions: [],
     createdAt: "2026-10-19T00:00:00.000Z",
     trustRecordHash: "a".repeat(64),

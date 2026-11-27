@@ -855,7 +855,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"action\": \"add\",\n  \"approverId\": \"approver-example\",\n  \"keyId\": \"approver-example-key-1\",\n  \"publicKeyPem\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\\n-----END PUBLIC KEY-----\\n\",\n  \"reason\": \"Priya approves refunds for the West region from October.\"\n}",
+              "raw": "{\n  \"action\": \"add\",\n  \"approverId\": \"approver-example\",\n  \"keyId\": \"approver-example-key-1\",\n  \"publicKeyPem\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\\n-----END PUBLIC KEY-----\\n\",\n  \"reason\": \"Priya approves refunds for the West region from October.\",\n  \"capabilities\": [\n    \"erp:pay-invoice\"\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1150,6 +1150,835 @@
               ]
             },
             "description": "operationId: rejectExternalConnectorChange\n\nRejects an external connector change. No registration changes. The same checks as approve, with a\nstep up authorization for action `reject` and a `rejectionReason`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Policy v2 (experimental)",
+      "description": "EXPERIMENTAL. Policy version 2 decisions, reviews, the register, console and notification endpoints. Mounted only when the deployment enables policy version 2. Shapes may change in a minor release until promoted.",
+      "item": [
+        {
+          "name": "Record a policy version 2 decision",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"capability\": \"erp:pay-invoice\",\n  \"transactionId\": \"<string>\",\n  \"target\": \"<string>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/decisions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "decisions"
+              ]
+            },
+            "description": "operationId: policyV2Decide\n\nEvaluates the approved policy version 2 for the capability and records the decision as evidence. The decision never releases anything by itself (`released` is always `false`). A `REVIEW` outcome carries a `reviewId`; read it with `GET /v2/reviews/{id}`. Signals are caller values, untrusted unless a registered source signed them."
+          }
+        },
+        {
+          "name": "Read a policy version 2 review as its requester sees it",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/reviews/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "reviews",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "The review item id, from the `reviewId` of a `REVIEW` decision."
+                }
+              ]
+            },
+            "description": "operationId: policyV2GetReview\n\nReturns the status of a review item. Only the requester of the decision may read it; any other caller gets `404`."
+          }
+        },
+        {
+          "name": "Record a reviewer's decision on a review item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"approve\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/reviews/:id/decision",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "reviews",
+                ":id",
+                "decision"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "The review item id."
+                }
+              ]
+            },
+            "description": "operationId: policyV2DecideReview\n\nThe reviewer must hold an active reviewer grant for the action. The result is final once the review's decisions are complete (`final: true`, with `outcome`)."
+          }
+        },
+        {
+          "name": "Replay a recorded policy version 2 decision from its evidence",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/evidence/:recordId/replay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "evidence",
+                ":recordId",
+                "replay"
+              ],
+              "variable": [
+                {
+                  "key": "recordId",
+                  "value": "",
+                  "description": "The evidence record id returned as `recordId` by `POST /v2/decisions`."
+                }
+              ]
+            },
+            "description": "operationId: policyV2Replay\n\nRe-runs the recorded decision and reports whether it reproduces. The caller must hold a register role. The replay changes nothing."
+          }
+        },
+        {
+          "name": "Read a read-only Policy v2 console screen",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/console/:screen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "console",
+                ":screen"
+              ],
+              "query": [
+                {
+                  "key": "capability",
+                  "value": "",
+                  "description": "The capability to show, for screens that are per capability.",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "screen",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "operationId: policyV2Console\n\nReturns one console screen as HTML. The screens are read-only. The caller's role decides which screens it may see; a role without the screen gets `403`."
+          }
+        },
+        {
+          "name": "Receive an SES delivery notification (bounces and complaints)",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/notifications/ses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "notifications",
+                "ses"
+              ]
+            },
+            "description": "operationId: policyV2SesNotification\n\nReceives the delivery notification that Amazon SES posts for an approval email. The notification must verify (its signature and topic) or the request is refused with `403 not_verified`. Not called by clients; it is the notification endpoint for the email channel."
+          }
+        },
+        {
+          "name": "Receive delivery events for approval notifications",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {}\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/notifications/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "notifications",
+                "events"
+              ]
+            },
+            "description": "operationId: policyV2NotificationEvents\n\nReceives delivery events for policy version 2 notifications. The events are verified with the events secret, or refused with `403 not_verified`. Not called by clients."
+          }
+        },
+        {
+          "name": "Read the Policy v2 register",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register"
+              ]
+            },
+            "description": "operationId: policyV2RegisterRead\n\nReturns the register's contents as plain data: sources, thresholds, actions, roles, approver keys, policy versions and reviewer grants."
+          }
+        },
+        {
+          "name": "Read the register's audit log, page by page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/audit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "audit"
+              ],
+              "query": [
+                {
+                  "key": "after",
+                  "value": "",
+                  "description": "The sequence number to read after. Defaults to 0.",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "The page size.",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: policyV2RegisterAudit"
+          }
+        },
+        {
+          "name": "Grant a register role to a caller",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/roles/grant",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "roles",
+                "grant"
+              ]
+            },
+            "description": "operationId: policyV2GrantRole"
+          }
+        },
+        {
+          "name": "Revoke a register role from a caller",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/roles/revoke",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "roles",
+                "revoke"
+              ]
+            },
+            "description": "operationId: policyV2RevokeRole"
+          }
+        },
+        {
+          "name": "Propose a business-signal source",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"<string>\",\n  \"dataOwner\": \"<string>\",\n  \"signer\": {\n    \"kind\": \"system\"\n  },\n  \"keyId\": \"<string>\",\n  \"publicKeyPem\": \"<string>\",\n  \"claims\": {},\n  \"canApprove\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/sources",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "sources"
+              ]
+            },
+            "description": "operationId: policyV2ProposeSource"
+          }
+        },
+        {
+          "name": "Approve a proposed source",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/sources/:name/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "sources",
+                ":name",
+                "approve"
+              ]
+            },
+            "description": "operationId: policyV2ApproveSource"
+          }
+        },
+        {
+          "name": "Revoke a source",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/sources/:name/revoke",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "sources",
+                ":name",
+                "revoke"
+              ]
+            },
+            "description": "operationId: policyV2RevokeSource"
+          }
+        },
+        {
+          "name": "Propose a threshold for an action",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"<string>\",\n  \"name\": \"<string>\",\n  \"value\": 0,\n  \"unit\": \"<string>\",\n  \"owner\": \"<string>\",\n  \"reason\": \"<string>\",\n  \"evidence\": \"<string>\",\n  \"nextReview\": \"<string>\",\n  \"highValue\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/thresholds",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "thresholds"
+              ]
+            },
+            "description": "operationId: policyV2ProposeThreshold"
+          }
+        },
+        {
+          "name": "Approve a proposed threshold",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/thresholds/:action/:name/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "thresholds",
+                ":action",
+                ":name",
+                "approve"
+              ],
+              "variable": [
+                {
+                  "key": "action",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "operationId: policyV2ApproveThreshold"
+          }
+        },
+        {
+          "name": "Register an action (a capability with its owner and reviewers)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"capability\": \"<string>\",\n  \"owner\": \"<string>\",\n  \"successor\": \"<string>\",\n  \"reviewers\": [\n    \"<string>\"\n  ],\n  \"review\": {\n    \"reviewWindowBusinessDays\": 0,\n    \"approvalValidityMinutes\": 0\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/actions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "actions"
+              ]
+            },
+            "description": "operationId: policyV2RegisterAction"
+          }
+        },
+        {
+          "name": "Grant a reviewer on an action",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reviewerId\": \"<string>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/actions/:capability/reviewers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "actions",
+                ":capability",
+                "reviewers"
+              ]
+            },
+            "description": "operationId: policyV2AddReviewer"
+          }
+        },
+        {
+          "name": "Revoke a reviewer's grant on an action",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/actions/:capability/reviewers/:reviewerId/revoke",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "actions",
+                ":capability",
+                "reviewers",
+                ":reviewerId",
+                "revoke"
+              ],
+              "variable": [
+                {
+                  "key": "reviewerId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "operationId: policyV2RevokeReviewer"
+          }
+        },
+        {
+          "name": "Record that an action passed a test tier",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tier\": \"<string>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/actions/:capability/tests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "actions",
+                ":capability",
+                "tests"
+              ]
+            },
+            "description": "operationId: policyV2RecordTest"
+          }
+        },
+        {
+          "name": "List what is still missing before an action can go live",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/actions/:capability/go-live",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "actions",
+                ":capability",
+                "go-live"
+              ]
+            },
+            "description": "operationId: policyV2GoLiveGate"
+          }
+        },
+        {
+          "name": "Take an action live, if its gate is met",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/actions/:capability/go-live",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "actions",
+                ":capability",
+                "go-live"
+              ]
+            },
+            "description": "operationId: policyV2GoLive\n\nRefused with `422 refused` and the `missing` list while any requirement is unmet."
+          }
+        },
+        {
+          "name": "Set how to reach a person about an alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"personId\": \"<string>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/contacts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "contacts"
+              ]
+            },
+            "description": "operationId: policyV2SetContact"
+          }
+        },
+        {
+          "name": "Propose a new version of a policy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/policies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "policies"
+              ]
+            },
+            "description": "operationId: policyV2ProposePolicy\n\nProposes a policy version. Only the action owner may propose it. A proposed version cannot change; a change is a new version. Approving a version supersedes the one approved before it."
+          }
+        },
+        {
+          "name": "Approve a proposed policy version",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/policies/:capability/:policyVersion/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "policies",
+                ":capability",
+                ":policyVersion",
+                "approve"
+              ],
+              "variable": [
+                {
+                  "key": "policyVersion",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "operationId: policyV2ApprovePolicy"
+          }
+        },
+        {
+          "name": "Propose an approver's public key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approverId\": \"<string>\",\n  \"keyId\": \"<string>\",\n  \"publicKeyPem\": \"<string>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/approver-keys",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "approver-keys"
+              ]
+            },
+            "description": "operationId: policyV2ProposeApproverKey"
+          }
+        },
+        {
+          "name": "Approve a proposed approver key",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/approver-keys/:approverId/:keyId/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "approver-keys",
+                ":approverId",
+                ":keyId",
+                "approve"
+              ],
+              "variable": [
+                {
+                  "key": "approverId",
+                  "value": ""
+                },
+                {
+                  "key": "keyId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "operationId: policyV2ApproveApproverKey"
+          }
+        },
+        {
+          "name": "Revoke an approver key",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/register/approver-keys/:approverId/:keyId/revoke",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v2",
+                "register",
+                "approver-keys",
+                ":approverId",
+                ":keyId",
+                "revoke"
+              ],
+              "variable": [
+                {
+                  "key": "approverId",
+                  "value": ""
+                },
+                {
+                  "key": "keyId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "operationId: policyV2RevokeApproverKey"
           }
         }
       ]

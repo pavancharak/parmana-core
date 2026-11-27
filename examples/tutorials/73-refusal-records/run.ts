@@ -5,6 +5,7 @@ import {
   demoApprovalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // RFC-0021: every policy REJECT produces a durable, signed Refusal
@@ -59,8 +60,8 @@ function vendorPaymentTransaction(overrides: {
       createdAt: now,
     },
     policy: {
-      name: "vendor-payment",
-      version: "2.1.0",
+      name: "payment-limit",
+      version: "1.0.0",
       schemaVersion: "1.0.0",
     },
     signals: {
@@ -84,9 +85,15 @@ console.log("==================================================");
 console.log();
 
 const executionSystem = await createExecutionSystem();
-const application = createApplication(executionSystem, demoApprovalVerifier());
+const application = createApplication(
+  executionSystem,
+  demoApprovalVerifier(),
+  undefined,
+  undefined,
+  demoTrustedSources(),
+);
 
-// riskScore: 999 fails vendor-payment/2.1.0's own risk-score rule
+// riskScore: 999 fails payment-limit/1.0.0's own risk-score rule
 // (requires <= 20) -- an ordinary PolicyEngine REJECT.
 const transaction = vendorPaymentTransaction({ riskScore: 999 });
 

@@ -49,6 +49,9 @@ import { NotFoundError } from "../../src/errors/NotFoundError.js";
 import { ConflictError } from "../../src/errors/ConflictError.js";
 import { withTestApproval } from "../../../test-support/approvals.js";
 import { seedPolicyGovernanceApprovals } from "../../../test-support/policy-governance.js";
+import { createTrustedFacts } from "../../../packages/api/tests/helpers/trusted-facts.js";
+
+const trustedFacts = createTrustedFacts();
 
 const RAW_API_KEY = "ts-sdk-integration-test-key";
 
@@ -64,6 +67,13 @@ function buildTransaction(
     principalId?: string;
   } = {},
 ): Promise<BusinessTransaction> {
+  trustedFacts.set({
+    vendorVerified: true,
+    invoiceVerified: true,
+    paymentApproved: true,
+    sufficientFunds: true,
+    riskScore: overrides.riskScore ?? 10,
+  });
   const businessTransactionId =
     overrides.businessTransactionId ?? crypto.randomUUID();
   const authorityId = crypto.randomUUID();
@@ -105,10 +115,10 @@ function buildTransaction(
     intent: {
       intentId,
       authorizationId,
-      // test:fixture-execute (not payments:execute/vendor-payment, removed
+      // test:fixture-execute (not payments:execute/payment-limit, removed
       // per docs/internal/VERIFICATION-GAPS.md G-27) -- registered only when
       // NODE_ENV=test (createTestFixtureConnector.ts). Still governed by
-      // the unchanged vendor-payment/2.1.0 policy below.
+      // the unchanged payment-limit/1.0.0 policy below.
       action: "test:fixture-execute",
       target,
       parameters: { amount: paymentAmount, currency: "USD" },
@@ -116,8 +126,8 @@ function buildTransaction(
     },
 
     policy: {
-      name: "vendor-payment",
-      version: "2.1.0",
+      name: "payment-limit",
+      version: "1.0.0",
       schemaVersion: "1.0.0",
     },
 
@@ -128,7 +138,7 @@ function buildTransaction(
       sufficientFunds: true,
       paymentAmount,
       riskScore: overrides.riskScore ?? 10,
-      // vendor-payment@2.1.0 declares boundSignals: vendorId -> target.
+      // payment-limit@1.0.0 declares boundSignals: vendorId -> target.
       vendorId: target,
     },
 
@@ -139,7 +149,7 @@ function buildTransaction(
 
 beforeAll(async () => {
   process.env.PARMANA_POLICY_DIR = fileURLToPath(
-    new URL("../../../policies", import.meta.url),
+    new URL("../../../fixtures/policies", import.meta.url),
   );
 
   // Deliberately dynamic imports, deferred until after PARMANA_POLICY_DIR
@@ -155,7 +165,7 @@ beforeAll(async () => {
   // dotenv loads it, not against this file's location. Running this
   // suite via `cd typescript && npm test` (cwd = typescript/) previously
   // resolved that to the nonexistent typescript/policies/, producing a
-  // live "Policy 'vendor-payment' version '2.0.0' was not found" 404 on
+  // live "Policy 'payment-limit' version '2.0.0' was not found" 404 on
   // every test that reached policy evaluation -- invisible from the repo
   // root (ci.yml's `npm test` runs from there, where the same relative
   // path happens to resolve correctly), but real and reproducible from
@@ -173,7 +183,13 @@ beforeAll(async () => {
   const { createApp } = await import("../../../packages/api/src/app.js");
 
   const executionSystem = await createExecutionSystem();
-  const application = createApplication(executionSystem);
+  const application = createApplication(
+    executionSystem,
+    undefined,
+    undefined,
+    undefined,
+    trustedFacts.registry,
+  );
 
   const authenticator = new StaticKeyAuthenticator([
     {

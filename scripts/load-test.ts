@@ -4,7 +4,7 @@
  *
  * Closes the "no load testing exists anywhere in the repo" production-
  * readiness gap: this exercises the real HTTP surface (a real server
- * process, real policy evaluation against policies/vendor-payment, real
+ * process, real policy evaluation against fixtures/policies/vendor-payment, real
  * Ed25519 signing, the real test-fixture connector) rather than a unit
  * benchmark of one function in isolation.
  *
@@ -193,13 +193,11 @@ function startServer(
         env: {
           ...process.env,
           NODE_ENV: "test",
-          // Benchmark only: vendor-payment has no maker-checker records here.
-          PARMANA_ALLOW_UNGOVERNED_POLICY: "true",
           PORT: String(port),
           PARMANA_AUTH_DISABLED: "true",
           // The server refuses to start without a policy directory
           // (Config.ts requirePolicyDirectory). The /execute benchmark
-          // evaluates policies/vendor-payment from this repository.
+          // evaluates fixtures/policies/vendor-payment from this repository.
           PARMANA_POLICY_DIR:
             process.env.PARMANA_POLICY_DIR ?? path.join(root, "policies"),
           PARMANA_KEY_DIR: keyDirectory,

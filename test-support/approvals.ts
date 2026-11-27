@@ -37,6 +37,7 @@ const keys = generateKeyPairSync("ed25519");
 const policiesDirectory = join(
   dirname(fileURLToPath(import.meta.url)),
   "..",
+  "fixtures",
   "policies",
 );
 
@@ -82,8 +83,8 @@ export function testApprovalIssuerRegistry(): StaticApprovalIssuerRegistry {
         "payments:refund",
         "paytm:cancel",
         "paytm:refund",
-        "razorpay:refund",
-        "razorpay:refund",
+        "payments:refund",
+        "payments:refund",
         "refund",
         "register",
         "reject",

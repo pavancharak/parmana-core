@@ -16,6 +16,7 @@ import {
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
 import { withRequiredFields } from "../../shared/helpers/business-transaction.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 type Failure = {
   businessTransactionId: string;
@@ -40,8 +41,9 @@ async function main(): Promise<void> {
   //
 
   const runtime = new RuntimeBuilder()
+    .withBusinessSignalSources(demoTrustedSources())
     .withSignalStateVerifier(demoApprovalSignalVerifier())
-    .withPolicyRepository(new FilePolicyRepository("policies"))
+    .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
     .build(repository);
 
   const transactions = [transaction1, transaction2, transaction3, transaction4];

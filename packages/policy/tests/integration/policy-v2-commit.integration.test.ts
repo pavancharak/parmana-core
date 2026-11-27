@@ -67,6 +67,9 @@ describe.skipIf(!databaseConfigured)(
     });
 
     afterAll(async () => {
+      // Leave the shared database as it was found: a partial review row left here makes the
+      // next server start fail on it.
+      await pool.query("TRUNCATE policy_v2_state, policy_v2_evidence");
       await releasePolicyV2SuiteLock(lock!);
       await pool.end();
     });

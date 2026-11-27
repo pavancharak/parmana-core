@@ -36,6 +36,10 @@ import { ExecutionIntentBuilder } from "../../src/ExecutionIntentBuilder.js";
 import { ExecutionIntentFinalizer } from "../../src/ExecutionIntentFinalizer.js";
 import { ExecutionIntentService } from "../../src/ExecutionIntentService.js";
 import { Runtime } from "../../src/Runtime.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+import { TrustedSignalResolver } from "../../src/business-validation/TrustedSignalResolver.js";
+
+const trustedFacts = createTrustedFacts();
 import { RuntimeAuthorizationSigner } from "../../src/RuntimeAuthorizationSigner.js";
 import { RuntimeEngine } from "../../src/RuntimeEngine.js";
 import { RuntimePipeline } from "../../src/RuntimePipeline.js";
@@ -60,12 +64,23 @@ import {
  * without calling the connector again.
  */
 const policyRepository = new FilePolicyRepository(
-  path.resolve(import.meta.dirname, "../../../../policies"),
+  path.resolve(import.meta.dirname, "../../../../fixtures/policies"),
 );
 
 const TX = "tx-adr0012";
 
+const DECLARED_SIGNALS = {
+  vendorVerified: true,
+  invoiceVerified: true,
+  paymentApproved: true,
+  sufficientFunds: true,
+  paymentAmount: 100,
+  riskScore: 10,
+  vendorId: "vendor://payments",
+};
+
 function transaction(): Promise<BusinessTransaction> {
+  trustedFacts.set(DECLARED_SIGNALS);
   return withTestApproval({
     businessTransactionId: TX,
     metadata: { executionMode: "SYNC" } as unknown as TransactionMetadata,
@@ -81,19 +96,11 @@ function transaction(): Promise<BusinessTransaction> {
       createdAt: new Date(),
     },
     policy: {
-      name: "vendor-payment",
-      version: "2.1.0",
+      name: "payment-limit",
+      version: "1.0.0",
       schemaVersion: "1.0.0",
     },
-    signals: {
-      vendorVerified: true,
-      invoiceVerified: true,
-      paymentApproved: true,
-      sufficientFunds: true,
-      paymentAmount: 100,
-      riskScore: 10,
-      vendorId: "vendor://payments",
-    },
+    signals: DECLARED_SIGNALS,
     status: BusinessTransactionStatus.RECEIVED,
     createdAt: new Date(),
   });
@@ -176,6 +183,8 @@ function setup(
     undefined,
     undefined,
     service,
+    undefined,
+    new TrustedSignalResolver(trustedFacts.registry),
   );
 
   return {
@@ -308,6 +317,13 @@ describe("ADR-0012: the intent is signed and stored before release", () => {
       undefined,
       undefined,
       testApprovalSignalVerifier(),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      new TrustedSignalResolver(trustedFacts.registry),
     );
 
     const result = await new Runtime(engine, trustRecords).execute(

@@ -74,7 +74,6 @@ describe.skipIf(!isMlDsa65Supported())(
         trustRecordId: "tr-hybrid-receipt",
         businessTransactionId: transaction.businessTransactionId,
         transaction,
-        overrides: [],
         executions: [],
         verifications: [
           {
@@ -146,7 +145,6 @@ describe.skipIf(!isMlDsa65Supported())(
         trustRecordId: "tr-hybrid-receipt-tampered",
         businessTransactionId: transaction.businessTransactionId,
         transaction,
-        overrides: [],
         executions: [],
         verifications: [
           {

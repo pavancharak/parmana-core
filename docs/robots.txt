@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://pavancharak.github.io/parmana-core/portal/sitemap.xml

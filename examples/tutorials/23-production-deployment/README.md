@@ -57,7 +57,7 @@ Only the supporting infrastructure changes.
 Policies are loaded from the configured repository.
 
 ```ts
-const policyRepository = new FilePolicyRepository("policies");
+const policyRepository = new FilePolicyRepository("fixtures/policies");
 ```
 
 In production, organizations typically version and review policies through their deployment process.

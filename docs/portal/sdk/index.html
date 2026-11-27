@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SDKs and packages · Parmana developer docs</title>
+<meta name="description" content="SDKs and packages Portal home · API reference This page lists every package in the repository that is marked public, what it is for, and whether you can install it from a public registry. It was checked against npm and PyPI on the day this ">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../security/key-management.html">Key management</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../policies/payment-refund-coverage.html">Coverage of the production policy</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="index.html" aria-current="page">SDKs and packages</a></li><li><a href="typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="python.html">Python SDK: parmana</a></li><li><a href="cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>SDKs and packages</span><span class="sep">/</span><span>SDKs and packages</span></div>
+    <article>
+<h1 id="sdks-and-packages">SDKs and packages<a class="anchor" href="#sdks-and-packages" aria-label="Link to this section">#</a></h1>
+<p><a href="../index.html">Portal home</a> · <a href="../api/index.html">API reference</a></p>
+<p>This page lists every package in the repository that is marked public, what it is for, and whether you can install it from a public registry. It was checked against npm and PyPI on the day this portal was written.</p>
+<h2 id="which-package-do-i-need">Which package do I need?<a class="anchor" href="#which-package-do-i-need" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>If you want to...</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Call Parmana from a Node.js or TypeScript application or agent</td>
+<td><a href="typescript.html"><code>@parmana/sdk</code></a></td>
+</tr>
+<tr>
+<td>Call Parmana from Python</td>
+<td><a href="python.html"><code>parmana</code></a></td>
+</tr>
+<tr>
+<td>Check an Execution Trust Record without the Parmana SDK, in any environment</td>
+<td><a href="verifier.html"><code>@parmana/verifier</code></a> (npm) or <a href="verifier.html"><code>parmana-verifier</code></a> (PyPI)</td>
+</tr>
+<tr>
+<td>Propose and approve policy changes from a terminal, as an operator</td>
+<td><a href="cli.html"><code>@parmana/cli</code></a> (<code>parmana-ops</code>)</td>
+</tr>
+<tr>
+<td>Write a connector that receives signed releases</td>
+<td><a href="connector-sdk.html"><code>@parmana/connector-sdk</code></a> (npm) or <a href="connector-sdk.html"><code>parmana-connector-sdk</code></a> (PyPI)</td>
+</tr>
+<tr>
+<td>Run the Parmana server</td>
+<td>Not a package. See <a href="../deployment/index.html">Deployment</a>.</td>
+</tr>
+</tbody></table></div>
+<h2 id="published-packages">Published packages<a class="anchor" href="#published-packages" aria-label="Link to this section">#</a></h2>
+<p>&quot;Registry&quot; is the version on the public registry. &quot;Repository&quot; is the version in this checkout. They match except where noted.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Registry</th>
+<th>Registry version</th>
+<th>Repository version</th>
+<th>Status</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>@parmana/sdk</code></td>
+<td>npm</td>
+<td>4.1.1</td>
+<td>4.1.1</td>
+<td><strong>Implemented</strong></td>
+<td>TypeScript SDK. The client, builders, errors, approval and step-up signing, offline verification.</td>
+</tr>
+<tr>
+<td><code>parmana</code></td>
+<td>PyPI</td>
+<td>4.1.1</td>
+<td>4.1.1</td>
+<td><strong>Implemented</strong></td>
+<td>Python SDK. The same surface as the TypeScript SDK, synchronous.</td>
+</tr>
+<tr>
+<td><code>@parmana/verifier</code></td>
+<td>npm</td>
+<td>2.0.3</td>
+<td>2.0.3</td>
+<td><strong>Implemented</strong></td>
+<td>Offline verifier and <code>parmana-verify</code> command. No dependencies.</td>
+</tr>
+<tr>
+<td><code>parmana-verifier</code></td>
+<td>PyPI</td>
+<td>2.0.3</td>
+<td>2.0.3</td>
+<td><strong>Implemented</strong></td>
+<td>Python version of the offline verifier, same results.</td>
+</tr>
+<tr>
+<td><code>@parmana/cli</code></td>
+<td>npm</td>
+<td>4.1.1</td>
+<td>4.1.1</td>
+<td><strong>Implemented</strong>, with a known defect in its command launch. See <a href="cli.html">cli.md</a>.</td>
+<td><code>parmana-ops</code>: policy, approver, step-up and key commands.</td>
+</tr>
+<tr>
+<td><code>@parmana/connector-sdk</code></td>
+<td>npm</td>
+<td>4.1.1</td>
+<td>4.1.1</td>
+<td>Documented elsewhere; not exercised here</td>
+<td>Connector authoring contracts.</td>
+</tr>
+<tr>
+<td><code>parmana-connector-sdk</code></td>
+<td>PyPI</td>
+<td>4.1.1</td>
+<td>4.1.1</td>
+<td>Documented elsewhere; not exercised here</td>
+<td>Python connector authoring contracts.</td>
+</tr>
+<tr>
+<td><code>@parmana/crypto</code></td>
+<td>npm</td>
+<td>4.1.1</td>
+<td>4.1.1</td>
+<td>Implemented as a building block; use the SDK&#39;s signing helpers</td>
+<td>Canonical serialization, signing and verification primitives.</td>
+</tr>
+<tr>
+<td><code>@parmana/shared</code></td>
+<td>npm</td>
+<td>4.1.1</td>
+<td>4.1.1</td>
+<td>Building block</td>
+<td>Domain model and configuration shared across packages.</td>
+</tr>
+<tr>
+<td><code>@parmana/envelope-verifier</code></td>
+<td>npm</td>
+<td><strong>0.1.0</strong></td>
+<td>4.1.1</td>
+<td>Building block</td>
+<td>Verifies that an execution request was authorized. Registry version differs from the repository. See <a href="../packages/publishing-envelope-verifier-and-execution-system.html">publishing</a>.</td>
+</tr>
+<tr>
+<td><code>@parmana/execution-system</code></td>
+<td>npm</td>
+<td><strong>0.1.0</strong></td>
+<td>4.1.1</td>
+<td>Building block</td>
+<td>Execution system protocol. Registry version differs from the repository. See <a href="../packages/publishing-envelope-verifier-and-execution-system.html">publishing</a>.</td>
+</tr>
+</tbody></table></div>
+<p>Packages marked public in <code>package.json</code> but <strong>not on npm</strong> are server building blocks. They are not integration points, and you do not install them. They are the runtime, policy engine, governance, approval, gateway, storage, replay and governance UI: <code>@parmana/api</code>, <code>@parmana/runtime</code>, <code>@parmana/policy</code>, <code>@parmana/approval</code>, <code>@parmana/capability-registry</code>, <code>@parmana/execution-control</code>, <code>@parmana/execution-gateway</code>, <code>@parmana/replay</code>, <code>@parmana/storage</code> and <code>@parmana/governance-ui</code>. They run inside the server built from this repository.</p>
+<h2 id="install-commands-as-checked">Install commands, as checked<a class="anchor" href="#install-commands-as-checked" aria-label="Link to this section">#</a></h2>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">npm install @parmana/sdk@4.1.1
+npm install @parmana/verifier@2.0.3
+npm install -g @parmana/cli@4.1.1          # see cli.md for how to run it
+pip install "parmana==4.1.1"
+pip install "parmana[verify]==4.1.1"       # for parmana.crypto signing and offline checks
+pip install "parmana-verifier==2.0.3"</code></pre></div>
+<p>The install commands were run in fresh directories and confirmed that the packages resolve, the exports exist, and the verifier&#39;s <code>parmana-verify</code> command runs.</p>
+<h2 id="discover-the-methods">Discover the methods<a class="anchor" href="#discover-the-methods" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The <strong>complete method index</strong> for each SDK is generated from the source. It lists every public method, its signature, and the HTTP request it sends:<ul>
+<li><a href="typescript-method-index.html">TypeScript: 58 methods</a></li>
+<li><a href="python-method-index.html">Python: 50 methods</a></li>
+</ul>
+</li>
+<li>The <strong>endpoint index</strong> lists all 66 operations in the OpenAPI document, with the SDK method that calls each one where there is one: <a href="../api/endpoint-index.html">Endpoint index</a>.</li>
+<li>In an editor, the TypeScript package ships type declarations (<code>dist/index.d.ts</code>), so autocomplete shows the signatures. In Python, the methods are typed and documented in their docstrings.</li>
+</ul>
+<h2 id="which-sdk-methods-reach-which-endpoints">Which SDK methods reach which endpoints<a class="anchor" href="#which-sdk-methods-reach-which-endpoints" aria-label="Link to this section">#</a></h2>
+<p>Each SDK method maps to one HTTP request, with two exceptions:</p>
+<ul>
+<li><code>createTransaction</code> / <code>create_transaction</code> sends two requests: <code>POST /transactions</code>, then <code>POST /transactions/{id}/execute</code>.</li>
+<li><code>endpoint</code> and, in Python, <code>version</code> are local. <code>version()</code> in TypeScript is not local: it sends <code>GET /version</code>.</li>
+</ul>
+<p>Some OpenAPI operations have no SDK method (for example the kill switch, the handbook download, and the sandbox approval). Call those over HTTP. They are listed in the <a href="../api/endpoint-index.html">endpoint index</a>.</p>
+<h2 id="versioning-and-compatibility">Versioning and compatibility<a class="anchor" href="#versioning-and-compatibility" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The SDK packages share one version number with the server repository (4.1.1 at the time of writing).</li>
+<li>The offline verifiers have their own version (2.0.3).</li>
+<li>A record carries a <code>schemaVersion</code>. The verifiers and the SDKs handle schema version 2 (legacy) and 3 (whole-record). See <a href="../security/evidence-verification.html">Evidence verification</a>.</li>
+<li>The server&#39;s <code>GET /version</code> reports the <code>@parmana/api</code> package version (4.1.1 in this build). An earlier build reported a hand-typed <code>0.4.0</code>; that is fixed, and the value now matches the packages.</li>
+</ul>
+<h2 id="next">Next<a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="typescript.html">TypeScript SDK</a></li>
+<li><a href="python.html">Python SDK</a></li>
+<li><a href="verifier.html">Offline verifier</a></li>
+<li><a href="cli.html">CLI</a></li>
+<li><a href="connector-sdk.html">Connector SDK</a></li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/sdk/README.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="../api/endpoint-index.html"><span>Previous</span>Endpoint index</a><a class="pn next" href="typescript.html"><span>Next</span>TypeScript SDK: @parmana/sdk</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#which-package-do-i-need">Which package do I need?</a></li><li class="d2"><a href="#published-packages">Published packages</a></li><li class="d2"><a href="#install-commands-as-checked">Install commands, as checked</a></li><li class="d2"><a href="#discover-the-methods">Discover the methods</a></li><li class="d2"><a href="#which-sdk-methods-reach-which-endpoints">Which SDK methods reach which endpoints</a></li><li class="d2"><a href="#versioning-and-compatibility">Versioning and compatibility</a></li><li class="d2"><a href="#next">Next</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

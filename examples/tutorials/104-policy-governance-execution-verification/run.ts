@@ -26,6 +26,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // docs/internal/CLAIMS.md 2.35: on top of the maker-checker approval flow
@@ -111,6 +112,7 @@ const executionVerifier = new PolicyGovernanceExecutionVerifier(
 );
 
 const runtime = new RuntimeBuilder()
+  .withBusinessSignalSources(demoTrustedSources())
   .withSignalStateVerifier(demoApprovalSignalVerifier())
   .withPolicyRepository(policyRepository)
   .withPolicyExecutionVerifier(executionVerifier)

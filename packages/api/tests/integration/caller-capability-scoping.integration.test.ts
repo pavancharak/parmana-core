@@ -11,6 +11,8 @@ import { InMemoryCallerAuditSink } from "../../src/auth/InMemoryCallerAuditSink.
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * HTTP-level proof that caller identity is actually *scoped*, not
@@ -41,7 +43,13 @@ describe("Caller capability scoping (HTTP boundary)", () => {
     const { executionSystem, auditSink: executionAuditSink } =
       createInspectableExecutionSystem();
 
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     const authenticator = new StaticKeyAuthenticator([
       {
@@ -54,7 +62,7 @@ describe("Caller capability scoping (HTTP boundary)", () => {
         callerId: "unscoped-caller",
         keyHash: hashApiKey(UNSCOPED_KEY),
         allowedPrincipalIds: ["integration-test"],
-        allowedCapabilities: ["razorpay:refund"],
+        allowedCapabilities: ["payments:refund"],
       },
       {
         callerId: "wildcard-caller",
@@ -303,14 +311,20 @@ describe("GET /callers/me (proof artifact)", () => {
 
   function buildApp() {
     const { executionSystem } = createInspectableExecutionSystem();
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     const authenticator = new StaticKeyAuthenticator([
       {
         callerId: "caller-a",
         keyHash: hashApiKey(CALLER_A_KEY),
         allowedPrincipalIds: ["integration-test"],
-        allowedCapabilities: ["razorpay:refund", "razorpay:refund-fetch"],
+        allowedCapabilities: ["payments:refund", "payments:refund-fetch"],
       },
       {
         callerId: "caller-b",
@@ -336,7 +350,7 @@ describe("GET /callers/me (proof artifact)", () => {
     expect(response.body).toEqual({
       callerId: "caller-a",
       allowedPrincipalIds: ["integration-test"],
-      allowedCapabilities: ["razorpay:refund", "razorpay:refund-fetch"],
+      allowedCapabilities: ["payments:refund", "payments:refund-fetch"],
       unrestrictedCapabilities: false,
     });
 

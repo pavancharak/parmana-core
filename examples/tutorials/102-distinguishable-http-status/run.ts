@@ -3,7 +3,23 @@ import crypto from "node:crypto";
 import { FileKeyProvider } from "@parmana/crypto";
 import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import { ExecutionGateway, type Connector } from "@parmana/execution-gateway";
-import { FilePolicyRepository } from "@parmana/policy";
+import type {
+  SignalStateVerifier,
+  SignalStateViolation,
+} from "@parmana/policy";
+
+import { governedPolicyDirectory } from "../../shared/helpers/demo-policy-governance.js";
+
+//
+// The release check's live signal source. The signals in this demo have not
+// changed between authorization and release, so it reports no violations. A
+// deployment wires a verifier that re-reads real-world state here.
+//
+class NothingChangedSignalVerifier implements SignalStateVerifier {
+  async findViolations(): Promise<readonly SignalStateViolation[]> {
+    return [];
+  }
+}
 import { RuntimeBuilder } from "@parmana/runtime";
 import { MemoryExecutionTrustRecordRepository } from "@parmana/storage";
 import {
@@ -16,6 +32,7 @@ import {
   demoApprovalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // docs/internal/CLAIMS.md 2.21: a policy REJECTED decision surfaces as HTTP 403
@@ -66,8 +83,8 @@ function rejectingTransaction(): BusinessTransaction {
       createdAt: now,
     },
     policy: {
-      name: "vendor-payment",
-      version: "2.1.0",
+      name: "payment-limit",
+      version: "1.0.0",
       schemaVersion: "1.0.0",
     },
     signals: {
@@ -122,7 +139,13 @@ const { createApplication } =
 const { createApp } = await import("../../../packages/api/src/app.js");
 
 const executionSystem = await createExecutionSystem();
-const application = createApplication(executionSystem, demoApprovalVerifier());
+const application = createApplication(
+  executionSystem,
+  demoApprovalVerifier(),
+  undefined,
+  undefined,
+  demoTrustedSources(),
+);
 const app = createApp(application, { callerAuth: "disabled" });
 
 const server = await new Promise<import("node:http").Server>((resolve) => {
@@ -154,14 +177,18 @@ console.log(
 );
 console.log("--------------------------------------------------");
 
+// Policy Governance approvals for every fixture policy, on a scratch copy.
+const governed = await governedPolicyDirectory("fixtures/policies");
+
 const runtime = new RuntimeBuilder()
+  .withBusinessSignalSources(demoTrustedSources())
   .withSignalStateVerifier(demoApprovalSignalVerifier())
-  .withPolicyRepository(new FilePolicyRepository("policies"))
+  .withPolicyRepository(governed.policyRepository)
   .build(new MemoryExecutionTrustRecordRepository());
 
 const approvedTransaction = {
   businessTransactionId: "22222222-2222-4222-8222-222222222299",
-  policy: { name: "vendor-payment", version: "2.1.0" },
+  policy: { name: "payment-limit", version: "1.0.0" },
   intent: {
     action: "release-payment",
     target: "vendor",
@@ -178,9 +205,14 @@ const approvedTransaction = {
   },
 };
 
-const { context } = await runtime.execute(
-  await withDemoApproval(approvedTransaction as never),
-);
+// withDemoApproval adds a signed approval artifact to the signals. The
+// runtime signs its authorization over the signals as they stand after that,
+// so the gateway request must carry that same object, not the pre-approval one.
+const approvedForRuntime = (await withDemoApproval(
+  approvedTransaction as never,
+)) as typeof approvedTransaction;
+
+const { context } = await runtime.execute(approvedForRuntime as never);
 if (!context.authorization)
   throw new Error("Execution Authorization was not generated.");
 
@@ -189,8 +221,9 @@ const publicKey = await new FileKeyProvider().getPublicKey(
 );
 
 const gateway = new ExecutionGateway({
-  // Legacy fixture: predates fail-closed policy binding.
-  allowUnverifiedPolicy: true,
+  signalStateVerifier: new NothingChangedSignalVerifier(),
+  policyRepository: governed.policyRepository,
+  policyApprovalVerifier: governed.policyApprovalVerifier,
   publicKey,
   nonceStore: new MemoryNonceStore(),
   connector: new RecordingConnector(),
@@ -201,6 +234,9 @@ const gatewayRequest = {
   action: approvedTransaction.intent.action,
   target: approvedTransaction.intent.target,
   parameters: approvedTransaction.intent.parameters,
+  // The signals the authorization was decided on, so the release check can
+  // confirm they are unchanged.
+  signals: approvedForRuntime.signals,
   authorization: context.authorization,
 };
 
@@ -236,8 +272,9 @@ const tampered = {
 let tamperedIsCoded = true;
 try {
   await new ExecutionGateway({
-    // Legacy fixture: predates fail-closed policy binding.
-    allowUnverifiedPolicy: true,
+    signalStateVerifier: new NothingChangedSignalVerifier(),
+    policyRepository: governed.policyRepository,
+    policyApprovalVerifier: governed.policyApprovalVerifier,
     publicKey,
     nonceStore: new MemoryNonceStore(),
     connector: new RecordingConnector(),

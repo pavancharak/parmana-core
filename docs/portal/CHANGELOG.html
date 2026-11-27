@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Changelog · Parmana developer docs</title>
+<meta name="description" content="Changelog Portal home · Coverage report This changelog records changes to the developer portal in docs/developer-portal/ . It does not record changes to the Parmana software. For those, see the repository's release notes and the packages' o">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="index.html">Parmana developer portal</a></li><li><a href="overview.html">Overview</a></li><li><a href="getting-started.html">Getting started</a></li><li><a href="faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="architecture.html">Architecture</a></li><li><a href="glossary.html">Glossary</a></li><li><a href="security/key-management.html">Key management</a></li><li><a href="policies/index.html">Policy management</a></li><li><a href="policies/payment-refund-coverage.html">Coverage of the production policy</a></li><li><a href="security/index.html">Security and cryptographic verification</a></li><li><a href="security/evidence-verification.html">Evidence verification</a></li><li><a href="security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="tutorials/index.html">Tutorials</a></li><li><a href="tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="api/index.html">REST API reference</a></li><li><a href="api/endpoints.html">Core endpoints</a></li><li><a href="api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="sdk/index.html">SDKs and packages</a></li><li><a href="sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="sdk/python.html">Python SDK: parmana</a></li><li><a href="sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="sdk/python-method-index.html">Python SDK method index</a></li><li><a href="packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="deployment/index.html">Deployment and operations</a></li><li><a href="reference/index.html">Developer reference</a></li><li><a href="reference/environment-variables.html">Environment variable reference</a></li><li><a href="reference/error-codes.html">Error code catalogue</a></li><li><a href="reference/error-code-index.html">Error code index</a></li><li><a href="troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="CHANGELOG.html" aria-current="page">Changelog</a></li><li><a href="COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Project</span><span class="sep">/</span><span>Changelog</span></div>
+    <article>
+<h1 id="changelog">Changelog<a class="anchor" href="#changelog" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">Portal home</a> · <a href="COVERAGE.html">Coverage report</a></p>
+<p>This changelog records changes to the developer portal in <code>docs/developer-portal/</code>. It does not record changes to the Parmana software. For those, see the repository&#39;s release notes and the packages&#39; own changelogs (for example <code>parmana-verifier</code>&#39;s <code>CHANGELOG.md</code>).</p>
+<p>Versions follow the packages the portal documents: SDKs and server 4.1.1, offline verifier 2.0.3.</p>
+<h2 id="2026-11-20-execution-system-defects-fixed-publishing-decided">2026-11-20: execution system defects fixed; publishing decided<a class="anchor" href="#2026-11-20-execution-system-defects-fixed-publishing-decided" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The placeholder <code>DefaultExecutionSystem</code> is renamed <code>SimulatedExecutionSystem</code>, and documented as executing nothing. All references are updated. The name is kept only in historical records.</li>
+<li><code>HttpExecutionSystem</code> applies its <code>timeout</code> option with <code>AbortSignal.timeout</code>, and says the action may have run.</li>
+<li><code>HttpExecutionSystem</code> checks each response field before returning the result.</li>
+<li>Both packages are decided public. <code>@parmana/envelope-verifier</code> is added to the release process; <code>@parmana/execution-system</code> is held until its receiving-system obligations are documented. Nothing is published.</li>
+<li>New API references: <code>packages/envelope-verifier-api.md</code> and <code>packages/execution-system-api.md</code>.</li>
+</ul>
+<h2 id="2026-11-20-schema-version-3-is-the-default">2026-11-20: schema version 3 is the default<a class="anchor" href="#2026-11-20-schema-version-3-is-the-default" aria-label="Link to this section">#</a></h2>
+<p>The owner made schema 3 the default: an unset <code>HYBRID_SCHEMA_VERSION</code> now means 3, and <code>2</code> is the rollback. The acknowledgement gate (<code>HYBRID_SCHEMA_V3_ACKNOWLEDGED</code>) is no longer read. This applies only to hybrid signing: a server in <code>CRYPTO_MODE=single</code> issues no schema 3 records. Changed: the parser and the doctor check, the tests that encoded the old default (each now states the schema it signs), <code>.env.example</code>, the public environment table, and the portal pages. Receipts are unchanged. The owner reports no active consumer and no single-mode record.</p>
+<h2 id="2026-11-20-schema-version-3-documented-in-full">2026-11-20: schema version 3 documented in full<a class="anchor" href="#2026-11-20-schema-version-3-documented-in-full" aria-label="Link to this section">#</a></h2>
+<p>Added <a href="security/schema-v3.html">Schema version 3</a>: what v3 covers and what it does not, the server and verifier settings, the downgrade decision and its cutover instant (<code>2026-11-20T13:01:38Z</code>), the issuance gate with its evidence, and the rollout and rollback steps. The code default is unchanged.</p>
+<h2 id="2026-11-20-third-pass-the-review-items-with-a-non-breaking-fix">2026-11-20: third pass: the review items with a non-breaking fix<a class="anchor" href="#2026-11-20-third-pass-the-review-items-with-a-non-breaking-fix" aria-label="Link to this section">#</a></h2>
+<p>Applied the fixes the review asked for that do not change existing behaviour. Each has a test.</p>
+<ul>
+<li><strong>Python SDK:</strong> <code>client.server_version()</code> asks the server for its version, as the TypeScript <code>version()</code> does. <code>client.version</code> stays the SDK version. (FINDINGS F4)</li>
+<li><strong>Both SDKs:</strong> the offline trust-record check takes an opt-in <code>requireFullCoverage</code> (TypeScript) or <code>require_full_coverage=True</code> (Python). It fails closed on legacy (schema 2) records. The default result is unchanged. (FINDINGS F2)</li>
+<li><strong>Python samples:</strong> the generated Policy v2 samples run their request only under <code>__main__</code>. Pytest collects files named <code>*_test.py</code>, and an import-time request reached the network during collection.</li>
+<li><strong>Portal checker:</strong> counts SDK methods from padded table rows too. Before this, the count depended on how the index was last formatted.</li>
+<li><strong>Cleanup:</strong> removed two empty, unreferenced fixtures (<code>typescript/test/fixtures/policy.ts</code> and <code>replay-result.ts</code>).</li>
+</ul>
+<p>Still open, and needing an owner decision or a release: the schema 2 default (F1), the approval helper for the quickstart (F7), and publishing the <code>parmana-ops</code> entry-point fix (the published 4.1.1 still has the old check).</p>
+<h2 id="2026-11-20-second-pass-the-five-unverified-items">2026-11-20: second pass: the five unverified items<a class="anchor" href="#2026-11-20-second-pass-the-five-unverified-items" aria-label="Link to this section">#</a></h2>
+<p>Closed the five gaps the first pass left open: Policy v2 in the contract, the exercised features, the connector release path, the untriggered error branches, and the retired flag. Each change has a test or a run named in <a href="COVERAGE.html#verification-log">COVERAGE.md</a>.</p>
+<p>Code and contract changes:</p>
+<ul>
+<li>The 28 Policy v2 operations (<code>/v2/decisions</code>, <code>/v2/register/*</code>, <code>/v2/reviews/*</code>, <code>/v2/evidence/*</code>, <code>/v2/console/*</code>, <code>/v2/notifications/*</code>) are in the OpenAPI document, tagged <em>Policy v2 (experimental)</em> and marked <code>x-stability: experimental</code>. Their cURL, TypeScript and Python samples are generated by <code>scripts/openapi/generate-policy-v2-samples.ts</code>, which <code>npm run openapi</code> runs.</li>
+<li>The route-parity test mounts the Policy v2 routes, so the document and the server are compared for them too.</li>
+<li>A new HTTP test pins the <code>500 EXECUTION_RECORD_INCOMPLETE</code> branch: the action runs once, and the response has the code and the transaction id.</li>
+<li>Tutorial 81 states the environment it needs. Its README command failed without it.</li>
+<li>The retired <code>PARMANA_ALLOW_UNGOVERNED_POLICY</code> is removed from the Docker workflow and the outage drill. Its unit test now asserts that the flag has no effect.</li>
+</ul>
+<p>Portal changes: the Policy v2 statements that said &quot;not in the OpenAPI document&quot; were corrected. The error-code total is 106 (it was written as 105). The error-code rows for <code>202</code>, <code>500</code> and <code>502</code> name the test that triggers each one. The coverage report&#39;s untriggered list now records what was exercised, with the database-gated suites run against a local PostgreSQL 16.15 cluster.</p>
+<p>Open, and new: the Policy v2 document format (F15), the open register response schemas (F16), and no live policy v2 server run (F17). The Docker stack and cloud deployment are still not run (F8).</p>
+<h2 id="2026-11-20-production-readiness-pass-on-the-code-and-the-portal">2026-11-20: production-readiness pass on the code and the portal<a class="anchor" href="#2026-11-20-production-readiness-pass-on-the-code-and-the-portal" aria-label="Link to this section">#</a></h2>
+<p>Changed the code where the review had a verified defect, and corrected the portal to match. Every change has a test or a live check named in <a href="COVERAGE.html#known-issues-found-during-this-review">COVERAGE.md</a>. Items that need an owner&#39;s decision are in <a href="FINDINGS.html">FINDINGS.md</a>.</p>
+<p>Code changes:</p>
+<ul>
+<li><code>GET /version</code> and the API manifest report the <code>@parmana/api</code> package version (4.1.1), not a hand-typed <code>0.4.0</code>.</li>
+<li>Unknown routes return a JSON <code>404</code> with <code>code: ROUTE_NOT_FOUND</code>, not an HTML page.</li>
+<li>The installed <code>parmana-ops</code> command runs when started through its bin name. The fix is in the repository; a release containing it is needed.</li>
+<li>Hybrid signing is refused at start-up unless <code>SECONDARY_SIGNATURE_PROVIDER</code> is set and differs from the primary.</li>
+<li>Production refuses memory storage at start-up (the default when <code>PARMANA_STORAGE</code> is unset). This reverses an earlier test&#39;s expectation; the owner should confirm it (<a href="FINDINGS.html#f0-production-with-memory-storage-is-now-refused-a-reversal-to-confirm">FINDINGS F0</a>).</li>
+<li><code>scripts/generate-approver-key.ts</code> creates its output folder.</li>
+<li>The retired <code>PARMANA_ALLOW_UNGOVERNED_POLICY</code> flag is removed from the examples runner, the load test and tutorial 81.</li>
+<li>The TypeScript workspace test script runs with the root configuration, and the six empty test files are removed. <code>npm test --workspace=typescript</code> passes with no extra environment.</li>
+<li>Corrected comments: the schema 3 gate in <code>Config.ts</code>, and the <code>PARMANA_KEY_DIR</code> requirement in <code>.env.example</code>.</li>
+<li>Tutorials 60, 103 and 120 state the environment they need.</li>
+<li>The existing quickstart page is corrected: the policy and key directories, and a warning about the approval step.</li>
+</ul>
+<p>Portal changes: every statement that described a fixed defect was updated, and the generated error reference and <code>llms-full.txt</code> were regenerated.</p>
+<p>Open, and not changed (see <a href="FINDINGS.html">FINDINGS.md</a>): the schema 2 default (F1), the SDK&#39;s legacy-record result (F2), the dev setup (F3), Python <code>version</code> versus TypeScript <code>version()</code> (F4), two <code>0.1.0</code> packages (F5), the Policy v2 contract (F6), approval automation (F7), the Docker, database and load checks (F8, F9), the Python and Node verifier test-count difference (F10), third-party reading of schema 3 (F11), the declared-transaction approval rule (F12), and unknown routes without a key (F13).</p>
+<h2 id="2026-11-20-first-version-of-the-developer-portal">2026-11-20: first version of the developer portal<a class="anchor" href="#2026-11-20-first-version-of-the-developer-portal" aria-label="Link to this section">#</a></h2>
+<p>Added the developer portal in <code>docs/developer-portal/</code>, written from the repository&#39;s source and checked against it:</p>
+<ul>
+<li><strong>Portal structure:</strong> overview, getting started, architecture, SDKs, REST API, tutorials, policy management, deployment, security, troubleshooting, reference, FAQ, glossary, examples, and this changelog.</li>
+<li><strong>SDK references:</strong> <code>@parmana/sdk</code> (58 methods) and <code>parmana</code> (50 methods), each with a generated method index that gives every signature and the HTTP request each method sends. Also the offline verifier (<code>@parmana/verifier</code>, <code>parmana-verifier</code>), the operator CLI (<code>@parmana/cli</code>), and the connector SDK&#39;s contract.</li>
+<li><strong>REST API:</strong> authentication, headers, errors, status codes, and the core endpoints with <code>curl</code>, JavaScript and sample responses. A generated index lists all 66 OpenAPI operations.</li>
+<li><strong>Tutorials:</strong> Node.js, Python, fintech, refund authorization, maker-checker, transaction limits, AI agents, and evidence verification.</li>
+<li><strong>Security:</strong> what is signed, canonical JSON and hashing, trust roots, schema versions and their coverage, tamper results, fail-closed behaviour, key management, and a production checklist.</li>
+<li><strong>Runnable examples:</strong> a governed quickstart kit (setup script, TypeScript and Python flows, approval and limit cases, a REST smoke test, and a standalone verification script). Each was run against a local server for this release.</li>
+<li><strong>Tools:</strong> <code>tools/generate-indexes.mjs</code> regenerates the method, endpoint and error-code indexes from source. <code>tools/check-docs.mjs</code> checks links and anchors, reports public methods and operations not named in narrative pages, and flags removed claims.</li>
+<li><strong>Coverage report:</strong> <a href="COVERAGE.html">COVERAGE.md</a>, with the verification log, sixteen known issues found during this review, and the remaining gaps.</li>
+</ul>
+<p>Documented findings that need an owner decision (none were changed in the repository):</p>
+<ul>
+<li>The existing quickstart does not run as written.</li>
+<li>The server reports version <code>0.4.0</code> while the packages are <code>4.1.1</code>.</li>
+<li>The installed <code>parmana-ops</code> binary prints nothing.</li>
+<li>Schema version 2 records leave most fields outside the signature. Schema version 3 is opt-in.</li>
+<li>A stale comment in the configuration describes schema version 3 as unreadable by the SDKs. Those SDKs read it correctly.</li>
+<li>The TypeScript workspace&#39;s <code>npm test</code> fails: six test files are empty.</li>
+</ul>
+<p>Not changed: the server, the packages, the existing documentation site (<code>docs/site/</code>), the existing guides, the tests and the examples. The portal is not published, and the proposed navigation for the documentation site is not applied.</p>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/CHANGELOG.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="troubleshooting/index.html"><span>Previous</span>Troubleshooting</a><a class="pn next" href="COVERAGE.html"><span>Next</span>Documentation coverage and verification report</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#2026-11-20-execution-system-defects-fixed-publishing-decided">2026-11-20: execution system defects fixed; publishing decided</a></li><li class="d2"><a href="#2026-11-20-schema-version-3-is-the-default">2026-11-20: schema version 3 is the default</a></li><li class="d2"><a href="#2026-11-20-schema-version-3-documented-in-full">2026-11-20: schema version 3 documented in full</a></li><li class="d2"><a href="#2026-11-20-third-pass-the-review-items-with-a-non-breaking-fix">2026-11-20: third pass: the review items with a non-breaking fix</a></li><li class="d2"><a href="#2026-11-20-second-pass-the-five-unverified-items">2026-11-20: second pass: the five unverified items</a></li><li class="d2"><a href="#2026-11-20-production-readiness-pass-on-the-code-and-the-portal">2026-11-20: production-readiness pass on the code and the portal</a></li><li class="d2"><a href="#2026-11-20-first-version-of-the-developer-portal">2026-11-20: first version of the developer portal</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "";</script>
+<script src="search-index.js"></script>
+<script src="portal.js"></script>
+</body>
+</html>

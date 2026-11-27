@@ -58,6 +58,7 @@ describe("release order threats: gateway", () => {
     const service = { execute: vi.fn() };
 
     const gateway = new ExecutionGateway({
+      allowUnverifiedSignals: true,
       // Legacy fixture: predates fail-closed policy binding. The behaviour under test does not depend on it.
       allowUnverifiedPolicy: true,
       publicKey: trusted.publicKey,

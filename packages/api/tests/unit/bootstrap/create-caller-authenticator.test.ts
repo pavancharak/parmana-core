@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { loadConfig } from "@parmana/shared";
 
@@ -72,13 +72,23 @@ describe("createCallerAuthenticator", () => {
     expect(result.auditSink).toBeDefined();
   });
 
-  describe("PARMANA_AUTH_DISABLED is refused outside development and test (fail closed)", () => {
+  describe("PARMANA_AUTH_DISABLED needs local mode (fail closed)", () => {
     const original = process.env.NODE_ENV;
+    const originalLocal = process.env.PARMANA_LOCAL_MODE;
+    beforeEach(() => {
+      // Refusals run with local mode off, so only NODE_ENV could relax them.
+      delete process.env.PARMANA_LOCAL_MODE;
+    });
     afterEach(() => {
       if (original === undefined) {
         delete process.env.NODE_ENV;
       } else {
         process.env.NODE_ENV = original;
+      }
+      if (originalLocal === undefined) {
+        delete process.env.PARMANA_LOCAL_MODE;
+      } else {
+        process.env.PARMANA_LOCAL_MODE = originalLocal;
       }
     });
 
@@ -90,7 +100,7 @@ describe("createCallerAuthenticator", () => {
           createCallerAuthenticator({
             auth: { keys: [], disabled: true },
           } as never),
-        ).toThrow(/refused unless NODE_ENV is exactly/);
+        ).toThrow(/refused unless local mode is on/);
       },
     );
 
@@ -100,15 +110,45 @@ describe("createCallerAuthenticator", () => {
         createCallerAuthenticator({
           auth: { keys: [], disabled: true },
         } as never),
-      ).toThrow(/refused unless NODE_ENV is exactly/);
+      ).toThrow(/refused unless local mode is on/);
     });
 
-    it.each([["development"], ["test"]])("allows NODE_ENV=%s", (nodeEnv) => {
-      process.env.NODE_ENV = nodeEnv;
-      const result = createCallerAuthenticator({
-        auth: { keys: [], disabled: true },
-      } as never);
-      expect(result.disabled).toBe(true);
-    });
+    it.each([["development"], ["test"]])(
+      "allows NODE_ENV=%s with local mode on",
+      (nodeEnv) => {
+        process.env.NODE_ENV = nodeEnv;
+        process.env.PARMANA_LOCAL_MODE = "true";
+        const result = createCallerAuthenticator({
+          auth: { keys: [], disabled: true },
+        } as never);
+        expect(result.disabled).toBe(true);
+      },
+    );
+  });
+});
+
+describe("PARMANA_LOCAL_MODE under the wrong NODE_ENV refuses to start", () => {
+  const originalNodeEnv = process.env.NODE_ENV;
+  const originalLocal = process.env.PARMANA_LOCAL_MODE;
+
+  afterEach(() => {
+    if (originalNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = originalNodeEnv;
+    if (originalLocal === undefined) delete process.env.PARMANA_LOCAL_MODE;
+    else process.env.PARMANA_LOCAL_MODE = originalLocal;
+  });
+
+  it("refuses startup when the flag is set and NODE_ENV=production, even with keys configured", () => {
+    process.env.NODE_ENV = "production";
+    process.env.PARMANA_LOCAL_MODE = "true";
+
+    expect(() =>
+      createCallerAuthenticator({
+        auth: {
+          keys: [{ keyHash: hashApiKey("k"), callerId: "c" }],
+          disabled: false,
+        },
+      } as never),
+    ).toThrow(/PARMANA_LOCAL_MODE=true is refused unless NODE_ENV is exactly/);
   });
 });

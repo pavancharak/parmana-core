@@ -44,6 +44,8 @@ export interface InboundCheckRecord {
   readonly expiresAt: string;
   readonly audience: string;
   readonly signature: string;
+  /** The same canonical bytes signed with ML-DSA-65 (post-quantum). Absent when no secondary signer is configured. */
+  readonly secondarySignature?: string;
   readonly issuedAt: Date;
   /** Who approved the request, when a verified human approval decided it (G-143). */
   readonly approvedBy?: string;
@@ -81,4 +83,10 @@ export interface InboundCheckRepository {
   ): Promise<void>;
 
   findById(decisionId: string): Promise<InboundCheckRecord | null>;
+
+  /**
+   * Redeems an approved decision, once. Returns true the first time and false if it was already redeemed.
+   * The redemption is kept until the decision's expiry, so a redeemed decision cannot be used again.
+   */
+  redeem(decisionId: string, expiresAt: string): Promise<boolean>;
 }

@@ -390,13 +390,10 @@ handed to this session, and none of them are:
   caller) after an external audit framed this as needing persistence;
   confirmed it does not. See `docs/internal/VERIFICATION-GAPS.md`'s "Gaps checked
   and found not applicable" section.
-- `HttpExecutionSystem`'s `timeout` option is declared
-  (`ExecutionSystemClientOptions.ts`) but never referenced anywhere in the
-  implementation — confirmed by grep: not enforced.
-- `DefaultExecutionSystem.execute()` unconditionally returns `success: true`
-  for any request — a no-op stub. Not used by any real connector path
-  today, but would silently "succeed" everything if ever wired in by
-  mistake.
+- Fixed 2026-11-20 (commit 4c383b5): `HttpExecutionSystem` applies its `timeout`
+  with `AbortSignal.timeout` and checks each response field; the no-op stub is
+  renamed `SimulatedExecutionSystem` and documented as executing nothing. The
+  stub is still exported, so publishing it is an owner decision.
 - Capability to policy binding covers 6 capabilities and 4 of the 14 policy
   names. A fail closed startup check (`assertConnectorCapabilitiesBound`)
   stops a _newly registered_ capability from shipping unbound. The binding pins the policy name in code; where policy governance is enforced, the version in effect is the one most recently approved (G-66, on `main` since 2026-09-27), so a new version needs no deploy.

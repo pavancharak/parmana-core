@@ -18,6 +18,9 @@ import {
   testApprovalIssuerRegistry,
   withTestApproval,
 } from "../../../../test-support/approvals.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+
+const trustedFacts = createTrustedFacts();
 
 /**
  * The approval race, end to end through the engine (decision D24). Two
@@ -26,8 +29,8 @@ import {
  */
 
 const POLICY = {
-  name: "vendor-payment",
-  version: "2.1.0",
+  name: "payment-limit",
+  version: "1.0.0",
   schemaVersion: "1.0.0",
 } as const;
 
@@ -74,9 +77,10 @@ function setup(ledgerForVerifier: ApprovalNonceLedger = ledger) {
     nonceStore: ledgerForVerifier,
   });
   const runtime = new RuntimeBuilder()
+    .withBusinessSignalSources(trustedFacts.registry)
     .withPolicyRepository(
       new FilePolicyRepository(
-        path.resolve(import.meta.dirname, "../../../../policies"),
+        path.resolve(import.meta.dirname, "../../../../fixtures/policies"),
       ),
     )
     .withSignalStateVerifier(new ApprovalSignalVerifier(verifier))

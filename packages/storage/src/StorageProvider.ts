@@ -14,6 +14,7 @@ import type {
   HandbookDownloadLeadRepository,
   PendingPolicyChangeRepository,
   PolicyChangeApprovalRecordRepository,
+  RefusalRecordOutboxRepository,
   RefusalRecordRepository,
   InboundCheckRepository,
   InboundDecisionRepository,
@@ -42,6 +43,7 @@ export interface StorageProvider {
    * Refusal Record repository (RFC-0021).
    */
   readonly refusalRecords: RefusalRecordRepository;
+  readonly refusalRecordOutbox: RefusalRecordOutboxRepository;
 
   /**
    * Inbound refund decisions (RFC-0025).

@@ -1,0 +1,3 @@
+# PRODUCTION ENVIRONMENT TEMPLATE. Copy to prod.tfvars (untracked) and fill in the values.
+expected_account_id = "<ACCOUNT_ID>"
+region              = "ap-south-1"

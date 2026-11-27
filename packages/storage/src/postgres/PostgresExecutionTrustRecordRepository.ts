@@ -2,7 +2,6 @@ import type {
   Execution,
   ExecutionTrustRecord,
   ExecutionTrustRecordRepository,
-  Override,
   Receipt,
   Verification,
 } from "@parmana/shared";
@@ -49,7 +48,6 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
       record.businessTransactionId,
       JSON.stringify(record.transaction),
       record.trustRecordHash,
-      JSON.stringify(record.signature),
       record.createdAt.toISOString(),
       record.updatedAt.toISOString(),
       record.authorization !== undefined
@@ -58,6 +56,9 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
       record.schemaVersion ?? null,
       record.signatures !== undefined
         ? JSON.stringify(record.signatures)
+        : null,
+      record.evidenceAnchor !== undefined
+        ? JSON.stringify(record.evidenceAnchor)
         : null,
     ]);
 
@@ -80,13 +81,11 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
       return null;
     }
 
-    const [executionRows, overrideRows, verificationRows, receiptRows] =
-      await Promise.all([
-        this.pool.query(SELECT_EXECUTIONS_SQL, [businessTransactionId]),
-        this.pool.query(SELECT_OVERRIDES_SQL, [businessTransactionId]),
-        this.pool.query(SELECT_VERIFICATIONS_SQL, [businessTransactionId]),
-        this.pool.query(SELECT_RECEIPTS_SQL, [businessTransactionId]),
-      ]);
+    const [executionRows, verificationRows, receiptRows] = await Promise.all([
+      this.pool.query(SELECT_EXECUTIONS_SQL, [businessTransactionId]),
+      this.pool.query(SELECT_VERIFICATIONS_SQL, [businessTransactionId]),
+      this.pool.query(SELECT_RECEIPTS_SQL, [businessTransactionId]),
+    ]);
 
     return {
       trustRecordId: header.trust_record_id,
@@ -95,10 +94,6 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
 
       executions: (executionRows.rows as { execution_json: Execution }[]).map(
         (row) => row.execution_json,
-      ),
-
-      overrides: (overrideRows.rows as { override_json: Override }[]).map(
-        (row) => row.override_json,
       ),
 
       verifications: (
@@ -110,7 +105,6 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
       ),
 
       trustRecordHash: header.trust_record_hash,
-      signature: header.signature_json,
       ...(header.authorization_json != null
         ? { authorization: header.authorization_json }
         : {}),
@@ -119,6 +113,9 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
         : {}),
       ...(header.signatures_json != null
         ? { signatures: header.signatures_json }
+        : {}),
+      ...(header.evidence_anchor_json != null
+        ? { evidenceAnchor: header.evidence_anchor_json }
         : {}),
       createdAt: new Date(header.created_at),
       updatedAt: new Date(header.updated_at),
@@ -157,37 +154,21 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
   }
 
   /**
-   * Appends an Override.
-   */
-  async appendOverride(
-    businessTransactionId: string,
-    override: Override,
-  ): Promise<void> {
-    await this.pool.query(INSERT_OVERRIDE_SQL, [
-      override.overrideId,
-      businessTransactionId,
-      JSON.stringify(override),
-      override.approvedAt.toISOString(),
-    ]);
-
-    await this.touch(businessTransactionId);
-  }
-
-  /**
    * Appends a Verification.
    */
   async appendVerification(
     businessTransactionId: string,
     verification: Verification,
   ): Promise<void> {
+    // Verifications are attached after signing and are not covered by the
+    // whole-record signature (decision D24), so they do not change updated_at.
+    // Touching it here would break the signature of every verified record.
     await this.pool.query(INSERT_VERIFICATION_SQL, [
       verification.verificationId,
       businessTransactionId,
       JSON.stringify(verification),
       verification.verifiedAt.toISOString(),
     ]);
-
-    await this.touch(businessTransactionId);
   }
 
   /**
@@ -197,14 +178,14 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
     businessTransactionId: string,
     receipt: Receipt,
   ): Promise<void> {
+    // Receipts are not covered by the whole-record signature (decision D24), so
+    // they do not change updated_at. See appendVerification.
     await this.pool.query(INSERT_RECEIPT_SQL, [
       receipt.receiptId,
       businessTransactionId,
       JSON.stringify(receipt),
       receipt.issuedAt.toISOString(),
     ]);
-
-    await this.touch(businessTransactionId);
   }
 
   /**
@@ -242,10 +223,10 @@ export class PostgresExecutionTrustRecordRepository implements ExecutionTrustRec
 const INSERT_TRUST_RECORD_SQL = `
   INSERT INTO execution_trust_records
     (trust_record_id, business_transaction_id, transaction_json,
-     trust_record_hash, signature_json, created_at, updated_at,
-     authorization_json, schema_version, signatures_json)
+     trust_record_hash, created_at, updated_at,
+     authorization_json, schema_version, signatures_json, evidence_anchor_json)
   VALUES
-    ($1, $2, $3::jsonb, $4, $5::jsonb, $6, $7, $8::jsonb, $9, $10::jsonb)
+    ($1, $2, $3::jsonb, $4, $5, $6, $7::jsonb, $8, $9::jsonb, $10::jsonb)
 `;
 
 const SELECT_HEADER_SQL = `
@@ -254,12 +235,6 @@ const SELECT_HEADER_SQL = `
 
 const SELECT_EXECUTIONS_SQL = `
   SELECT execution_json FROM executions
-  WHERE business_transaction_id = $1
-  ORDER BY created_at ASC, seq ASC
-`;
-
-const SELECT_OVERRIDES_SQL = `
-  SELECT override_json FROM overrides
   WHERE business_transaction_id = $1
   ORDER BY created_at ASC, seq ASC
 `;
@@ -283,11 +258,6 @@ const INSERT_EXECUTION_SQL = `
 
 const UPDATE_EXECUTION_SQL = `
   UPDATE executions SET execution_json = $1::jsonb WHERE execution_id = $2
-`;
-
-const INSERT_OVERRIDE_SQL = `
-  INSERT INTO overrides (override_id, business_transaction_id, override_json, created_at)
-  VALUES ($1, $2, $3::jsonb, $4)
 `;
 
 const INSERT_VERIFICATION_SQL = `
@@ -319,10 +289,10 @@ interface TrustRecordHeaderRow {
   readonly business_transaction_id: string;
   readonly transaction_json: ExecutionTrustRecord["transaction"];
   readonly trust_record_hash: string;
-  readonly signature_json: ExecutionTrustRecord["signature"];
   readonly created_at: string | Date;
   readonly updated_at: string | Date;
   readonly authorization_json?: ExecutionTrustRecord["authorization"] | null;
   readonly schema_version?: number | null;
   readonly signatures_json?: ExecutionTrustRecord["signatures"] | null;
+  readonly evidence_anchor_json?: ExecutionTrustRecord["evidenceAnchor"] | null;
 }

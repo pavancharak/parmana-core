@@ -1,11 +1,12 @@
 {
-  "version": "4.1.1",
+  "version": "5.0.0",
   "npm": [
     "@parmana/sdk",
     "@parmana/connector-sdk",
     "@parmana/shared",
     "@parmana/crypto",
-    "@parmana/cli"
+    "@parmana/cli",
+    "@parmana/envelope-verifier"
   ],
   "pypi": ["parmana", "parmana-connector-sdk"],
   "verifier": ["@parmana/verifier", "parmana-verifier"]

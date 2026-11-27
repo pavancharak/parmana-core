@@ -53,16 +53,25 @@ class ApproverApi:
         approver_id: str,
         key_id: str,
         public_key_pem: str,
+        capabilities: builtins.list[str],
         reason: str,
     ) -> ApprovalIssuerChange:
         """
-        Propose trusting a new approver key.
+        Propose trusting a new approver key, granted the listed capabilities.
 
-        Maps to POST /approval-issuers/changes with action "add".
+        Maps to POST /approval-issuers/changes with action "add". The server
+        requires `capabilities`: a list of 1 to 50 capability names (for
+        example "erp:pay-invoice"). An approver may approve only those.
         `public_key_pem` is the .public.pem file
         scripts/generate-approver-key.ts writes. Nothing changes until a
         different person approves it.
         """
+
+        if not 1 <= len(capabilities) <= 50:
+            raise ValueError(
+                "capabilities must list 1 to 50 capability names; "
+                f"got {len(capabilities)}."
+            )
 
         return self._propose(
             {
@@ -70,6 +79,7 @@ class ApproverApi:
                 "approverId": approver_id,
                 "keyId": key_id,
                 "publicKeyPem": public_key_pem,
+                "capabilities": list(capabilities),
                 "reason": reason,
             }
         )

@@ -44,8 +44,6 @@ class InMemoryExecutionTrustRecordRepository implements ExecutionTrustRecordRepo
 
   async replaceExecution(): Promise<void> {}
 
-  async appendOverride(): Promise<void> {}
-
   async appendVerification(
     _businessTransactionId: string,
     verification: Verification,
@@ -258,7 +256,9 @@ describe("VerificationService (live path)", () => {
     expect(verification.status).toBe(VerificationStatus.FAILED);
     expect(verification.message).toContain("Integrity check failed");
     expect(verification.message).toContain("tampered-hash-value");
-    expect(verification.message).not.toContain("Signature check failed");
+    // Schema version 3 signs the whole record, including the stored hash, so a changed hash also
+    // fails the signature check (decision D24).
+    expect(verification.message).toContain("Signature check failed");
     expect(verification.message).not.toContain(
       "Authorization binding check failed",
     );
@@ -273,10 +273,9 @@ describe("VerificationService (live path)", () => {
 
     const tamperedRecord: ExecutionTrustRecord = {
       ...trustRecord,
-      signature: {
-        ...trustRecord.signature,
-        value: "not-a-real-signature",
-      },
+      signatures: trustRecord.signatures?.map((entry, index) =>
+        index === 0 ? { ...entry, signature: "not-a-real-signature" } : entry,
+      ),
     };
 
     const repository = new InMemoryExecutionTrustRecordRepository();

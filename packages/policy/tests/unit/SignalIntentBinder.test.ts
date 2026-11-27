@@ -15,7 +15,7 @@ import type { Policy } from "../../src/types/Policy.js";
  */
 describe("SignalIntentBinder", () => {
   const policyWithBindings: Policy = {
-    policyId: "vendor-payment",
+    policyId: "payment-limit",
     policyVersion: "2.0.0",
     schemaVersion: "1.0.0",
     boundSignals: {

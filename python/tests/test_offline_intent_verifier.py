@@ -54,7 +54,7 @@ def test_a_real_server_signed_intent_verifies_with_only_the_public_key():
 
     assert result.valid is True
     assert result.hash_valid is True
-    assert result.legacy_signature_valid is True
+    assert result.valid is True
     assert result.errors == []
     assert result.algorithms_checked == ["ed25519"]
 
@@ -78,7 +78,7 @@ def test_altering_any_signed_field_fails_both_the_hash_and_the_signature(field, 
 
     assert result.valid is False
     assert result.hash_valid is False
-    assert result.legacy_signature_valid is False
+    assert result.valid is False
 
 
 def test_the_unsigned_fields_are_not_part_of_what_is_signed():
@@ -111,7 +111,7 @@ def test_a_different_public_key_fails_the_signature_but_not_the_hash():
 
     assert result.valid is False
     assert result.hash_valid is True
-    assert result.legacy_signature_valid is False
+    assert result.valid is False
 
 
 def test_a_missing_public_key_for_the_key_id_is_reported():

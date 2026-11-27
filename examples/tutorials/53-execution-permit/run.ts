@@ -8,7 +8,7 @@ import { FilePolicyRepository } from "@parmana/policy";
 
 import { RuntimeFactory } from "@parmana/runtime";
 
-import { DefaultExecutionSystem } from "@parmana/execution-system";
+import { SimulatedExecutionSystem } from "@parmana/execution-system";
 
 import {
   MemoryBusinessTransactionRepository,
@@ -20,6 +20,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // Historical note: this tutorial was originally "Execution Permit",
@@ -33,7 +34,7 @@ import {
 //
 
 //
-// CRYPTO_MODE=hybrid, set before RuntimeFactory.create() constructs
+// CRYPTO_MODE=hybrid, set before RuntimeFactory.create(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, demoTrustedSources()) constructs
 // the runtime's signing components -- Trust Records are additionally
 // signed with SECONDARY_SIGNATURE_PROVIDER (ML-DSA-65) alongside the
 // default Ed25519 signature, requiring both to verify.
@@ -80,14 +81,14 @@ const transaction = JSON.parse(
 ) as BusinessTransaction;
 
 const policyRepository = new FilePolicyRepository(
-  path.resolve(root, "../../../policies"),
+  path.resolve(root, "../../../fixtures/policies"),
 );
 
 const transactions = new MemoryBusinessTransactionRepository();
 
 const trustRecords = new MemoryExecutionTrustRecordRepository();
 
-const executionSystem = new DefaultExecutionSystem();
+const executionSystem = new SimulatedExecutionSystem();
 
 const application = RuntimeFactory.create(
   transactions,
@@ -96,6 +97,14 @@ const application = RuntimeFactory.create(
   executionSystem,
   undefined,
   demoApprovalSignalVerifier(),
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  demoTrustedSources(),
 );
 
 // --------------------------------------------------
@@ -127,9 +136,9 @@ console.log(JSON.stringify(trustRecord, null, 2));
 
 console.log();
 
-console.log("Legacy signature (unchanged shape, always present)");
-console.log(`  algorithm : ${trustRecord.signature.algorithm}`);
-console.log(`  keyId     : ${trustRecord.signature.keyId}`);
+console.log("Signature (first entry of the signatures array)");
+console.log(`  algorithm : ${trustRecord.signatures?.[0]?.algorithm}`);
+console.log(`  keyId     : ${trustRecord.signatures?.[0]?.keyId}`);
 
 console.log();
 

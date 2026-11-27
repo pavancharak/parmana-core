@@ -5,7 +5,10 @@ import { describe, expect, it } from "vitest";
 import type { ExecutionTrustRecord } from "@parmana/shared";
 
 import { verifyExecutionTrustRecordOffline } from "../../src/OfflineVerifier.js";
-import { canonicalExecutionTrustRecord } from "../../src/ExecutionTrustRecordCanonicalView.js";
+import {
+  canonicalExecutionTrustRecord,
+  hybridSignedCanonicalView,
+} from "../../src/ExecutionTrustRecordCanonicalView.js";
 import { TrustRecordHasher } from "../../src/TrustRecordHasher.js";
 import { SHA256HashProvider } from "../../src/providers/hash/SHA256HashProvider.js";
 import { Ed25519SignatureProvider } from "../../src/providers/signature/Ed25519SignatureProvider.js";
@@ -34,7 +37,6 @@ function draftRecord(
       status: "RECEIVED",
       createdAt: new Date("2026-01-01T00:00:00Z"),
     } as ExecutionTrustRecord["transaction"],
-    overrides: [],
     executions: [],
     verifications: [],
     receipts: [],
@@ -62,12 +64,6 @@ async function buildSignedRecord(
   const withHash = {
     ...draft,
     trustRecordHash,
-    signature: {
-      algorithm: "ed25519" as const,
-      keyId,
-      value: "",
-      signedAt: new Date(),
-    },
   } as ExecutionTrustRecord;
 
   const signer = new ArtifactSigner({
@@ -75,12 +71,17 @@ async function buildSignedRecord(
     signature: new Ed25519SignatureProvider(),
   });
 
+  // Schema version 3: one signature over the whole record (decision D24).
   const value = await signer.sign(
-    canonicalExecutionTrustRecord(withHash),
+    hybridSignedCanonicalView(withHash, 3),
     privateKey,
   );
 
-  return { ...withHash, signature: { ...withHash.signature, value } };
+  return {
+    ...withHash,
+    schemaVersion: 3,
+    signatures: [{ algorithm: "ed25519" as const, keyId, signature: value }],
+  } as ExecutionTrustRecord;
 }
 
 describe("verifyExecutionTrustRecordOffline", () => {
@@ -104,7 +105,7 @@ describe("verifyExecutionTrustRecordOffline", () => {
 
     expect(result.valid).toBe(true);
     expect(result.hashValid).toBe(true);
-    expect(result.legacySignatureValid).toBe(true);
+    expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
     expect(result.algorithmsChecked).toContain("ed25519");
   });
@@ -158,7 +159,7 @@ describe("verifyExecutionTrustRecordOffline", () => {
     });
 
     expect(result.valid).toBe(false);
-    expect(result.legacySignatureValid).toBe(false);
+    expect(result.valid).toBe(false);
   });
 
   it("fails closed when no public key is supplied for the record's keyId", async () => {
@@ -191,11 +192,10 @@ describe("verifyExecutionTrustRecordOffline", () => {
 
     const withBadAlgorithm: ExecutionTrustRecord = {
       ...record,
-      signature: {
-        ...record.signature,
-        algorithm:
-          "sphincs-plus" as ExecutionTrustRecord["signature"]["algorithm"],
-      },
+      signatures: record.signatures!.map((entry) => ({
+        ...entry,
+        algorithm: "sphincs-plus" as typeof entry.algorithm,
+      })),
     };
 
     const result = await verifyExecutionTrustRecordOffline(withBadAlgorithm, {
@@ -209,91 +209,60 @@ describe("verifyExecutionTrustRecordOffline", () => {
   });
 
   describe.skipIf(!isMlDsa65Supported())(
-    `hybrid records${isMlDsa65Supported() ? "" : ` [SKIPPED: ${ML_DSA_65_SKIP_REASON}]`}`,
+    `hybrid records (schema version 3)${isMlDsa65Supported() ? "" : ` [SKIPPED: ${ML_DSA_65_SKIP_REASON}]`}`,
     () => {
-      it("verifies a genuine hybrid (ed25519 + dilithium3) record fully offline", async () => {
+      const pemOf = (key: { export: (o: object) => string | Buffer }) =>
+        key.export({ format: "pem", type: "spki" }).toString();
+
+      async function signedHybrid() {
         const ed25519Keys = generateKeyPairSync("ed25519");
         const mldsaKeys = generateKeyPairSync("ml-dsa-65");
 
-        const draft = draftRecord("txn-offline-hybrid-valid");
-        const hasher = new TrustRecordHasher({
+        const draft = draftRecord("txn-offline-hybrid");
+        const trustRecordHash = await new TrustRecordHasher({
           hash: new SHA256HashProvider(),
           signature: new Ed25519SignatureProvider(),
-        });
+        }).hash(canonicalExecutionTrustRecord(draft as ExecutionTrustRecord));
+        const withHash = { ...draft, trustRecordHash } as ExecutionTrustRecord;
 
-        const trustRecordHash = await hasher.hash(
-          canonicalExecutionTrustRecord(draft as ExecutionTrustRecord),
-        );
-
-        const withHash = {
-          ...draft,
-          trustRecordHash,
-          signature: {
-            algorithm: "ed25519" as const,
-            keyId: "hybrid-primary",
-            value: "",
-            signedAt: new Date(),
-          },
-        } as ExecutionTrustRecord;
-
-        const legacySigner = new ArtifactSigner({
+        // Both entries sign the same whole-record view (decision D24).
+        const artifact = hybridSignedCanonicalView(withHash, 3);
+        const edValue = await new ArtifactSigner({
           hash: new SHA256HashProvider(),
           signature: new Ed25519SignatureProvider(),
-        });
-
-        const legacyValue = await legacySigner.sign(
-          canonicalExecutionTrustRecord(withHash),
-          ed25519Keys.privateKey,
-        );
-
-        const schemaVersion = 2;
-        const hybridArtifact = {
-          ...canonicalExecutionTrustRecord(withHash),
-          schemaVersion,
-        };
-
-        const ed25519HybridValue = await legacySigner.sign(
-          hybridArtifact,
-          ed25519Keys.privateKey,
-        );
-
-        const dilithiumSigner = new ArtifactSigner({
+        }).sign(artifact, ed25519Keys.privateKey);
+        const mlValue = await new ArtifactSigner({
           hash: new SHA256HashProvider(),
           signature: new Dilithium3SignatureProvider(),
-        });
+        }).sign(artifact, mldsaKeys.privateKey);
 
-        const dilithiumValue = await dilithiumSigner.sign(
-          hybridArtifact,
-          mldsaKeys.privateKey,
-        );
-
-        const record: ExecutionTrustRecord = {
+        const record = {
           ...withHash,
-          signature: { ...withHash.signature, value: legacyValue },
-          schemaVersion,
+          schemaVersion: 3,
           signatures: [
             {
               algorithm: "ed25519",
               keyId: "hybrid-primary",
-              signature: ed25519HybridValue,
+              signature: edValue,
             },
             {
               algorithm: "dilithium3",
               keyId: "hybrid-secondary",
-              signature: dilithiumValue,
+              signature: mlValue,
             },
           ],
+        } as unknown as ExecutionTrustRecord;
+
+        const keys = {
+          "hybrid-primary": pemOf(ed25519Keys.publicKey),
+          "hybrid-secondary": pemOf(mldsaKeys.publicKey),
         };
+        return { record, keys };
+      }
 
-        const result = await verifyExecutionTrustRecordOffline(record, {
-          "hybrid-primary": ed25519Keys.publicKey
-            .export({ format: "pem", type: "spki" })
-            .toString(),
-          "hybrid-secondary": mldsaKeys.publicKey
-            .export({ format: "pem", type: "spki" })
-            .toString(),
-        });
-
+      it("verifies a genuine hybrid record fully offline", async () => {
+        const { record, keys } = await signedHybrid();
+        const result = await verifyExecutionTrustRecordOffline(record, keys);
         expect(result.valid).toBe(true);
         expect(result.hybridSignaturesValid).toBe(true);
         expect(result.algorithmsChecked).toEqual(
@@ -301,68 +270,14 @@ describe("verifyExecutionTrustRecordOffline", () => {
         );
       });
 
-      it("fails when the ML-DSA-65 component of a hybrid record is stripped -- the downgrade attack", async () => {
-        const ed25519Keys = generateKeyPairSync("ed25519");
-        const mldsaKeys = generateKeyPairSync("ml-dsa-65");
-
-        const draft = draftRecord("txn-offline-hybrid-stripped");
-        const hasher = new TrustRecordHasher({
-          hash: new SHA256HashProvider(),
-          signature: new Ed25519SignatureProvider(),
+      it("fails when the ML-DSA-65 entry is stripped from a hybrid record at or after the cutover -- the downgrade attack", async () => {
+        const { record, keys } = await signedHybrid();
+        const stripped = { ...record, signatures: [record.signatures![0]!] };
+        const result = await verifyExecutionTrustRecordOffline(stripped, keys, {
+          hybridRequiredFrom: "2026-01-01T00:00:00Z",
         });
-
-        const trustRecordHash = await hasher.hash(
-          canonicalExecutionTrustRecord(draft as ExecutionTrustRecord),
-        );
-
-        const withHash = {
-          ...draft,
-          trustRecordHash,
-          signature: {
-            algorithm: "ed25519" as const,
-            keyId: "hybrid-primary",
-            value: "",
-            signedAt: new Date(),
-          },
-        } as ExecutionTrustRecord;
-
-        const legacySigner = new ArtifactSigner({
-          hash: new SHA256HashProvider(),
-          signature: new Ed25519SignatureProvider(),
-        });
-
-        const legacyValue = await legacySigner.sign(
-          canonicalExecutionTrustRecord(withHash),
-          ed25519Keys.privateKey,
-        );
-
-        const record: ExecutionTrustRecord = {
-          ...withHash,
-          signature: { ...withHash.signature, value: legacyValue },
-          // schemaVersion/signatures deliberately omitted -- simulates
-          // an attacker (or lossy pipeline) stripping the hybrid
-          // envelope from an originally-hybrid-signed record, exactly
-          // like verification-service-hybrid.test.ts's own
-          // "still verifies a legacy-shaped record" case.
-        };
-
-        const result = await verifyExecutionTrustRecordOffline(record, {
-          "hybrid-primary": ed25519Keys.publicKey
-            .export({ format: "pem", type: "spki" })
-            .toString(),
-        });
-
-        // The offline verifier reports facts, not policy: with no
-        // `signatures` array present at all, hybridSignaturesValid is
-        // undefined (nothing to check) and the legacy signature alone
-        // is genuinely valid -- exactly like the online default-off
-        // HYBRID_SIGNATURE_REQUIRED behavior. This is the honest,
-        // correct report; whether that is acceptable is the caller's
-        // policy decision, not this function's to make.
-        expect(result.legacySignatureValid).toBe(true);
-        expect(result.hybridSignaturesValid).toBeUndefined();
-
-        void mldsaKeys;
+        expect(result.valid).toBe(false);
+        expect(result.errors.join(" ")).toMatch(/hybridRequiredFrom/);
       });
     },
   );
@@ -372,14 +287,8 @@ describe("verifyExecutionTrustRecordOffline on malformed input", () => {
   it.each([
     ["null", null],
     ["a string", "not a record"],
-    ["a record with no signature", { trustRecordHash: "abc" }],
-    [
-      "a signature missing its value",
-      {
-        trustRecordHash: "abc",
-        signature: { algorithm: "ed25519", keyId: "default" },
-      },
-    ],
+    ["a record with no trustRecordHash", {}],
+    ["a numeric trustRecordHash", { trustRecordHash: 1 }],
   ])(
     "returns valid: false with a reason for %s, never throws",
     async (_label, input) => {

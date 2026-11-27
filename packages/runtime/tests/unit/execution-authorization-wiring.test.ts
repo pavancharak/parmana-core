@@ -14,7 +14,6 @@ import {
   type Execution,
   type ExecutionTrustRecord,
   type ExecutionTrustRecordRepository,
-  type Override,
   type Receipt,
   type Verification,
 } from "@parmana/shared";
@@ -26,7 +25,7 @@ import {
 } from "@parmana/policy";
 
 import {
-  DefaultExecutionSystem,
+  SimulatedExecutionSystem,
   type ExecutionRequest,
   type ExecutionResult,
   type ExecutionSystem,
@@ -108,11 +107,6 @@ class InMemoryExecutionTrustRecordRepository implements ExecutionTrustRecordRepo
 
   async replaceExecution(_execution: Execution): Promise<void> {}
 
-  async appendOverride(
-    _businessTransactionId: string,
-    _override: Override,
-  ): Promise<void> {}
-
   async appendVerification(
     _businessTransactionId: string,
     _verification: Verification,
@@ -138,13 +132,13 @@ class FixedPolicyRepository implements PolicyRepository {
 
 /**
  * Records the last ExecutionRequest forwarded downstream,
- * then delegates to DefaultExecutionSystem so the runtime
+ * then delegates to SimulatedExecutionSystem so the runtime
  * pipeline completes normally.
  */
 class RecordingExecutionSystem implements ExecutionSystem {
   public lastRequest: ExecutionRequest | undefined;
 
-  private readonly delegate = new DefaultExecutionSystem();
+  private readonly delegate = new SimulatedExecutionSystem();
 
   async execute(request: ExecutionRequest): Promise<ExecutionResult> {
     this.lastRequest = request;

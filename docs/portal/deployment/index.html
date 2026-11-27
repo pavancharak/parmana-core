@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deployment and operations · Parmana developer docs</title>
+<meta name="description" content="Deployment and operations Portal home · Security · Environment variables · Self-hosted guide This page covers running Parmana: local development, Docker, PostgreSQL, cloud, and on-premises. For each option it says whether it is Implemented ">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../security/key-management.html">Key management</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../policies/payment-refund-coverage.html">Coverage of the production policy</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="index.html" aria-current="page">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Operate</span><span class="sep">/</span><span>Deployment and operations</span></div>
+    <article>
+<h1 id="deployment-and-operations">Deployment and operations<a class="anchor" href="#deployment-and-operations" aria-label="Link to this section">#</a></h1>
+<p><a href="../index.html">Portal home</a> · <a href="../security/index.html">Security</a> · <a href="../reference/environment-variables.html">Environment variables</a> · <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/site/self-hosted/overview.mdx">Self-hosted guide</a></p>
+<p>This page covers running Parmana: local development, Docker, PostgreSQL, cloud, and on-premises. For each option it says whether it is <strong>Implemented</strong> (in the code, and run here), <strong>Implemented, not run here</strong> (in the code, but not run in this verification), or <strong>Planned / recommended</strong> (a practice this portal recommends, which the code does not enforce, or which is not in the code at all).</p>
+<h2 id="options-at-a-glance">Options at a glance<a class="anchor" href="#options-at-a-glance" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Status</th>
+<th>Run in this verification?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Local development from source (<code>npm run dev</code>, configured by the setup script)</td>
+<td><strong>Implemented</strong></td>
+<td>Yes: the server ran, served every route checked, and executed transactions</td>
+</tr>
+<tr>
+<td><code>npm run dev:setup</code> (a one-command local server)</td>
+<td><strong>Implemented</strong></td>
+<td>Yes: it starts, but its policy directory does not contain the fixture policies, so the fixture flows are refused (see below)</td>
+</tr>
+<tr>
+<td>Docker Compose (<code>docker-compose.yml</code>: postgres, migrate, seed, setup, api)</td>
+<td><strong>Implemented</strong></td>
+<td><strong>No.</strong> The file validated with <code>docker compose config</code>. The Docker daemon was not reachable, so the stack was not started.</td>
+</tr>
+<tr>
+<td>Dockerfile image (<code>Dockerfile</code>, <code>Dockerfile.cli</code>)</td>
+<td><strong>Implemented</strong></td>
+<td><strong>No.</strong> Not built.</td>
+</tr>
+<tr>
+<td>PostgreSQL storage (<code>PARMANA_STORAGE=postgres</code>, <code>DATABASE_URL</code>)</td>
+<td><strong>Implemented</strong></td>
+<td><strong>No.</strong> The sandbox had a hosted database URL in its environment, which this verification deliberately did not use.</td>
+</tr>
+<tr>
+<td>Cloud hosting (the OpenAPI document lists a production server; <code>vercel.json</code> is in the repository)</td>
+<td><strong>Implemented as configuration</strong></td>
+<td><strong>No.</strong> Not deployed or contacted.</td>
+</tr>
+<tr>
+<td>On-premises (Docker Compose, or the Node process on your own hosts)</td>
+<td><strong>Implemented</strong></td>
+<td><strong>No</strong> for the container path. Process path: see local.</td>
+</tr>
+<tr>
+<td>Scaling out to several API replicas</td>
+<td><strong>Planned / recommended</strong></td>
+<td>No</td>
+</tr>
+<tr>
+<td>High availability and failover</td>
+<td><strong>Planned / recommended</strong></td>
+<td>No</td>
+</tr>
+<tr>
+<td>Backup and recovery procedures</td>
+<td><strong>Planned / recommended</strong></td>
+<td>No</td>
+</tr>
+<tr>
+<td>Monitoring, dashboards, and alerting</td>
+<td><strong>Planned / recommended</strong>; structured logs and an alert webhook setting exist</td>
+<td>No</td>
+</tr>
+</tbody></table></div>
+<h2 id="local-development">Local development<a class="anchor" href="#local-development" aria-label="Link to this section">#</a></h2>
+<p>The server runs from a checkout. It needs the packages built, a policy directory, a key directory and, for tests, <code>NODE_ENV=test</code>.</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">npm ci
+npm run build</code></pre></div>
+<p>Start it with the setup that the <a href="../getting-started.html">getting-started guide</a> uses. It writes the keys, the policies and the caller keys outside the repository, prints the exact command, and does not overwrite an existing directory:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">node docs/developer-portal/examples/governed-quickstart/setup.mjs
+bash ~/.parmana/governed-quickstart/start-server.sh</code></pre></div>
+<p><code>npm run dev:setup</code> starts a local server in one command, with local keys in <code>keys/</code> and <code>.parmana-dev/</code>. It sets <code>NODE_ENV=test</code> and <code>PARMANA_POLICY_DIR=./policies</code>. Verified: the server started and <code>GET /health</code> returned <code>UP</code>. Its policy directory holds <code>payment-refund</code>, not <code>vendor-payment</code>, so a request for <code>vendor-payment@2.1.0</code> is refused with <code>404 Policy … was not found</code>. Use the governed setup for the fixture flows.</p>
+<p>The server refuses to start with missing configuration, and says what is missing. In production it also refuses memory storage (<code>PARMANA_STORAGE</code> unset or <code>memory</code>), and refuses hybrid signing without a distinct secondary provider:</p>
+<div class="code"><div class="code-bar"><span>text</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-text">Error: PARMANA_POLICY_DIR is not set. Refusing to start without a configured policy directory…
+Error: PARMANA_KEY_DIR is not configured.</code></pre></div>
+<h2 id="docker-compose">Docker Compose<a class="anchor" href="#docker-compose" aria-label="Link to this section">#</a></h2>
+<p><code>docker-compose.yml</code> defines five services. Their order and their roles, from the file:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Role</th>
+<th>Depends on (from <code>docker-compose.yml</code>)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>setup</code></td>
+<td>Creates the signing keys and the caller key in <code>./parmana-local/</code> on first start.</td>
+<td>Nothing.</td>
+</tr>
+<tr>
+<td><code>postgres</code></td>
+<td>The PostgreSQL database, with the data volume <code>postgres-data</code>.</td>
+<td>Nothing.</td>
+</tr>
+<tr>
+<td><code>migrate</code></td>
+<td>Applies the database migrations.</td>
+<td><code>postgres</code>.</td>
+</tr>
+<tr>
+<td><code>seed</code></td>
+<td>Seeds the shipped policies.</td>
+<td><code>migrate</code>.</td>
+</tr>
+<tr>
+<td><code>api</code></td>
+<td>The Parmana API, in <code>NODE_ENV=production</code>, with <code>PARMANA_STORAGE=postgres</code>.</td>
+<td><code>setup</code> and <code>seed</code>, both completed successfully.</td>
+</tr>
+</tbody></table></div>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">docker compose up -d
+docker compose ps                          # wait until api is healthy
+curl -i http://127.0.0.1:3000/health       # expect 200 once it is up
+docker compose down                        # stop; the database is kept
+docker compose down -v                     # stop and delete the database too</code></pre></div>
+<p>Defaults from the file:</p>
+<ul>
+<li>The API binds to <code>127.0.0.1</code> (<code>PARMANA_BIND</code>), on host port <code>3000</code> (<code>PARMANA_PORT</code>). It is not exposed to the network unless you change <code>PARMANA_BIND</code>.</li>
+<li>The container runs as the <code>node</code> user (<code>USER node</code> in the Dockerfile) on the <code>node:24-slim</code> base, pinned by digest.</li>
+<li>The API&#39;s health check calls <code>/ready</code> and expects <code>READY</code>.</li>
+<li><code>POLICY_CHANGE_CHECKERS</code> is passed through from your environment. An empty value approves nothing, so set it before you approve a policy.</li>
+</ul>
+<p><strong>Not run in this verification:</strong> the Docker daemon was not reachable from the sandbox, so the stack was not started. The compose file was validated with <code>docker compose config -q</code>, which lists the five services. Run <code>docker compose up</code> on a host with Docker before you rely on it.</p>
+<h2 id="postgresql">PostgreSQL<a class="anchor" href="#postgresql" aria-label="Link to this section">#</a></h2>
+<p>Production storage is PostgreSQL. Set <code>PARMANA_STORAGE=postgres</code> (or <code>supabase</code>, an alias for the same implementation) and <code>DATABASE_URL</code>.</p>
+<ul>
+<li>The server checks <code>DATABASE_URL</code> at start-up when storage is PostgreSQL, and refuses to start without it.</li>
+<li><code>GET /ready</code> runs <code>SELECT 1</code> against the database when storage is PostgreSQL. A failing query makes the service not ready.</li>
+<li>Apply migrations before the first start, with the <code>migrate</code> service or <code>npm run db:migrate</code> (<code>scripts/migrate-database.ts</code>). Not run in this verification.</li>
+<li>Use TLS to the database in production. The environment variable <code>PARMANA_DATABASE_CA_FILE</code> takes a CA file (see the <code>.env.test.example</code> comments and <a href="../reference/environment-variables.html">Environment variables</a>).</li>
+</ul>
+<p>Memory storage (<code>PARMANA_STORAGE=memory</code>) keeps everything in the process. It is for development and tests only. Verified: after a server restart, a transaction created before the restart returned <code>404 Business Transaction not found.</code>, and the trust-record list was empty. Do not run a deployment on memory storage.</p>
+<h2 id="cloud-and-on-premises">Cloud and on-premises<a class="anchor" href="#cloud-and-on-premises" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The OpenAPI document lists <code>https://parmana-api-real.vercel.app</code> as a production server, and the repository has a <code>vercel.json</code>. This portal did not deploy, contact or test that server.</li>
+<li>For your own cloud or on-premises hosts, run the server as a Node.js 24 process or as the Docker image, behind a TLS-terminating reverse proxy, with PostgreSQL and a key directory or KMS. The self-hosted guide in the repository&#39;s documentation site covers the steps: <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/site/self-hosted/overview.mdx"><code>docs/site/self-hosted/overview.mdx</code></a>.</li>
+<li>Keep the database, the key material, and the policy directory on storage that only the service can write. The policy directory must match the approval records (see the policies page).</li>
+<li><code>KEY_PROVIDER=aws-kms</code> stores signing in a KMS (Ed25519 only). Its reachability is checked at start-up. The <code>npm run verify:kms</code> script was not run here.</li>
+</ul>
+<h2 id="environment-variables">Environment variables<a class="anchor" href="#environment-variables" aria-label="Link to this section">#</a></h2>
+<p>The complete list, with what each one does and where it is read, is in <a href="../reference/environment-variables.html">Environment variables</a>. The variables a deployment must set are:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Why</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>NODE_ENV=production</code></td>
+<td>Production behaviour.</td>
+<td>The test approver setting is refused outside <code>NODE_ENV=test</code>.</td>
+</tr>
+<tr>
+<td><code>PARMANA_STORAGE=postgres</code></td>
+<td>Durable storage.</td>
+<td><code>supabase</code> is an alias.</td>
+</tr>
+<tr>
+<td><code>DATABASE_URL</code></td>
+<td>The database.</td>
+<td>Required with PostgreSQL storage.</td>
+</tr>
+<tr>
+<td><code>PARMANA_POLICY_DIR</code></td>
+<td>The policy files.</td>
+<td>Required. The server will not start without it.</td>
+</tr>
+<tr>
+<td><code>PARMANA_KEY_DIR</code> or <code>KEY_PROVIDER=aws-kms</code></td>
+<td>The signing keys.</td>
+<td>Required.</td>
+</tr>
+<tr>
+<td><code>PARMANA_API_KEYS</code></td>
+<td>The caller entries (hashes).</td>
+<td>JSON array.</td>
+</tr>
+<tr>
+<td><code>POLICY_CHANGE_CHECKERS</code></td>
+<td>Who may approve each policy.</td>
+<td>JSON object. An empty value approves nothing.</td>
+</tr>
+<tr>
+<td><code>CRYPTO_MODE</code>, <code>SECONDARY_SIGNATURE_PROVIDER</code>, <code>HYBRID_SCHEMA_VERSION</code></td>
+<td>Evidence strength.</td>
+<td>See <a href="../security/index.html#schema-versions-and-coverage">Security</a>.</td>
+</tr>
+</tbody></table></div>
+<p>Do not set <code>PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE</code>, <code>PARMANA_AUTH_DISABLED=true</code> or <code>NODE_ENV=test</code> in production. The server refuses the first outside <code>NODE_ENV=test</code>. The second makes <code>/ready</code> report <code>authDisabled: true</code> and accept requests without authentication.</p>
+<h2 id="secrets-management">Secrets management<a class="anchor" href="#secrets-management" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Signing keys:</strong> in the key directory (readable by the service only) or in a KMS. Never in a repository.</li>
+<li><strong>Caller keys:</strong> in the caller&#39;s own secret store. The server holds only the hash.</li>
+<li><strong>Approver and checker private keys:</strong> on their owners&#39; machines.</li>
+<li><strong><code>PARMANA_KEY_MATERIAL_JSON</code> and <code>PARMANA_KEY_MATERIAL_SECRET</code>:</strong> key material the server writes into the key directory at boot, per the repository&#39;s <code>.env.example</code>. Treat them as secrets, and do not log them.</li>
+<li><strong><code>PARMANA_SECRETS_PROVIDER</code>:</strong> selects a secrets provider. Read the environment reference for the values it accepts.</li>
+<li><strong><code>DATABASE_URL</code>:</strong> a secret. It appears in the environment, so restrict who can read the process environment.</li>
+</ul>
+<h2 id="network-requirements">Network requirements<a class="anchor" href="#network-requirements" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Direction</th>
+<th>Port and protocol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Clients → Parmana API</td>
+<td>443 (through your reverse proxy), or 3000 locally</td>
+<td>SDK and REST calls, over HTTPS.</td>
+</tr>
+<tr>
+<td>Parmana API → PostgreSQL</td>
+<td>5432, TLS</td>
+<td>Storage.</td>
+</tr>
+<tr>
+<td>Parmana API → connectors</td>
+<td>Your network, HTTPS</td>
+<td>Signed releases.</td>
+</tr>
+<tr>
+<td>Parmana API → business signal sources</td>
+<td>HTTPS</td>
+<td>Sourced facts (for example the payment provider&#39;s signal service). Each source is registered.</td>
+</tr>
+<tr>
+<td>Operators → Parmana API</td>
+<td>HTTPS</td>
+<td>Policy and governance changes.</td>
+</tr>
+</tbody></table></div>
+<p>The SDKs refuse non-HTTPS endpoints except on loopback, so a client cannot send its key in clear text by accident.</p>
+<h2 id="scaling-availability-and-recovery">Scaling, availability and recovery<a class="anchor" href="#scaling-availability-and-recovery" aria-label="Link to this section">#</a></h2>
+<p>These are <strong>planned or recommended</strong>. The code does not enforce them, and this verification did not test them.</p>
+<ul>
+<li><strong>Scaling.</strong> Run more than one API instance against the same PostgreSQL database, behind a load balancer. Each request is independent apart from the database. Test this before you rely on it: the repository&#39;s <code>npm run loadtest</code> script exists and was not run here.</li>
+<li><strong>Availability.</strong> Use the health (<code>/health</code>) for liveness and <code>/ready</code> for readiness in your orchestrator. Readiness depends on the database.</li>
+<li><strong>Backup.</strong> Back up the PostgreSQL database. The records, the approval records and the transactions are there. Back up the key directory or KMS configuration separately and securely; without the signing key you cannot sign new records, and without the old public keys you cannot verify old ones.</li>
+<li><strong>Recovery.</strong> Restore the database, then the key material. Verify a sample of records afterwards with the pinned keys. Restore the policy directory to match the approval records, or the server will refuse the mismatched policies.</li>
+<li><strong>Key rotation.</strong> <code>npm run rotate:verification-key</code> exists; keep old public keys in your trust set. See <a href="../security/index.html#key-management">Security</a>.</li>
+</ul>
+<h2 id="monitoring-and-logging">Monitoring and logging<a class="anchor" href="#monitoring-and-logging" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Health and readiness.</strong> <code>GET /health</code> returns <code>{&quot;status&quot;:&quot;UP&quot;}</code>. <code>GET /ready</code> returns <code>{&quot;status&quot;:&quot;READY&quot;, &quot;storage&quot;: …, &quot;authDisabled&quot;: …}</code>. Use these in your monitor.</li>
+<li><strong>Logs.</strong> The server writes one JSON object per line on standard output, with an <code>event</code> field. Observed events include <code>runtime</code>, <code>runtime_engine_constructed</code>, <code>policy_governance_integrity_check_passed</code>, and <code>caller_audit_write_failed</code> (seen in the examples&#39; test output). Ship them to your log store.</li>
+<li><strong>Alerts.</strong> <code>ALERT_WEBHOOK_URL</code> and <code>ALERT_WEBHOOK_SECRET</code> configure an alert webhook. The sink is in the server&#39;s code. Its delivery was not tested here.</li>
+<li><strong>Rate limits.</strong> The server returns <code>429</code> with <code>Retry-After</code> when limits are reached. Watch for it; a sudden rise can mean a client is retrying an execution it should not.</li>
+<li><strong>What to watch for:</strong> <code>409</code> on executions (repeated ids), <code>502</code> and <code>500 EXECUTION_RECORD_INCOMPLETE</code> (actions that may need reconciling), <code>caller_audit_write_failed</code>, and <code>policy_governance_integrity_check</code> failures.</li>
+</ul>
+<h2 id="performance-and-latency">Performance and latency<a class="anchor" href="#performance-and-latency" aria-label="Link to this section">#</a></h2>
+<p>No latency or throughput figure is published in this portal, because none was measured here. The load-test script (<code>npm run loadtest -- --connections 20 --duration 15</code>) measures <code>POST /execute</code> on your hardware. Expect the database write and the signature to dominate; the policy evaluation is local and small. Measure against your own traffic before you set capacity.</p>
+<h2 id="operational-checklist">Operational checklist<a class="anchor" href="#operational-checklist" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"> <code>/ready</code> is healthy, and reports <code>authDisabled: false</code> and the storage you expect.</li>
+<li><input disabled="" type="checkbox"> PostgreSQL migrations applied, backups configured, restore tested.</li>
+<li><input disabled="" type="checkbox"> Signing keys in a KMS or a key directory only the service reads; the public keys published and pinned by the verifiers.</li>
+<li><input disabled="" type="checkbox"> Policy directory matches the approval records at start-up (no integrity failures in the logs).</li>
+<li><input disabled="" type="checkbox"> <code>POLICY_CHANGE_CHECKERS</code> names the checkers for each policy.</li>
+<li><input disabled="" type="checkbox"> Caller keys scoped; a rotation runbook exists.</li>
+<li><input disabled="" type="checkbox"> Logs shipped; alerts for <code>5xx</code>, <code>429</code> spikes and audit write failures.</li>
+<li><input disabled="" type="checkbox"> A TLS-terminating reverse proxy in front of the API, and the API not reachable except through it.</li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/deployment/README.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="../packages/publishing-envelope-verifier-and-execution-system.html"><span>Previous</span>Publishing @parmana/envelope-verifier and @parmana/execution-system</a><a class="pn next" href="../reference/index.html"><span>Next</span>Developer reference</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#options-at-a-glance">Options at a glance</a></li><li class="d2"><a href="#local-development">Local development</a></li><li class="d2"><a href="#docker-compose">Docker Compose</a></li><li class="d2"><a href="#postgresql">PostgreSQL</a></li><li class="d2"><a href="#cloud-and-on-premises">Cloud and on-premises</a></li><li class="d2"><a href="#environment-variables">Environment variables</a></li><li class="d2"><a href="#secrets-management">Secrets management</a></li><li class="d2"><a href="#network-requirements">Network requirements</a></li><li class="d2"><a href="#scaling-availability-and-recovery">Scaling, availability and recovery</a></li><li class="d2"><a href="#monitoring-and-logging">Monitoring and logging</a></li><li class="d2"><a href="#performance-and-latency">Performance and latency</a></li><li class="d2"><a href="#operational-checklist">Operational checklist</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

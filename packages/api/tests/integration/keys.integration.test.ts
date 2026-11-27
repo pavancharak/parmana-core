@@ -13,6 +13,8 @@ import { createInspectableExecutionSystem } from "../bootstrap/createInspectable
 import { hashApiKey } from "../../src/auth/hashApiKey.js";
 import { StaticKeyAuthenticator } from "../../src/auth/StaticKeyAuthenticator.js";
 import { InMemoryCallerAuditSink } from "../../src/auth/InMemoryCallerAuditSink.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * HTTP-level proof of the public-key discovery endpoints (PQC audit
@@ -25,7 +27,13 @@ import { InMemoryCallerAuditSink } from "../../src/auth/InMemoryCallerAuditSink.
 describe("Public-key discovery (HTTP boundary)", () => {
   function buildApp() {
     const { executionSystem } = createInspectableExecutionSystem();
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     return createApp(application, {
       callerAuth: "disabled",
@@ -67,7 +75,13 @@ describe("Public-key discovery (HTTP boundary)", () => {
 
   it("does not require caller authentication", async () => {
     const { executionSystem } = createInspectableExecutionSystem();
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     // Caller-auth genuinely enabled (not "disabled") to prove this
     // route is reachable with no credential even when caller-auth
@@ -106,7 +120,6 @@ describe("Public-key discovery (HTTP boundary)", () => {
         status: "RECEIVED",
         createdAt: new Date(),
       },
-      overrides: [],
       executions: [],
       verifications: [],
       receipts: [],
@@ -119,22 +132,16 @@ describe("Public-key discovery (HTTP boundary)", () => {
     const withHash = {
       ...draft,
       trustRecordHash,
-      signature: {
-        algorithm: "ed25519" as const,
-        keyId: "default",
-        value: "",
-        signedAt: new Date(),
-      },
+      schemaVersion: 3,
     } as ExecutionTrustRecord;
 
-    const signature = await crypto.sign(withHash);
-    const record: ExecutionTrustRecord = { ...withHash, signature };
+    // Schema version 3: the signatures array covers the whole record (decision D24).
+    const signatures = await crypto.signWholeRecord(withHash);
+    const record: ExecutionTrustRecord = { ...withHash, signatures };
 
-    const result = await verifyExecutionTrustRecordOffline(
-      record,
-      { default: keyResponse.body.pem },
-      { allowLegacyOnly: true },
-    );
+    const result = await verifyExecutionTrustRecordOffline(record, {
+      default: keyResponse.body.pem,
+    });
 
     expect(result.valid).toBe(true);
   });

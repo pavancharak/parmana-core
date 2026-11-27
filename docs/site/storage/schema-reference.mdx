@@ -21,31 +21,30 @@ psql "$DATABASE_URL"
 
 ## Quick index
 
-| Table                                   | Purpose                                                                 | Owning code                                    |
-| --------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------- |
-| `business_transactions`                 | The received request, as submitted                                      | `PostgresBusinessTransactionRepository`        |
-| `executions`                            | Append only log of execution attempts                                   | `PostgresExecutionTrustRecordRepository`       |
-| `execution_trust_records`               | The signed, final trust record                                          | `PostgresExecutionTrustRecordRepository`       |
-| `verifications`                         | Log of independent verification calls                                   | `PostgresExecutionTrustRecordRepository`       |
-| `receipts`                              | Signed receipts                                                         | `PostgresExecutionTrustRecordRepository`       |
-| `overrides`                             | `OverrideService` backing table, deliberately unreachable, expect empty | `PostgresExecutionTrustRecordRepository`       |
-| `refusal_records`                       | Signed record of a refused decision                                     | `PostgresRefusalRecordRepository`              |
-| `execution_intents`                     | Signed intent stored before an action is released                       | `PostgresExecutionIntentRepository`            |
-| `caller_audit_events`                   | Every caller authentication decision, the highest write volume          | `PostgresCallerAuditSink`                      |
-| `execution_audit_events`                | Execution lifecycle events, **shared with `example-agent`**             | `PostgresExecutionAuditSink`                   |
-| `policies`                              | Policy content written on approval (Vercel has a read only filesystem)  | `PostgresPolicyRepository`                     |
-| `approval_issuers`                      | Approver keys added through maker checker                               | `PostgresApprovalIssuerRepository`             |
-| `approval_issuer_changes`               | Proposals to add or revoke an approver key                              | `PostgresApprovalIssuerRepository`             |
-| `external_connectors`                   | External connectors registered through maker checker                    | `PostgresExternalConnectorRepository`          |
-| `external_connector_changes`            | Proposals to register or revoke an external connector                   | `PostgresExternalConnectorRepository`          |
-| `pending_policy_changes`                | Maker and checker: a proposed change awaiting approval                  | `PostgresPendingPolicyChangeRepository`        |
-| `policy_change_approval_records`        | Maker and checker: signed approval or rejection                         | `PostgresPolicyChangeApprovalRecordRepository` |
-| `consumed_nonces`                       | Replay protection: gateway authorization envelopes                      | `PostgresNonceStore`                           |
-| `consumed_approval_nonces`              | Replay protection: approval artifacts (separate namespace)              | `PostgresApprovalNonceStore`                   |
-| `consumed_policy_change_step_up_nonces` | Replay protection: the checker's step up key (separate namespace)       | `PostgresPolicyChangeStepUpNonceStore`         |
-| `challenge_records`                     | Investigation records, the only mutable table                           | `PostgresChallengeRecordRepository`            |
-| `rate_limit_counters`                   | Fleet wide rate limits, the only table without RLS                      | `PostgresRateLimitStore`                       |
-| `handbook_download_leads`               | Email captured before a handbook PDF download                           | `PostgresHandbookDownloadLeadRepository`       |
+| Table                                   | Purpose                                                                | Owning code                                    |
+| --------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------- |
+| `business_transactions`                 | The received request, as submitted                                     | `PostgresBusinessTransactionRepository`        |
+| `executions`                            | Append only log of execution attempts                                  | `PostgresExecutionTrustRecordRepository`       |
+| `execution_trust_records`               | The signed, final trust record                                         | `PostgresExecutionTrustRecordRepository`       |
+| `verifications`                         | Log of independent verification calls                                  | `PostgresExecutionTrustRecordRepository`       |
+| `receipts`                              | Signed receipts                                                        | `PostgresExecutionTrustRecordRepository`       |
+| `refusal_records`                       | Signed record of a refused decision                                    | `PostgresRefusalRecordRepository`              |
+| `execution_intents`                     | Signed intent stored before an action is released                      | `PostgresExecutionIntentRepository`            |
+| `caller_audit_events`                   | Every caller authentication decision, the highest write volume         | `PostgresCallerAuditSink`                      |
+| `execution_audit_events`                | Execution lifecycle events, **shared with `example-agent`**            | `PostgresExecutionAuditSink`                   |
+| `policies`                              | Policy content written on approval (Vercel has a read only filesystem) | `PostgresPolicyRepository`                     |
+| `approval_issuers`                      | Approver keys added through maker checker                              | `PostgresApprovalIssuerRepository`             |
+| `approval_issuer_changes`               | Proposals to add or revoke an approver key                             | `PostgresApprovalIssuerRepository`             |
+| `external_connectors`                   | External connectors registered through maker checker                   | `PostgresExternalConnectorRepository`          |
+| `external_connector_changes`            | Proposals to register or revoke an external connector                  | `PostgresExternalConnectorRepository`          |
+| `pending_policy_changes`                | Maker and checker: a proposed change awaiting approval                 | `PostgresPendingPolicyChangeRepository`        |
+| `policy_change_approval_records`        | Maker and checker: signed approval or rejection                        | `PostgresPolicyChangeApprovalRecordRepository` |
+| `consumed_nonces`                       | Replay protection: gateway authorization envelopes                     | `PostgresNonceStore`                           |
+| `consumed_approval_nonces`              | Replay protection: approval artifacts (separate namespace)             | `PostgresApprovalNonceStore`                   |
+| `consumed_policy_change_step_up_nonces` | Replay protection: the checker's step up key (separate namespace)      | `PostgresPolicyChangeStepUpNonceStore`         |
+| `challenge_records`                     | Investigation records, the only mutable table                          | `PostgresChallengeRecordRepository`            |
+| `rate_limit_counters`                   | Fleet wide rate limits, the only table without RLS                     | `PostgresRateLimitStore`                       |
+| `handbook_download_leads`               | Email captured before a handbook PDF download                          | `PostgresHandbookDownloadLeadRepository`       |
 
 Not covered here: the migration tracking table of the Supabase CLI, `supabase_migrations.schema_migrations`,
 which this repository does not use. The tracked migration runner records each applied file in
@@ -73,12 +72,12 @@ decision. Created by `20260629013035_initial_schema.sql` and never altered.
 `status` is never updated after receipt. The current outcome of a transaction lives in
 `executions`. RLS enabled, no policies.
 
-### `executions`, `verifications`, `receipts`, `overrides`
+### `executions`, `verifications`, `receipts`
 
-These four share one shape: an id primary key (`execution_id`, `verification_id`,
-`receipt_id`, `override_id`), a `business_transaction_id` foreign key with
+These three share one shape: an id primary key (`execution_id`, `verification_id`,
+`receipt_id`), a `business_transaction_id` foreign key with
 `ON DELETE RESTRICT`, one JSONB payload column (`execution_json`, `verification_json`,
-`receipt_json`, `override_json`), a timestamp (`created_at`, `verified_at`, `issued_at`,
+`receipt_json`), a timestamp (`created_at`, `verified_at`, `issued_at`,
 `created_at`), and a `seq BIGSERIAL` added by `20260711120000` as an exact insertion order,
 because millisecond timestamps can tie under fast concurrent appends. All created by
 `20260629013035_initial_schema.sql`, indexed on `business_transaction_id` and the timestamp,
@@ -86,8 +85,6 @@ RLS enabled.
 
 - A transaction can have several `executions` rows: it is an append only sequence, not one
   mutable status.
-- `overrides` is expected to stay empty: `OverrideService` is deliberately not reachable from
-  the API.
 
 ### `execution_trust_records`
 

@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tutorial: let an AI agent act through Parmana · Parmana developer docs</title>
+<meta name="description" content="Tutorial: let an AI agent act through Parmana Tutorials · Architecture: agent workflow · Transaction limits Goal. An agent proposes and submits business actions. Parmana decides whether each one runs, against the policy in effect and a sign">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../security/key-management.html">Key management</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../policies/payment-refund-coverage.html">Coverage of the production policy</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="index.html">Tutorials</a></li><li><a href="maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="ai-agents.html" aria-current="page">Tutorial: let an AI agent act through Parmana</a></li><li><a href="fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Tutorials</span><span class="sep">/</span><span>Tutorial: let an AI agent act through Parmana</span></div>
+    <article>
+<h1 id="tutorial-let-an-ai-agent-act-through-parmana">Tutorial: let an AI agent act through Parmana<a class="anchor" href="#tutorial-let-an-ai-agent-act-through-parmana" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">Tutorials</a> · <a href="../architecture.html#3-ai-agent-authorization-workflow">Architecture: agent workflow</a> · <a href="transaction-limits.html">Transaction limits</a></p>
+<p><strong>Goal.</strong> An agent proposes and submits business actions. Parmana decides whether each one runs, against the policy in effect and a signed human approval. The agent can ask. It cannot approve, and it cannot make the server believe an approval it made up.</p>
+<p><strong>Verification.</strong></p>
+<ul>
+<li>The refusals and the approval path were checked by tutorial 120 (<a href="https://github.com/pavancharak/parmana-core/blob/main/examples/tutorials/120-no-action-without-approval/run.ts"><code>examples/tutorials/120-no-action-without-approval/run.ts</code></a>), which passed in the examples runner. Its Part 3 cases are quoted below.</li>
+<li>The agent pattern (an SDK caller that declares, then executes with an attached approval) was run as <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/typescript/declare-then-execute.ts"><code>declare-then-execute.ts</code></a> and <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/typescript/governed-flow.ts"><code>governed-flow.ts</code></a>. The approval cases, including the declared-without-approval refusal, were run as <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/typescript/approval-cases.ts"><code>approval-cases.ts</code></a>: A, B, C and D refused, E approved.</li>
+<li>The Python example <code>python/examples/10_llm_tool_call.py</code> is in the repository. <strong>It was not run in this verification.</strong></li>
+</ul>
+<h2 id="the-agents-position">The agent&#39;s position<a class="anchor" href="#the-agents-position" aria-label="Link to this section">#</a></h2>
+<p>An agent is a caller with an API key. Its key has a list of capabilities it may invoke, and a list of principals it may act for. Those lists are the only permissions it has. Parmana checks them on every request.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>The agent can</th>
+<th>The agent cannot</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Propose a business action, with its parameters and the policy it runs under.</td>
+<td>Approve the action. Approval needs a person&#39;s signature.</td>
+</tr>
+<tr>
+<td>Attach an approval that a person signed and gave it.</td>
+<td>Sign an approval itself. The agent never holds an approver&#39;s private key.</td>
+</tr>
+<tr>
+<td>Read the status and the record of its own transactions.</td>
+<td>Propose or approve a change to a policy. Those are human, maker-checker routes.</td>
+</tr>
+<tr>
+<td>Call <code>declare</code> and <code>execute</code> for the capabilities its key allows.</td>
+<td>Invoke a capability its key does not allow, or act for a principal it is not allowed.</td>
+</tr>
+</tbody></table></div>
+<h2 id="step-1-give-the-agent-a-narrow-key">Step 1: give the agent a narrow key<a class="anchor" href="#step-1-give-the-agent-a-narrow-key" aria-label="Link to this section">#</a></h2>
+<p>The operator issues a key for the agent, with the fewest capabilities it needs and no governance rights:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash"># Generated by the operator. The raw key goes to the agent's secret store, once.
+parmana-ops keys generate-api-key --caller-id invoice-agent --out-dir ./agent-keys \
+  --allowed-capabilities test:fixture-execute --allowed-principal-ids demo</code></pre></div>
+<p>The <code>parmana-ops</code> bin printed nothing in the published 4.1.1 release. The fix is in the repository; until a release contains it, run the command through its file, as described in <a href="../sdk/cli.html#the-installed-binary-fixed-in-the-repository-not-yet-in-a-published-release">CLI</a>. <code>keys generate-api-key</code> writes two files to the output directory, <code>&lt;caller&gt;.key</code> (the raw key, owner-only) and <code>&lt;caller&gt;.entry.json</code> (the <code>PARMANA_API_KEYS</code> entry, with only the hash). It prints the paths, and no secret. Verified.</p>
+<p>Do not set <code>credentialHolderType</code> to <code>USER</code> for an agent. A service caller is refused on the human-only routes with <code>NON_HUMAN_CALLER_DENIED</code> (verified in tutorial 103).</p>
+<h2 id="step-2-the-agent-asks-for-approval-outside-parmana">Step 2: the agent asks for approval, outside Parmana<a class="anchor" href="#step-2-the-agent-asks-for-approval-outside-parmana" aria-label="Link to this section">#</a></h2>
+<p>The agent prepares the request: the vendor, the amount, the purpose, and the policy it runs under. It sends that to your review workflow, not to Parmana yet. A person reviews it there. The reason is that a declared transaction executes exactly as it was declared, and an approval cannot be added to it afterwards (see the warning below).</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">// The agent's plan. Shown to the approver. Not sent to Parmana.
+const plan = {
+  purpose: "Pay invoice INV-2026-100 to vendor V-100",
+  vendorId: "vendor://payments",
+  amount: 1000,
+  currency: "USD",
+  policy: { name: "vendor-payment", version: "2.1.0" },
+};
+await reviewQueue.submit(plan); // your workflow; the approver reads plan.purpose, plan.amount and plan.vendorId</code></pre></div>
+<h2 id="step-3-a-person-approves-outside-parmana">Step 3: a person approves, outside Parmana<a class="anchor" href="#step-3-a-person-approves-outside-parmana" aria-label="Link to this section">#</a></h2>
+<p>The approver is a person. They review the plan in their own tool, and sign only if they agree. They sign on their own machine with their own key:</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">// On the approver's machine. The agent never runs this and never sees the key.
+import { readFileSync } from "node:fs";
+import { signApproval } from "@parmana/sdk";
+
+const approval = signApproval({
+  privateKeyPem: readFileSync("approver.private.pem", "utf8"),
+  approverId: "finance-approver-1",
+  keyId: "finance-approver-key-1",
+  capability: "test:fixture-execute",
+  resourceId: "vendor://payments", // the target the plan names
+  maxAmount: 1000, // the amount the plan names
+  ttlSeconds: 900,
+});
+// The approver hands this JSON back to the agent, through your workflow.</code></pre></div>
+<h2 id="step-4-the-agent-builds-the-transaction-with-the-approval-and-executes">Step 4: the agent builds the transaction with the approval, and executes<a class="anchor" href="#step-4-the-agent-builds-the-transaction-with-the-approval-and-executes" aria-label="Link to this section">#</a></h2>
+<p>The approval goes into the transaction <strong>before</strong> it is declared or executed. The agent then declares and executes, or executes in one call:</p>
+<div class="code"><div class="code-bar"><span>typescript</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-typescript">import { randomUUID } from "node:crypto";
+import { ParmanaClient, createBusinessTransaction } from "@parmana/sdk";
+
+const agent = new ParmanaClient({ endpoint, apiKey: process.env.AGENT_KEY });
+
+const request = createBusinessTransaction({
+  businessTransactionId: randomUUID(),
+  principalId: "demo",
+  purpose: plan.purpose,
+  action: "test:fixture-execute",
+  target: plan.vendorId,
+  parameters: { amount: plan.amount, currency: plan.currency },
+  policy: { name: "vendor-payment", version: "2.1.0", schemaVersion: "1.0.0" },
+  signals: {
+    humanApproved: true,
+    approvalArtifact: approval, // the person's signature, carried as data
+    vendorVerified: true,
+    invoiceVerified: true,
+    paymentApproved: true,
+    sufficientFunds: true,
+    paymentAmount: plan.amount,
+    riskScore: 5,
+    vendorId: plan.vendorId,
+  },
+});
+
+await agent.declareTransaction(request); // RECEIVED
+const record = await agent.executeTransaction(request.businessTransactionId); // APPROVED
+// or, in one call: const record = await agent.execute(request);</code></pre></div>
+<p>Parmana verifies the approval against the request: its signature, its scope, its amount, its target, its expiry, and whether it has been used. It does not take the agent&#39;s word.</p>
+<blockquote>
+<p><strong>Warning: a declared transaction is fixed.</strong> <code>executeTransaction(id)</code> runs the stored declared request. It does not take a new body, and an approval cannot be added to a request after it was declared. Verified: a transaction declared without an approval was refused when executed. The same request declared with the approval was approved. If an agent declares an unapproved request, that id is used: a later attempt with the approval is a <code>409</code>, not a new decision. Declare only when the approval is in hand, or use the one-call <code>execute</code>.</p>
+</blockquote>
+<h2 id="what-the-agent-sees-in-each-case">What the agent sees in each case<a class="anchor" href="#what-the-agent-sees-in-each-case" aria-label="Link to this section">#</a></h2>
+<p>Tutorial 120 Part 3 ran these cases against a real execution path:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Case</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The agent sets <code>humanApproved: true</code> and attaches no signed approval, with no approval verifier configured</td>
+<td><strong>Refused</strong>: no approval verifier is configured, so the signed human approval cannot be checked.</td>
+</tr>
+<tr>
+<td>The agent sets <code>humanApproved: true</code> with no signed approval, with the verifier configured</td>
+<td><strong>Refused</strong>: the declared <code>humanApproved</code> is true, the verified one is false.</td>
+</tr>
+<tr>
+<td>A person signs an approval, the agent attaches it</td>
+<td><strong>Approved</strong>.</td>
+</tr>
+</tbody></table></div>
+<p>The first two cases are the reason an agent cannot approve itself. The server checks the approval; the agent&#39;s declaration is not enough.</p>
+<p>Tutorial 120 Part 1 also shows that a policy cannot be written so that an agent&#39;s declarations approve an action. Each of these was refused at policy validation: an approve rule that always approves; an approve rule on facts the agent declares; an approval signal inside an <code>any</code> branch that another branch could satisfy alone; and an approval signal that is not declared in <code>approvalSignals</code>.</p>
+<h2 id="make-the-agents-requests-reviewable">Make the agent&#39;s requests reviewable<a class="anchor" href="#make-the-agents-requests-reviewable" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Give every request a <code>purpose</code> a person can read.</strong> The approver decides from it, and it is part of the record.</li>
+<li><strong>Keep one transaction id per action.</strong> The agent retries reads, not executions. See the <a href="nodejs-integration.html">Node.js tutorial</a> for the outcomes.</li>
+<li><strong>Do not declare a request before its approval exists.</strong> A declared request is fixed (see the warning in step 4).</li>
+<li><strong>Set the amount and target from the agent&#39;s plan, and let the approver sign exactly that.</strong> An approval for another target or amount is refused.</li>
+<li><strong>Record the request and the record.</strong> A declared request is <code>RECEIVED</code> until it is executed; the record is the evidence after.</li>
+</ul>
+<h2 id="production-notes">Production notes<a class="anchor" href="#production-notes" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Do not give an agent a key that can invoke an action without a policy that requires a human approval. Check each capability&#39;s policy in <a href="../policies/index.html">Policy management</a>.</li>
+<li>An agent that calls a business system with its own credentials, outside Parmana, is outside the record. Make the target system accept only Parmana&#39;s connector.</li>
+<li>Revoke an agent&#39;s key by changing its entry, through your configuration process, and check <code>GET /callers/me</code> after any change.</li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/tutorials/ai-agents.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="python-integration.html"><span>Previous</span>Tutorial: integrate Parmana into a Python application</a><a class="pn next" href="fintech-integration.html"><span>Next</span>Tutorial: gate vendor payments in a fintech application</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#the-agents-position">The agent's position</a></li><li class="d2"><a href="#step-1-give-the-agent-a-narrow-key">Step 1: give the agent a narrow key</a></li><li class="d2"><a href="#step-2-the-agent-asks-for-approval-outside-parmana">Step 2: the agent asks for approval, outside Parmana</a></li><li class="d2"><a href="#step-3-a-person-approves-outside-parmana">Step 3: a person approves, outside Parmana</a></li><li class="d2"><a href="#step-4-the-agent-builds-the-transaction-with-the-approval-and-executes">Step 4: the agent builds the transaction with the approval, and executes</a></li><li class="d2"><a href="#what-the-agent-sees-in-each-case">What the agent sees in each case</a></li><li class="d2"><a href="#make-the-agents-requests-reviewable">Make the agent's requests reviewable</a></li><li class="d2"><a href="#production-notes">Production notes</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

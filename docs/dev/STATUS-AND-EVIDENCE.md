@@ -1,6 +1,6 @@
 # Status and evidence
 
-[Back to the README](../../README.md) · [Developer docs index](README.md)
+[Back to the README](https://github.com/pavancharak/parmana-core/blob/main/README.md) · [Developer docs index](README.md)
 
 ## Reports and evidence
 
@@ -9,15 +9,15 @@ Every report is listed once, here. Start with the question you have.
 **Test results**
 
 - **Live CI runs:** every push runs the build, lint, typecheck and test suite. Results for each run are on the [CI workflow page](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml). To reproduce them, see [Quick start](RUNNING.md#quick-start).
-- **Evaluation scenarios:** the 16 attack scenarios are in [evaluations/scenarios.json](../../evaluations/scenarios.json). [EVALUATION.md](../../EVALUATION.md) explains the result.
+- **Evaluation scenarios:** the 16 attack scenarios are in [evaluations/scenarios.json](https://github.com/pavancharak/parmana-core/blob/main/evaluations/scenarios.json). [EVALUATION.md](https://github.com/pavancharak/parmana-core/blob/main/EVALUATION.md) explains the result.
 - **Fault injection:** [docs/internal/testing/FAULT-INJECTION.md](../internal/testing/FAULT-INJECTION.md) makes the business transaction store, the intent store or signing fail on purpose, at the HTTP boundary, and checks that nothing is released. It does not test a deployed system.
 - **Mutation testing:** [docs/internal/testing/MUTATION-TESTING.md](../internal/testing/MUTATION-TESTING.md) breaks the security code on purpose and checks that the tests notice. Fuzz tests send damaged and arbitrary requests, policies and records, and require a clear refusal, never a crash.
 
 **Security**
 
-- **Threat model:** [THREAT-MODEL.md](../../THREAT-MODEL.md) gives each threat its control, the attack that tests it, and the risk that remains.
-- **Security challenge:** [SECURITY-CHALLENGE.md](../../SECURITY-CHALLENGE.md) describes what counts as breaking Parmana on a copy you run yourself, and credits every confirmed break.
-- **Open issues and past incidents:** [docs/internal/VERIFICATION-GAPS.md](../internal/VERIFICATION-GAPS.md) lists every gap still open, with its evidence and what to do meanwhile. Past incidents and their fixes are recorded there too; see G-24 for an authorization bypass that was found and fixed. The full incident log is in [04-INCIDENTS-LOG.md](../../04-INCIDENTS-LOG.md).
+- **Threat model:** [THREAT-MODEL.md](https://github.com/pavancharak/parmana-core/blob/main/THREAT-MODEL.md) gives each threat its control, the attack that tests it, and the risk that remains.
+- **Security challenge:** [SECURITY-CHALLENGE.md](https://github.com/pavancharak/parmana-core/blob/main/SECURITY-CHALLENGE.md) describes what counts as breaking Parmana on a copy you run yourself, and credits every confirmed break.
+- **Open issues and past incidents:** [docs/internal/VERIFICATION-GAPS.md](../internal/VERIFICATION-GAPS.md) lists every gap still open, with its evidence and what to do meanwhile. Past incidents and their fixes are recorded there too; see G-24 for an authorization bypass that was found and fixed. The full incident log is in [04-INCIDENTS-LOG.md](https://github.com/pavancharak/parmana-core/blob/main/04-INCIDENTS-LOG.md).
 - **Claims you can check:** [docs/internal/CLAIMS.md](../internal/CLAIMS.md) states each claim at the scope its evidence supports, with the code and tests behind it, and lists what is not yet true.
 - **Mapped to standards:** the [OWASP mapping](https://docs.parmanasystems.com/security/owasp-mapping) covers the OWASP Top 10 for LLM Applications and for Agentic Applications (2026). The [regulation mapping](https://docs.parmanasystems.com/security/regulation-mapping) covers the EU AI Act, the NIST AI RMF, ISO/IEC 42001 and RBI guidance.
 - **Supply chain:** [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana-core), CodeQL on every change, and signed build provenance for SDK releases, the server image and the command-line tool's container image.
@@ -25,7 +25,7 @@ Every report is listed once, here. Start with the question you have.
 
 **Governance**
 
-- **Policy approval log:** [governance/README.md](../../governance/README.md) describes the hash-chained log of policy change approvals, and how to verify it.
+- **Policy approval log:** [governance/README.md](https://github.com/pavancharak/parmana-core/blob/main/governance/README.md) describes the hash-chained log of policy change approvals, and how to verify it.
 
 **Third-party listing**
 

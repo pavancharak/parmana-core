@@ -127,6 +127,9 @@ const examples = [
   "examples/tutorials/126-kill-switch-probe/run.ts",
   "examples/tutorials/127-checker-scope/run.ts",
   "examples/tutorials/128-nbfc-loan-disbursement/run.ts",
+  "examples/tutorials/129-payment-refund-stand-in-source/run.ts",
+  "examples/tutorials/130-rate-limiting/run.ts",
+  "examples/tutorials/131-configuration-and-bootstrapping/run.ts",
   "examples/scenarios/expense-approval/run.ts",
   "examples/scenarios/purchase-order/run.ts",
   "examples/04-verified-execution/run.ts",
@@ -148,11 +151,16 @@ const LOCAL_DEFAULTS: Record<string, string> = {
   PARMANA_STORAGE: "memory",
   KEY_PROVIDER: "local",
   PRIMARY_SIGNATURE_PROVIDER: "ed25519",
-  // Examples run hermetically and their policies have no maker-checker
-  // approval records in this tree. The opt-in is honoured only when NODE_ENV is
-  // "test" or "development" (examples set NODE_ENV=test), and never in a
-  // deployment. See policyGovernanceRelaxed.
-  PARMANA_ALLOW_UNGOVERNED_POLICY: "true",
+  // The examples run in local mode (localMode.ts): they set NODE_ENV=test
+  // themselves and rely on the test-fixture connector, which is registered
+  // only in local mode.
+  PARMANA_LOCAL_MODE: "true",
+};
+
+// Examples that approve a fixture policy start with its folder, not the live one.
+const EXAMPLE_POLICY_DIR: Record<string, string> = {
+  "examples/tutorials/77-caller-ownership-scoping/run.ts":
+    "./fixtures/policies",
 };
 
 const appliedDefaults: string[] = [];
@@ -222,11 +230,16 @@ async function run(example: string): Promise<void> {
   console.log();
 
   await new Promise<void>((resolve, reject) => {
+    // An example that approves a fixture policy starts with its policy folder set.
+    const exampleEnv = EXAMPLE_POLICY_DIR[example]
+      ? { ...process.env, PARMANA_POLICY_DIR: EXAMPLE_POLICY_DIR[example] }
+      : process.env;
     const child = spawn(
       process.execPath,
       ["./node_modules/tsx/dist/cli.mjs", path.join(root, example)],
       {
         cwd: root,
+        env: exampleEnv,
         stdio: "inherit",
       },
     );

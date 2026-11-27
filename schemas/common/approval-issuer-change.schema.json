@@ -68,6 +68,16 @@
     "rejectionReason": {
       "type": "string",
       "description": "Present when REJECTED."
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "description": "For add: the capability names the approver may approve, as the server stored them (duplicates removed).",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._:-]{0,127}$"
+      }
     }
   },
   "examples": [

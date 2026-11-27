@@ -14,6 +14,7 @@ change = client.approvers.propose_add(
     public_key_pem=Path(
         "approver-example__approver-example-key-1.public.pem"
     ).read_text(),
+    capabilities=["erp:pay-invoice"],
     reason="The example approver approves refunds for the West region from October.",
 )
 

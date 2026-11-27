@@ -4,10 +4,18 @@ import { describe, expect, it } from "vitest";
 import { createApplication } from "../../../src/application.js";
 import { createApp } from "../../../src/app.js";
 import { createExecutionSystem } from "../../../src/bootstrap/createExecutionSystem.js";
+import { createTrustedFacts } from "../../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 async function buildApp() {
   const executionSystem = await createExecutionSystem();
-  const application = createApplication(executionSystem);
+  const application = createApplication(
+    executionSystem,
+    undefined,
+    undefined,
+    undefined,
+    trustedFacts.registry,
+  );
   return createApp(application, { callerAuth: "disabled" });
 }
 

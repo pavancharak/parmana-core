@@ -1,4 +1,5 @@
 //
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 // GET /ready is an operational readiness probe (distinct from /health,
 // a pure liveness check): it reports whether this process's actual,
 // configured storage backend is reachable, not just whether the
@@ -15,7 +16,13 @@ const { createApp } = await import("../../../packages/api/src/app.js");
 
 async function buildApp() {
   const executionSystem = await createExecutionSystem();
-  const application = createApplication(executionSystem);
+  const application = createApplication(
+    executionSystem,
+    undefined,
+    undefined,
+    undefined,
+    demoTrustedSources(),
+  );
   return createApp(application, { callerAuth: "disabled" });
 }
 

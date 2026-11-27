@@ -71,3 +71,7 @@ The decision link is not implemented. It is blocked by the signed record format:
 - Production (the Vercel project's Production environment, with system environment variables enabled): neither `HYBRID_SCHEMA_VERSION` nor `HYBRID_SCHEMA_V3_ACKNOWLEDGED` is set, so production issues v2. Not checked: Preview environments, and any other deployment.
 
 Next step, not started: update the SDKs and the offline verifier (in `parmana-verifier`) to read v3 records. Enabling v3 and implementing the link both wait for that work. Until then, decision 1 of this ADR cannot be met in production.
+
+## Amendment (2026-11-20)
+
+The bullets above on the schema version describe the state before 2026-11-20. Schema 3 is now the default, `HYBRID_SCHEMA_VERSION` unset means 3, and `HYBRID_SCHEMA_V3_ACKNOWLEDGED` is no longer read (ADR-0016 amendment). Whether a given environment issues v3 depends on its hybrid configuration, which this note does not check.

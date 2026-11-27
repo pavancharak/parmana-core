@@ -16,6 +16,8 @@ import {
   MemoryKillSwitchStore,
 } from "../../src/killSwitch/KillSwitchService.js";
 import { createExecutionSystem } from "../../src/bootstrap/createExecutionSystem.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * Express 5 does not keep a router's mount path on its layer (only a
@@ -50,19 +52,39 @@ routerPrototype.use = function use(
  * against the spec too: POST /sandbox/approvals exists only in sandbox
  * mode (ADR-0014).
  */
-const app = createApp(createApplication(await createExecutionSystem()), {
-  callerAuth: "disabled",
-  // The kill switch routes are mounted only when a switch is supplied (ADR-0017).
-  killSwitch: new KillSwitchService(new MemoryKillSwitchStore(), {
-    resetNeedsSecondOperator: true,
-    probes: new MemoryKillSwitchProbeLog(),
-  }),
-  sandboxApprover: {
-    approverId: "parity-sandbox-approver",
-    keyId: "parity-sandbox-approver-key",
-    privateKey: generateKeyPairSync("ed25519").privateKey,
+const app = createApp(
+  createApplication(
+    await createExecutionSystem(),
+    undefined,
+    undefined,
+    undefined,
+    trustedFacts.registry,
+  ),
+  {
+    callerAuth: "disabled",
+    // The kill switch routes are mounted only when a switch is supplied (ADR-0017).
+    killSwitch: new KillSwitchService(new MemoryKillSwitchStore(), {
+      resetNeedsSecondOperator: true,
+      probes: new MemoryKillSwitchProbeLog(),
+    }),
+    sandboxApprover: {
+      approverId: "parity-sandbox-approver",
+      keyId: "parity-sandbox-approver-key",
+      privateKey: generateKeyPairSync("ed25519").privateKey,
+    },
+    // Policy version 2 (EXPERIMENTAL) routes are mounted only when a service is
+    // supplied. The routers register their handlers at mount time and call the
+    // service only when a request arrives, so inert placeholders are enough for
+    // this check, which compares paths and methods and never sends a request.
+    policyV2Decisions: {} as never,
+    policyV2Register: {} as never,
+    policyV2Reviews: {} as never,
+    policyV2Replay: {} as never,
+    policyV2Console: {} as never,
+    policyV2Bounces: {} as never,
+    policyV2Events: {} as never,
   },
-});
+);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

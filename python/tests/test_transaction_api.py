@@ -76,7 +76,7 @@ class FakeTransport:
                 created_at=datetime.now(UTC),
             ),
             policy=PolicyReference(
-                name="vendor-payment",
+                name="payment-limit",
                 version="1.0.0",
                 schema_version="1.0.0",
             ),
@@ -93,7 +93,6 @@ class FakeTransport:
                 trust_record_id="tr-001",
                 business_transaction_id="tx-001",
                 transaction=transaction,
-                overrides=[],
                 executions=[],
                 verifications=[],
                 receipts=[],
@@ -137,7 +136,7 @@ def _sample_transaction() -> BusinessTransaction:
             created_at=now,
         ),
         policy=PolicyReference(
-            name="vendor-payment", version="1.0.0", schema_version="1.0.0"
+            name="payment-limit", version="1.0.0", schema_version="1.0.0"
         ),
         signals={},
         status="RECEIVED",

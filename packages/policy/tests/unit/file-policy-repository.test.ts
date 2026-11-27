@@ -27,7 +27,10 @@ import type { Policy } from "../../src/types/Policy.js";
  * — this mirrors that fix and that test file's structure.
  */
 describe("FilePolicyRepository name/version sanitization", () => {
-  const basePath = path.resolve(import.meta.dirname, "../../../../policies");
+  const basePath = path.resolve(
+    import.meta.dirname,
+    "../../../../fixtures/policies",
+  );
 
   it("rejects a path-traversal name that resolves outside basePath", async () => {
     const repository = new FilePolicyRepository(basePath);
@@ -41,7 +44,7 @@ describe("FilePolicyRepository name/version sanitization", () => {
     const repository = new FilePolicyRepository(basePath);
 
     await expect(
-      repository.load("vendor-payment", "../../../../../../etc"),
+      repository.load("payment-limit", "../../../../../../etc"),
     ).rejects.toThrow(PolicyNotFoundError);
   });
 
@@ -92,9 +95,9 @@ describe("FilePolicyRepository name/version sanitization", () => {
   it("accepts the well-formed name/version used by the rest of the suite", async () => {
     const repository = new FilePolicyRepository(basePath);
 
-    const policy = await repository.load("vendor-payment", "2.0.0");
+    const policy = await repository.load("payment-limit", "1.0.0");
 
-    expect(policy.policyId).toBe("vendor-payment");
+    expect(policy.policyId).toBe("payment-limit");
   });
 });
 

@@ -1,0 +1,15 @@
+---
+title: "Interface: PolicyV2ReviewDecision"
+---
+
+The result of a reviewer's decision.
+
+## Members
+
+| Name                | Kind     | Type                                   | Description                                            |
+| ------------------- | -------- | -------------------------------------- | ------------------------------------------------------ |
+| `itemId`            | Property | `string`                               |                                                        |
+| `status`            | Property | `string`                               |                                                        |
+| `final`             | Property | `boolean`                              | True once the review is finished. outcome is set then. |
+| `outcome?`          | Property | `"APPROVED" \| "REFUSED" \| undefined` |                                                        |
+| `decisionsRecorded` | Property | `number`                               |                                                        |

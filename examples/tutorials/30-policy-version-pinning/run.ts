@@ -16,6 +16,7 @@ import {
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
 import { withRequiredFields } from "../../shared/helpers/business-transaction.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 async function main(): Promise<void> {
   console.log();
@@ -28,8 +29,9 @@ async function main(): Promise<void> {
   // Build Runtime
   //
   const runtime = new RuntimeBuilder()
+    .withBusinessSignalSources(demoTrustedSources())
     .withSignalStateVerifier(demoApprovalSignalVerifier())
-    .withPolicyRepository(new FilePolicyRepository("policies"))
+    .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
     .build(new MemoryExecutionTrustRecordRepository());
 
   console.log("Generating authorization...");
@@ -67,7 +69,7 @@ async function main(): Promise<void> {
   //
   // Enterprise policy pinning
   //
-  const expectedPolicyVersion = "2.1.0";
+  const expectedPolicyVersion = "1.0.0";
 
   const actualPolicyVersion = context.authorization.payload.policyVersion;
 
@@ -75,9 +77,9 @@ async function main(): Promise<void> {
   console.log("Enterprise Policy Check");
   console.log("------------------------------");
 
-  console.log(`Expected Policy : vendor-payment@${expectedPolicyVersion}`);
+  console.log(`Expected Policy : payment-limit@${expectedPolicyVersion}`);
 
-  console.log(`Authorization   : vendor-payment@${actualPolicyVersion}`);
+  console.log(`Authorization   : payment-limit@${actualPolicyVersion}`);
 
   console.log();
 

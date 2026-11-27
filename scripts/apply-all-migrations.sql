@@ -3227,3 +3227,127 @@ CREATE TRIGGER policy_v2_delivery_events_no_change
 ALTER TABLE policy_v2_delivery_events ENABLE ROW LEVEL SECURITY;
 
 REVOKE ALL ON policy_v2_delivery_events FROM anon, authenticated;
+
+
+-- =============================================================================
+-- Source: supabase/migrations/20261121120000_drop_legacy_signature_from_execution_trust_records.sql
+-- Decision D24: trust records are schema version 3 only, and carry their signatures in
+-- signatures_json. The legacy signature_json column (seven fields, schema version 2 only)
+-- is no longer written or read, so it is dropped.
+--
+-- The owner confirmed there are no customers, vendors or live traffic, so the legacy
+-- signatures in existing rows are not needed as evidence. Apply only after the owner's approval.
+ALTER TABLE execution_trust_records
+  DROP COLUMN IF EXISTS signature_json;
+
+
+-- =============================================================================
+-- Source: supabase/migrations/20261121130000_drop_overrides_table.sql
+-- Overrides are removed from the Execution Trust Record format. They are no longer part of
+-- the hashed or signed fields (parmana-core frozen canonical view, owner approved), and no
+-- code path creates or reads them. The overrides table, its index, its row-level security
+-- and its sequence columns are dropped with it.
+--
+-- The owner confirmed there are no customers, vendors or live traffic, so existing override
+-- rows are not needed. Apply only after the owner's approval.
+DROP TABLE IF EXISTS overrides;
+
+
+-- =============================================================================
+-- Source: supabase/migrations/20261121140000_add_evidence_anchor_to_execution_trust_records.sql
+-- The Execution Trust Record carries an evidenceAnchor, which the whole-record signature covers
+-- (decision D24). It was built at record creation but never stored, so a record loaded back did
+-- not match the one that was signed. This column stores it. Nullable: records created before this
+-- migration have no anchor, and the loader leaves the field out, as before.
+ALTER TABLE execution_trust_records
+  ADD COLUMN IF NOT EXISTS evidence_anchor_json JSONB;
+
+
+-- =============================================================================
+-- Source: supabase/migrations/20261123120000_add_refusal_record_outbox.sql
+-- =============================================================================
+-- Refusal Record outbox (RFC-0021)
+-- =============================================================================
+--
+-- A refusal is never blocked by its evidence. When writing the Refusal Record
+-- fails at the time of the refusal, the inputs needed to build it are saved
+-- here, and a background drain writes the record later. Entries are removed
+-- from the pending set once delivered. The table is append-only in practice:
+-- rows are updated only to record delivery or a failed attempt.
+--
+-- Known limit: if the database itself is unreachable when a refusal happens,
+-- this table cannot be written either. That case is logged and counted, and
+-- the refusal still takes effect.
+
+CREATE TABLE IF NOT EXISTS refusal_record_outbox (
+
+    business_transaction_id TEXT PRIMARY KEY,
+
+    decision_json JSONB NOT NULL,
+
+    evaluated_intent_json JSONB NOT NULL,
+
+    binding_violations_json JSONB,
+
+    submitted_by TEXT,
+
+    policy_content_hash TEXT,
+
+    enqueued_at TIMESTAMPTZ NOT NULL,
+
+    attempts INTEGER NOT NULL DEFAULT 0,
+
+    last_error TEXT,
+
+    delivered_at TIMESTAMPTZ
+
+);
+
+-- Drain scans only undelivered rows, oldest first.
+CREATE INDEX IF NOT EXISTS refusal_record_outbox_pending_idx
+    ON refusal_record_outbox (enqueued_at)
+    WHERE delivered_at IS NULL;
+
+
+-- =============================================================================
+-- Source: supabase/migrations/20261124120000_enable_rls_refusal_record_outbox.sql
+-- =============================================================================
+-- Refusal Record outbox: row level security
+-- =============================================================================
+--
+-- 20261123120000_add_refusal_record_outbox.sql created refusal_record_outbox
+-- without row level security. Its rows hold the full decision, the evaluated
+-- intent, binding violations and the submitter, the same data refusal_records
+-- holds, and refusal_records has RLS enabled (20260802120000).
+--
+-- This migration enables RLS on the table, as refusal_records does. The table
+-- has no policies, so a role other than the owner gets no rows. The owner
+-- (the role that runs migrations and the service's own connection) is not
+-- subject to RLS unless FORCE is set, which it is not here.
+--
+-- It also revokes table privileges from the Supabase API roles, so a key for
+-- those roles cannot read or write the table through the API. The revoke is
+-- skipped for a role that does not exist, so the migration also runs on plain
+-- PostgreSQL.
+
+ALTER TABLE refusal_record_outbox ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+        REVOKE ALL ON refusal_record_outbox FROM anon;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+        REVOKE ALL ON refusal_record_outbox FROM authenticated;
+    END IF;
+END
+$$;
+
+
+-- =============================================================================
+-- Source: supabase/migrations/20261125120000_add_secondary_signature_to_inbound_decisions.sql
+-- Stores the post-quantum (ML-DSA-65) signature over each inbound decision, alongside the
+-- Ed25519 signature in `signature`. Nullable: decisions made before this migration, and
+-- decisions made while no secondary signer is configured, have no secondary signature.
+ALTER TABLE inbound_decisions
+  ADD COLUMN IF NOT EXISTS secondary_signature text;

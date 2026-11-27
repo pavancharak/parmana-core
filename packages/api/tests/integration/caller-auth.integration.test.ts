@@ -11,6 +11,8 @@ import { InMemoryCallerAuditSink } from "../../src/auth/InMemoryCallerAuditSink.
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * HTTP-level proof of caller authentication: the layer in
@@ -27,7 +29,13 @@ describe("Caller authentication (HTTP boundary)", () => {
     const { executionSystem, auditSink: executionAuditSink } =
       createInspectableExecutionSystem();
 
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     const authenticator = new StaticKeyAuthenticator([
       {
@@ -150,7 +158,13 @@ describe("Caller authentication (HTTP boundary)", () => {
       const newKey = "orchestrator-new-key";
 
       const { executionSystem } = createInspectableExecutionSystem();
-      const application = createApplication(executionSystem);
+      const application = createApplication(
+        executionSystem,
+        undefined,
+        undefined,
+        undefined,
+        trustedFacts.registry,
+      );
 
       // Rotation in progress: both keys active.
       const duringRotation = new StaticKeyAuthenticator([
@@ -329,7 +343,7 @@ describe("Caller authentication (HTTP boundary)", () => {
       const rejectedTransaction = await createBusinessTransaction();
       // @ts-expect-error -- test fixture's signals are typed loosely enough
       // upstream that this direct mutation is the simplest way to force the
-      // real policy engine (policies/vendor-payment/2.0.0/policy.json,
+      // real policy engine (fixtures/policies/payment-limit/2.0.0/policy.json,
       // rule "reject-insufficient-funds") to reject.
       rejectedTransaction.signals.sufficientFunds = false;
 

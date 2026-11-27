@@ -1,8 +1,7 @@
 {
-  "policyId": "vendor-payment",
+  "policyId": "payment-limit",
   "policyVersion": "2.0.0",
   "schemaVersion": "1.0.0",
-
   "signalsSchema": {
     "vendorVerified": "boolean",
     "invoiceVerified": "boolean",
@@ -11,7 +10,6 @@
     "paymentAmount": "number",
     "riskScore": "number"
   },
-
   "rules": [
     {
       "id": "approve-payment",
@@ -64,5 +62,37 @@
         "reason": "One or more policy conditions were not satisfied."
       }
     }
-  ]
+  ],
+  "signalSources": {
+    "invoiceVerified": {
+      "source": "trusted-test",
+      "claim": "fact.invoiceVerified",
+      "subject": "target"
+    },
+    "paymentAmount": {
+      "source": "trusted-test",
+      "claim": "fact.paymentAmount",
+      "subject": "target"
+    },
+    "paymentApproved": {
+      "source": "trusted-test",
+      "claim": "fact.paymentApproved",
+      "subject": "target"
+    },
+    "riskScore": {
+      "source": "trusted-test",
+      "claim": "fact.riskScore",
+      "subject": "target"
+    },
+    "sufficientFunds": {
+      "source": "trusted-test",
+      "claim": "fact.sufficientFunds",
+      "subject": "target"
+    },
+    "vendorVerified": {
+      "source": "trusted-test",
+      "claim": "fact.vendorVerified",
+      "subject": "target"
+    }
+  }
 }

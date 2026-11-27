@@ -26,14 +26,14 @@
   "intent": {
     "intentId": "intent-001",
     "authorizationId": "authorization-001",
-    "action": "vendor-payment",
+    "action": "payment-limit",
     "resource": "invoice-1001",
     "issuedAt": "2026-01-01T00:00:00Z"
   },
 
   "policy": {
-    "name": "vendor-payment",
-    "version": "2.1.0",
+    "name": "payment-limit",
+    "version": "1.0.0",
     "schemaVersion": "1.0.0"
   },
 

@@ -5,21 +5,25 @@ import { describe, expect, it } from "vitest";
 import type { ExecutionTrustRecord } from "@parmana/shared";
 
 import { verifyExecutionTrustRecordOffline } from "../../src/OfflineVerifier.js";
-import { canonicalExecutionTrustRecord } from "../../src/ExecutionTrustRecordCanonicalView.js";
+import {
+  canonicalExecutionTrustRecord,
+  hybridSignedCanonicalView,
+} from "../../src/ExecutionTrustRecordCanonicalView.js";
 import { TrustRecordHasher } from "../../src/TrustRecordHasher.js";
 import { SHA256HashProvider } from "../../src/providers/hash/SHA256HashProvider.js";
 import { Ed25519SignatureProvider } from "../../src/providers/signature/Ed25519SignatureProvider.js";
 import { ArtifactSigner } from "../../src/ArtifactSigner.js";
 
 /**
- * ADR-0016 option 2, offline side: a record created at or after the cutover
- * must carry a hybrid envelope. These records are legacy-only (Ed25519), so
- * they run on any Node version.
+ * ADR-0016 option 2, offline side, under decision D24: a schema version 3 record with one signature
+ * (single mode) is accepted before the cutover, and refused from the cutover on, where both hybrid
+ * signatures are required. There is no legacy-only record.
  */
 
 const CREATED_AT = "2026-06-01T00:00:00.000Z";
+const CUTOVER = "2026-03-01T00:00:00.000Z";
 
-async function buildLegacyRecord(
+async function buildSingleRecord(
   createdAt: string,
   keyId: string,
   privateKey: ReturnType<typeof generateKeyPairSync<"ed25519">>["privateKey"],
@@ -28,7 +32,6 @@ async function buildLegacyRecord(
     trustRecordId: "txn-cutover",
     businessTransactionId: "txn-cutover",
     transaction: { businessTransactionId: "txn-cutover", status: "RECEIVED" },
-    overrides: [],
     executions: [],
     verifications: [],
     receipts: [],
@@ -52,50 +55,46 @@ async function buildLegacyRecord(
   });
 
   const value = await signer.sign(
-    canonicalExecutionTrustRecord(withHash),
+    hybridSignedCanonicalView(withHash, 3),
     privateKey,
   );
 
   return {
     ...withHash,
-    signature: {
-      algorithm: "ed25519",
-      keyId,
-      value,
-      signedAt: new Date(createdAt),
-    },
+    schemaVersion: 3,
+    signatures: [{ algorithm: "ed25519", keyId, signature: value }],
   } as ExecutionTrustRecord;
 }
 
-describe("offline verifier: hybridRequiredFrom cutover", () => {
+describe("offline verifier: hybridRequiredFrom cutover (schema version 3)", () => {
   const { privateKey, publicKey } = generateKeyPairSync("ed25519");
   const keys = {
     "cutover-key": publicKey.export({ format: "pem", type: "spki" }).toString(),
   };
 
-  it("accepts a legacy-only record created before the cutover", async () => {
-    const record = await buildLegacyRecord(
+  it("accepts a single-signed record created before the cutover", async () => {
+    const record = await buildSingleRecord(
       "2026-01-01T00:00:00.000Z",
       "cutover-key",
       privateKey,
     );
 
     const result = await verifyExecutionTrustRecordOffline(record, keys, {
-      hybridRequiredFrom: "2026-03-01T00:00:00.000Z",
+      hybridRequiredFrom: CUTOVER,
     });
 
     expect(result.valid).toBe(true);
   });
 
-  it("rejects a legacy-only record created after the cutover", async () => {
-    const record = await buildLegacyRecord(
+  it("refuses a single-signed record created after the cutover: both hybrid signatures are required", async () => {
+    const record = await buildSingleRecord(
       CREATED_AT,
       "cutover-key",
       privateKey,
     );
 
     const result = await verifyExecutionTrustRecordOffline(record, keys, {
-      hybridRequiredFrom: "2026-03-01T00:00:00.000Z",
+      hybridRequiredFrom: CUTOVER,
     });
 
     expect(result.valid).toBe(false);
@@ -103,7 +102,7 @@ describe("offline verifier: hybridRequiredFrom cutover", () => {
   });
 
   it("treats the cutover instant as inclusive", async () => {
-    const record = await buildLegacyRecord(
+    const record = await buildSingleRecord(
       CREATED_AT,
       "cutover-key",
       privateKey,
@@ -116,8 +115,8 @@ describe("offline verifier: hybridRequiredFrom cutover", () => {
     expect(result.valid).toBe(false);
   });
 
-  it("refuses a legacy-only record when no cutover and no opt-in is given", async () => {
-    const record = await buildLegacyRecord(
+  it("accepts a single-signed record when no cutover is given (single mode)", async () => {
+    const record = await buildSingleRecord(
       CREATED_AT,
       "cutover-key",
       privateKey,
@@ -125,37 +124,6 @@ describe("offline verifier: hybridRequiredFrom cutover", () => {
 
     const result = await verifyExecutionTrustRecordOffline(record, keys);
 
-    expect(result.valid).toBe(false);
-    expect(result.errors.join(" ")).toMatch(/no hybrid envelope/);
-  });
-
-  it("accepts a legacy-only record only when legacy-only is explicitly allowed", async () => {
-    const record = await buildLegacyRecord(
-      CREATED_AT,
-      "cutover-key",
-      privateKey,
-    );
-
-    const result = await verifyExecutionTrustRecordOffline(record, keys, {
-      allowLegacyOnly: true,
-    });
-
     expect(result.valid).toBe(true);
-  });
-
-  it("refuses a legacy-only record after the cutover even when legacy-only is allowed", async () => {
-    const record = await buildLegacyRecord(
-      CREATED_AT,
-      "cutover-key",
-      privateKey,
-    );
-
-    const result = await verifyExecutionTrustRecordOffline(record, keys, {
-      hybridRequiredFrom: "2026-03-01T00:00:00.000Z",
-      allowLegacyOnly: true,
-    });
-
-    expect(result.valid).toBe(false);
-    expect(result.errors.join(" ")).toMatch(/hybridRequiredFrom/);
   });
 });

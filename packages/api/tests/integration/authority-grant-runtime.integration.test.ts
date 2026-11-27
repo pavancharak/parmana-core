@@ -35,6 +35,8 @@ import {
   testApprovalSignalVerifier,
   withTestApproval,
 } from "../../../../test-support/approvals.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * RFC-0023 phase 3, end to end: a grant made and revoked through
@@ -78,7 +80,6 @@ class TrustRecords implements ExecutionTrustRecordRepository {
   }
   async appendExecution(): Promise<void> {}
   async replaceExecution(): Promise<void> {}
-  async appendOverride(): Promise<void> {}
   async appendVerification(): Promise<void> {}
   async appendReceipt(): Promise<void> {}
 }
@@ -97,29 +98,38 @@ class RefusalRecords implements RefusalRecordRepository {
 function governanceApp() {
   const { executionSystem } = createInspectableExecutionSystem();
 
-  return createApp(createApplication(executionSystem), {
-    callerAuth: {
-      authenticator: new StaticKeyAuthenticator([
-        {
-          callerId: "e2e-maker",
-          keyHash: hashApiKey(MAKER_KEY),
-          credentialHolderType: AuthorityType.USER,
-        },
-        {
-          callerId: "e2e-checker",
-          keyHash: hashApiKey(CHECKER_KEY),
-          credentialHolderType: AuthorityType.USER,
-          stepUpPublicKey: checkerStepUp.publicKey
-            .export({ format: "pem", type: "spki" })
-            .toString(),
-        },
-      ]),
-      auditSink: new InMemoryCallerAuditSink(),
+  return createApp(
+    createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    ),
+    {
+      callerAuth: {
+        authenticator: new StaticKeyAuthenticator([
+          {
+            callerId: "e2e-maker",
+            keyHash: hashApiKey(MAKER_KEY),
+            credentialHolderType: AuthorityType.USER,
+          },
+          {
+            callerId: "e2e-checker",
+            keyHash: hashApiKey(CHECKER_KEY),
+            credentialHolderType: AuthorityType.USER,
+            stepUpPublicKey: checkerStepUp.publicKey
+              .export({ format: "pem", type: "spki" })
+              .toString(),
+          },
+        ]),
+        auditSink: new InMemoryCallerAuditSink(),
+      },
+      stepUpVerifier: new PolicyChangeStepUpVerifier({
+        nonceStore: new MemoryNonceStore(),
+      }),
     },
-    stepUpVerifier: new PolicyChangeStepUpVerifier({
-      nonceStore: new MemoryNonceStore(),
-    }),
-  });
+  );
 }
 
 async function change(

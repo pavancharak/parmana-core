@@ -110,7 +110,7 @@ function buildRegister(): PolicyRegister {
 }
 
 const policy = {
-  policyId: "vendor-payment",
+  policyId: "payment-limit",
   policyVersion: "2.0.0",
   schemaVersion: "2.0.0",
   capability: CAPABILITY,

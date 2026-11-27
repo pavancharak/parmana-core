@@ -58,18 +58,14 @@ export class ExternalConnectorAwareRegistry implements ConnectorRegistry {
     private readonly options: ExternalConnectorAwareRegistryOptions,
   ) {}
 
+  /**
+   * Built-in connectors only. An external connector is returned only by
+   * resolveCapability, which checks that its registration is still active.
+   * This synchronous lookup cannot make that check, so it must not return
+   * one, or a revoked connector would stay reachable here.
+   */
   get(name: string): SecureConnector {
-    try {
-      return this.builtIn.get(name);
-    } catch (error) {
-      for (const connector of this.built.values()) {
-        if (connector.connectorId === name) {
-          return connector;
-        }
-      }
-
-      throw error;
-    }
+    return this.builtIn.get(name);
   }
 
   async resolveCapability(capability: string): Promise<SecureConnector> {

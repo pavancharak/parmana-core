@@ -1,0 +1,70 @@
+# Parmana developer docs
+
+> Parmana sets clear limits on what AI agents and business systems may do, checks every action against those limits, and records each decision as a verifiable Execution Trust Record. These pages document the API, the SDKs, the policy model and the operations.
+
+The API is described by an OpenAPI document at https://pavancharak.github.io/parmana-core/site/openapi.bundled.yaml. Experimental Policy version 2 operations are marked as such in that document.
+
+## Get started
+
+- [Parmana developer portal](https://pavancharak.github.io/parmana-core/portal/index.html): Parmana makes sure that AI agents and business applications take only the actions the organization has approved, and keeps signed, independently verifiable evidence of each action.
+- [Overview](https://pavancharak.github.io/parmana-core/portal/overview.html): Parmana is an execution integrity layer for business applications and autonomous AI agents. Before an action runs, Parmana checks that:
+- [Getting started](https://pavancharak.github.io/parmana-core/portal/getting-started.html): This guide takes you from nothing to a verified execution on your own machine. Every command below was run in the verification for this portal. The steps are in order, and each one ends with something
+- [Frequently asked questions](https://pavancharak.github.io/parmana-core/portal/faq.html): The first thirteen questions are the ones a developer new to Parmana should be able to answer from this portal alone. The answers are short, and each one links to the page that has the detail and the 
+
+## Concepts
+
+- [Architecture](https://pavancharak.github.io/parmana-core/portal/architecture.html): This page shows how a request moves through Parmana, where the trust boundaries are, which steps are synchronous, and where asynchronous work happens. The request path is written as numbered steps. Th
+- [Glossary](https://pavancharak.github.io/parmana-core/portal/glossary.html): Terms are in alphabetical order. Where a term has a page with more detail, the entry links to it.
+- [Key management](https://pavancharak.github.io/parmana-core/portal/security/key-management.html): This page describes how the keys that sign Execution Trust Records are held, started, rotated and retired. It describes what the code does on this branch. Where something is not verified against a rea
+- [Policy management](https://pavancharak.github.io/parmana-core/portal/policies/index.html): A policy is the organization's rule for one kind of action. Parmana does not decide what your business allows. You write the policy, a second person approves each version, and Parmana enforces it on e
+- [Coverage of the production policy](https://pavancharak.github.io/parmana-core/portal/policies/payment-refund-coverage.html): This page says which policy Parmana runs in production, what the automated tests check about it, and which tests do not. It is written so you can judge how far to rely on the test suite when you integ
+- [Security and cryptographic verification](https://pavancharak.github.io/parmana-core/portal/security/index.html): This page explains what Parmana signs, what the signatures cover, how the keys are trusted, and what happens when something goes wrong. The claims are checked against the code and against tests run fo
+- [Evidence verification](https://pavancharak.github.io/parmana-core/portal/security/evidence-verification.html): This page is for the person who needs to check an Execution Trust Record: an auditor, a second team, a regulator, or your own CI. You can do it without Parmana's server, without the Parmana SDK, and w
+- [Schema version 3: whole-record signatures, the cutover and the rollout](https://pavancharak.github.io/parmana-core/portal/security/schema-v3.html): This page is the complete reference for schema version 3 (v3). It says what v3 covers, what it does not, how the server and the verifiers are configured, the decision that was made about the downgrade
+
+## Tutorials
+
+- [Tutorials](https://pavancharak.github.io/parmana-core/portal/tutorials/index.html): Each tutorial follows one integration from start to finish. For each one it says who does what: your application, the SDK, the Parmana service, and the business system. Every tutorial links to code in
+- [Tutorial: maker-checker approval of a policy change](https://pavancharak.github.io/parmana-core/portal/tutorials/maker-checker.html): The operator sets two things, in the server's environment:
+- [Tutorial: enforce transaction limits](https://pavancharak.github.io/parmana-core/portal/tutorials/transaction-limits.html): Each is independent. A payment must pass all three. Meeting one does not waive another.
+- [Tutorial: authorize a refund](https://pavancharak.github.io/parmana-core/portal/tutorials/refund-authorization.html): payment-refund@1.0.0 has three rules, checked in order. The first matching rule decides:
+- [Tutorial: integrate Parmana into a Node.js service](https://pavancharak.github.io/parmana-core/portal/tutorials/nodejs-integration.html): Configure the client from the environment. The endpoint must be https:// except on your own machine.
+- [Tutorial: integrate Parmana into a Python application](https://pavancharak.github.io/parmana-core/portal/tutorials/python-integration.html): The Python SDK is synchronous only. Call it from a worker, a request handler, or a script. There is no async client.
+- [Tutorial: let an AI agent act through Parmana](https://pavancharak.github.io/parmana-core/portal/tutorials/ai-agents.html): An agent is a caller with an API key. Its key has a list of capabilities it may invoke, and a list of principals it may act for. Those lists are the only permissions it has. Parmana checks them on eve
+- [Tutorial: gate vendor payments in a fintech application](https://pavancharak.github.io/parmana-core/portal/tutorials/fintech-integration.html): From fixtures/policies/vendor-payment/2.1.0/policy.json:
+- [Runnable examples](https://pavancharak.github.io/parmana-core/portal/examples/index.html): These examples are the code the portal's tutorials point to. They run against a local Parmana server that you start from this repository, with test configuration. Each one was run for this portal, and
+
+## API reference
+
+- [REST API reference](https://pavancharak.github.io/parmana-core/portal/api/index.html): The Parmana API is a JSON-over-HTTP API described by an OpenAPI 3.1 document (openapi/openapi.yaml, API version 1.0.0). The server publishes the document at GET /openapi.yaml and GET /openapi.json. Th
+- [Core endpoints](https://pavancharak.github.io/parmana-core/portal/api/endpoints.html): This page covers the routes most integrations use. For each one: the purpose, the authentication, the request, the response, the errors, and a curl and JavaScript example. Where the verification run c
+- [Endpoint index](https://pavancharak.github.io/parmana-core/portal/api/endpoint-index.html): Every operation in openapi/openapi.yaml (94 operations, OpenAPI 3.1.0, API version 1.0.0). "TypeScript SDK method" is the method that sends that exact method and path; "—" means no TypeScript SDK meth
+
+## SDKs and packages
+
+- [SDKs and packages](https://pavancharak.github.io/parmana-core/portal/sdk/index.html): This page lists every package in the repository that is marked public, what it is for, and whether you can install it from a public registry. It was checked against npm and PyPI on the day this portal
+- [TypeScript SDK: @parmana/sdk](https://pavancharak.github.io/parmana-core/portal/sdk/typescript.html): const client = new ParmanaClient({ endpoint: "https://parmana.example.com", // or http://localhost:3000 for local development apiKey: process.env.PARMANAAPIKEY, // the caller's raw API key timeout: 30
+- [Python SDK: parmana](https://pavancharak.github.io/parmana-core/portal/sdk/python.html): client = ParmanaClient( endpoint="https://parmana.example.com", # or "http://localhost:3000" for local development apikey=os.environ["PARMANAAPIKEY"], # the caller's raw API key timeout=30, # seconds,
+- [Operator CLI: @parmana/cli (parmana-ops)](https://pavancharak.github.io/parmana-core/portal/sdk/cli.html): parmana-ops is the operator's command-line tool. It proposes policy changes from a file, signs a checker's step-up envelope on the checker's own machine, submits it, creates caller keys, and generates
+- [Offline verifier: @parmana/verifier and parmana-verifier](https://pavancharak.github.io/parmana-core/portal/sdk/verifier.html): Use this when you need to check an Execution Trust Record without trusting the Parmana server and without the Parmana SDK: an auditor, a regulator, a second team, or a CI job. It needs a record file a
+- [Connector SDK: @parmana/connector-sdk and parmana-connector-sdk](https://pavancharak.github.io/parmana-core/portal/sdk/connector-sdk.html): A connector is the component that performs the business call once Parmana has released a request. It receives a request that has already been authorized and verified, and it carries out the action aga
+- [TypeScript SDK method index](https://pavancharak.github.io/parmana-core/portal/sdk/typescript-method-index.html): 58 public methods on ParmanaClient. The HTTP column is the request each method sends, read from the SDK source.
+- [Python SDK method index](https://pavancharak.github.io/parmana-core/portal/sdk/python-method-index.html): 51 public methods on ParmanaClient (parmana package). Each flat method delegates to a sub-API object (for example client.execution); the HTTP column is the request it sends.
+- [@parmana/envelope-verifier: API reference](https://pavancharak.github.io/parmana-core/portal/packages/envelope-verifier-api.html): This page describes the package's public API, as it is exported from packages/envelope-verifier/src at version 4.1.1. The package's own README states exactly what a passing verification proves. This p
+- [@parmana/execution-system: API reference](https://pavancharak.github.io/parmana-core/portal/packages/execution-system-api.html): The package defines the request Parmana sends to an execution system once an action is authorized, and a client that sends it over HTTP. It does not authorize anything itself. The receiving system mus
+- [Publishing @parmana/envelope-verifier and @parmana/execution-system](https://pavancharak.github.io/parmana-core/portal/packages/publishing-envelope-verifier-and-execution-system.html): This page sets out what publishing these two packages would mean, what is already true, and what to check first. It is for the owner, who decides and publishes. It does not publish anything.
+
+## Operate
+
+- [Deployment and operations](https://pavancharak.github.io/parmana-core/portal/deployment/index.html): This page covers running Parmana: local development, Docker, PostgreSQL, cloud, and on-premises. For each option it says whether it is Implemented (in the code, and run here), Implemented, not run her
+- [Developer reference](https://pavancharak.github.io/parmana-core/portal/reference/index.html): This section is the lookup material: where each definition lives, the complete indexes, the configuration, and the error codes. Use it when you know the name of a thing and want its exact definition.
+- [Environment variable reference](https://pavancharak.github.io/parmana-core/portal/reference/environment-variables.html): Parmana is configured through environment variables. The server reads them at start-up and refuses to start when a required one is missing or invalid. The SDKs and the CLI read a few more, listed at t
+- [Error code catalogue](https://pavancharak.github.io/parmana-core/portal/reference/error-codes.html): A Parmana error is an HTTP status plus a body. The body has an error message and, for most refusals, a code. The SDKs turn the status into a class, and keep the server's code where one is sent.
+- [Error code index](https://pavancharak.github.io/parmana-core/portal/reference/error-code-index.html): 107 error code literals found in the server source. "Triggered in verification" means a request in this portal's runs produced the code. The others are defined in source and were not triggered; their 
+- [Troubleshooting](https://pavancharak.github.io/parmana-core/portal/troubleshooting/index.html): This page starts from what you see and works back to the cause. The messages quoted here were observed in this verification, unless a section says otherwise. For the full list of codes, read the error
+
+## Project
+
+- [Changelog](https://pavancharak.github.io/parmana-core/portal/CHANGELOG.html): This changelog records changes to the developer portal in docs/developer-portal/. It does not record changes to the Parmana software. For those, see the repository's release notes and the packages' ow
+- [Documentation coverage and verification report](https://pavancharak.github.io/parmana-core/portal/COVERAGE.html): This report says what was documented, what was checked, what was run, what failed, and what remains. It was produced on 2026-11-20 from the parmana-core checkout on branch ccr-ead4b602-t6o6n7. The che
+- [Findings: open items after the production-readiness pass](https://pavancharak.github.io/parmana-core/portal/FINDINGS.html): This file lists everything from the review that is not fixed in the change set, and why. Each item is either a decision that belongs to the owner, something this environment could not verify, or somet

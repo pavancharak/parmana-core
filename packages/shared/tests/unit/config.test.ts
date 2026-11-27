@@ -61,33 +61,33 @@ describe("loadConfig hybridSchemaVersion (ADR-0016)", () => {
     }
   });
 
-  it("defaults to schema version 2 when HYBRID_SCHEMA_VERSION is unset", () => {
+  it("defaults to schema version 3 when HYBRID_SCHEMA_VERSION is unset (ADR-0016, decided 2026-11-20)", () => {
     process.env.PARMANA_POLICY_DIR = "./policies";
     delete process.env.HYBRID_SCHEMA_VERSION;
 
-    expect(loadConfig().crypto.hybridSchemaVersion).toBe(2);
+    expect(loadConfig().crypto.hybridSchemaVersion).toBe(3);
   });
 
-  it("refuses schema version 3 unless the acknowledgement is set", () => {
+  it("treats a blank HYBRID_SCHEMA_VERSION as the default, 3", () => {
+    process.env.PARMANA_POLICY_DIR = "./policies";
+    process.env.HYBRID_SCHEMA_VERSION = "   ";
+
+    expect(loadConfig().crypto.hybridSchemaVersion).toBe(3);
+  });
+
+  it("refuses schema version 2: it is discarded (D24), so there is no rollback to it", () => {
+    process.env.PARMANA_POLICY_DIR = "./policies";
+    process.env.HYBRID_SCHEMA_VERSION = "2";
+
+    expect(() => loadConfig()).toThrow(
+      "HYBRID_SCHEMA_VERSION=2 is no longer supported",
+    );
+  });
+
+  it("accepts schema version 3 without the former acknowledgement", () => {
     process.env.PARMANA_POLICY_DIR = "./policies";
     process.env.HYBRID_SCHEMA_VERSION = "3";
     delete process.env.HYBRID_SCHEMA_V3_ACKNOWLEDGED;
-
-    expect(() => loadConfig()).toThrow("HYBRID_SCHEMA_V3_ACKNOWLEDGED=true");
-  });
-
-  it("refuses schema version 3 when the acknowledgement is anything but the exact string true", () => {
-    process.env.PARMANA_POLICY_DIR = "./policies";
-    process.env.HYBRID_SCHEMA_VERSION = "3";
-    process.env.HYBRID_SCHEMA_V3_ACKNOWLEDGED = "yes";
-
-    expect(() => loadConfig()).toThrow("HYBRID_SCHEMA_V3_ACKNOWLEDGED=true");
-  });
-
-  it("accepts schema version 3 when acknowledged", () => {
-    process.env.PARMANA_POLICY_DIR = "./policies";
-    process.env.HYBRID_SCHEMA_VERSION = "3";
-    process.env.HYBRID_SCHEMA_V3_ACKNOWLEDGED = "true";
 
     expect(loadConfig().crypto.hybridSchemaVersion).toBe(3);
   });
@@ -97,7 +97,7 @@ describe("loadConfig hybridSchemaVersion (ADR-0016)", () => {
     process.env.HYBRID_SCHEMA_VERSION = "4";
 
     expect(() => loadConfig()).toThrow(
-      'HYBRID_SCHEMA_VERSION must be 2 or 3, got "4".',
+      'HYBRID_SCHEMA_VERSION must be 3, got "4".',
     );
   });
 });

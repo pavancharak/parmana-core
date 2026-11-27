@@ -1,0 +1,125 @@
+{
+  "policyId": "rag-document-access",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes retrieval of enterprise documents after validating requester authorization, document access permissions, data classification, and retrieval risk assessment.",
+  "signalsSchema": {
+    "requesterAuthenticated": "boolean",
+    "requesterAuthorized": "boolean",
+    "documentAccessible": "boolean",
+    "classificationPermitted": "boolean",
+    "riskScore": "number"
+  },
+  "unboundSignalReasons": {},
+  "rules": [
+    {
+      "id": "approve-document-access",
+      "condition": {
+        "all": [
+          {
+            "fact": "requesterAuthenticated",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "requesterAuthorized",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "documentAccessible",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "classificationPermitted",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "riskScore",
+            "operator": "lte",
+            "value": 20
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Document access authorized. Authentication, authorization, document permissions, classification requirements, and risk assessment were satisfied."
+      }
+    },
+    {
+      "id": "reject-high-risk-request",
+      "condition": {
+        "fact": "riskScore",
+        "operator": "gt",
+        "value": 20
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Document access rejected because the assessed retrieval risk exceeds the maximum permitted threshold."
+      }
+    },
+    {
+      "id": "reject-document-not-accessible",
+      "condition": {
+        "fact": "documentAccessible",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Document access rejected because the requested document is not accessible."
+      }
+    },
+    {
+      "id": "reject-classification-not-permitted",
+      "condition": {
+        "fact": "classificationPermitted",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Document access rejected because the requester is not authorized to access the document's classification level."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Document access rejected because one or more required policy conditions were not satisfied."
+      }
+    }
+  ],
+  "signalSources": {
+    "classificationPermitted": {
+      "source": "trusted-test",
+      "claim": "fact.classificationPermitted",
+      "subject": "target"
+    },
+    "documentAccessible": {
+      "source": "trusted-test",
+      "claim": "fact.documentAccessible",
+      "subject": "target"
+    },
+    "requesterAuthenticated": {
+      "source": "trusted-test",
+      "claim": "fact.requesterAuthenticated",
+      "subject": "target"
+    },
+    "requesterAuthorized": {
+      "source": "trusted-test",
+      "claim": "fact.requesterAuthorized",
+      "subject": "target"
+    },
+    "riskScore": {
+      "source": "trusted-test",
+      "claim": "fact.riskScore",
+      "subject": "target"
+    }
+  }
+}

@@ -6,6 +6,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // docs/internal/VERIFICATION-GAPS.md G-32 / docs/internal/CLAIMS.md 2.28: RuntimeAuthorizationSigner
@@ -51,11 +52,12 @@ const path = await import("node:path");
 const root = path.resolve(import.meta.dirname);
 
 const policyRepository = new FilePolicyRepository(
-  path.resolve(root, "../../../policies"),
+  path.resolve(root, "../../../fixtures/policies"),
 );
 const trustRecords = new MemoryExecutionTrustRecordRepository();
 
 const runtime = new RuntimeBuilder()
+  .withBusinessSignalSources(demoTrustedSources())
   .withSignalStateVerifier(demoApprovalSignalVerifier())
   .withPolicyRepository(policyRepository)
   .build(trustRecords);
@@ -89,7 +91,7 @@ async function transactionFor(
     intent: {
       intentId: `${businessTransactionId}-intent`,
       authorizationId: `${businessTransactionId}-authorization`,
-      action: "vendor-payment",
+      action: "payment-limit",
       target: "sap.payment.release",
       parameters: {
         invoiceId: "invoice-105",
@@ -101,8 +103,8 @@ async function transactionFor(
     },
 
     policy: {
-      name: "vendor-payment",
-      version: "2.1.0",
+      name: "payment-limit",
+      version: "1.0.0",
       schemaVersion: "1.0.0",
     },
 

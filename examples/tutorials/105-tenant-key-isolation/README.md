@@ -37,7 +37,7 @@ npx tsx examples/tutorials/105-tenant-key-isolation/run.ts
 Generates a scratch `default` and `tenant.acme-corp` keypair into a temp `PARMANA_KEY_DIR`
 (never the repo's own `keys/`) and cleans it up afterward. `tenant.globex-corp` is
 deliberately never provisioned, to exercise the fallback path. Uses the real
-`vendor-payment` policy from the repo's own `policies/` directory, in-memory trust records —
+`payment-limit` policy from the repo's own `policies/` directory, in-memory trust records —
 no HTTP server, no Supabase.
 
 ## Why This Matters

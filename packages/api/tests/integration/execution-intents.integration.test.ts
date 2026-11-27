@@ -28,6 +28,8 @@ import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 import { testApprovalSignalVerifier } from "../../../../test-support/approvals.js";
 import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * HTTP-level proof of ADR-0012 through the real Express app: an Execution
@@ -80,7 +82,13 @@ function authenticator() {
 describe("Execution Intents (ADR-0012, HTTP boundary): normal execution", () => {
   function buildApp() {
     const { executionSystem } = createInspectableExecutionSystem();
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     return createApp(application, { callerAuth: "disabled" });
   }
@@ -158,7 +166,13 @@ describe("Execution Intents (ADR-0012, HTTP boundary): normal execution", () => 
 describe("Execution Intents (ADR-0012, HTTP boundary): who may do what", () => {
   function buildAuthenticatedApp() {
     const { executionSystem } = createInspectableExecutionSystem();
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     return createApp(application, {
       callerAuth: {
@@ -261,7 +275,7 @@ describe("Execution Intents (ADR-0012, HTTP boundary): repair after a released a
       new MemoryBusinessTransactionRepository(),
       trustRecords,
       new FilePolicyRepository(
-        path.resolve(import.meta.dirname, "../../../../policies"),
+        path.resolve(import.meta.dirname, "../../../../fixtures/policies"),
       ),
       executionSystem,
       new MemoryRefusalRecordRepository(),
@@ -270,6 +284,10 @@ describe("Execution Intents (ADR-0012, HTTP boundary): repair after a released a
       undefined,
       undefined,
       intents,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
     );
 
     const app = createApp(application, {
@@ -430,7 +448,7 @@ describe("Execution Intents (G-54, HTTP boundary): closing an intent reconciled 
       new MemoryBusinessTransactionRepository(),
       trustRecords,
       new FilePolicyRepository(
-        path.resolve(import.meta.dirname, "../../../../policies"),
+        path.resolve(import.meta.dirname, "../../../../fixtures/policies"),
       ),
       executionSystem,
       new MemoryRefusalRecordRepository(),
@@ -439,6 +457,10 @@ describe("Execution Intents (G-54, HTTP boundary): closing an intent reconciled 
       undefined,
       undefined,
       intents,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
     );
 
     const app = createApp(application, {

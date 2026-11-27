@@ -1,0 +1,11 @@
+---
+title: "Interface: VerifyTrustRecordOptions"
+---
+
+Options for verifyExecutionTrustRecordOffline.
+
+## Members
+
+| Name                  | Kind     | Type                  | Description                                                                                                                                                                     |
+| --------------------- | -------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hybridRequiredFrom?` | Property | `string \| undefined` | The cutover (ADR-0016), an ISO-8601 UTC timestamp ending in "Z". A record created at or after it must carry both hybrid signatures. Before it, one valid signature is accepted. |

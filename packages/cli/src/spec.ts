@@ -173,7 +173,7 @@ export const COMMANDS: readonly CommandSpec[] = [
       "PARMANA_CONFIG",
     ],
     example:
-      "parmana-ops approver propose-add --approver pavan --key pavan-key-1 --public-key-file pavan.public.pem --capabilities razorpay:refund --reason rotation --dry-run",
+      "parmana-ops approver propose-add --approver pavan --key pavan-key-1 --public-key-file pavan.public.pem --capabilities payments:refund --reason rotation --dry-run",
   },
   {
     id: "approver propose-revoke",

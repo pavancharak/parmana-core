@@ -53,7 +53,6 @@ class InMemoryExecutionTrustRecordRepository implements ExecutionTrustRecordRepo
 
   async appendExecution(): Promise<void> {}
   async replaceExecution(): Promise<void> {}
-  async appendOverride(): Promise<void> {}
   async appendVerification(
     _businessTransactionId: string,
     _verification: Verification,
@@ -182,10 +181,10 @@ describe.skipIf(!isMlDsa65Supported())(
       }
     });
 
-    it("builds and verifies a hybrid-signed record end to end", async () => {
+    it("builds and verifies a hybrid-signed record end to end, at the default schema 3", async () => {
       const trustRecord = await buildTrustRecord("txn-hybrid-valid");
 
-      expect(trustRecord.schemaVersion).toBe(2);
+      expect(trustRecord.schemaVersion).toBe(3);
       expect(trustRecord.signatures).toHaveLength(2);
       expect(
         trustRecord.signatures?.map((entry) => entry.algorithm).sort(),
@@ -201,7 +200,7 @@ describe.skipIf(!isMlDsa65Supported())(
       expect(verification.status).toBe(VerificationStatus.VERIFIED);
     });
 
-    it("still verifies a legacy-shaped record (no schemaVersion/signatures) even while this process runs CRYPTO_MODE=hybrid -- additive, not breaking", async () => {
+    it("refuses a legacy-shaped record (no schemaVersion/signatures): only schema version 3 is accepted (D24)", async () => {
       const hybridRecord = await buildTrustRecord("txn-legacy-shaped");
 
       // Simulate a record persisted before this milestone: strip the
@@ -219,7 +218,7 @@ describe.skipIf(!isMlDsa65Supported())(
         "txn-legacy-shaped",
       );
 
-      expect(verification.status).toBe(VerificationStatus.VERIFIED);
+      expect(verification.status).not.toBe(VerificationStatus.VERIFIED);
     });
 
     it("rejects a hybrid record with a corrupted secondary signature -- not a silent downgrade to the legacy signature alone (proven to fail without the fix)", async () => {

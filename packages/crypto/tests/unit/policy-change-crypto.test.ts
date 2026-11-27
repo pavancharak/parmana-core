@@ -10,7 +10,7 @@ function draftRecord(
   return {
     policyChangeApprovalRecordId: "pcar-1",
     pendingPolicyChangeId: "ppc-1",
-    policyName: "vendor-payment",
+    policyName: "payment-limit",
     policyVersion: "2.0.0",
     proposedBy: "human-maker",
     approvedBy: "human-checker",
@@ -91,7 +91,7 @@ describe("PolicyChangeCrypto sign/verify", () => {
   it("hashPolicyContent is deterministic for the same content and differs for different content", async () => {
     const crypto = new PolicyChangeCrypto();
 
-    const content = { policyId: "vendor-payment", policyVersion: "2.0.0" };
+    const content = { policyId: "payment-limit", policyVersion: "2.0.0" };
 
     const first = await crypto.hashPolicyContent(content);
     const second = await crypto.hashPolicyContent(content);

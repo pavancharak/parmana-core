@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Troubleshooting · Parmana developer docs</title>
+<meta name="description" content="Troubleshooting Portal home · Error codes · FAQ · Getting started This page starts from what you see and works back to the cause. The messages quoted here were observed in this verification, unless a section says otherwise. For the full lis">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../security/key-management.html">Key management</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../policies/payment-refund-coverage.html">Coverage of the production policy</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="index.html" aria-current="page">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Operate</span><span class="sep">/</span><span>Troubleshooting</span></div>
+    <article>
+<h1 id="troubleshooting">Troubleshooting<a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a></h1>
+<p><a href="../index.html">Portal home</a> · <a href="../reference/error-codes.html">Error codes</a> · <a href="../faq.html">FAQ</a> · <a href="../getting-started.html">Getting started</a></p>
+<p>This page starts from what you see and works back to the cause. The messages quoted here were observed in this verification, unless a section says otherwise. For the full list of codes, read the <a href="../reference/error-codes.html">error code reference</a>.</p>
+<p><strong>First, find the status and the code.</strong> In the SDKs, read <code>error.constructor.name</code>, <code>error.statusCode</code> (TypeScript) or <code>error.status_code</code> (Python), and the server code (<code>serverCode</code> in TypeScript, <code>server_code</code> in Python). Over HTTP, read the <code>code</code> field of the body.</p>
+<h2 id="debugging-checklist">Debugging checklist<a class="anchor" href="#debugging-checklist" aria-label="Link to this section">#</a></h2>
+<p>Run these in order. Each step narrows the cause.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Command</th>
+<th>What a healthy answer looks like</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1. Is the server up?</td>
+<td><code>curl -s $PARMANA_API_URL/health</code></td>
+<td><code>{&quot;status&quot;:&quot;UP&quot;}</code></td>
+</tr>
+<tr>
+<td>2. Is it ready, and what storage?</td>
+<td><code>curl -s $PARMANA_API_URL/ready</code></td>
+<td><code>{&quot;status&quot;:&quot;READY&quot;, …, &quot;authDisabled&quot;:false}</code></td>
+</tr>
+<tr>
+<td>3. Does my key work?</td>
+<td><code>curl -s -H &quot;Authorization: Bearer $KEY&quot; $PARMANA_API_URL/callers/me</code></td>
+<td>Your <code>callerId</code> and the capabilities you expect</td>
+</tr>
+<tr>
+<td>4. Is the policy version in effect?</td>
+<td><code>curl -s -H &quot;Authorization: Bearer $KEY&quot; &quot;$PARMANA_API_URL/policies/validate&quot; -X POST -H &#39;content-type: application/json&#39; -d &#39;{&quot;policyId&quot;:&quot;…&quot;,&quot;policyVersion&quot;:&quot;…&quot;}&#39;</code></td>
+<td><code>{&quot;valid&quot;:true,&quot;errors&quot;:[]}</code>. Then check it is the one you approved.</td>
+</tr>
+<tr>
+<td>5. What happened to my transaction?</td>
+<td><code>curl -s -H &quot;Authorization: Bearer $KEY&quot; &quot;$PARMANA_API_URL/transactions/$ID/status?history=true&quot;</code></td>
+<td><code>current.status</code> and the history</td>
+</tr>
+<tr>
+<td>6. Was it refused?</td>
+<td><code>curl -s -H &quot;Authorization: Bearer $KEY&quot; $PARMANA_API_URL/refusal/$ID</code></td>
+<td>The refusal record, with its <code>decision</code></td>
+</tr>
+<tr>
+<td>7. Does the record verify?</td>
+<td>The <a href="../security/evidence-verification.html">evidence verification</a> steps</td>
+<td><code>valid: true</code></td>
+</tr>
+</tbody></table></div>
+<p>For the CLI, add <code>--verbose</code> to log each request and response code with secrets removed, and <code>--dry-run</code> to see the request without sending it. The CLI as an installed bin needs the workaround in <a href="../sdk/cli.html#the-installed-binary-fixed-in-the-repository-not-yet-in-a-published-release">CLI</a>.</p>
+<h2 id="authentication-failures">Authentication failures<a class="anchor" href="#authentication-failures" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>401 {&quot;error&quot;:&quot;authentication required&quot;}</code></td>
+<td>No <code>Authorization</code> header, or the key is unknown.</td>
+<td>Send <code>Authorization: Bearer &lt;raw key&gt;</code>. The raw key is what was generated, not its hash.</td>
+</tr>
+<tr>
+<td><code>401</code> from the SDK (<code>AuthenticationError</code>)</td>
+<td>The same, seen through the SDK.</td>
+<td>Check the environment variable is set in the process that runs the code.</td>
+</tr>
+<tr>
+<td><code>429</code> after two <code>401</code>s</td>
+<td>The authentication-failure rate limit.</td>
+<td>Stop retrying with a bad key. Fix the key. Wait for the <code>Retry-After</code> window.</td>
+</tr>
+</tbody></table></div>
+<h2 id="authorization-and-caller-permission-failures">Authorization and caller permission failures<a class="anchor" href="#authorization-and-caller-permission-failures" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Code</th>
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Caller is not permitted to invoke this capability.</code></td>
+<td><code>CAPABILITY_NOT_ALLOWED</code></td>
+<td>The action is not in your key&#39;s <code>allowedCapabilities</code>.</td>
+<td>Ask the operator to add it, or use a key that has it. Check with <code>GET /callers/me</code>.</td>
+</tr>
+<tr>
+<td><code>Caller is not permitted to assert this authority.principalId.</code></td>
+<td>none</td>
+<td>The <code>principalId</code> is not in your key&#39;s <code>allowedPrincipalIds</code>.</td>
+<td>Use an allowed principal.</td>
+</tr>
+<tr>
+<td><code>Caller is not permitted to act for this tenantId.</code></td>
+<td><code>TENANT_NOT_ALLOWED</code></td>
+<td>The <code>tenantId</code> is not allowed for your key.</td>
+<td>Use an allowed tenant, or leave it out.</td>
+</tr>
+<tr>
+<td><code>…was proposed by this same caller — the proposer (maker) may not also approve or reject it (checker).</code></td>
+<td><code>SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE</code></td>
+<td>A maker tried to approve their own change.</td>
+<td>A different, listed checker approves.</td>
+</tr>
+<tr>
+<td><code>403 NON_HUMAN_CALLER_DENIED</code></td>
+<td><code>NON_HUMAN_CALLER_DENIED</code></td>
+<td>A service caller tried a human-only route.</td>
+<td>Use a human&#39;s key for governance routes.</td>
+</tr>
+<tr>
+<td><code>403 STEP_UP_AUTHORIZATION_INVALID</code></td>
+<td><code>STEP_UP_AUTHORIZATION_INVALID</code></td>
+<td>The step-up envelope is missing, expired, wrong, or not signed by the checker&#39;s registered key.</td>
+<td>Sign a fresh envelope with the checker&#39;s step-up key, and submit it at once.</td>
+</tr>
+</tbody></table></div>
+<h2 id="policy-evaluation-failures">Policy evaluation failures<a class="anchor" href="#policy-evaluation-failures" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Code</th>
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Policy &#39;vendor-payment&#39; version &#39;2.1.0&#39; was not found.</code></td>
+<td>none (<code>404</code>)</td>
+<td>The version is not on this server.</td>
+<td>Check the name and version. Check <code>PARMANA_POLICY_DIR</code>.</td>
+</tr>
+<tr>
+<td><code>No policy is bound to capability &quot;…&quot;.</code></td>
+<td><code>CAPABILITY_NOT_BOUND</code> (<code>404</code>)</td>
+<td>The capability has no policy binding on this build. The test capability <code>test:fixture-execute</code> is unbound on purpose.</td>
+<td>Name the policy and version in <code>policy</code> (as the examples do). A capability needs a binding for <code>GET /policies/in-effect</code> to answer.</td>
+</tr>
+<tr>
+<td><code>…was superseded: the version in effect is &quot;2.1.1&quot;, the one most recently approved.</code></td>
+<td>(<code>403</code>, <code>ExecutionRejectedError</code>)</td>
+<td>You named a version that is no longer the one in effect.</td>
+<td>Name the version in effect. See <a href="../policies/index.html#versions-and-the-version-in-effect">Policy management</a>.</td>
+</tr>
+<tr>
+<td><code>…has no PolicyChangeApprovalRecord -- it has never completed the Policy Governance approval flow.</code></td>
+<td>(<code>403</code>, <code>ExecutionRejectedError</code>)</td>
+<td>The version was never approved through maker-checker. On a fresh server this is the normal first state.</td>
+<td>Approve the version. See <a href="../tutorials/maker-checker.html">Maker-checker</a>.</td>
+</tr>
+<tr>
+<td><code>Vendor payment rejected because the assessed payment risk exceeds the maximum permitted threshold.</code></td>
+<td><code>POLICY_DENIED</code> (<code>403</code>)</td>
+<td>A policy rule rejected the request.</td>
+<td>The reason is the policy&#39;s own. Show it. Do not retry the same request.</td>
+</tr>
+<tr>
+<td><code>Vendor payment rejected because one or more required policy conditions were not satisfied.</code></td>
+<td><code>POLICY_DENIED</code> (<code>403</code>)</td>
+<td>A required condition is not met, for example no approval was attached.</td>
+<td>Attach the approval, or supply the required facts.</td>
+</tr>
+<tr>
+<td><code>declared signal(s) do not match the executed intent (paymentAmount=999 != intent.parameters.amount=1000).</code></td>
+<td>(<code>403</code>)</td>
+<td>A bound signal differs from the request.</td>
+<td>Build both values from the same variable.</td>
+</tr>
+<tr>
+<td><code>declared signal(s) do not match independently verified state (humanApproved=true != verified humanApproved=false).</code></td>
+<td>(<code>403</code>)</td>
+<td>Parmana&#39;s independent check of the approval returned false.</td>
+<td>See <a href="#approval-failures">Approval failures</a>.</td>
+</tr>
+</tbody></table></div>
+<h3 id="approval-failures">Approval failures<a class="anchor" href="#approval-failures" aria-label="Link to this section">#</a></h3>
+<p>An approval is refused when Parmana cannot verify it for this request. The message names the signal that failed, which is <code>humanApproved</code> in the examples. Causes observed in this verification:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Cause</th>
+<th>Observed result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>No approval attached, and <code>humanApproved</code> is false</td>
+<td>A policy-condition refusal (<code>POLICY_DENIED</code>).</td>
+</tr>
+<tr>
+<td>The approval&#39;s <code>ttlSeconds</code> has passed</td>
+<td><code>humanApproved</code> verified as false.</td>
+</tr>
+<tr>
+<td>The approval names a different target (<code>resourceId</code>)</td>
+<td><code>humanApproved</code> verified as false.</td>
+</tr>
+<tr>
+<td>The approval&#39;s <code>maxAmount</code> is below the amount requested</td>
+<td><code>humanApproved</code> verified as false.</td>
+</tr>
+<tr>
+<td>The approval was signed by a key the server does not trust</td>
+<td><code>humanApproved</code> verified as false (or the server reports that no approval verifier is configured).</td>
+</tr>
+<tr>
+<td>The approval is reused</td>
+<td>A second use is refused.</td>
+</tr>
+<tr>
+<td>The approval is attached to a transaction declared without it</td>
+<td>Refused on execution. An approval cannot be added to a declared transaction.</td>
+</tr>
+</tbody></table></div>
+<p>Check, in order: the approval&#39;s <code>capability</code> equals the intent&#39;s action; <code>resourceId</code> equals the target; <code>maxAmount</code> covers the amount; the approval has not expired; the approver&#39;s key is trusted by the server (<code>approverId</code> and <code>keyId</code> match the registered approver); the approval was not used before.</p>
+<h2 id="duplicates-and-status-failures">Duplicates and status failures<a class="anchor" href="#duplicates-and-status-failures" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Code</th>
+<th>Meaning</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Business Transaction &#39;…&#39; already exists.</code></td>
+<td><code>409</code></td>
+<td>The <code>businessTransactionId</code> was used. Nothing ran again.</td>
+<td>Read the existing outcome: <code>trustRecord()</code> or <code>transactionStatus()</code>. Use a new id only for a new action.</td>
+</tr>
+<tr>
+<td><code>202</code> with <code>status: EXECUTING</code></td>
+<td>(<code>202</code>, <code>ExecutionPendingError</code>)</td>
+<td>Released and recorded, but the status is not yet final.</td>
+<td>Call <code>reconcileTransaction</code>. Do not resubmit.</td>
+</tr>
+<tr>
+<td><code>500</code> <code>EXECUTION_RECORD_INCOMPLETE</code></td>
+<td><code>EXECUTION_RECORD_INCOMPLETE</code></td>
+<td>Released; the signed record could not be produced.</td>
+<td>Reconcile. Do not retry as a new transaction.</td>
+</tr>
+<tr>
+<td><code>502</code> <code>EXECUTION_OUTCOME_UNKNOWN</code></td>
+<td><code>EXECUTION_OUTCOME_UNKNOWN</code></td>
+<td>Released; the connector call failed.</td>
+<td>Reconcile against the connector.</td>
+</tr>
+<tr>
+<td><code>503</code> <code>SIGNING_UNAVAILABLE</code></td>
+<td><code>SIGNING_UNAVAILABLE</code></td>
+<td>Signing is unavailable. Nothing was executed.</td>
+<td>Retry later, with the same id.</td>
+</tr>
+</tbody></table></div>
+<h2 id="signature-and-verification-failures">Signature and verification failures<a class="anchor" href="#signature-and-verification-failures" aria-label="Link to this section">#</a></h2>
+<p>These are the messages the verifiers print (observed):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Message</th>
+<th>Meaning</th>
+<th>What to check</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>trustRecordHash mismatch: expected …</code></td>
+<td>A covered field of the record differs from what was signed.</td>
+<td>The record was changed, or was reformatted with a changed value. Use the original.</td>
+</tr>
+<tr>
+<td><code>signature verification failed for keyId &quot;default&quot; (ed25519).</code></td>
+<td>The signature does not verify with the key in your trust file.</td>
+<td>The record was altered, or it was signed by another key. Compare the fingerprint.</td>
+</tr>
+<tr>
+<td><code>schemaVersion 2 (or no schemaVersion) covers only seven top-level fields and is refused by default: set allowLegacyV2 …</code></td>
+<td>A schema 2 record, and the trust file does not accept it.</td>
+<td>Set <code>allowLegacyV2</code> knowingly, or verify a schema 3 record. See <a href="../security/index.html#schema-versions-and-coverage">Security</a>.</td>
+</tr>
+<tr>
+<td><code>record has no hybrid envelope: set hybridRequiredFrom or allowLegacyOnly …</code></td>
+<td>A single-signature record, and the trust file does not accept it.</td>
+<td>Set <code>allowLegacyOnly</code> knowingly, or verify a hybrid record.</td>
+</tr>
+<tr>
+<td><code>valid: true</code> with <code>coverage: legacy</code></td>
+<td>The record verified, but only its seven covered fields are protected.</td>
+<td>Read the security page before relying on uncovered fields.</td>
+</tr>
+</tbody></table></div>
+<h2 id="network-and-timeout-failures">Network and timeout failures<a class="anchor" href="#network-and-timeout-failures" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>SDK class</th>
+<th>Cause</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>No response</td>
+<td><code>NetworkError</code></td>
+<td>The endpoint is unreachable, or a proxy blocked it.</td>
+<td>Check the endpoint, DNS and proxy. Read the status before any retry.</td>
+</tr>
+<tr>
+<td>Slow response</td>
+<td><code>TimeoutError</code></td>
+<td>The request exceeded <code>timeout</code> (default 30 seconds).</td>
+<td>Check the status of the transaction. The action may have been released. Do not resubmit it.</td>
+</tr>
+<tr>
+<td><code>429</code></td>
+<td><code>RateLimitError</code></td>
+<td>The rate limit was reached.</td>
+<td>Wait for <code>retryAfterSeconds</code>. Reduce the request rate.</td>
+</tr>
+</tbody></table></div>
+<p>The SDK retries <code>GET</code> requests only, when retries are enabled. It never retries a <code>POST</code>. A <code>POST</code> that timed out may still have run: read the transaction&#39;s status before you decide.</p>
+<h2 id="problems-with-the-existing-quickstart-and-local-setup">Problems with the existing quickstart and local setup<a class="anchor" href="#problems-with-the-existing-quickstart-and-local-setup" aria-label="Link to this section">#</a></h2>
+<p>These were found when the existing <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/site/quickstart.mdx">quickstart</a> was run as written on a fresh checkout. They are recorded in <a href="../COVERAGE.html#known-issues-found-during-this-review">COVERAGE</a>. The governed setup in <a href="../getting-started.html">Getting started</a> avoids each one.</p>
+<h3 id="the-existing-quickstart-did-not-run-as-written-now-corrected">The existing quickstart did not run as written (now corrected)<a class="anchor" href="#the-existing-quickstart-did-not-run-as-written-now-corrected" aria-label="Link to this section">#</a></h3>
+<p>These were the problems in the quickstart. The quickstart page and the code are corrected in this change; the list stays so that anyone who followed an older copy can match the error to its fix.</p>
+<ol>
+<li><strong>The server refused to start without <code>PARMANA_POLICY_DIR</code>.</strong> Fixed: the quickstart&#39;s server command sets <code>PARMANA_POLICY_DIR=./fixtures/policies</code>.</li>
+<li><strong>The server refused to start without <code>PARMANA_KEY_DIR</code>.</strong> Fixed: the command sets <code>PARMANA_KEY_DIR=./keys</code>. The setting is required in every environment, including <code>NODE_ENV=test</code>.</li>
+<li><strong>The approver key generator did not create its output folder.</strong> Fixed: <code>generate-approver-key</code> creates the folder, so no <code>mkdir</code> is needed.</li>
+<li><strong>The first execution is refused until the policy is approved.</strong> Still true, and deliberate: <code>vendor-payment@2.1.0</code> has no approval record on a fresh server. The quickstart now says so and points to the maker-checker flow. It is not automated (see <a href="../FINDINGS.html">FINDINGS</a>, F7).</li>
+<li><strong><code>PARMANA_ALLOW_UNGOVERNED_POLICY=true</code> did nothing.</strong> Fixed: the setting is removed from the examples runner, the load test and tutorial 81. Governance is enforced in every environment.</li>
+</ol>
+<h3 id="npm-run-devsetup-refuses-the-fixture-flows"><code>npm run dev:setup</code> refuses the fixture flows<a class="anchor" href="#npm-run-devsetup-refuses-the-fixture-flows" aria-label="Link to this section">#</a></h3>
+<p><code>npm run dev:setup</code> starts a server with <code>PARMANA_POLICY_DIR=./policies</code>, which does not include <code>vendor-payment</code>. Its caller key can invoke only <code>test:fixture-execute</code>, which is unbound by design. Verified: <code>POST /execute</code> for <code>vendor-payment@2.1.0</code> returns <code>404 Policy &#39;vendor-payment&#39; version &#39;2.1.0&#39; was not found.</code>, and <code>GET /policies/in-effect?capability=test:fixture-execute</code> returns <code>404 CAPABILITY_NOT_BOUND</code>. Use the governed setup for the fixture flows.</p>
+<h3 id="hybrid-signing-without-a-secondary-provider-now-refused-at-start-up">Hybrid signing without a secondary provider (now refused at start-up)<a class="anchor" href="#hybrid-signing-without-a-secondary-provider-now-refused-at-start-up" aria-label="Link to this section">#</a></h3>
+<p>Earlier builds released the action and then returned <code>500</code> with <code>Secondary signature provider is not configured.</code> The server now refuses to start with <code>CRYPTO_MODE=hybrid</code> unless <code>SECONDARY_SIGNATURE_PROVIDER</code> is set and differs from the primary, and it checks the secondary key files before it binds the port. If you see a <code>500</code> like this on an older build, reconcile the released transaction and do not resubmit it. Set <code>SECONDARY_SIGNATURE_PROVIDER=dilithium3</code>, with a <code>default-secondary</code> key in the key directory. See <a href="../security/index.html#schema-versions-and-coverage">Security</a>.</p>
+<h3 id="a-policy-file-does-not-match-its-approval-record">A policy file does not match its approval record<a class="anchor" href="#a-policy-file-does-not-match-its-approval-record" aria-label="Link to this section">#</a></h3>
+<p>The server refuses a policy whose file was changed outside the approval flow. The message, as the existing <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/site/troubleshooting.mdx">troubleshooting guide</a> describes it, names the content hash. This message was not reproduced in this verification. Restore the file to the approved content, or propose the new content through maker-checker.</p>
+<h2 id="debugging-the-cli">Debugging the CLI<a class="anchor" href="#debugging-the-cli" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The published <code>parmana-ops</code> 4.1.1 printed nothing and exited 0 when run under its bin name. The fix is in the repository and is not yet in a published release. Until then run the file: <code>node &quot;$(npm root -g)/@parmana/cli/dist/index.js&quot; --help</code>. See <a href="../sdk/cli.html#the-installed-binary-fixed-in-the-repository-not-yet-in-a-published-release">CLI</a>.</li>
+<li>A <code>HTTP 403 SAME_ACTOR…</code> from <code>approval submit</code> with the hint &quot;This token is not allowed to do this. Check which credential is set.&quot; means the token in <code>PARMANA_TOKEN</code> is the maker&#39;s, not the checker&#39;s.</li>
+</ul>
+<h2 id="tests-and-examples-that-fail-on-a-fresh-checkout">Tests and examples that fail on a fresh checkout<a class="anchor" href="#tests-and-examples-that-fail-on-a-fresh-checkout" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong><code>npm test --workspace=typescript</code> failed</strong> before this change: six test files were empty and the integration suites needed the root test setup. Fixed: the empty files are removed, and the workspace script runs with the root configuration. It passes with no extra environment (22 files, 248 tests).</li>
+<li><strong>Tutorials 60, 103 and 120 need <code>PARMANA_POLICY_DIR</code></strong> (and 103 also <code>PARMANA_KEY_DIR</code>) when run directly. Their READMEs now state the command. <code>npm run examples</code> sets these defaults for you.</li>
+<li><strong><code>DATABASE_URL</code> in your environment</strong> can make a test run target a database. The repository&#39;s test setup refuses hosted databases unless they are listed in <code>PARMANA_TEST_PROJECT_REFS</code> and <code>ALLOW_LIVE_SUPABASE=1</code> is set. Unset <code>DATABASE_URL</code> for local runs.</li>
+</ul>
+<h2 id="getting-more-help">Getting more help<a class="anchor" href="#getting-more-help" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Open an issue in the repository with the status, the code, the request id if the server gave one, and the output of the debugging checklist. Do not include raw keys, approver private keys or step-up private keys.</li>
+<li>Report a security issue through <a href="https://github.com/pavancharak/parmana-core/blob/main/SECURITY.md">SECURITY.md</a>, not in a public issue.</li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/troubleshooting/README.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="../reference/error-code-index.html"><span>Previous</span>Error code index</a><a class="pn next" href="../CHANGELOG.html"><span>Next</span>Changelog</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#debugging-checklist">Debugging checklist</a></li><li class="d2"><a href="#authentication-failures">Authentication failures</a></li><li class="d2"><a href="#authorization-and-caller-permission-failures">Authorization and caller permission failures</a></li><li class="d2"><a href="#policy-evaluation-failures">Policy evaluation failures</a></li><li class="d3"><a href="#approval-failures">Approval failures</a></li><li class="d2"><a href="#duplicates-and-status-failures">Duplicates and status failures</a></li><li class="d2"><a href="#signature-and-verification-failures">Signature and verification failures</a></li><li class="d2"><a href="#network-and-timeout-failures">Network and timeout failures</a></li><li class="d2"><a href="#problems-with-the-existing-quickstart-and-local-setup">Problems with the existing quickstart and local setup</a></li><li class="d3"><a href="#the-existing-quickstart-did-not-run-as-written-now-corrected">The existing quickstart did not run as written (now corrected)</a></li><li class="d3"><a href="#npm-run-devsetup-refuses-the-fixture-flows">npm run dev:setup refuses the fixture flows</a></li><li class="d3"><a href="#hybrid-signing-without-a-secondary-provider-now-refused-at-start-up">Hybrid signing without a secondary provider (now refused at start-up)</a></li><li class="d3"><a href="#a-policy-file-does-not-match-its-approval-record">A policy file does not match its approval record</a></li><li class="d2"><a href="#debugging-the-cli">Debugging the CLI</a></li><li class="d2"><a href="#tests-and-examples-that-fail-on-a-fresh-checkout">Tests and examples that fail on a fresh checkout</a></li><li class="d2"><a href="#getting-more-help">Getting more help</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

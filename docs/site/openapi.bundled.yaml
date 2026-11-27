@@ -110,6 +110,11 @@ tags:
   - name: External Connectors
     description: Maker-checker for binding a capability to an operator's HTTPS
       endpoint and its policy, without a deploy (ADR-0013)
+  - name: Policy v2 (experimental)
+    description: EXPERIMENTAL. Policy version 2 decisions, reviews, the register,
+      console and notification endpoints. Mounted only when the deployment
+      enables policy version 2. Shapes may change in a minor release until
+      promoted.
   - name: Business Signal Sources
     description: Maker-checker for the business systems Parmana asks for the facts a
       policy needs, without a deploy (RFC-0023)
@@ -1159,7 +1164,6 @@ paths:
                       signature: HZaohm/v3xrJTp+VrcJmLLcIG1SMl3LyPcHQUF6UHo7J9Z/KY92brpU92xVnPhVJJMaB+fd7nVRQ96k3OP7DBQ==
                       keyId: default
                       algorithm: ed25519
-                    overrides: []
                     executions:
                       - executionId: 21a57d3e-bed5-4a73-8af9-2ac2d7e8326e
                         businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
@@ -1294,7 +1298,6 @@ paths:
                         riskScore: 12
                       status: RECEIVED
                       createdAt: 2026-07-13T17:36:00.965Z
-                    overrides: []
                     executions:
                       - executionId: 90746492-7721-4228-b244-67bf8a45ca68
                         businessTransactionId: 44b34a79-e0f2-49d7-a48e-e52fff88182e
@@ -2565,7 +2568,6 @@ paths:
                       signature: HZaohm/v3xrJTp+VrcJmLLcIG1SMl3LyPcHQUF6UHo7J9Z/KY92brpU92xVnPhVJJMaB+fd7nVRQ96k3OP7DBQ==
                       keyId: default
                       algorithm: ed25519
-                    overrides: []
                     executions:
                       - executionId: 21a57d3e-bed5-4a73-8af9-2ac2d7e8326e
                         businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
@@ -4381,7 +4383,6 @@ paths:
                         signature: TDZgeHSqXhdacOLBUZzEMIFFTP1BkF68hTrvtQrI3SWJo7MApe6JqPTou7xoqzKK7tBwvDrG25mTyRA3TUA8AQ==
                         keyId: default
                         algorithm: ed25519
-                      overrides: []
                       executions:
                         - executionId: ad87bb66-5811-404b-bdbf-f8196bfec100
                           businessTransactionId: 0815b845-20b0-4c45-9582-31fce04eaf58
@@ -4575,7 +4576,6 @@ paths:
                         signature: TDZgeHSqXhdacOLBUZzEMIFFTP1BkF68hTrvtQrI3SWJo7MApe6JqPTou7xoqzKK7tBwvDrG25mTyRA3TUA8AQ==
                         keyId: default
                         algorithm: ed25519
-                      overrides: []
                       executions:
                         - executionId: ad87bb66-5811-404b-bdbf-f8196bfec100
                           businessTransactionId: 0815b845-20b0-4c45-9582-31fce04eaf58
@@ -5546,7 +5546,6 @@ paths:
                         signature: 2mCcxfvZ1LIGiFnfHH8ug+Azw7W8AiXMyWmx98z2bDVK9cUZyutsOQD/pLxJ4YBwcjl003acuqkU1iB2OX3sAA==
                         keyId: default
                         algorithm: ed25519
-                      overrides: []
                       executions:
                         - executionId: d405986b-899c-40d6-bba4-71f885e5a6a9
                           businessTransactionId: b09eb4f2-30f8-4783-bd23-4092eabc8378
@@ -5779,7 +5778,6 @@ paths:
                         riskScore: 12
                       status: RECEIVED
                       createdAt: 2026-07-13T17:36:00.965Z
-                    overrides: []
                     executions:
                       - executionId: 90746492-7721-4228-b244-67bf8a45ca68
                         businessTransactionId: 44b34a79-e0f2-49d7-a48e-e52fff88182e
@@ -7702,6 +7700,8 @@ paths:
                       -----BEGIN PUBLIC KEY-----
                       MCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=
                       -----END PUBLIC KEY-----
+                    capabilities:
+                      - erp:pay-invoice
                     reason: The approver approves refunds for the West region from October.
                     proposedBy: human-maker
                     proposedAt: 2026-09-28T19:05:59.726Z
@@ -7823,6 +7823,7 @@ paths:
                 public_key_pem=Path(
                     "approver-example__approver-example-key-1.public.pem"
                 ).read_text(),
+                capabilities=["erp:pay-invoice"],
                 reason="The example approver approves refunds for the West region from October.",
             )
 
@@ -11262,8 +11263,3067 @@ paths:
 
 
             print(response.status_code, approval)
+  /v2/decisions:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Record a policy version 2 decision
+      operationId: policyV2Decide
+      description: Evaluates the approved policy version 2 for the capability and
+        records the decision as evidence. The decision never releases anything
+        by itself (`released` is always `false`). A `REVIEW` outcome carries a
+        `reviewId`; read it with `GET /v2/reviews/{id}`. Signals are caller
+        values, untrusted unless a registered source signed them.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyV2DecisionRequest"
+      responses:
+        "200":
+          description: The recorded decision.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyV2Decision"
+              example:
+                outcome: APPROVE
+                reason: The policy approves this request.
+                tier: tier-1
+                recordId: record-123
+                released: false
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "404":
+          $ref: "#/components/responses/PolicyV2NotEnabled"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Record a decision
+
+            curl -X POST "https://parmana-api-real.vercel.app/v2/decisions" \
+              -H "Authorization: Bearer $PARMANA_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"capability":"erp:pay-invoice","transactionId":"txn-1001","target":"invoice-7781","parameters":{"amount":1200},"signals":{"vendorVerified":true}}'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Record a decision
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/decisions",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${process.env.PARMANA_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  capability: "erp:pay-invoice",
+                  transactionId: "txn-1001",
+                  target: "invoice-7781",
+                  parameters: { amount: 1200 },
+                  signals: { vendorVerified: true },
+                }),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+            # Record a decision
+            import json
+            import os
+            import urllib.request
+
+            BODY = r'{"capability":"erp:pay-invoice","transactionId":"txn-1001","target":"invoice-7781","parameters":{"amount":1200},"signals":{"vendorVerified":true}}'
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/decisions",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/reviews/{id}:
+    get:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Read a policy version 2 review as its requester sees it
+      operationId: policyV2GetReview
+      description: Returns the status of a review item. Only the requester of the
+        decision may read it; any other caller gets `404`.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The review item id, from the `reviewId` of a `REVIEW` decision.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The review, as its requester sees it.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyV2ReviewView"
+              example:
+                status: pending
+                reasonCode: UNDER_REVIEW
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "404":
+          $ref: "#/components/responses/PolicyV2NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Read a review
+
+            curl "https://parmana-api-real.vercel.app/v2/reviews/review-123" \
+              -H "Authorization: Bearer $PARMANA_API_KEY"
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Read a review
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/reviews/review-123",
+              {
+                method: "GET",
+                headers: { Authorization: `Bearer ${process.env.PARMANA_API_KEY}` },
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Read a review
+
+            import os
+
+            import urllib.request
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/reviews/review-123",
+                    data=None,
+                    method="GET",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/reviews/{id}/decision:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Record a reviewer's decision on a review item
+      operationId: policyV2DecideReview
+      description: "The reviewer must hold an active reviewer grant for the action.
+        The result is final once the review's decisions are complete (`final:
+        true`, with `outcome`)."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The review item id.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyV2ReviewDecisionRequest"
+      responses:
+        "200":
+          description: The result of the reviewer's decision.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyV2ReviewDecision"
+              example:
+                itemId: review-123
+                status: approved
+                final: true
+                outcome: APPROVED
+                decisionsRecorded: 1
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Decide a review as a reviewer
+
+            curl -X POST
+            "https://parmana-api-real.vercel.app/v2/reviews/review-123/decision"
+            \
+              -H "Authorization: Bearer $PARMANA_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"decision":"approve"}'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Decide a review as a reviewer
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/reviews/review-123/decision",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${process.env.PARMANA_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ decision: "approve" }),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Decide a review as a reviewer
+
+            import json
+
+            import os
+
+            import urllib.request
+
+
+            BODY = r'{"decision":"approve"}'
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/reviews/review-123/decision",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/evidence/{recordId}/replay:
+    get:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Replay a recorded policy version 2 decision from its evidence
+      operationId: policyV2Replay
+      description: Re-runs the recorded decision and reports whether it reproduces.
+        The caller must hold a register role. The replay changes nothing.
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          description: The evidence record id returned as `recordId` by `POST
+            /v2/decisions`.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The replay result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyV2ReplayResult"
+              example:
+                reproduced: true
+                differences: []
+                replayed:
+                  outcome: APPROVE
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "404":
+          $ref: "#/components/responses/PolicyV2NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Replay a recorded decision
+
+            curl
+            "https://parmana-api-real.vercel.app/v2/evidence/record-123/replay"
+            \
+              -H "Authorization: Bearer $PARMANA_API_KEY"
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Replay a recorded decision
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/evidence/record-123/replay",
+              {
+                method: "GET",
+                headers: { Authorization: `Bearer ${process.env.PARMANA_API_KEY}` },
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Replay a recorded decision
+
+            import os
+
+            import urllib.request
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/evidence/record-123/replay",
+                    data=None,
+                    method="GET",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/console/{screen}:
+    get:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Read a read-only Policy v2 console screen
+      operationId: policyV2Console
+      description: Returns one console screen as HTML. The screens are read-only. The
+        caller's role decides which screens it may see; a role without the
+        screen gets `403`.
+      parameters:
+        - name: screen
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - home
+              - register
+              - changes
+              - reviews
+              - approvals
+              - gate
+              - decisions
+              - audit
+        - name: capability
+          in: query
+          required: false
+          description: The capability to show, for screens that are per capability.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The screen, as HTML.
+          content:
+            text/html:
+              schema:
+                type: string
+              example: "<h1>Policy v2 console: home</h1>"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "404":
+          $ref: "#/components/responses/PolicyV2NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Read a console screen (HTML)
+
+            curl "https://parmana-api-real.vercel.app/v2/console/home" \
+              -H "Authorization: Bearer $PARMANA_API_KEY"
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Read a console screen (HTML)
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/console/home",
+              {
+                method: "GET",
+                headers: { Authorization: `Bearer ${process.env.PARMANA_API_KEY}` },
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Read a console screen (HTML)
+
+            import os
+
+            import urllib.request
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/console/home",
+                    data=None,
+                    method="GET",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/notifications/ses:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Receive an SES delivery notification (bounces and complaints)
+      operationId: policyV2SesNotification
+      description: Receives the delivery notification that Amazon SES posts for an
+        approval email. The notification must verify (its signature and topic)
+        or the request is refused with `403 not_verified`. Not called by
+        clients; it is the notification endpoint for the email channel.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: The SES notification, as posted by Amazon SES. Its signature is
+                checked by the server.
+      responses:
+        "200":
+          description: The notification was handled.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              example:
+                handled: true
+        "403":
+          description: The notification did not verify.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyV2Error"
+              example:
+                error: not_verified
+      security: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Amazon SES posts this; clients do not call it
+
+            curl -X POST
+            "https://parmana-api-real.vercel.app/v2/notifications/ses" \
+              -H "Content-Type: application/json" \
+              -d '{"Type":"Notification","Message":"{}"}'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Amazon SES posts this; clients do not call it
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/notifications/ses",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ Type: "Notification", Message: "{}" }),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Amazon SES posts this; clients do not call it
+
+            import json
+
+            import urllib.request
+
+
+            BODY = r'{"Type":"Notification","Message":"{}"}'
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/notifications/ses",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/notifications/events:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Receive delivery events for approval notifications
+      operationId: policyV2NotificationEvents
+      description: Receives delivery events for policy version 2 notifications. The
+        events are verified with the events secret, or refused with `403
+        not_verified`. Not called by clients.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+      responses:
+        "200":
+          description: The number of events recorded.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - recorded
+                properties:
+                  recorded:
+                    type: integer
+                    minimum: 0
+              example:
+                recorded: 1
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "403":
+          description: The events did not verify.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyV2Error"
+              example:
+                error: not_verified
+      security: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Delivery events; clients do not call it
+
+            curl -X POST
+            "https://parmana-api-real.vercel.app/v2/notifications/events" \
+              -H "Content-Type: application/json" \
+              -d '[{"type":"Delivery"}]'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Delivery events; clients do not call it
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/notifications/events",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify([{ type: "Delivery" }]),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Delivery events; clients do not call it
+
+            import json
+
+            import urllib.request
+
+
+            BODY = r'[{"type":"Delivery"}]'
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/notifications/events",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register:
+    get:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Read the Policy v2 register
+      operationId: policyV2RegisterRead
+      description: "Returns the register's contents as plain data: sources,
+        thresholds, actions, roles, approver keys, policy versions and reviewer
+        grants."
+      responses:
+        "200":
+          description: The register.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              example:
+                sources: []
+                thresholds: []
+                actions: []
+                roles: []
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Read the register
+
+            curl "https://parmana-api-real.vercel.app/v2/register" \
+              -H "Authorization: Bearer $PARMANA_API_KEY"
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Read the register
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register",
+              {
+                method: "GET",
+                headers: { Authorization: `Bearer ${process.env.PARMANA_API_KEY}` },
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Read the register
+
+            import os
+
+            import urllib.request
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register",
+                    data=None,
+                    method="GET",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/audit:
+    get:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Read the register's audit log, page by page
+      operationId: policyV2RegisterAudit
+      parameters:
+        - name: after
+          in: query
+          required: false
+          description: The sequence number to read after. Defaults to 0.
+          schema:
+            type: integer
+            minimum: 0
+        - name: limit
+          in: query
+          required: false
+          description: The page size.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: A page of audit events. `next` is the sequence to pass as `after`
+            for the next page, or null at the end.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - events
+                  - next
+                properties:
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  next:
+                    type:
+                      - integer
+                      - "null"
+              example:
+                events: []
+                next: null
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Read the register audit log
+
+            curl "https://parmana-api-real.vercel.app/v2/register/audit" \
+              -H "Authorization: Bearer $PARMANA_API_KEY"
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Read the register audit log
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/audit",
+              {
+                method: "GET",
+                headers: { Authorization: `Bearer ${process.env.PARMANA_API_KEY}` },
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Read the register audit log
+
+            import os
+
+            import urllib.request
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/audit",
+                    data=None,
+                    method="GET",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/roles/grant:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Grant a register role to a caller
+      operationId: policyV2GrantRole
+      requestBody:
+        $ref: "#/components/requestBodies/PolicyV2RoleGrant"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Grant a role
+
+            curl -X POST
+            "https://parmana-api-real.vercel.app/v2/register/roles/grant" \
+              -H "Authorization: Bearer $PARMANA_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"callerId":"caller-ops-1","role":"reviewer"}'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Grant a role
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/roles/grant",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${process.env.PARMANA_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ callerId: "caller-ops-1", role: "reviewer" }),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Grant a role
+
+            import json
+
+            import os
+
+            import urllib.request
+
+
+            BODY = r'{"callerId":"caller-ops-1","role":"reviewer"}'
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/roles/grant",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/roles/revoke:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Revoke a register role from a caller
+      operationId: policyV2RevokeRole
+      requestBody:
+        $ref: "#/components/requestBodies/PolicyV2RoleGrant"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Revoke a role
+
+            curl -X POST
+            "https://parmana-api-real.vercel.app/v2/register/roles/revoke" \
+              -H "Authorization: Bearer $PARMANA_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"callerId":"caller-ops-1","role":"reviewer"}'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Revoke a role
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/roles/revoke",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${process.env.PARMANA_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ callerId: "caller-ops-1", role: "reviewer" }),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Revoke a role
+
+            import json
+
+            import os
+
+            import urllib.request
+
+
+            BODY = r'{"callerId":"caller-ops-1","role":"reviewer"}'
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/roles/revoke",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/sources:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Propose a business-signal source
+      operationId: policyV2ProposeSource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyV2SourceInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Propose a source
+
+            curl -X POST
+            "https://parmana-api-real.vercel.app/v2/register/sources" \
+              -H "Authorization: Bearer $PARMANA_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"name":"erp-ledger","dataOwner":"Finance","signer":{"kind":"system"},"keyId":"erp-2026-01","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA...\n-----END PUBLIC KEY-----","claims":{"invoiceAmount":"INR"},"canApprove":true}'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Propose a source
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/sources",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${process.env.PARMANA_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  name: "erp-ledger",
+                  dataOwner: "Finance",
+                  signer: { kind: "system" },
+                  keyId: "erp-2026-01",
+                  publicKeyPem:
+                    "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA...\n-----END PUBLIC KEY-----",
+                  claims: { invoiceAmount: "INR" },
+                  canApprove: true,
+                }),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+            # Propose a source
+            import json
+            import os
+            import urllib.request
+
+            BODY = r'{"name":"erp-ledger","dataOwner":"Finance","signer":{"kind":"system"},"keyId":"erp-2026-01","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA...\n-----END PUBLIC KEY-----","claims":{"invoiceAmount":"INR"},"canApprove":true}'
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/sources",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/sources/{name}/approve:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Approve a proposed source
+      operationId: policyV2ApproveSource
+      parameters:
+        - $ref: "#/components/parameters/PolicyV2Name"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+            # Approve a source
+            curl -X POST "https://parmana-api-real.vercel.app/v2/register/sources/erp-ledger/approve" \
+              -H "Authorization: Bearer $PARMANA_API_KEY"
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Approve a source
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/sources/erp-ledger/approve",
+              {
+                method: "POST",
+                headers: { Authorization: `Bearer ${process.env.PARMANA_API_KEY}` },
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Approve a source
+
+            import os
+
+            import urllib.request
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/sources/erp-ledger/approve",
+                    data=None,
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/sources/{name}/revoke:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Revoke a source
+      operationId: policyV2RevokeSource
+      parameters:
+        - $ref: "#/components/parameters/PolicyV2Name"
+      requestBody:
+        $ref: "#/components/requestBodies/PolicyV2Reason"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+            # Revoke a source
+            curl -X POST "https://parmana-api-real.vercel.app/v2/register/sources/erp-ledger/revoke" \
+              -H "Authorization: Bearer $PARMANA_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"reason":"Key rotated"}'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Revoke a source
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/sources/erp-ledger/revoke",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${process.env.PARMANA_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ reason: "Key rotated" }),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Revoke a source
+
+            import json
+
+            import os
+
+            import urllib.request
+
+
+            BODY = r'{"reason":"Key rotated"}'
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/sources/erp-ledger/revoke",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/thresholds:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Propose a threshold for an action
+      operationId: policyV2ProposeThreshold
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyV2ThresholdInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Propose a threshold
+
+            curl -X POST
+            "https://parmana-api-real.vercel.app/v2/register/thresholds" \
+              -H "Authorization: Bearer $PARMANA_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"action":"erp:pay-invoice","name":"max-amount","value":5000,"unit":"INR","owner":"Finance","reason":"Limit payments without review","evidence":"Policy memo 2026-11","nextReview":"2027-05-01","highValue":true}'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Propose a threshold
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/thresholds",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${process.env.PARMANA_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  action: "erp:pay-invoice",
+                  name: "max-amount",
+                  value: 5000,
+                  unit: "INR",
+                  owner: "Finance",
+                  reason: "Limit payments without review",
+                  evidence: "Policy memo 2026-11",
+                  nextReview: "2027-05-01",
+                  highValue: true,
+                }),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+            # Propose a threshold
+            import json
+            import os
+            import urllib.request
+
+            BODY = r'{"action":"erp:pay-invoice","name":"max-amount","value":5000,"unit":"INR","owner":"Finance","reason":"Limit payments without review","evidence":"Policy memo 2026-11","nextReview":"2027-05-01","highValue":true}'
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/thresholds",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/thresholds/{action}/{name}/approve:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Approve a proposed threshold
+      operationId: policyV2ApproveThreshold
+      parameters:
+        - name: action
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/PolicyV2Name"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+            # Approve a threshold
+            curl -X POST "https://parmana-api-real.vercel.app/v2/register/thresholds/erp:pay-invoice/max-amount/approve" \
+              -H "Authorization: Bearer $PARMANA_API_KEY"
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Approve a threshold
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/thresholds/erp:pay-invoice/max-amount/approve",
+              {
+                method: "POST",
+                headers: { Authorization: `Bearer ${process.env.PARMANA_API_KEY}` },
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Approve a threshold
+
+            import os
+
+            import urllib.request
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/thresholds/erp:pay-invoice/max-amount/approve",
+                    data=None,
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/actions:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Register an action (a capability with its owner and reviewers)
+      operationId: policyV2RegisterAction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyV2ActionInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Register an action
+
+            curl -X POST
+            "https://parmana-api-real.vercel.app/v2/register/actions" \
+              -H "Authorization: Bearer $PARMANA_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"capability":"erp:pay-invoice","owner":"Finance","successor":"Finance Controller","reviewers":["reviewer-1"],"review":{"reviewWindowBusinessDays":2,"approvalValidityMinutes":120}}'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Register an action
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/actions",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${process.env.PARMANA_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  capability: "erp:pay-invoice",
+                  owner: "Finance",
+                  successor: "Finance Controller",
+                  reviewers: ["reviewer-1"],
+                  review: { reviewWindowBusinessDays: 2, approvalValidityMinutes: 120 },
+                }),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+            # Register an action
+            import json
+            import os
+            import urllib.request
+
+            BODY = r'{"capability":"erp:pay-invoice","owner":"Finance","successor":"Finance Controller","reviewers":["reviewer-1"],"review":{"reviewWindowBusinessDays":2,"approvalValidityMinutes":120}}'
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/actions",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/actions/{capability}/reviewers:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Grant a reviewer on an action
+      operationId: policyV2AddReviewer
+      parameters:
+        - $ref: "#/components/parameters/PolicyV2Capability"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyV2ReviewerGrant"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+            # Grant a reviewer on an action
+            curl -X POST "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/reviewers" \
+              -H "Authorization: Bearer $PARMANA_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"reviewerId":"reviewer-1","maxAmount":10000}'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Grant a reviewer on an action
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/reviewers",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${process.env.PARMANA_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ reviewerId: "reviewer-1", maxAmount: 10000 }),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Grant a reviewer on an action
+
+            import json
+
+            import os
+
+            import urllib.request
+
+
+            BODY = r'{"reviewerId":"reviewer-1","maxAmount":10000}'
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/reviewers",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/actions/{capability}/reviewers/{reviewerId}/revoke:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Revoke a reviewer's grant on an action
+      operationId: policyV2RevokeReviewer
+      parameters:
+        - $ref: "#/components/parameters/PolicyV2Capability"
+        - name: reviewerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/PolicyV2Reason"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+            # Revoke a reviewer's grant
+            curl -X POST "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/reviewers/reviewer-1/revoke" \
+              -H "Authorization: Bearer $PARMANA_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"reason":"Left the team"}'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Revoke a reviewer's grant
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/reviewers/reviewer-1/revoke",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${process.env.PARMANA_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ reason: "Left the team" }),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Revoke a reviewer's grant
+
+            import json
+
+            import os
+
+            import urllib.request
+
+
+            BODY = r'{"reason":"Left the team"}'
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/reviewers/reviewer-1/revoke",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/actions/{capability}/tests:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Record that an action passed a test tier
+      operationId: policyV2RecordTest
+      parameters:
+        - $ref: "#/components/parameters/PolicyV2Capability"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tier
+              properties:
+                tier:
+                  type: string
+                  minLength: 1
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+            # Record a passed test tier
+            curl -X POST "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/tests" \
+              -H "Authorization: Bearer $PARMANA_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"tier":"tier-1"}'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Record a passed test tier
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/tests",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${process.env.PARMANA_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ tier: "tier-1" }),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Record a passed test tier
+
+            import json
+
+            import os
+
+            import urllib.request
+
+
+            BODY = r'{"tier":"tier-1"}'
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/tests",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/actions/{capability}/go-live:
+    get:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: List what is still missing before an action can go live
+      operationId: policyV2GoLiveGate
+      parameters:
+        - $ref: "#/components/parameters/PolicyV2Capability"
+      responses:
+        "200":
+          description: The missing requirements. An empty list means the gate is met.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - missing
+                properties:
+                  missing:
+                    type: array
+                    items:
+                      type: string
+              example:
+                missing:
+                  - an approved threshold
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+            # List what is missing before go-live
+            curl "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/go-live" \
+              -H "Authorization: Bearer $PARMANA_API_KEY"
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // List what is missing before go-live
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/go-live",
+              {
+                method: "GET",
+                headers: { Authorization: `Bearer ${process.env.PARMANA_API_KEY}` },
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # List what is missing before go-live
+
+            import os
+
+            import urllib.request
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/go-live",
+                    data=None,
+                    method="GET",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Take an action live, if its gate is met
+      operationId: policyV2GoLive
+      description: Refused with `422 refused` and the `missing` list while any
+        requirement is unmet.
+      parameters:
+        - $ref: "#/components/parameters/PolicyV2Capability"
+      responses:
+        "200":
+          description: The action is live.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - live
+                properties:
+                  live:
+                    type: boolean
+                    enum:
+                      - true
+              example:
+                live: true
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+            # Take an action live, if its gate is met
+            curl -X POST "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/go-live" \
+              -H "Authorization: Bearer $PARMANA_API_KEY"
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Take an action live, if its gate is met
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/go-live",
+              {
+                method: "POST",
+                headers: { Authorization: `Bearer ${process.env.PARMANA_API_KEY}` },
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Take an action live, if its gate is met
+
+            import os
+
+            import urllib.request
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/actions/erp:pay-invoice/go-live",
+                    data=None,
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/contacts:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Set how to reach a person about an alert
+      operationId: policyV2SetContact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - personId
+              properties:
+                personId:
+                  type: string
+                  minLength: 1
+                email:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Set a contact
+
+            curl -X POST
+            "https://parmana-api-real.vercel.app/v2/register/contacts" \
+              -H "Authorization: Bearer $PARMANA_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"personId":"person-1","email":"ops@example.com"}'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Set a contact
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/contacts",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${process.env.PARMANA_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ personId: "person-1", email: "ops@example.com" }),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Set a contact
+
+            import json
+
+            import os
+
+            import urllib.request
+
+
+            BODY = r'{"personId":"person-1","email":"ops@example.com"}'
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/contacts",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/policies:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Propose a new version of a policy
+      operationId: policyV2ProposePolicy
+      description: Proposes a policy version. Only the action owner may propose it. A
+        proposed version cannot change; a change is a new version. Approving a
+        version supersedes the one approved before it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: The policy document, in the policy version 2 format. Its checks are
+                the validator's (see PolicyV2ValidationError).
+              additionalProperties: true
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Propose a policy version. Replace {} with the policy document.
+
+            curl -X POST
+            "https://parmana-api-real.vercel.app/v2/register/policies" \
+              -H "Authorization: Bearer $PARMANA_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{}'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Propose a policy version. Replace {} with the policy document.
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/policies",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${process.env.PARMANA_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({}),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Propose a policy version. Replace {} with the policy document.
+
+            import json
+
+            import os
+
+            import urllib.request
+
+
+            BODY = r"{}"
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/policies",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/policies/{capability}/{policyVersion}/approve:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Approve a proposed policy version
+      operationId: policyV2ApprovePolicy
+      parameters:
+        - $ref: "#/components/parameters/PolicyV2Capability"
+        - name: policyVersion
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+            # Approve a policy version
+            curl -X POST "https://parmana-api-real.vercel.app/v2/register/policies/erp:pay-invoice/2.0.0/approve" \
+              -H "Authorization: Bearer $PARMANA_API_KEY"
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Approve a policy version
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/policies/erp:pay-invoice/2.0.0/approve",
+              {
+                method: "POST",
+                headers: { Authorization: `Bearer ${process.env.PARMANA_API_KEY}` },
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Approve a policy version
+
+            import os
+
+            import urllib.request
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/policies/erp:pay-invoice/2.0.0/approve",
+                    data=None,
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/approver-keys:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Propose an approver's public key
+      operationId: policyV2ProposeApproverKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyV2ApproverKeyInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Propose an approver key
+
+            curl -X POST
+            "https://parmana-api-real.vercel.app/v2/register/approver-keys" \
+              -H "Authorization: Bearer $PARMANA_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"approverId":"approver-7","keyId":"key-2026-01","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA...\n-----END PUBLIC KEY-----"}'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Propose an approver key
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/approver-keys",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${process.env.PARMANA_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  approverId: "approver-7",
+                  keyId: "key-2026-01",
+                  publicKeyPem:
+                    "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA...\n-----END PUBLIC KEY-----",
+                }),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+            # Propose an approver key
+            import json
+            import os
+            import urllib.request
+
+            BODY = r'{"approverId":"approver-7","keyId":"key-2026-01","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA...\n-----END PUBLIC KEY-----"}'
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/approver-keys",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/approver-keys/{approverId}/{keyId}/approve:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Approve a proposed approver key
+      operationId: policyV2ApproveApproverKey
+      parameters:
+        - name: approverId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+            # Approve an approver key
+            curl -X POST "https://parmana-api-real.vercel.app/v2/register/approver-keys/approver-7/key-2026-01/approve" \
+              -H "Authorization: Bearer $PARMANA_API_KEY"
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Approve an approver key
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/approver-keys/approver-7/key-2026-01/approve",
+              {
+                method: "POST",
+                headers: { Authorization: `Bearer ${process.env.PARMANA_API_KEY}` },
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Approve an approver key
+
+            import os
+
+            import urllib.request
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/approver-keys/approver-7/key-2026-01/approve",
+                    data=None,
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
+  /v2/register/approver-keys/{approverId}/{keyId}/revoke:
+    post:
+      tags:
+        - Policy v2 (experimental)
+      x-stability: experimental
+      summary: Revoke an approver key
+      operationId: policyV2RevokeApproverKey
+      parameters:
+        - name: approverId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/PolicyV2Reason"
+      responses:
+        "200":
+          $ref: "#/components/responses/PolicyV2RegisterChange"
+        "400":
+          $ref: "#/components/responses/PolicyV2InvalidRequest"
+        "401":
+          $ref: "#/components/responses/PolicyV2Unauthenticated"
+        "403":
+          $ref: "#/components/responses/PolicyV2Forbidden"
+        "409":
+          $ref: "#/components/responses/PolicyV2Conflict"
+        "422":
+          $ref: "#/components/responses/PolicyV2Refused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      security:
+        - bearerAuth: []
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: |-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment enables it.
+            # Revoke an approver key
+            curl -X POST "https://parmana-api-real.vercel.app/v2/register/approver-keys/approver-7/key-2026-01/revoke" \
+              -H "Authorization: Bearer $PARMANA_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"reason":"Key compromised"}'
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            // EXPERIMENTAL Policy version 2. Available only where the
+            deployment enables it.
+
+            // Revoke an approver key
+
+            const response = await fetch(
+              "https://parmana-api-real.vercel.app/v2/register/approver-keys/approver-7/key-2026-01/revoke",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${process.env.PARMANA_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ reason: "Key compromised" }),
+              },
+            );
+
+            console.log(response.status, await response.text());
+        - lang: python
+          label: Python
+          source: >-
+            # EXPERIMENTAL Policy version 2. Available only where the deployment
+            enables it.
+
+            # Revoke an approver key
+
+            import json
+
+            import os
+
+            import urllib.request
+
+
+            BODY = r'{"reason":"Key compromised"}'
+
+
+
+            def main() -> None:
+                request = urllib.request.Request(
+                    "https://parmana-api-real.vercel.app/v2/register/approver-keys/approver-7/key-2026-01/revoke",
+                    data=json.dumps(json.loads(BODY)).encode("utf-8"),
+                    method="POST",
+                    headers={
+                        "Authorization": "Bearer " + os.environ.get("PARMANA_API_KEY", ""),
+                        "Content-Type": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(request) as response:
+                    print(response.status, response.read().decode("utf-8"))
+
+
+            if __name__ == "__main__":
+                main()
 components:
   schemas:
+    PolicyV2DecisionRequest:
+      type: object
+      required:
+        - capability
+        - transactionId
+        - target
+      properties:
+        capability:
+          type: string
+          pattern: ^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$
+          description: The capability, as namespace:verb, for example erp:pay-invoice.
+          example: erp:pay-invoice
+        transactionId:
+          type: string
+          minLength: 1
+          description: The caller's id for this decision. Must not be blank.
+        target:
+          type: string
+          description: The target of the action.
+        parameters:
+          type: object
+          additionalProperties: true
+          description: The action's parameters. Defaults to {}.
+        signals:
+          type: object
+          additionalProperties: true
+          description: Caller values, untrusted unless a registered source signed them.
+            Defaults to {}.
+        approvals:
+          type: object
+          additionalProperties: true
+          description: Approval artifacts, checked by the server.
+    PolicyV2Refusal:
+      type: object
+      required:
+        - code
+        - detail
+      properties:
+        code:
+          type: string
+          enum:
+            - NO_APPROVED_POLICY
+            - ACTION_NOT_LIVE
+            - POLICY_INVALID
+            - SOURCE_UNAVAILABLE
+            - SOURCE_NOT_VERIFIED
+            - STALE
+            - INVALID
+            - MISSING_VALUE
+            - THRESHOLD_NOT_APPROVED
+        detail:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+              - check
+              - path
+              - message
+            properties:
+              check:
+                type: integer
+                description: The check number in the policy version 2 specification. 0 means
+                  structure.
+              path:
+                type: string
+              message:
+                type: string
+    PolicyV2Decision:
+      type: object
+      required:
+        - outcome
+        - reason
+        - recordId
+        - released
+      properties:
+        outcome:
+          type: string
+          enum:
+            - APPROVE
+            - REJECT
+            - REVIEW
+        reason:
+          type: string
+        tier:
+          type: string
+        refusal:
+          $ref: "#/components/schemas/PolicyV2Refusal"
+        recordId:
+          type: string
+          description: The evidence record. Replay it with GET
+            /v2/evidence/{recordId}/replay.
+        released:
+          type: boolean
+          enum:
+            - false
+          description: Always false. A policy version 2 decision never releases an action
+            by itself.
+        reviewId:
+          type: string
+          description: Present for a REVIEW outcome. Read it with GET /v2/reviews/{id}.
+    PolicyV2ReviewView:
+      type: object
+      required:
+        - status
+        - reasonCode
+      properties:
+        status:
+          type: string
+          enum:
+            - pending
+            - approved
+            - refused
+            - expired
+        reasonCode:
+          type: string
+          enum:
+            - UNDER_REVIEW
+            - REVIEW_APPROVED
+            - REVIEW_REFUSED
+            - REVIEW_EXPIRED
+    PolicyV2ReviewDecisionRequest:
+      type: object
+      required:
+        - decision
+      properties:
+        decision:
+          type: string
+          enum:
+            - approve
+            - reject
+    PolicyV2ReviewDecision:
+      type: object
+      required:
+        - itemId
+        - status
+        - final
+        - decisionsRecorded
+      properties:
+        itemId:
+          type: string
+        status:
+          type: string
+        final:
+          type: boolean
+          description: True once the review is finished. outcome is set then.
+        outcome:
+          type: string
+          enum:
+            - APPROVED
+            - REFUSED
+        decisionsRecorded:
+          type: integer
+          minimum: 0
+    PolicyV2ReplayResult:
+      type: object
+      required:
+        - reproduced
+        - differences
+      properties:
+        reproduced:
+          type: boolean
+          description: True when the replay gives the same outcome and inputs.
+        differences:
+          type: array
+          items:
+            type: string
+        replayed:
+          type: object
+          additionalProperties: true
+          description: The decision the replay produced, in the evidence record's fields.
+    PolicyV2Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: A stable machine code, for example forbidden, refused,
+            invalid_request, conflict, not_found, not_enabled, not_verified, or
+            unauthenticated.
+        message:
+          type: string
+    PolicyV2SourceInput:
+      type: object
+      required:
+        - name
+        - dataOwner
+        - signer
+        - keyId
+        - publicKeyPem
+        - claims
+        - canApprove
+      properties:
+        name:
+          type: string
+        dataOwner:
+          type: string
+        signer:
+          type: object
+          required:
+            - kind
+          properties:
+            kind:
+              type: string
+              enum:
+                - system
+                - intermediary
+            operator:
+              type: string
+            reviewDate:
+              type: string
+        keyId:
+          type: string
+        publicKeyPem:
+          type: string
+          description: The Ed25519 public key (PEM) the source signs its answers with.
+        claims:
+          type: object
+          additionalProperties:
+            type: string
+          description: Claim name to the unit the source states for it.
+        canApprove:
+          type: boolean
+          description: True if any policy uses this source to approve.
+    PolicyV2ThresholdInput:
+      type: object
+      required:
+        - action
+        - name
+        - value
+        - unit
+        - owner
+        - reason
+        - evidence
+        - nextReview
+        - highValue
+      properties:
+        action:
+          type: string
+        name:
+          type: string
+        value:
+          type: number
+        unit:
+          type: string
+        owner:
+          type: string
+        reason:
+          type: string
+        evidence:
+          type: string
+        nextReview:
+          type: string
+        highValue:
+          type: boolean
+    PolicyV2ActionInput:
+      type: object
+      required:
+        - capability
+        - owner
+        - successor
+        - reviewers
+        - review
+      properties:
+        capability:
+          type: string
+        owner:
+          type: string
+        successor:
+          type: string
+        reviewers:
+          type: array
+          items:
+            type: string
+        review:
+          type: object
+          required:
+            - reviewWindowBusinessDays
+            - approvalValidityMinutes
+          properties:
+            reviewWindowBusinessDays:
+              type: number
+            approvalValidityMinutes:
+              type: number
+    PolicyV2ReviewerGrant:
+      type: object
+      required:
+        - reviewerId
+      properties:
+        reviewerId:
+          type: string
+          minLength: 1
+        maxAmount:
+          type: number
+          description: The largest amount this reviewer may decide. Absent means no amount
+            limit.
+    PolicyV2ApproverKeyInput:
+      type: object
+      required:
+        - approverId
+        - keyId
+        - publicKeyPem
+      properties:
+        approverId:
+          type: string
+        keyId:
+          type: string
+        publicKeyPem:
+          type: string
+          description: The approver's Ed25519 public key (PEM). Approvals signed with it
+            count only while the key is active.
     TransactionStatusEvent:
       type: object
       description: One append-only status event of a Business Transaction (decision D23).
@@ -11984,41 +15044,6 @@ components:
             riskScore: 10
           status: RECEIVED
           createdAt: 2026-07-07T16:38:59.325Z
-    override.schema:
-      title: Override
-      description: Immutable trust artifact recording an authorized human override for
-        a Business Transaction. No API route in this repository currently
-        creates an Override; this schema exists only because
-        ExecutionTrustRecord.overrides is part of the append-only Trust Record
-        shape; every captured example has an empty overrides array.
-      type: object
-      additionalProperties: true
-      required:
-        - overrideId
-        - businessTransactionId
-        - approvedBy
-        - reason
-        - approvedAt
-      properties:
-        overrideId:
-          type: string
-          description: Unique Override identifier.
-        businessTransactionId:
-          type: string
-          description: Business Transaction to which this Override belongs.
-        approvedBy:
-          type: string
-          description: Authorized user or system that approved the Override.
-        reason:
-          type: string
-          description: Human-readable reason for the Override.
-        justification:
-          type: string
-          description: Optional business justification.
-        approvedAt:
-          type: string
-          format: date-time
-          description: UTC timestamp when the Override was approved.
     decision.schema:
       title: Decision
       description: Immutable result of evaluating an Intent against a Policy. Decision
@@ -12405,16 +15430,14 @@ components:
       description: "Canonical immutable record representing everything Parmana knows
         about a Business Transaction: the authoritative source for replay,
         verification, audit, and receipt generation. One Execution Trust Record
-        exists per Business Transaction. overrides, executions, verifications,
-        and receipts are append-only: existing entries are never modified or
-        removed."
+        exists per Business Transaction. executions, verifications, and receipts
+        are append-only: existing entries are never modified or removed."
       type: object
       additionalProperties: true
       required:
         - trustRecordId
         - businessTransactionId
         - transaction
-        - overrides
         - executions
         - verifications
         - receipts
@@ -12431,12 +15454,6 @@ components:
           description: Business Transaction identifier.
         transaction:
           $ref: "#/components/schemas/business-transaction.schema"
-        overrides:
-          type: array
-          description: Override history. Append-only; empty on every transaction in this
-            repository today (no route creates an Override).
-          items:
-            $ref: "#/components/schemas/override.schema"
         executions:
           type: array
           description: Execution history. Append-only.
@@ -12571,7 +15588,6 @@ components:
               riskScore: 10
             status: RECEIVED
             createdAt: 2026-07-07T16:38:59.325Z
-          overrides: []
           executions:
             - executionId: 2be38c15-f93c-4621-9a1c-7570c130dea0
               businessTransactionId: eed2a972-1bf5-4166-8472-761f76fbf1b2
@@ -13884,6 +16900,15 @@ components:
         rejectionReason:
           type: string
           description: Present when REJECTED.
+        capabilities:
+          type: array
+          minItems: 1
+          maxItems: 50
+          description: "For add: the capability names the approver may approve, as the
+            server stored them (duplicates removed)."
+          items:
+            type: string
+            pattern: ^[a-z0-9][a-z0-9._:-]{0,127}$
       examples:
         - changeId: ba7c5827-5844-4069-94fc-9b438ef08f78
           action: add
@@ -13941,6 +16966,15 @@ components:
           type: string
           minLength: 1
           maxLength: 2000
+        capabilities:
+          type: array
+          minItems: 1
+          maxItems: 50
+          description: "Required for add, not allowed for revoke: the capability names
+            this approver may approve. The server removes duplicates."
+          items:
+            type: string
+            pattern: ^[a-z0-9][a-z0-9._:-]{0,127}$
       examples:
         - action: add
           approverId: approver-example
@@ -13950,10 +16984,33 @@ components:
             MCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=
             -----END PUBLIC KEY-----
           reason: Priya approves refunds for the West region from October.
+          capabilities:
+            - erp:pay-invoice
         - action: revoke
           approverId: approver-example
           keyId: approver-example-key-1
           reason: Priya moved to another team.
+      allOf:
+        - if:
+            properties:
+              action:
+                const: add
+            required:
+              - action
+          then:
+            required:
+              - publicKeyPem
+              - capabilities
+        - if:
+            properties:
+              action:
+                const: revoke
+            required:
+              - action
+          then:
+            not:
+              required:
+                - capabilities
     approval-issuer-change-response.schema:
       title: Approver Change Response
       description: Response of POST /approval-issuers/changes (201) and of approve and
@@ -14883,6 +17940,57 @@ components:
             signedAt:
               type: string
               format: date-time
+  requestBodies:
+    PolicyV2RoleGrant:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - callerId
+              - role
+            properties:
+              callerId:
+                type: string
+              role:
+                type: string
+                enum:
+                  - second-approver
+                  - risk-function
+                  - parmana-owner
+                  - source-owner
+                  - action-owner
+                  - gate-owner
+                  - reviewer
+                  - operator
+    PolicyV2Reason:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - reason
+            properties:
+              reason:
+                type: string
+                minLength: 1
+  parameters:
+    PolicyV2Name:
+      name: name
+      in: path
+      required: true
+      schema:
+        type: string
+    PolicyV2Capability:
+      name: capability
+      in: path
+      required: true
+      description: The capability, as namespace:verb.
+      schema:
+        type: string
+        pattern: ^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$
   securitySchemes:
     operatorBearer:
       type: apiKey
@@ -14902,6 +18010,95 @@ components:
         Required on every route not listed as exempt in this document's
         top-level description. See /api-reference/authentication.
   responses:
+    PolicyV2Unauthenticated:
+      description: No key, or an unknown key (EXPERIMENTAL Policy v2 route).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PolicyV2Error"
+          example:
+            error: unauthenticated
+    PolicyV2InvalidRequest:
+      description: The body or a parameter is not valid. The message names the field
+        (EXPERIMENTAL Policy v2 route).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PolicyV2Error"
+          example:
+            error: invalid_request
+            message: capability must look like namespace:verb.
+    PolicyV2Forbidden:
+      description: The caller's role does not allow this change or screen
+        (EXPERIMENTAL Policy v2 route).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PolicyV2Error"
+          example:
+            error: forbidden
+            message: The caller does not hold a role that allows this change.
+    PolicyV2NotFound:
+      description: No such item for this caller (EXPERIMENTAL Policy v2 route).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PolicyV2Error"
+          example:
+            error: not_found
+    PolicyV2NotEnabled:
+      description: This capability is not enabled on this deployment (EXPERIMENTAL
+        Policy v2 route).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PolicyV2Error"
+          example:
+            error: not_enabled
+    PolicyV2Conflict:
+      description: The state changed while it was being saved. Read it again and retry
+        (EXPERIMENTAL Policy v2 route).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PolicyV2Error"
+          example:
+            error: conflict
+            message: The register changed while it was being saved. Read it again and retry.
+    PolicyV2Refused:
+      description: The change is refused by a rule of the register or the review. The
+        message says why. A go-live refusal also lists `missing` (EXPERIMENTAL
+        Policy v2 route).
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/PolicyV2Error"
+              - type: object
+                properties:
+                  missing:
+                    type: array
+                    items:
+                      type: string
+          example:
+            error: refused
+            message: The action has no approved threshold.
+            missing:
+              - an approved threshold
+    PolicyV2RegisterChange:
+      description: The register record the change produced (for example a source,
+        threshold, action, policy version, approver key or role grant). The
+        shape depends on the change (EXPERIMENTAL Policy v2 route).
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
+          example:
+            name: erp-ledger
+            status: proposed
+            proposedBy: caller-ops-1
+            approvals: []
     Unauthorized:
       description: The `Authorization` header is missing, is not a bearer key, or
         names a key the server does not know. Nothing ran. Send a valid key.

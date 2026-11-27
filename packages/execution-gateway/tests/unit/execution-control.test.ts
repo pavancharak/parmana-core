@@ -1,3 +1,4 @@
+import { TrustRecordHasher } from "@parmana/crypto";
 import { generateKeyPairSync } from "node:crypto";
 
 import { describe, expect, it } from "vitest";
@@ -53,6 +54,7 @@ async function fixture() {
       businessTransactionId: content.businessTransactionId,
       policyName: "payments",
       policyVersion: "1.0.0",
+      signalsHash: await new TrustRecordHasher(crypto).hash({}),
       executableContent: content,
     },
     privateKey,
@@ -100,6 +102,7 @@ async function fixture() {
     gatewayIdentity: gatewayPresentation,
   });
   const gateway = new ExecutionGateway({
+    allowUnverifiedSignals: true,
     // Legacy fixture: predates fail-closed policy binding.
     allowUnverifiedPolicy: true,
     publicKey,

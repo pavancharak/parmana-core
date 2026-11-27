@@ -1,7 +1,6 @@
 import {
   Execution,
   ExecutionTrustRecord,
-  Override,
   Receipt,
   Verification,
 } from "../domain/index.js";
@@ -39,14 +38,6 @@ export interface ExecutionTrustRecordRepository {
    * implementations.
    */
   replaceExecution(execution: Execution): Promise<void>;
-
-  /**
-   * Appends an immutable Override.
-   */
-  appendOverride(
-    businessTransactionId: string,
-    override: Override,
-  ): Promise<void>;
 
   /**
    * Appends an immutable Verification.

@@ -64,3 +64,37 @@ describe("createExecutionIntents (ADR-0012)", () => {
     }
   });
 });
+
+describe("executionIntentsEnforced: local mode only (Gap C)", () => {
+  const keys = [
+    "NODE_ENV",
+    "PARMANA_LOCAL_MODE",
+    "EXECUTION_INTENTS_CHECK",
+  ] as const;
+  const original = Object.fromEntries(
+    keys.map((key) => [key, process.env[key]]),
+  );
+
+  afterEach(() => {
+    for (const key of keys) {
+      if (original[key] === undefined) delete process.env[key];
+      else process.env[key] = original[key];
+    }
+  });
+
+  it("stays enforced under NODE_ENV=test without local mode", () => {
+    process.env.NODE_ENV = "test";
+    delete process.env.PARMANA_LOCAL_MODE;
+    process.env.EXECUTION_INTENTS_CHECK = "false";
+
+    expect(executionIntentsEnforced()).toBe(true);
+  });
+
+  it("is off in local mode unless EXECUTION_INTENTS_CHECK is 'true'", () => {
+    process.env.NODE_ENV = "development";
+    process.env.PARMANA_LOCAL_MODE = "true";
+    delete process.env.EXECUTION_INTENTS_CHECK;
+
+    expect(executionIntentsEnforced()).toBe(false);
+  });
+});

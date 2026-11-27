@@ -27,12 +27,14 @@ describe("assertStorageConfigured", () => {
     expect(() => assertStorageConfigured()).not.toThrow();
   });
 
-  it("is a no-op outside test mode when PARMANA_STORAGE=memory", () => {
+  it("refuses memory storage in production, because memory is not durable", () => {
+    // Changed in the production-readiness pass: production with memory storage
+    // used to start silently. It now refuses, before the port is bound.
     process.env.NODE_ENV = "production";
     process.env.PARMANA_STORAGE = "memory";
     delete process.env.DATABASE_URL;
 
-    expect(() => assertStorageConfigured()).not.toThrow();
+    expect(() => assertStorageConfigured()).toThrow(/not durable/);
   });
 
   it("fails closed with a named, actionable error when PARMANA_STORAGE=supabase and DATABASE_URL is not configured", () => {

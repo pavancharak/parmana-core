@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schema version 3: whole-record signatures, the cutover and the rollout · Parmana developer docs</title>
+<meta name="description" content="Schema version 3: whole-record signatures, the cutover and the rollout Portal home · Security · Evidence verification · Environment variables · FINDINGS This page is the complete reference for schema version 3 (v3). It says what v3 covers, ">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="key-management.html">Key management</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../policies/payment-refund-coverage.html">Coverage of the production policy</a></li><li><a href="index.html">Security and cryptographic verification</a></li><li><a href="evidence-verification.html">Evidence verification</a></li><li><a href="schema-v3.html" aria-current="page">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Concepts</span><span class="sep">/</span><span>Schema version 3: whole-record signatures, the cutover and the rollout</span></div>
+    <article>
+<h1 id="schema-version-3-whole-record-signatures-the-cutover-and-the-rollout">Schema version 3: whole-record signatures, the cutover and the rollout<a class="anchor" href="#schema-version-3-whole-record-signatures-the-cutover-and-the-rollout" aria-label="Link to this section">#</a></h1>
+<p><a href="../index.html">Portal home</a> · <a href="index.html">Security</a> · <a href="evidence-verification.html">Evidence verification</a> · <a href="../reference/environment-variables.html">Environment variables</a> · <a href="../FINDINGS.html">FINDINGS</a></p>
+<p>This page is the complete reference for schema version 3 (v3). It says what v3 covers, what it does not, how the server and the verifiers are configured, the decision that was made about the downgrade gap, and the steps to roll it out. Where a statement comes from the code, the decision record or a run, it says so. Where something is not known, it says that too.</p>
+<p>The decision record is <a href="https://github.com/pavancharak/parmana-core/blob/main/docs/internal/adr/ADR-0016-Whole-Record-Signature-Schema-V3.md">ADR-0016</a>.</p>
+<h2 id="summary">Summary<a class="anchor" href="#summary" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Schema 2</strong> signs seven top-level fields with the legacy signature. A change to any other field, such as <code>updatedAt</code>, still verifies. The verifier reports <code>coverage: &quot;legacy&quot;</code>. It was the default until 2026-11-20, and is now the rollback setting.</li>
+<li><strong>Schema 3</strong> signs every top-level field except five excluded fields, with hybrid signatures (ed25519 and dilithium3). A change to any covered field fails. The verifier reports <code>coverage: &quot;full&quot;</code>.</li>
+<li><strong>Schema 3 is the default</strong> (decided 2026-11-20, ADR-0016). An unset <code>HYBRID_SCHEMA_VERSION</code> means 3. The former acknowledgement gate, <code>HYBRID_SCHEMA_V3_ACKNOWLEDGED</code>, is no longer read. The default applies to hybrid signing: a server in <code>CRYPTO_MODE=single</code> issues records with no hybrid envelope, and so no schema 3 record.</li>
+<li><strong>The downgrade gap is decided.</strong> Someone who can write to stored records can remove the hybrid envelope and set the version back to 2. The chosen fix (ADR-0016 option 2) is a cutover instant. From that instant, a record without a valid hybrid envelope is rejected. The instant is <code>2026-11-20T13:01:38Z</code>.</li>
+<li><strong>The cutover holds only if every issuing server runs hybrid signing.</strong> A server in <code>CRYPTO_MODE=single</code> issues records with no hybrid envelope, and every such record would be rejected after the cutover. This is a precondition, not something the repository can check.</li>
+</ul>
+<h2 id="what-each-schema-covers">What each schema covers<a class="anchor" href="#what-each-schema-covers" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Schema version</th>
+<th>Signatures</th>
+<th>Fields covered</th>
+<th>Coverage reported</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>2</strong> (or unversioned)</td>
+<td>Legacy <code>signature</code> (ed25519), plus <code>signatures</code> only when hybrid is on</td>
+<td><code>trustRecordId</code>, <code>businessTransactionId</code>, <code>transaction</code>, <code>authorization</code>, <code>executions</code>, <code>createdAt</code></td>
+<td><code>legacy</code></td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td>Hybrid <code>signatures</code>: ed25519 and dilithium3, both required</td>
+<td>Every top-level field except <code>signature</code>, <code>signatures</code>, <code>schemaVersion</code>, <code>verifications</code> and <code>receipts</code>. <code>schemaVersion</code> is part of the hybrid message, so changing it breaks the signatures.</td>
+<td><code>full</code></td>
+</tr>
+</tbody></table></div>
+<p>The exclusion list is the same in the verifier&#39;s <code>docs/FORMAT.md</code> and in the signing code (<code>WHOLE_RECORD_EXCLUDED_FIELDS</code> in <code>packages/crypto/src/ExecutionTrustRecordCanonicalView.ts</code>). It was checked against both on 2026-11-20.</p>
+<h3 id="what-v3-still-does-not-cover">What v3 still does not cover<a class="anchor" href="#what-v3-still-does-not-cover" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong><code>verifications</code> and <code>receipts</code> are not covered.</strong> They are attached after signing. A receipt carries its own signature, which is checked separately.</li>
+<li><strong>The legacy <code>signature</code> does not cover <code>schemaVersion</code>.</strong> That is the root of the downgrade gap. v3 covers <code>schemaVersion</code> only through its hybrid message. If the hybrid envelope is removed, nothing signs the version, so the cutover is what closes the gap.</li>
+<li><strong>Receipts keep their own hybrid version.</strong> <code>ReceiptCrypto</code> signs receipts with hybrid message version 2 (a constant in <code>packages/crypto/src/ReceiptCrypto.ts</code>). The default schema change does not affect receipts.</li>
+<li><strong>v3 does not prove the business action happened.</strong> It proves the record is unchanged since the key holder signed it. Use the connector&#39;s own records to show the action ran.</li>
+</ul>
+<h3 id="verified-results">Verified results<a class="anchor" href="#verified-results" aria-label="Link to this section">#</a></h3>
+<p>The following were checked in this portal, on records from the same run (see <a href="evidence-verification.html">Evidence verification</a> for the commands):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Change to the record</th>
+<th>Schema 2 (<code>legacy</code>)</th>
+<th>Schema 3 (<code>full</code>)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A covered field (<code>executions[0].decision.outcome</code>)</td>
+<td>Detected: <code>trustRecordHash mismatch</code>, signature fails</td>
+<td>Detected</td>
+</tr>
+<tr>
+<td>An uncovered field (<code>updatedAt</code>)</td>
+<td><strong>Not detected: <code>valid: true</code></strong></td>
+<td>Detected: both signatures fail</td>
+</tr>
+</tbody></table></div>
+<p>With the v3 settings below, a record reported <code>&quot;coverage&quot;:&quot;full&quot;</code> under the verifier&#39;s default trust rules (no legacy flags). The TypeScript and Python SDK offline checks agreed (<code>coverage: &quot;full&quot;</code>), and a tampered copy was rejected by all three.</p>
+<h2 id="server-configuration">Server configuration<a class="anchor" href="#server-configuration" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CRYPTO_MODE</code></td>
+<td><code>single</code></td>
+<td><code>hybrid</code> makes the server add a <code>signatures</code> array to each record. In <code>single</code> mode there is no hybrid envelope.</td>
+</tr>
+<tr>
+<td><code>PRIMARY_SIGNATURE_PROVIDER</code></td>
+<td><code>ed25519</code></td>
+<td>The primary algorithm.</td>
+</tr>
+<tr>
+<td><code>SECONDARY_SIGNATURE_PROVIDER</code></td>
+<td>none</td>
+<td>Required when <code>CRYPTO_MODE=hybrid</code>. Must differ from the primary. The server refuses to start otherwise.</td>
+</tr>
+<tr>
+<td><code>HYBRID_SCHEMA_VERSION</code></td>
+<td><code>3</code></td>
+<td><code>3</code> only. Unset means 3. <code>2</code> is refused at start-up (discarded, D24). Any other value is refused too.</td>
+</tr>
+<tr>
+<td><code>HYBRID_SCHEMA_V3_ACKNOWLEDGED</code></td>
+<td>not read</td>
+<td>Ignored. It was the issuance gate until schema 3 became the default. Remove it from environment files.</td>
+</tr>
+<tr>
+<td><code>HYBRID_SIGNATURE_REQUIRED</code></td>
+<td><code>false</code></td>
+<td>When <code>true</code>, verifying a record with no <code>signatures</code> array, or a partial one, is a rejection, whatever its version.</td>
+</tr>
+<tr>
+<td><code>HYBRID_REQUIRED_FROM</code></td>
+<td>none</td>
+<td>The cutover (UTC, ending in <code>Z</code>). From this instant, a record needs a valid hybrid envelope. Enforced by the server&#39;s verification path as well as by verifiers.</td>
+</tr>
+</tbody></table></div>
+<p>Start-up refusals you will see:</p>
+<ul>
+<li><code>CRYPTO_MODE=hybrid</code> without <code>SECONDARY_SIGNATURE_PROVIDER</code>, or with the same provider as the primary.</li>
+<li>A <code>HYBRID_SCHEMA_VERSION</code> other than <code>3</code>, including <code>2</code>, which is discarded (D24).</li>
+<li>A <code>HYBRID_REQUIRED_FROM</code> that is not a UTC ISO-8601 timestamp.</li>
+</ul>
+<p>If <code>CRYPTO_MODE=hybrid</code> is set but no secondary provider is, the server releases the action and then fails to write the record. Its response is <code>500</code> with <code>Secondary signature provider is not configured.</code>. The start-up check above now stops this before any action is released.</p>
+<h2 id="verifier-configuration">Verifier configuration<a class="anchor" href="#verifier-configuration" aria-label="Link to this section">#</a></h2>
+<p>The verifiers are the parties who rely on the record, so they set the policy for what they accept.</p>
+<ul>
+<li><strong>The trust file</strong> (<code>trust.json</code> for the standalone verifier):<ul>
+<li><code>hybridRequiredFrom</code>: the cutover. It must be the same instant the server uses.</li>
+<li><code>allowLegacyV2</code>: <code>true</code> to accept schema 2 records. Without it, schema 2 and unversioned records are refused, because they sign seven fields.</li>
+<li><code>allowLegacyOnly</code>: <code>true</code> to accept a record with no hybrid envelope where no cutover is set. Refused by default.</li>
+</ul>
+</li>
+<li><strong>Coverage in the result.</strong> Every verifier reports <code>coverage</code>. A caller that needs the whole record covered must reject <code>legacy</code>.</li>
+<li><strong>SDK option.</strong> The TypeScript SDK takes <code>{ requireFullCoverage: true }</code> as the third argument to <code>verifyExecutionTrustRecordOffline</code>. The Python SDK takes <code>require_full_coverage=True</code> to <code>verify_execution_trust_record_offline</code>. With it, a record that is not <code>full</code> is <code>valid: false</code>, and the error names the option. The default result is unchanged.</li>
+</ul>
+<h2 id="the-decision">The decision<a class="anchor" href="#the-decision" aria-label="Link to this section">#</a></h2>
+<p>ADR-0016 listed three ways to close the downgrade gap:</p>
+<ol>
+<li>Cover <code>schemaVersion</code> in the legacy signature. <strong>Rejected.</strong> It changes the legacy signed bytes, which breaks an acceptance criterion and every pre-hybrid verifier.</li>
+<li><strong>Require a hybrid envelope for records created at or after a pinned cutover.</strong> <strong>Chosen (2026-11-20).</strong></li>
+<li>Keep only the server-side switch. Leaves offline verification open, so third parties could be downgraded.</li>
+</ol>
+<p>The owner&#39;s decisions on 2026-11-20:</p>
+<ul>
+<li><strong>Option 2 is chosen.</strong> The verifier already implements it as <code>hybridRequiredFrom</code>.</li>
+<li><strong>The cutover instant is <code>2026-11-20T13:01:38Z</code>.</strong> It is set now.</li>
+<li><strong>No record was issued in <code>single</code> mode.</strong> So no record predates the cutover, and the limit for pre-cutover records does not apply.</li>
+</ul>
+<p><strong>The precondition is the owner&#39;s to keep.</strong> At the cutover instant, every server that issues records must run <code>CRYPTO_MODE=hybrid</code>, with <code>SECONDARY_SIGNATURE_PROVIDER</code> set and <code>HYBRID_SIGNATURE_REQUIRED=true</code>. The repository cannot check this from where it runs. If a server is still in <code>single</code> mode after the instant, the verifier rejects its new records.</p>
+<h3 id="issuance-gate">Issuance gate<a class="anchor" href="#issuance-gate" aria-label="Link to this section">#</a></h3>
+<p>ADR-0016 set four conditions for issuing v3. Each was checked on 2026-11-20:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The downgrade gap is closed, or accepted in writing, with the option chosen</td>
+<td>Met</td>
+<td>Option 2 recorded in ADR-0016, cutover <code>2026-11-20T13:01:38Z</code></td>
+</tr>
+<tr>
+<td>The public verifier and the SDKs read v3 and report <code>coverage</code></td>
+<td>Met</td>
+<td><code>parmana-verifier</code> 2.0.3 on npm and PyPI; <code>@parmana/sdk</code> 4.1.1 on npm; both read v3 and report <code>coverage</code></td>
+</tr>
+<tr>
+<td><code>docs/FORMAT.md</code> describes v3 coverage exactly as the code signs it</td>
+<td>Met</td>
+<td>Exclusion list matches <code>WHOLE_RECORD_EXCLUDED_FIELDS</code> in the signing code</td>
+</tr>
+<tr>
+<td>The downgrade decision is recorded in the ADR</td>
+<td>Met</td>
+<td>ADR-0016, &quot;Decision recorded&quot; and &quot;Issuance gate: status&quot;</td>
+</tr>
+</tbody></table></div>
+<p>The gate is met, and on 2026-11-20 the owner made schema 3 the default. The acknowledgement that the gate used to require is no longer read.</p>
+<h2 id="rollout">Rollout<a class="anchor" href="#rollout" aria-label="Link to this section">#</a></h2>
+<p>Each step is for each deployment. Do not skip a step.</p>
+<ol>
+<li><strong>Confirm the precondition.</strong> Every server that issues records runs <code>CRYPTO_MODE=hybrid</code>, with a secondary provider that differs from the primary, and <code>HYBRID_SIGNATURE_REQUIRED=true</code>. Keep this set for the lifetime of the deployment.</li>
+<li><strong>Set the cutover on the server:</strong> <code>HYBRID_REQUIRED_FROM=2026-11-20T13:01:38Z</code>.</li>
+<li><strong>Set the cutover in every verifier trust file:</strong> <code>hybridRequiredFrom: &quot;2026-11-20T13:01:38Z&quot;</code>. Do this before, or with, step 4, so a verifier never accepts a record that a stricter one would refuse.</li>
+<li><strong>Confirm the server signs schema 3.</strong> There is nothing to enable: schema 3 is the default. Restart the server, and confirm that a new hybrid record reports <code>schemaVersion</code> 3. If you must roll back, set <code>HYBRID_SCHEMA_VERSION=2</code>.</li>
+<li><strong>Check one record end to end.</strong> Create a record and verify it offline. It should report <code>valid: true</code> and <code>coverage: &quot;full&quot;</code>. Change one covered field in a copy and confirm it is rejected.</li>
+<li><strong>Tell consumers what to require.</strong> Each consumer that needs the whole record should require <code>coverage: &quot;full&quot;</code>, or use <code>requireFullCoverage</code>.</li>
+</ol>
+<h3 id="rollback">Rollback<a class="anchor" href="#rollback" aria-label="Link to this section">#</a></h3>
+<p>Schema version 2 has been discarded (decision D24), so there is no rollback to it: <code>HYBRID_SCHEMA_VERSION=2</code> is refused at start-up. Keep the hybrid settings and the cutover in place, so records stay hybrid-signed and the cutover stays enforced. <strong>Not tested in this repository. Check it on a non-production deployment before relying on it.</strong></p>
+<h2 id="cost-size-and-speed">Cost: size and speed<a class="anchor" href="#cost-size-and-speed" aria-label="Link to this section">#</a></h2>
+<p>Measured on 2026-11-20 with the built packages in this repository, using the server&#39;s own signing code (<code>VerificationCrypto</code>) and the TypeScript SDK&#39;s offline verifier. The record was a minimal one (one transaction, no executions), so treat the byte counts as the cost of the signature envelope, not a size for production records. To reproduce these figures on your hardware, run <code>npx tsx scripts/bench-whole-record-cost.ts 1000</code> from the repository root after <code>npm run build:packages</code>. Each figure is the average over 1000 iterations, from two runs that agreed to within about 0.1 ms.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Record size</th>
+<th>Sign</th>
+<th>Offline verify</th>
+<th>Coverage reported</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Single (legacy signature only)</td>
+<td>600 bytes</td>
+<td>about 0.15 ms</td>
+<td>about 0.15 ms</td>
+<td><code>legacy</code></td>
+</tr>
+<tr>
+<td>Schema 2, hybrid</td>
+<td>5,248 bytes</td>
+<td>about 1.7 ms</td>
+<td>about 0.6 ms</td>
+<td><code>legacy</code></td>
+</tr>
+<tr>
+<td>Schema 3, hybrid</td>
+<td>5,248 bytes</td>
+<td>about 1.6 ms</td>
+<td>about 0.6 ms</td>
+<td><code>full</code></td>
+</tr>
+</tbody></table></div>
+<p>What this means:</p>
+<ul>
+<li><strong>Schema 2 and schema 3 cost the same.</strong> Both carry the same hybrid envelope. Going to v3 changes what is covered, not how much it costs.</li>
+<li><strong>The hybrid envelope is the cost.</strong> Adding it multiplies the record size by about 8.7 for this record (an extra 4,648 bytes). Signing is about 10 times slower than the single signature, and verifying about 4 times slower.</li>
+<li><strong>The overhead is per record, not per field.</strong> The signatures have a fixed size, so the extra bytes do not grow with the record&#39;s payload. Records with large payloads gain proportionally less.</li>
+<li><strong>The environment was a 4-vCPU Linux container on Node 24.22.3.</strong> Other hardware will differ. Re-measure on the deployment&#39;s own machines before sizing storage or latency budgets.</li>
+<li><strong>Algorithm names.</strong> <code>dilithium3</code> is an alias for ML-DSA-65 in this codebase, so the configuration above and the benchmark used the same algorithm.</li>
+</ul>
+<h2 id="known-limits-and-open-items">Known limits and open items<a class="anchor" href="#known-limits-and-open-items" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>The default was changed on 2026-11-20</strong> by the owner&#39;s decision, recorded in <a href="../FINDINGS.html#f1-default-record-schema-version-3-since-2026-11-20-was-version-2-signing-7-fields">FINDINGS F1</a>. Changing it again is a new decision.</li>
+<li><strong>Third-party readers are unknown, and the owner reports no active consumer.</strong> Only the TypeScript and Python SDKs and <code>parmana-verifier</code> 2.0.3 have been checked to read v3. Whether other tools do is not known (F11). Any consumer added later must read v3 before it receives records.</li>
+<li><strong>Size and speed were measured</strong> (see <a href="#cost-size-and-speed">Cost</a>). Re-measure on the deployment&#39;s own hardware before sizing storage or latency budgets.</li>
+<li><strong>The cutover and the default rest on owner statements.</strong> The owner reports that no <code>single</code>-mode record exists and that no consumer is active. The repository cannot confirm either, or that every issuing server is in hybrid mode.</li>
+<li><strong>Verifier-side changes are in another repository.</strong> The <code>hybridRequiredFrom</code> and <code>allowLegacyV2</code> handling lives in <code>parmana-verifier</code>. This portal documents it but does not change it.</li>
+</ul>
+<h2 id="related">Related<a class="anchor" href="#related" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/internal/adr/ADR-0016-Whole-Record-Signature-Schema-V3.md">ADR-0016</a>: the decision record and the issuance gate.</li>
+<li><a href="evidence-verification.html">Evidence verification</a>: how to verify a record offline.</li>
+<li><a href="../reference/environment-variables.html">Environment variables</a>: every setting above, with its default.</li>
+<li><a href="index.html#schema-versions-and-coverage">Security</a>: the summary this page expands.</li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/security/schema-v3.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="evidence-verification.html"><span>Previous</span>Evidence verification</a><a class="pn next" href="../tutorials/index.html"><span>Next</span>Tutorials</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#summary">Summary</a></li><li class="d2"><a href="#what-each-schema-covers">What each schema covers</a></li><li class="d3"><a href="#what-v3-still-does-not-cover">What v3 still does not cover</a></li><li class="d3"><a href="#verified-results">Verified results</a></li><li class="d2"><a href="#server-configuration">Server configuration</a></li><li class="d2"><a href="#verifier-configuration">Verifier configuration</a></li><li class="d2"><a href="#the-decision">The decision</a></li><li class="d3"><a href="#issuance-gate">Issuance gate</a></li><li class="d2"><a href="#rollout">Rollout</a></li><li class="d3"><a href="#rollback">Rollback</a></li><li class="d2"><a href="#cost-size-and-speed">Cost: size and speed</a></li><li class="d2"><a href="#known-limits-and-open-items">Known limits and open items</a></li><li class="d2"><a href="#related">Related</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

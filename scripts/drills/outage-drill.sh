@@ -67,13 +67,12 @@ start_server() {
     PARMANA_STORAGE=postgres \
     DATABASE_URL="postgresql://$PGUSER:$PGPASSWORD@127.0.0.1:$PROXY_LISTEN/postgres" \
     PARMANA_KEY_DIR="$WORK/keys" \
-    PARMANA_POLICY_DIR="$ROOT/policies" \
+    PARMANA_POLICY_DIR="$ROOT/fixtures/policies" \
     PARMANA_API_KEYS="[{\"callerId\":\"drill-caller\",\"keyHash\":\"$API_KEY_HASH\",\"allowedCapabilities\":[\"*\"],\"allowedPrincipalIds\":[\"integration-test\"]}]" \
     PARMANA_PORT="$API_PORT" \
     PORT="$API_PORT" \
     PARMANA_SERVICE_PORT="$API_PORT" \
     PARMANA_DATABASE_CA_FILE= \
-    PARMANA_ALLOW_UNGOVERNED_POLICY=true \
     EXECUTION_INTENTS_CHECK=true \
     SIGNING_READINESS_CHECK=true \
     node --import tsx src/server.ts > "$WORK/server.log" 2>&1 &
@@ -110,6 +109,9 @@ step "Migrations and policies"
 PGDATABASE=postgres ROLES_FILE="$ROOT/docker/local/postgres-roles.sql" \
   MIGRATIONS_DIR="$ROOT/supabase/migrations" bash docker/local/migrate.sh
 node docker/local/seed-policies.mjs
+# The drill's transaction names payment-limit 1.0.0, which is a fixture, not a
+# live policy. Seed the fixtures too, so the baseline finds the policy it names.
+PARMANA_POLICY_DIR="$ROOT/fixtures/policies" node docker/local/seed-policies.mjs
 
 # Signing keys, generated for the drill only.
 mkdir -p "$WORK/keys"
@@ -197,7 +199,7 @@ set +e
     NODE_ENV=development \
     PARMANA_STORAGE=memory \
     PARMANA_KEY_DIR="$WORK/keys" \
-    PARMANA_POLICY_DIR="$ROOT/policies" \
+    PARMANA_POLICY_DIR="$ROOT/fixtures/policies" \
     KEY_PROVIDER=aws-kms \
     AWS_REGION=ap-south-1 \
     AWS_ACCESS_KEY_ID=drill-not-real \

@@ -76,6 +76,30 @@ If the server refuses to start with `AWS_ROLE_ARN` or `Secrets Manager` errors, 
 - It does not change how v2 or v3 records are signed.
 - It does not work on AWS KMS. ML-DSA-65 keys are not held in KMS yet (option B in `KEY-DELIVERY.md`).
 
+## The secondary key secret (dilithium3, F26)
+
+This is separate from option A. It holds only the secondary (dilithium3) private key, read through `PARMANA_SECONDARY_KEY_SECRET_ID`. The primary and other keys stay where they are.
+
+Store the key with `scripts/store-secondary-key.mjs`, and only with it. The script generates a fresh key, so the origin of every stored key is known. Don't store a key from `keys/` or any other folder: such a key may be a copy of a production key, and its origin can't be checked afterwards.
+
+1. Apply `infra/parmana-prod-signing/main.tf` (production) or `infra/parmana-test-signing/main.tf` (test) after reviewing `terraform plan`. Use the matching folder and variable file only. Each stack refuses to run in an account other than the one its variable file names. Do not apply the production folder until open item PROD-1 is resolved. Terraform creates the secret and its policies. It does not create the key value.
+2. Store a fresh key (Node 24 or later, from the repository root):
+
+   ```bash
+   node scripts/store-secondary-key.mjs --secret-id <secret-name> --region <region>
+   ```
+
+   To check the key is generated and valid without storing it, add `--dry-run`. The script never prints key material. It prints the secret's ARN and the new version id.
+
+3. Set `PARMANA_SECONDARY_KEY_SECRET_ID` and `AWS_REGION`. The server refuses to start if the secret cannot be read or does not hold an ML-DSA-65 key.
+4. Confirm the server starts, and that CloudTrail shows `GetSecretValue` only from the server role.
+
+Rotation: run step 2 again. The server picks up the new value after the five-minute cache expires, or on restart. Once the new key is trusted everywhere it is needed, retire the old one.
+
+The test account run is recorded in `TEST-ACCOUNT-SECRET-CHECK.md`.
+
+Not done: this has not been run against AWS production. Step 4's CloudTrail alert is an operator step.
+
 ## Open checks
 
 - Whether Vercel's OIDC role can read the secret has **not been verified**. Verify it on Preview before production.

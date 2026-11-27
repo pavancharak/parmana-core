@@ -8,6 +8,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // Strategic-positioning claim (docs/internal/CLAIMS.md 2.24): the authorization
@@ -58,8 +59,8 @@ async function buildTransaction(
       createdAt: fixedDate,
     },
     policy: {
-      name: "vendor-payment",
-      version: "2.1.0",
+      name: "payment-limit",
+      version: "1.0.0",
       schemaVersion: "1.0.0",
     },
     signals: {
@@ -79,8 +80,9 @@ async function buildTransaction(
 
 function buildRuntime() {
   return new RuntimeBuilder()
+    .withBusinessSignalSources(demoTrustedSources())
     .withSignalStateVerifier(demoApprovalSignalVerifier())
-    .withPolicyRepository(new FilePolicyRepository("policies"))
+    .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
     .build(new MemoryExecutionTrustRecordRepository());
 }
 

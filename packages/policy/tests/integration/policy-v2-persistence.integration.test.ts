@@ -102,6 +102,7 @@ describe.skipIf(!databaseConfigured)(
         maxAmount: 50_000,
       });
       const first = queue.open({
+        decisionRecord: { recordId: "ev-1", hash: "0".repeat(64) },
         capability: CAPABILITY,
         target: "INV-1",
         requester: "agent-7",
@@ -127,6 +128,7 @@ describe.skipIf(!databaseConfigured)(
       expect(restored.get(first.id)?.status).toBe("open");
       expect(restored.canReview(first.id, "rev-1")).toBe(true);
       const second = restored.open({
+        decisionRecord: { recordId: "ev-1", hash: "0".repeat(64) },
         capability: CAPABILITY,
         target: "INV-2",
         requester: "agent-7",

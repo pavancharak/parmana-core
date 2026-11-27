@@ -42,7 +42,7 @@ def run_quickstart(
 
     # test:fixture-execute is a generic, test-only connector
     # (NODE_ENV=test only, no credentials needed) built for exactly this
-    # walkthrough. The policy name "vendor-payment" is unrelated to any
+    # walkthrough. The policy name "payment-limit" is unrelated to any
     # connector, it's just the name of the example policy this
     # transaction is evaluated against.
     transaction = create_business_transaction(
@@ -52,7 +52,7 @@ def run_quickstart(
         target="vendor://payments",
         parameters={"amount": 1000, "currency": "USD"},
         policy=PolicyReference(
-            name="vendor-payment", version="2.1.0", schema_version="1.0.0"
+            name="payment-limit", version="1.0.0", schema_version="1.0.0"
         ),
         signals={
             # No agent action is authorized without a signed human approval.
@@ -67,7 +67,7 @@ def run_quickstart(
             "sufficientFunds": True,
             "paymentAmount": 1000,
             "riskScore": 5,
-            # vendor-payment@2.1.0 declares boundSignals: { "vendorId": "target" },
+            # payment-limit@1.0.0 declares boundSignals: { "vendorId": "target" },
             # this must exactly equal intent.target, checked before policy
             # evaluation ever runs.
             "vendorId": "vendor://payments",
@@ -79,7 +79,7 @@ def run_quickstart(
     print(f"\nBusiness Transaction ID: {transaction.business_transaction_id}")
     print(f"Trust Record ID:         {trust_record.trust_record_id}")
     print(f"Trust Record Hash:       {trust_record.trust_record_hash}")
-    print(f"Signature Algorithm:     {trust_record.signature.algorithm}")
+    print(f"Signature Algorithm:     {trust_record.signatures[0].algorithm}")
 
     print("\nFull Execution Trust Record:")
     print(json.dumps(asdict(trust_record), indent=2, default=str))

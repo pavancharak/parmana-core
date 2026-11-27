@@ -32,20 +32,14 @@ const COMMITMENT_PREFIX = Buffer.from(
  */
 export interface OfflineVerificationResult {
   /**
-   * True only when the hash matches, the legacy signature verifies, and any
-   * hybrid `signatures` array verifies.
+   * True only when the hash matches and the signatures verify. For a trust record, the signatures
+   * array must verify, and from the cutover on it must carry both hybrid signatures. For an
+   * execution intent, its signature must verify.
    */
   readonly valid: boolean;
 
   /**
-   * "full" when a schema version 3 hybrid record verifies, otherwise "legacy".
-   * Set for trust records only.
-   */
-  readonly coverage?: "full" | "legacy" | undefined;
-
-  /**
-   * Whether the hybrid `signatures` array verifies. Undefined when the record
-   * has none. Set for trust records only.
+   * Whether the trust record's `signatures` array verifies. Set for trust records only.
    */
   readonly hybridSignaturesValid?: boolean | undefined;
 
@@ -53,11 +47,6 @@ export interface OfflineVerificationResult {
    * The record's own hash matches a fresh SHA-256 of its canonical form.
    */
   readonly hashValid: boolean;
-
-  /**
-   * The Ed25519 signature verifies with the supplied public key.
-   */
-  readonly legacySignatureValid: boolean;
 
   readonly algorithmsChecked: readonly string[];
 
@@ -92,7 +81,6 @@ const TRUST_RECORD_FIELDS = [
   "businessTransactionId",
   "transaction",
   "authorization",
-  "overrides",
   "executions",
   "createdAt",
 ] as const;
@@ -142,9 +130,7 @@ function verifyEd25519(
   return verify(null, commitment, publicKey, signature);
 }
 
-const DEFAULT_SCHEMA_VERSION = 2;
 const WHOLE_RECORD_SCHEMA_VERSION = 3;
-const SUPPORTED_SCHEMA_VERSIONS = new Set<number>([2, 3]);
 
 // Top-level fields a schema version 3 message does not cover.
 const WHOLE_RECORD_EXCLUDED_FIELDS = new Set<string>([
@@ -181,11 +167,11 @@ function hybridMessage(record: JsonObject, schemaVersion: number): Uint8Array {
 }
 
 /**
- * Verifies a hybrid `signatures` array. Fail-closed: exactly two entries, one
- * Ed25519 and one ML-DSA-65 (dilithium3), each verifying over `message` with
- * the key its keyId names. Any other shape is a failure.
+ * Verifies a schema version 3 `signatures` array (decision D24). One or two entries, each for an
+ * algorithm this verifier supports (ed25519 or dilithium3), no algorithm repeated, and every entry
+ * verifying over `message` with the key its keyId names. Any other shape is a failure.
  */
-function verifyHybridEntries(
+function verifyEnvelope(
   entries: unknown,
   message: Uint8Array,
   publicKeys: PublicKeys,
@@ -202,12 +188,19 @@ function verifyHybridEntries(
 
   const names = entries.map((e) => String((e as JsonObject).algorithm));
 
+  if (entries.length < 1 || entries.length > 2) {
+    errors.push(
+      `signatures must have one or two entries, got ${entries.length}.`,
+    );
+    return false;
+  }
+
   if (
-    entries.length !== 2 ||
-    [...names].sort().join(",") !== "dilithium3,ed25519"
+    names.some((name) => name !== "ed25519" && name !== "dilithium3") ||
+    new Set(names).size !== names.length
   ) {
     errors.push(
-      `signatures must be exactly one ed25519 and one dilithium3 entry, got [${names.join(", ")}].`,
+      `signatures must name each algorithm at most once, from ed25519 and dilithium3, got [${names.join(", ")}].`,
     );
     return false;
   }
@@ -347,57 +340,85 @@ function verifySigned(
  *   `GET /trust-records/{id}` returned it, or as parsed from a JSON file.
  * @param publicKeys Key ID to PEM public key.
  */
+/** Options for verifyExecutionTrustRecordOffline. */
+export interface VerifyTrustRecordOptions {
+  /**
+   * The cutover (ADR-0016), an ISO-8601 UTC timestamp ending in "Z". A record created at or after it
+   * must carry both hybrid signatures. Before it, one valid signature is accepted.
+   */
+  readonly hybridRequiredFrom?: string;
+}
+
 export function verifyExecutionTrustRecordOffline(
   trustRecord: unknown,
   publicKeys: PublicKeys,
+  options: VerifyTrustRecordOptions = {},
 ): OfflineVerificationResult {
   const record = (trustRecord ?? {}) as JsonObject;
-  const result = verifySigned(
-    record,
-    TRUST_RECORD_FIELDS,
-    "trustRecordHash",
-    publicKeys,
-  );
+  const errors: string[] = [];
+  const algorithmsChecked: string[] = [];
 
-  const schemaVersion =
-    typeof record.schemaVersion === "number"
-      ? record.schemaVersion
-      : DEFAULT_SCHEMA_VERSION;
+  const canonical = canonicalSerialize(pick(record, TRUST_RECORD_FIELDS));
+  const expectedHash = createHash("sha256").update(canonical).digest("hex");
+  const hashValid = expectedHash === record.trustRecordHash;
 
-  let hybridValid: boolean | undefined;
-
-  if (!SUPPORTED_SCHEMA_VERSIONS.has(schemaVersion)) {
-    result.errors.push(
-      `unsupported schemaVersion ${String(schemaVersion)}: expected 2 or 3.`,
+  if (!hashValid) {
+    errors.push(
+      `trustRecordHash mismatch: expected ${expectedHash}, got ${String(record.trustRecordHash)}.`,
     );
-    hybridValid = false;
-  } else if (record.signatures !== undefined && record.signatures !== null) {
-    hybridValid = verifyHybridEntries(
-      record.signatures,
-      hybridMessage(record, schemaVersion),
-      publicKeys,
-      result.algorithmsChecked,
-      result.errors,
+  }
+
+  // Schema version 3 only (decision D24). The signatures array covers the whole record.
+  let hybridValid = false;
+
+  if (record.schemaVersion !== WHOLE_RECORD_SCHEMA_VERSION) {
+    errors.push(
+      `unsupported schemaVersion ${String(record.schemaVersion)}: only schemaVersion 3 is accepted (decision D24).`,
     );
-  } else if (schemaVersion === WHOLE_RECORD_SCHEMA_VERSION) {
-    result.errors.push(
+  } else if (record.signatures === undefined || record.signatures === null) {
+    errors.push(
       "schemaVersion 3 record has no signatures array: a whole-record signature is required.",
     );
-    hybridValid = false;
+  } else {
+    hybridValid = verifyEnvelope(
+      record.signatures,
+      hybridMessage(record, WHOLE_RECORD_SCHEMA_VERSION),
+      publicKeys,
+      algorithmsChecked,
+      errors,
+    );
+  }
+
+  // From the cutover on, both hybrid signatures are required.
+  if (
+    options.hybridRequiredFrom !== undefined &&
+    isAtOrAfterCutover(record.createdAt, options.hybridRequiredFrom)
+  ) {
+    const count = Array.isArray(record.signatures)
+      ? record.signatures.length
+      : 0;
+
+    if (hybridValid && count !== 2) {
+      errors.push(
+        `record created at or after hybridRequiredFrom (${options.hybridRequiredFrom}) must carry both hybrid signatures.`,
+      );
+      hybridValid = false;
+    }
   }
 
   return {
-    valid: result.hashValid && result.signatureValid && hybridValid !== false,
-    hashValid: result.hashValid,
-    legacySignatureValid: result.signatureValid,
-    algorithmsChecked: result.algorithmsChecked,
-    errors: result.errors,
-    coverage:
-      schemaVersion === WHOLE_RECORD_SCHEMA_VERSION && hybridValid === true
-        ? "full"
-        : "legacy",
+    valid: hashValid && hybridValid,
+    hashValid,
     hybridSignaturesValid: hybridValid,
+    algorithmsChecked,
+    errors,
   };
+}
+
+/** True when createdAt is at or after the cutover (the instant itself is included). */
+function isAtOrAfterCutover(createdAt: unknown, cutover: string): boolean {
+  const created = typeof createdAt === "string" ? Date.parse(createdAt) : NaN;
+  return !Number.isNaN(created) && created >= Date.parse(cutover);
 }
 
 /**
@@ -425,7 +446,6 @@ export function verifyExecutionIntentOffline(
   return {
     valid: result.hashValid && result.signatureValid,
     hashValid: result.hashValid,
-    legacySignatureValid: result.signatureValid,
     algorithmsChecked: result.algorithmsChecked,
     errors: result.errors,
   };

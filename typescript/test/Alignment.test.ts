@@ -320,7 +320,6 @@ describe("offline verification", () => {
     expect(result).toEqual({
       valid: true,
       hashValid: true,
-      legacySignatureValid: true,
       algorithmsChecked: ["ed25519"],
       errors: [],
     });
@@ -334,7 +333,6 @@ describe("offline verification", () => {
 
     expect(result.valid).toBe(false);
     expect(result.hashValid).toBe(false);
-    expect(result.legacySignatureValid).toBe(false);
   });
 
   it("reports a missing public key instead of throwing", () => {
@@ -356,7 +354,7 @@ describe("offline verification", () => {
     expect(result.errors[0]).toMatch(/not an Ed25519 key/);
   });
 
-  it("verifies a Trust Record signed the way the server signs one, and refuses a malformed hybrid record", async () => {
+  it("verifies a Trust Record signed the way the server signs a schema version 3 record, and refuses a malformed envelope", async () => {
     const { privateKey, publicKey } = generateKeyPairSync("ed25519");
 
     const body = {
@@ -366,44 +364,46 @@ describe("offline verification", () => {
       executions: [],
       createdAt: "2026-09-25T00:00:00.000Z",
     };
-    const canonical = canonicalSerialize(body);
     const { createHash, sign } = await import("node:crypto");
+    const trustRecordHash = createHash("sha256")
+      .update(canonicalSerialize(body))
+      .digest("hex");
+
+    // Schema version 3 signs every field except the signatures, and the schema version is part of
+    // the message (decision D24). There is no legacy signature.
+    const covered = { ...body, trustRecordHash, schemaVersion: 3 };
     const record = {
-      ...body,
-      trustRecordHash: createHash("sha256").update(canonical).digest("hex"),
-      signature: {
-        algorithm: "ed25519",
-        keyId: "default",
-        value: sign(null, canonical, privateKey).toString("base64"),
-      },
+      ...covered,
+      signatures: [
+        {
+          algorithm: "ed25519",
+          keyId: "default",
+          signature: sign(
+            null,
+            canonicalSerialize(covered),
+            privateKey,
+          ).toString("base64"),
+        },
+      ],
     };
     const pem = String(publicKey.export({ type: "spki", format: "pem" }));
 
     expect(
-      verifyExecutionTrustRecordOffline(
-        record,
-        { default: pem },
-        { allowLegacyOnly: true },
-      ).valid,
+      verifyExecutionTrustRecordOffline(record, { default: pem }).valid,
     ).toBe(true);
 
     // The server's own reference verifier agrees.
-    const reference = await serverVerifyTrustRecord(
-      record,
-      { default: pem },
-      { allowLegacyOnly: true },
-    );
+    const reference = await serverVerifyTrustRecord(record as never, {
+      default: pem,
+    });
     expect(reference.valid).toBe(true);
 
-    // A lone ML-DSA-65 entry is not a hybrid record: refused, not treated as valid.
-    const hybrid = verifyExecutionTrustRecordOffline(
+    // A lone entry with no signature value is a malformed envelope: refused.
+    const malformed = verifyExecutionTrustRecordOffline(
       { ...record, signatures: [{ algorithm: "dilithium3" }] },
       { default: pem },
     );
-    expect(hybrid.valid).toBe(false);
-    expect(hybrid.errors.join(" ")).toMatch(
-      /exactly one ed25519 and one dilithium3/,
-    );
+    expect(malformed.valid).toBe(false);
     expect(createPublicKey(pem).asymmetricKeyType).toBe("ed25519");
   });
 });

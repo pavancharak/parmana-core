@@ -8,7 +8,6 @@ import {
   type Execution,
   type ExecutionTrustRecord,
   type ExecutionTrustRecordRepository,
-  type Override,
   type Receipt,
   type Verification,
 } from "@parmana/shared";
@@ -19,7 +18,7 @@ import {
   type PolicyRepository,
 } from "@parmana/policy";
 
-import { DefaultExecutionSystem } from "@parmana/execution-system";
+import { SimulatedExecutionSystem } from "@parmana/execution-system";
 
 import { RuntimeBuilder } from "../../src/RuntimeBuilder.js";
 
@@ -39,7 +38,7 @@ import { TrustChainValidationComponent } from "../../src/components/TrustChainVa
  * latency exists anywhere in this repo. This measures the in-process
  * cost of validate -> evaluate policy -> sign authorization -> execute
  * -> assemble trust record, with an in-memory ExecutionSystem/repositories
- * (DefaultExecutionSystem, no real connector network call).
+ * (SimulatedExecutionSystem, no real connector network call).
  *
  * Explicit about what this does NOT measure: HTTP request/response
  * overhead, Express middleware, real database writes (Postgres/Supabase),
@@ -89,7 +88,6 @@ class InMemoryExecutionTrustRecordRepository implements ExecutionTrustRecordRepo
 
   async appendExecution(_id: string, _execution: Execution): Promise<void> {}
   async replaceExecution(_execution: Execution): Promise<void> {}
-  async appendOverride(_id: string, _override: Override): Promise<void> {}
   async appendVerification(
     _id: string,
     _verification: Verification,
@@ -180,7 +178,7 @@ describe("RuntimeEngine pipeline latency (in-process, no HTTP/network/database)"
         new ExecutionComponent(
           new ExecutionService(transactions, trustRecords),
           new ExecutionRequestBuilder(),
-          new DefaultExecutionSystem(),
+          new SimulatedExecutionSystem(),
           new ExecutionEvidenceBuilder(),
         ),
       )

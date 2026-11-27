@@ -74,7 +74,7 @@ transaction = create_business_transaction(
     target="vendor://payments",
     parameters={"amount": 1000, "currency": "USD"},
     policy=PolicyReference(
-        name="vendor-payment", version="2.0.0", schema_version="1.0.0"
+        name="payment-limit", version="1.0.0", schema_version="1.0.0"
     ),
     signals={
         "vendorVerified": True,

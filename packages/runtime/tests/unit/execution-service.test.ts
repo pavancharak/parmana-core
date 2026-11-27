@@ -68,7 +68,6 @@ class RecordingExecutionTrustRecordRepository implements ExecutionTrustRecordRep
     this.replaced.push(execution);
   }
 
-  async appendOverride(): Promise<void> {}
   async appendVerification(): Promise<void> {}
   async appendReceipt(): Promise<void> {}
 }

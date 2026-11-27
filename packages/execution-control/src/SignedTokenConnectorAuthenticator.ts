@@ -5,7 +5,7 @@ import {
   verifyGatewayAttestationSignature,
   type GatewayAttestation,
 } from "./GatewayAttestation.js";
-import { isExternalConnectorIdentity } from "./externalConnectorIdentity.js";
+import { SystemClock, type Clock } from "./Clock.js";
 
 import type {
   ConnectorAuthenticator,
@@ -26,6 +26,16 @@ export interface RequestBoundConnectorAuthenticator extends ConnectorAuthenticat
     authentication: unknown,
     authorizationId: string,
   ): boolean;
+
+  /**
+   * An authenticator with the same gateway trust that trusts exactly the
+   * given connector identities and nothing else. A connector built for one
+   * registration is given the scope of its own identity, so no other
+   * identity, even one of the same form, passes its policy.
+   */
+  scopedTo(
+    connectorIdentities: readonly ConnectorIdentity[],
+  ): RequestBoundConnectorAuthenticator;
 }
 
 /**
@@ -37,14 +47,20 @@ export class SignedTokenConnectorAuthenticator implements RequestBoundConnectorA
     private readonly gateway: GatewayIdentity,
     private readonly gatewayPublicKey: KeyObject,
     private readonly connectorIdentities: readonly ConnectorIdentity[],
-    /**
-     * Also trust the identity form external connectors are built with
-     * (externalConnectorIdentity). They are built by the server itself
-     * for an approved registration (ADR-0013), so their set is not known
-     * at startup.
-     */
-    private readonly trustExternalConnectors = false,
+    /** Source of the time for the attestation expiry check. */
+    private readonly clock: Clock = new SystemClock(),
   ) {}
+
+  scopedTo(
+    connectorIdentities: readonly ConnectorIdentity[],
+  ): SignedTokenConnectorAuthenticator {
+    return new SignedTokenConnectorAuthenticator(
+      this.gateway,
+      this.gatewayPublicKey,
+      connectorIdentities,
+      this.clock,
+    );
+  }
 
   authenticateGateway(
     identity: GatewayIdentity,
@@ -66,10 +82,6 @@ export class SignedTokenConnectorAuthenticator implements RequestBoundConnectorA
   }
 
   authenticateConnector(identity: ConnectorIdentity): boolean {
-    if (this.trustExternalConnectors && isExternalConnectorIdentity(identity)) {
-      return true;
-    }
-
     return this.connectorIdentities.some(
       (trusted) =>
         trusted.connectorId === identity.connectorId &&
@@ -89,6 +101,12 @@ export class SignedTokenConnectorAuthenticator implements RequestBoundConnectorA
     }
     if (!isGatewayAttestation(authentication)) return undefined;
     if (authentication.payload.gatewayId !== this.gateway.gatewayId)
+      return undefined;
+    // Expired attestations are refused, with no grace period. The check runs
+    // before the signature so a stale attestation is refused without any
+    // work on the key. An unparseable expiry is refused too.
+    const expiresAt = Date.parse(authentication.payload.expiresAt);
+    if (!Number.isFinite(expiresAt) || this.clock.now().getTime() >= expiresAt)
       return undefined;
     if (
       !verifyGatewayAttestationSignature(authentication, this.gatewayPublicKey)

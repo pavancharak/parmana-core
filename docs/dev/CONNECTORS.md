@@ -1,6 +1,6 @@
 # Connecting a system you run
 
-[Back to the README](../../README.md) · [Developer docs index](README.md)
+[Back to the README](https://github.com/pavancharak/parmana-core/blob/main/README.md) · [Developer docs index](README.md)
 
 An operator registers an **external connector**: a capability, the HTTPS endpoint that serves it, and the policy that governs it. One person proposes the registration, and a different person approves it with a step-up signature. Once active, Parmana sends each approved action to the endpoint as a signed release. The endpoint checks the release's signature and audience, and it needs no shared secret.
 

@@ -57,7 +57,7 @@ Each run is appended to [ASSURANCE_RESULTS.md](ASSURANCE_RESULTS.md) with:
 
 Earlier entries are not rewritten. Corrections are added as dated notes.
 
-[CLAUDE.md](../CLAUDE.md) tells Claude Code sessions in this repository to follow these rules. Sessions may run the checks, record only results they observed, and submit changes through a pull request.
+[CLAUDE.md](https://github.com/pavancharak/parmana-core/blob/main/CLAUDE.md) tells Claude Code sessions in this repository to follow these rules. Sessions may run the checks, record only results they observed, and submit changes through a pull request.
 
 ### 3.4 Score policy
 

@@ -18,25 +18,3 @@ export function externalConnectorIdentity(
     authenticationMetadata: {},
   };
 }
-
-/**
- * True only for an identity of exactly that form, with the same
- * capability in both fields.
- */
-export function isExternalConnectorIdentity(
-  identity: ConnectorIdentity,
-): boolean {
-  if (!identity.connectorId.startsWith(EXTERNAL_CONNECTOR_ID_PREFIX)) {
-    return false;
-  }
-
-  const capability = identity.connectorId.slice(
-    EXTERNAL_CONNECTOR_ID_PREFIX.length,
-  );
-
-  return (
-    capability.length > 0 &&
-    identity.publicIdentity ===
-      `${EXTERNAL_PUBLIC_IDENTITY_PREFIX}${capability}`
-  );
-}

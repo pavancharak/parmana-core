@@ -13,6 +13,8 @@ import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 import type { ConnectorExecutor } from "@parmana/execution-control";
 import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * A trip that lands after the HTTP guard has passed a request, but before the
@@ -51,6 +53,8 @@ describe("kill switch between the HTTP guard and release", () => {
       executionSystem,
       undefined,
       killSwitch,
+      undefined,
+      trustedFacts.registry,
     );
 
     return {

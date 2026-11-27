@@ -60,9 +60,7 @@ def _as_json(value: Any) -> dict[str, Any]:
 _SUPPORTED_ALGORITHMS = {"ed25519"}
 
 # Schema versions, mirroring packages/crypto/src/ExecutionTrustRecordCanonicalView.ts.
-_DEFAULT_SCHEMA_VERSION = 2
 _WHOLE_RECORD_SCHEMA_VERSION = 3
-_SUPPORTED_SCHEMA_VERSIONS = (2, 3)
 
 # Top-level fields a schema version 3 message does not cover (attached after
 # signing, or the signatures themselves).
@@ -140,7 +138,6 @@ def _canonical_execution_trust_record(record: dict[str, Any]) -> dict[str, Any]:
         "businessTransactionId",
         "transaction",
         "authorization",
-        "overrides",
         "executions",
         "createdAt",
     )
@@ -152,23 +149,28 @@ def _canonical_execution_trust_record(record: dict[str, Any]) -> dict[str, Any]:
 class OfflineVerificationResult:
     valid: bool
     hash_valid: bool
-    legacy_signature_valid: bool
     algorithms_checked: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
-    # "full" when a schema version 3 hybrid record verifies, otherwise "legacy".
-    coverage: str = "legacy"
+    # Whether the trust record's signatures array verifies. Set for trust records only.
     hybrid_signatures_valid: bool | None = None
 
 
 def verify_execution_trust_record_offline(
     trust_record: Any,
     public_keys: dict[str, str],
+    *,
+    hybrid_required_from: str | None = None,
 ) -> OfflineVerificationResult:
     """
     `trust_record` is a plain dict, exactly as `json.load()` would
     produce from a Trust Record JSON file or API response body, or the
     ExecutionTrustRecord that `client.trust_record()` returns.
     `public_keys` maps keyId -> PEM-encoded public key text.
+
+    Schema version 3 only (decision D24): the signatures array covers the
+    whole record. A record with one valid entry is accepted, unless it was
+    created at or after `hybrid_required_from` (ADR-0016), where both hybrid
+    entries are required.
     """
 
     trust_record = _as_json(trust_record)
@@ -189,85 +191,68 @@ def verify_execution_trust_record_offline(
             f"got {trust_record.get('trustRecordHash')}."
         )
 
-    signature_field = trust_record.get("signature") or {}
-    algorithm = signature_field.get("algorithm")
-    key_id = signature_field.get("keyId")
-    signature_value = signature_field.get("value")
-
-    legacy_signature_valid = False
-
-    if algorithm not in _SUPPORTED_ALGORITHMS:
-        errors.append(f"unsupported algorithm: {algorithm}.")
-    elif key_id not in public_keys:
-        errors.append(f'no public key supplied for keyId "{key_id}".')
-    else:
-        algorithms_checked.append(algorithm)
-
-        try:
-            public_key = load_pem_public_key(public_keys[key_id].encode("utf-8"))
-
-            if not isinstance(public_key, Ed25519PublicKey):
-                raise ValueError("supplied public key is not an Ed25519 key")
-
-            if not isinstance(signature_value, str):
-                raise ValueError("signature.value is missing or not a string")
-
-            import base64
-
-            signature_bytes = base64.b64decode(signature_value)
-            message = canonical_serialize(canonical)
-
-            _verify_ed25519_with_commitment(public_key, signature_bytes, message)
-            legacy_signature_valid = True
-        except InvalidSignature:
-            errors.append(
-                f'signature verification failed for keyId "{key_id}" ({algorithm}).'
-            )
-        except Exception as error:  # noqa: BLE001 -- reported, not swallowed
-            errors.append(f'error verifying keyId "{key_id}" ({algorithm}): {error}')
-
-    schema_version = trust_record.get("schemaVersion", _DEFAULT_SCHEMA_VERSION)
+    schema_version = trust_record.get("schemaVersion")
     entries = trust_record.get("signatures")
-    hybrid_valid: bool | None = None
+    hybrid_valid = False
 
-    if schema_version not in _SUPPORTED_SCHEMA_VERSIONS:
-        errors.append(f"unsupported schemaVersion {schema_version}: expected 2 or 3.")
-        hybrid_valid = False
-    elif entries is not None:
-        hybrid_valid = _verify_hybrid_entries(
-            entries,
-            _hybrid_message(trust_record, schema_version),
-            public_keys,
-            algorithms_checked,
-            errors,
+    if schema_version != _WHOLE_RECORD_SCHEMA_VERSION:
+        errors.append(
+            f"unsupported schemaVersion {schema_version}: only schemaVersion 3 "
+            "is accepted (decision D24)."
         )
-    elif schema_version == _WHOLE_RECORD_SCHEMA_VERSION:
+    elif entries is None:
         errors.append(
             "schemaVersion 3 record has no signatures array: a whole-record "
             "signature is required."
         )
-        hybrid_valid = False
+    else:
+        hybrid_valid = _verify_envelope(
+            entries,
+            _hybrid_message(trust_record, _WHOLE_RECORD_SCHEMA_VERSION),
+            public_keys,
+            algorithms_checked,
+            errors,
+        )
 
-    coverage = (
-        "full"
-        if schema_version == _WHOLE_RECORD_SCHEMA_VERSION and hybrid_valid is True
-        else "legacy"
-    )
-
-    valid = hash_valid and legacy_signature_valid and (hybrid_valid is not False)
+    # From the cutover on, both hybrid signatures are required.
+    if hybrid_required_from is not None and _is_at_or_after_cutover(
+        trust_record.get("createdAt"), hybrid_required_from
+    ):
+        count = len(entries) if isinstance(entries, list) else 0
+        if hybrid_valid and count != 2:
+            errors.append(
+                f"record created at or after hybridRequiredFrom "
+                f"({hybrid_required_from}) must carry both hybrid signatures."
+            )
+            hybrid_valid = False
 
     return OfflineVerificationResult(
-        valid=valid,
+        valid=hash_valid and hybrid_valid,
         hash_valid=hash_valid,
-        legacy_signature_valid=legacy_signature_valid,
         algorithms_checked=algorithms_checked,
         errors=errors,
-        coverage=coverage,
         hybrid_signatures_valid=hybrid_valid,
     )
 
 
-def _verify_hybrid_entries(
+def _is_at_or_after_cutover(created_at: Any, cutover: str) -> bool:
+    """True when createdAt is at or after the cutover.
+
+    The cutover instant itself is included.
+    """
+    from datetime import datetime
+
+    if not isinstance(created_at, str):
+        return False
+    try:
+        created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+        threshold = datetime.fromisoformat(cutover.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    return created >= threshold
+
+
+def _verify_envelope(
     entries: Any,
     message: bytes,
     public_keys: dict[str, str],
@@ -275,27 +260,27 @@ def _verify_hybrid_entries(
     errors: list[str],
 ) -> bool:
     """
-    Verifies a hybrid `signatures` array. Fail-closed, as the TypeScript
-    verifier is: exactly two entries, one Ed25519 and one ML-DSA-65 (dilithium3),
-    each verifying over `message` with the key its keyId names. Any other
-    shape, duplicate algorithm, or unknown algorithm is a failure.
+    Verifies a schema version 3 `signatures` array (decision D24): one or two
+    entries, each for an algorithm this verifier supports (ed25519 or dilithium3),
+    no algorithm repeated, and every entry verifying over `message` with the key
+    its keyId names. Any other shape is a failure.
     """
 
     if not isinstance(entries, list) or not all(isinstance(e, dict) for e in entries):
         errors.append("malformed signatures: expected a list of entries.")
         return False
 
-    if len(entries) != 2:
-        errors.append(
-            f"signatures array has {len(entries)} entries, need exactly 2 for a "
-            "hybrid record."
-        )
+    if not 1 <= len(entries) <= 2:
+        errors.append(f"signatures must have one or two entries, got {len(entries)}.")
         return False
 
     names = [entry.get("algorithm") for entry in entries]
-    if sorted(map(str, names)) != ["dilithium3", "ed25519"]:
+    if any(name not in ("ed25519", "dilithium3") for name in names) or len(
+        set(names)
+    ) != len(names):
         errors.append(
-            f"signatures must be one ed25519 and one dilithium3 entry, got {names}."
+            "signatures must name each algorithm at most once, from ed25519 and "
+            f"dilithium3, got {names}."
         )
         return False
 
@@ -444,7 +429,6 @@ def verify_execution_intent_offline(
     return OfflineVerificationResult(
         valid=hash_valid and signature_valid,
         hash_valid=hash_valid,
-        legacy_signature_valid=signature_valid,
         algorithms_checked=algorithms_checked,
         errors=errors,
     )

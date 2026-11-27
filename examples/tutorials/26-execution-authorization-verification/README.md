@@ -46,7 +46,7 @@ The Runtime produces a signed Execution Authorization.
 
 ```ts
 const runtime = new RuntimeBuilder()
-  .withPolicyRepository(new FilePolicyRepository("policies"))
+  .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
   .build(new MemoryExecutionTrustRecordRepository());
 ```
 

@@ -57,12 +57,13 @@ def builder_example_server() -> str:
         env = {
             **os.environ,
             "NODE_ENV": "test",
+            "PARMANA_LOCAL_MODE": "true",
             # Approval records for the policies are seeded by
             # test-support/start-test-server.ts (D19).
             # Trusts the local test approver (tests/local_approver.py).
             **local_approver_env(),
             "PARMANA_STORAGE": "memory",
-            "PARMANA_POLICY_DIR": str(REPO_ROOT / "policies"),
+            "PARMANA_POLICY_DIR": str(REPO_ROOT / "fixtures" / "policies"),
             "PARMANA_KEY_DIR": key_dir,
             "PARMANA_AUTH_DISABLED": "true",
             "PORT": str(port),
@@ -126,7 +127,7 @@ def test_builder_example_runs_end_to_end_against_a_real_server(builder_example_s
     assert trust_record.trust_record_id
     assert len(trust_record.executions) == 1
     assert trust_record.executions[0].decision.outcome.value == "APPROVED"
-    assert trust_record.signature.algorithm.value == "ed25519"
+    assert trust_record.signatures[0].algorithm.value == "ed25519"
 
     # The property this example exists to prove: every id pair the
     # builder derives round-trips correctly through a real server, not

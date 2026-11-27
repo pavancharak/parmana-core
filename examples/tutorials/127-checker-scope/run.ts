@@ -20,16 +20,16 @@ function expect(label: string, actual: unknown, expected: unknown) {
   }
 }
 
-const scope = parsePolicyChangeCheckers('{"vendor-payment":["checker-1"]}');
+const scope = parsePolicyChangeCheckers('{"payment-limit":["checker-1"]}');
 
 expect(
   "a listed checker may approve the listed policy",
-  isCheckerInScope(scope, "vendor-payment", "checker-1"),
+  isCheckerInScope(scope, "payment-limit", "checker-1"),
   true,
 );
 expect(
   "a caller not listed for the policy may not approve it",
-  isCheckerInScope(scope, "vendor-payment", "checker-2"),
+  isCheckerInScope(scope, "payment-limit", "checker-2"),
   false,
 );
 expect(
@@ -41,7 +41,7 @@ expect(
   "an unset variable lists nobody",
   isCheckerInScope(
     parsePolicyChangeCheckers(undefined),
-    "vendor-payment",
+    "payment-limit",
     "checker-1",
   ),
   false,

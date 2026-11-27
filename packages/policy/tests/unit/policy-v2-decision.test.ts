@@ -94,7 +94,7 @@ function buildRegister(): PolicyRegister {
 }
 
 const policy = {
-  policyId: "vendor-payment",
+  policyId: "payment-limit",
   policyVersion: "2.0.0",
   schemaVersion: "2.0.0",
   capability: CAPABILITY,
@@ -364,6 +364,20 @@ describe("decide: refusals before any rule runs", () => {
     );
     const decision = await decide(request, deps);
     expect(decision.refusal?.code).toBe("NO_APPROVED_POLICY");
+  });
+
+  it("names the go-live gate when a version is approved but its action is not live", async () => {
+    const { deps, request } = setup(
+      { sourceValues: funds(4000) },
+      { capability: "other:thing" },
+    );
+    const decision = await decide(request, {
+      ...deps,
+      approvedButNotLive: (capability) => capability === "other:thing",
+    });
+    expect(decision.refusal?.code).toBe("ACTION_NOT_LIVE");
+    expect(decision.outcome).toBe("REJECT");
+    expect(decision.refusal?.detail).toMatch(/go-live gate has not passed/);
   });
 
   it("refuses a policy that does not pass the validator", async () => {

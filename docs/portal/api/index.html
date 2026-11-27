@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>REST API reference · Parmana developer docs</title>
+<meta name="description" content="REST API reference Portal home · Core endpoints · Full endpoint index · SDKs The Parmana API is a JSON-over-HTTP API described by an OpenAPI 3.1 document ( openapi/openapi.yaml , API version 1.0.0 ). The server publishes the document at GET">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../security/key-management.html">Key management</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../policies/payment-refund-coverage.html">Coverage of the production policy</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="index.html" aria-current="page">REST API reference</a></li><li><a href="endpoints.html">Core endpoints</a></li><li><a href="endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>API reference</span><span class="sep">/</span><span>REST API reference</span></div>
+    <article>
+<h1 id="rest-api-reference">REST API reference<a class="anchor" href="#rest-api-reference" aria-label="Link to this section">#</a></h1>
+<p><a href="../index.html">Portal home</a> · <a href="endpoints.html">Core endpoints</a> · <a href="endpoint-index.html">Full endpoint index</a> · <a href="../sdk/index.html">SDKs</a></p>
+<p>The Parmana API is a JSON-over-HTTP API described by an OpenAPI 3.1 document (<code>openapi/openapi.yaml</code>, API version <code>1.0.0</code>). The server publishes the document at <code>GET /openapi.yaml</code> and <code>GET /openapi.json</code>. The SDKs wrap these routes. Use the REST API directly from any language, or when you need a route the SDK does not wrap.</p>
+<h2 id="base-urls">Base URLs<a class="anchor" href="#base-urls" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Environment</th>
+<th>URL</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Local, from source</td>
+<td><code>http://localhost:3000</code></td>
+<td>The default port is 3000 (the <code>PORT</code> variable changes it). Plain HTTP is allowed for loopback only.</td>
+</tr>
+<tr>
+<td>Production (as listed in the OpenAPI document)</td>
+<td><code>https://parmana-api-real.vercel.app</code></td>
+<td>The document says this server needs a key issued by the operator. It was not contacted in this verification.</td>
+</tr>
+<tr>
+<td>Your deployment</td>
+<td>Your HTTPS endpoint</td>
+<td>See <a href="../deployment/index.html">Deployment</a>.</td>
+</tr>
+</tbody></table></div>
+<h2 id="authentication">Authentication<a class="anchor" href="#authentication" aria-label="Link to this section">#</a></h2>
+<p>Almost every route requires a bearer key:</p>
+<div class="code"><div class="code-bar"><span>http</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-http">Authorization: Bearer &lt;your-api-key&gt;</code></pre></div>
+<ul>
+<li>The key is issued to a <strong>caller</strong>. The server stores only the SHA-256 hash of the key (see <code>PARMANA_API_KEYS</code> in <a href="../reference/environment-variables.html">Environment variables</a>).</li>
+<li>A caller may act only for the principals in its <code>allowedPrincipalIds</code>, and invoke only the actions in its <code>allowedCapabilities</code>. Check yours with <code>GET /callers/me</code>.</li>
+<li>Changes to policies, approver keys, external connectors, business signal sources and authority grants are <strong>operator</strong> routes. They require a caller whose credential holder is a human (<code>credentialHolderType: USER</code>), and a step-up envelope on approval. The OpenAPI document marks them <code>operatorBearer</code>.</li>
+<li>These routes need no key: <code>GET /health</code>, <code>GET /ready</code>, <code>GET /openapi.yaml</code>, <code>GET /openapi.json</code>, <code>GET /api-manifest.json</code>, <code>GET /parmana-handbook.pdf</code>, the handbook download-lead routes, <code>POST /refusal/verify</code>, <code>POST /execution-intents/verify</code> and <code>POST /audit/verify</code>. The last three verify a document you send; they do not reveal stored records.</li>
+</ul>
+<p>Missing or unknown keys return <code>401</code>:</p>
+<div class="code"><div class="code-bar"><span>bash</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-bash">curl -s http://localhost:3000/version
+# {"error":"authentication required"}   HTTP 401</code></pre></div>
+<h2 id="content-type-and-headers">Content type and headers<a class="anchor" href="#content-type-and-headers" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Header</th>
+<th>When</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Authorization</code></td>
+<td>Every authenticated route</td>
+<td><code>Bearer &lt;key&gt;</code></td>
+</tr>
+<tr>
+<td><code>Content-Type</code></td>
+<td>Every route with a body</td>
+<td><code>application/json</code></td>
+</tr>
+<tr>
+<td><code>Accept</code></td>
+<td>Optional</td>
+<td><code>application/json</code></td>
+</tr>
+</tbody></table></div>
+<p>Responses are <code>application/json; charset=utf-8</code>, except <code>GET /parmana-handbook.pdf</code> (PDF). An unknown route returns a JSON <code>404</code> with <code>code: ROUTE_NOT_FOUND</code> (as of this change; earlier builds returned an HTML page). A client must still check the status code and the <code>Content-Type</code> before parsing.</p>
+<h2 id="rate-limits">Rate limits<a class="anchor" href="#rate-limits" aria-label="Link to this section">#</a></h2>
+<p>Rate limits are applied per route class. The response headers report them. For example, <code>GET /health</code>:</p>
+<div class="code"><div class="code-bar"><span>text</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-text">RateLimit-Policy: 300;w=60
+RateLimit-Limit: 300
+RateLimit-Remaining: 298
+RateLimit-Reset: 60</code></pre></div>
+<p>When a limit is exceeded the API returns <code>429</code>. The SDKs raise <code>RateLimitError</code>, which carries <code>retryAfterSeconds</code> when the server sends <code>Retry-After</code>. The limits are set with <code>RATE_LIMIT_HEALTH_PER_MINUTE</code>, <code>RATE_LIMIT_PUBLIC_PER_MINUTE</code>, <code>RATE_LIMIT_EXECUTE_PER_MINUTE</code> and <code>RATE_LIMIT_AUTH_FAILURE_PER_MINUTE</code> (see <a href="../reference/environment-variables.html">Environment variables</a>).</p>
+<h2 id="errors">Errors<a class="anchor" href="#errors" aria-label="Link to this section">#</a></h2>
+<p>Error bodies are JSON with an <code>error</code> message and, for most refusals, a <code>code</code>:</p>
+<div class="code"><div class="code-bar"><span>json</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-json">{
+  "error": "No policy is bound to capability \"test:fixture-execute\".",
+  "code": "CAPABILITY_NOT_BOUND"
+}</code></pre></div>
+<p>Some routes return a body with <code>error</code> only. Validation errors from the request-body checks name the missing fields in the message. Unknown routes return JSON <code>404</code> with <code>code: ROUTE_NOT_FOUND</code>.</p>
+<p>The error catalogue, with each code, its status and its meaning, is in <a href="../reference/error-codes.html">Error codes</a>. The SDKs map status codes to error classes; see the <a href="../sdk/typescript.html#errors">TypeScript errors</a> and <a href="../sdk/python.html#errors">Python errors</a>.</p>
+<h2 id="status-codes-used-by-the-api">Status codes used by the API<a class="anchor" href="#status-codes-used-by-the-api" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning in Parmana</th>
+<th>Typical cause</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>200</code></td>
+<td>Success. For <code>POST /execute</code>, the body is the signed Execution Trust Record.</td>
+<td>Approved and released.</td>
+</tr>
+<tr>
+<td><code>201</code></td>
+<td>Created. Declared, or a policy change proposed.</td>
+<td><code>POST /transactions</code> accepted as <code>RECEIVED</code>.</td>
+</tr>
+<tr>
+<td><code>202</code></td>
+<td>Released and the record exists, but the status is <code>EXECUTING</code>.</td>
+<td>The status update failed after release. Reconcile.</td>
+</tr>
+<tr>
+<td><code>400</code></td>
+<td>Malformed request. Nothing was stored.</td>
+<td>Missing field, invalid UUID, mismatched ids.</td>
+</tr>
+<tr>
+<td><code>401</code></td>
+<td>No key, or an unknown key.</td>
+<td>Missing <code>Authorization</code>.</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td>Refused: policy, caller permission, approval, or maker-checker.</td>
+<td><code>POLICY_DENIED</code>, <code>CAPABILITY_NOT_ALLOWED</code>, <code>SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE</code>, and others.</td>
+</tr>
+<tr>
+<td><code>404</code></td>
+<td>Not found: a transaction, record, policy version, or unbound capability.</td>
+<td><code>CAPABILITY_NOT_BOUND</code>, <code>Policy ... was not found.</code></td>
+</tr>
+<tr>
+<td><code>409</code></td>
+<td>Conflict: the id was used, or the status does not allow the action.</td>
+<td>Re-submitting a <code>businessTransactionId</code>.</td>
+</tr>
+<tr>
+<td><code>429</code></td>
+<td>Rate limit reached.</td>
+<td>Too many requests in the window.</td>
+</tr>
+<tr>
+<td><code>500</code></td>
+<td>Server error. Some <code>500</code>s mean the action was released (see below).</td>
+<td><code>EXECUTION_RECORD_INCOMPLETE</code>.</td>
+</tr>
+<tr>
+<td><code>502</code></td>
+<td>The connector call failed after release. Outcome unknown.</td>
+<td><code>EXECUTION_OUTCOME_UNKNOWN</code>.</td>
+</tr>
+<tr>
+<td><code>503</code></td>
+<td>Temporarily unavailable. Nothing was executed.</td>
+<td><code>SIGNING_UNAVAILABLE</code> and similar.</td>
+</tr>
+</tbody></table></div>
+<p><strong>Two rules matter most for retries:</strong></p>
+<ol>
+<li>A <code>500</code> with <code>EXECUTION_RECORD_INCOMPLETE</code> and a <code>502</code> with <code>EXECUTION_OUTCOME_UNKNOWN</code> mean the action may already have run. Do not submit it as a new transaction. Read its status or reconcile it.</li>
+<li>A <code>409</code> on an execution means that id has been used. Read the existing outcome. It does not mean the action ran twice.</li>
+</ol>
+<h2 id="identifiers">Identifiers<a class="anchor" href="#identifiers" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>businessTransactionId</code>: a UUID the caller chooses. It is single-use. The server returns <code>400</code> if it is not a valid UUID.</li>
+<li><code>pendingPolicyChangeId</code>, <code>changeId</code>, <code>trustRecordId</code>, <code>receiptId</code>, <code>verificationId</code>: UUIDs assigned by the server.</li>
+<li><code>policy.name</code> and <code>policy.version</code>: the policy identifier and version, for example <code>vendor-payment</code> and <code>2.1.0</code>. The server looks the version up by its exact string.</li>
+</ul>
+<h2 id="pagination">Pagination<a class="anchor" href="#pagination" aria-label="Link to this section">#</a></h2>
+<p>List routes take <code>page</code> (from 1) and <code>pageSize</code>. <code>GET /transactions</code> defaults to page 1 with 25 items. Lists are returned as a bare JSON array.</p>
+<h2 id="versions">Versions<a class="anchor" href="#versions" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>GET /version</code> returns <code>{&quot;name&quot;:&quot;Parmana&quot;,&quot;version&quot;:&quot;4.1.1&quot;,&quot;api&quot;:&quot;v1&quot;}</code> on this build. <code>version</code> is the <code>@parmana/api</code> package version, a deployment build identifier separate from the REST API version <code>api</code>. An earlier build reported a hand-typed <code>0.4.0</code>; that is fixed.</li>
+<li><code>GET /api-manifest.json</code> describes the API and links the SDKs, and reports the same build version.</li>
+<li>The OpenAPI document is <code>1.0.0</code>.</li>
+</ul>
+<h2 id="experimental-and-opt-in-routes">Experimental and opt-in routes<a class="anchor" href="#experimental-and-opt-in-routes" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Route family</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/execution-intents/*</code></td>
+<td>Experimental</td>
+<td>Enabled by the deployment&#39;s execution-intent settings. <code>executionIntentsConfigured: false</code> in the dev server.</td>
+</tr>
+<tr>
+<td><code>/kill-switch/*</code></td>
+<td>Experimental, opt-in</td>
+<td>Mounted only when <code>KILL_SWITCH_ENABLED=true</code>. Not mounted in the verified configuration: it returns a JSON <code>404</code> with <code>ROUTE_NOT_FOUND</code>.</td>
+</tr>
+<tr>
+<td><code>/v2/*</code> (policy v2: decisions, register, reviews, evidence, console, notifications)</td>
+<td>Experimental, opt-in</td>
+<td>Documented in the OpenAPI document, marked <code>x-stability: experimental</code> (tag &quot;Policy v2 (experimental)&quot;, listed below). Mounted only when <code>PARMANA_POLICY_V2_DECISIONS</code> and related settings are set. Without them each path returns <code>404</code> with <code>code: ROUTE_NOT_FOUND</code>.</td>
+</tr>
+<tr>
+<td><code>/v1/inbound/*</code></td>
+<td>Experimental, opt-in</td>
+<td>Inbound refund decision and outcome routes (RFC-0025). Mounted only when <code>INBOUND_AUDIENCE</code> is set, and the server fails closed if the gateway&#39;s private key is not configured.</td>
+</tr>
+<tr>
+<td><code>/sandbox/approvals</code></td>
+<td>Demo, sandbox only</td>
+<td>Returns an approval signed by the sandbox&#39;s demo approver, and only for <code>sandbox:receipt</code>. The OpenAPI document says that in a production deployment this route does not exist.</td>
+</tr>
+</tbody></table></div>
+<h3 id="policy-version-2-operations-experimental">Policy version 2 operations (experimental)<a class="anchor" href="#policy-version-2-operations-experimental" aria-label="Link to this section">#</a></h3>
+<p>These 28 operations are in the OpenAPI document. Their shapes come from the server&#39;s routers and the SDK&#39;s policy version 2 models. The TypeScript SDK calls four of them (<code>decidePolicyV2</code>, <code>policyV2Review</code>, <code>decidePolicyV2Review</code> and <code>policyV2Replay</code>). The two notification endpoints are called by Amazon SES and the email channel, not by clients. Each is marked <code>x-stability: experimental</code>, and its shape may change in a minor release until the owner promotes it.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Operation ID</th>
+<th>Method</th>
+<th>Path</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>policyV2Console</code></td>
+<td>GET</td>
+<td><code>/v2/console/{screen}</code></td>
+</tr>
+<tr>
+<td><code>policyV2Decide</code></td>
+<td>POST</td>
+<td><code>/v2/decisions</code></td>
+</tr>
+<tr>
+<td><code>policyV2Replay</code></td>
+<td>GET</td>
+<td><code>/v2/evidence/{recordId}/replay</code></td>
+</tr>
+<tr>
+<td><code>policyV2NotificationEvents</code></td>
+<td>POST</td>
+<td><code>/v2/notifications/events</code></td>
+</tr>
+<tr>
+<td><code>policyV2SesNotification</code></td>
+<td>POST</td>
+<td><code>/v2/notifications/ses</code></td>
+</tr>
+<tr>
+<td><code>policyV2GoLiveGate</code></td>
+<td>GET</td>
+<td><code>/v2/register/actions/{capability}/go-live</code></td>
+</tr>
+<tr>
+<td><code>policyV2GoLive</code></td>
+<td>POST</td>
+<td><code>/v2/register/actions/{capability}/go-live</code></td>
+</tr>
+<tr>
+<td><code>policyV2RevokeReviewer</code></td>
+<td>POST</td>
+<td><code>/v2/register/actions/{capability}/reviewers/{reviewerId}/revoke</code></td>
+</tr>
+<tr>
+<td><code>policyV2AddReviewer</code></td>
+<td>POST</td>
+<td><code>/v2/register/actions/{capability}/reviewers</code></td>
+</tr>
+<tr>
+<td><code>policyV2RecordTest</code></td>
+<td>POST</td>
+<td><code>/v2/register/actions/{capability}/tests</code></td>
+</tr>
+<tr>
+<td><code>policyV2RegisterAction</code></td>
+<td>POST</td>
+<td><code>/v2/register/actions</code></td>
+</tr>
+<tr>
+<td><code>policyV2ApproveApproverKey</code></td>
+<td>POST</td>
+<td><code>/v2/register/approver-keys/{approverId}/{keyId}/approve</code></td>
+</tr>
+<tr>
+<td><code>policyV2RevokeApproverKey</code></td>
+<td>POST</td>
+<td><code>/v2/register/approver-keys/{approverId}/{keyId}/revoke</code></td>
+</tr>
+<tr>
+<td><code>policyV2ProposeApproverKey</code></td>
+<td>POST</td>
+<td><code>/v2/register/approver-keys</code></td>
+</tr>
+<tr>
+<td><code>policyV2RegisterAudit</code></td>
+<td>GET</td>
+<td><code>/v2/register/audit</code></td>
+</tr>
+<tr>
+<td><code>policyV2SetContact</code></td>
+<td>POST</td>
+<td><code>/v2/register/contacts</code></td>
+</tr>
+<tr>
+<td><code>policyV2ApprovePolicy</code></td>
+<td>POST</td>
+<td><code>/v2/register/policies/{capability}/{policyVersion}/approve</code></td>
+</tr>
+<tr>
+<td><code>policyV2ProposePolicy</code></td>
+<td>POST</td>
+<td><code>/v2/register/policies</code></td>
+</tr>
+<tr>
+<td><code>policyV2GrantRole</code></td>
+<td>POST</td>
+<td><code>/v2/register/roles/grant</code></td>
+</tr>
+<tr>
+<td><code>policyV2RevokeRole</code></td>
+<td>POST</td>
+<td><code>/v2/register/roles/revoke</code></td>
+</tr>
+<tr>
+<td><code>policyV2ApproveSource</code></td>
+<td>POST</td>
+<td><code>/v2/register/sources/{name}/approve</code></td>
+</tr>
+<tr>
+<td><code>policyV2RevokeSource</code></td>
+<td>POST</td>
+<td><code>/v2/register/sources/{name}/revoke</code></td>
+</tr>
+<tr>
+<td><code>policyV2ProposeSource</code></td>
+<td>POST</td>
+<td><code>/v2/register/sources</code></td>
+</tr>
+<tr>
+<td><code>policyV2ApproveThreshold</code></td>
+<td>POST</td>
+<td><code>/v2/register/thresholds/{action}/{name}/approve</code></td>
+</tr>
+<tr>
+<td><code>policyV2ProposeThreshold</code></td>
+<td>POST</td>
+<td><code>/v2/register/thresholds</code></td>
+</tr>
+<tr>
+<td><code>policyV2RegisterRead</code></td>
+<td>GET</td>
+<td><code>/v2/register</code></td>
+</tr>
+<tr>
+<td><code>policyV2DecideReview</code></td>
+<td>POST</td>
+<td><code>/v2/reviews/{id}/decision</code></td>
+</tr>
+<tr>
+<td><code>policyV2GetReview</code></td>
+<td>GET</td>
+<td><code>/v2/reviews/{id}</code></td>
+</tr>
+</tbody></table></div>
+<h2 id="the-endpoint-index">The endpoint index<a class="anchor" href="#the-endpoint-index" aria-label="Link to this section">#</a></h2>
+<p>The <a href="endpoint-index.html">endpoint index</a> lists all 66 operations in the OpenAPI document with their method, path, operation id, authentication requirement, the TypeScript SDK method that calls each one (where there is one), and the summary.</p>
+<h2 id="next">Next<a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="endpoints.html">Core endpoints</a>: the request and response for each core route, with <code>curl</code>, JavaScript and Python examples.</li>
+<li><a href="../reference/error-codes.html">Error codes</a></li>
+<li><a href="../troubleshooting/index.html">Troubleshooting</a></li>
+</ul>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/api/README.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="../examples/index.html"><span>Previous</span>Runnable examples</a><a class="pn next" href="endpoints.html"><span>Next</span>Core endpoints</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#base-urls">Base URLs</a></li><li class="d2"><a href="#authentication">Authentication</a></li><li class="d2"><a href="#content-type-and-headers">Content type and headers</a></li><li class="d2"><a href="#rate-limits">Rate limits</a></li><li class="d2"><a href="#errors">Errors</a></li><li class="d2"><a href="#status-codes-used-by-the-api">Status codes used by the API</a></li><li class="d2"><a href="#identifiers">Identifiers</a></li><li class="d2"><a href="#pagination">Pagination</a></li><li class="d2"><a href="#versions">Versions</a></li><li class="d2"><a href="#experimental-and-opt-in-routes">Experimental and opt-in routes</a></li><li class="d3"><a href="#policy-version-2-operations-experimental">Policy version 2 operations (experimental)</a></li><li class="d2"><a href="#the-endpoint-index">The endpoint index</a></li><li class="d2"><a href="#next">Next</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>
