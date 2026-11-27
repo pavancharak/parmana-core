@@ -4,8 +4,8 @@
 # token is passed at run time with -e PARMANA_TOKEN, and the image runs as the
 # unprivileged "node" user. The version is pinned; change it deliberately.
 #
-#   docker build -f Dockerfile.cli -t parmana-cli:2.0.2 .
-#   docker run --rm parmana-cli:2.0.2 --help
+#   docker build -f Dockerfile.cli -t parmana-cli:5.0.0 .
+#   docker run --rm parmana-cli:5.0.0 --help
 #
 # The command inside the image is parmana-ops. The name parmana is the
 # verifier tool's, so this image does not use it.

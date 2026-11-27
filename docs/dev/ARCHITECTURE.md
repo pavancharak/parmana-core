@@ -32,6 +32,7 @@ Authority --> Authorization --> Intent --> Business Transaction
 | Package                        | Role                                                                                                                                     |
 | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `@parmana/api`                 | REST API: `/execute`, `/verification`, webhooks, caller authentication                                                                   |
+| `@parmana/cli`                 | Command-line tool `parmana-ops`: the maker-checker steps for policy changes, and the approval log                                        |
 | `@parmana/runtime`             | Orchestrates a Business Transaction through policy, execution and evidence                                                               |
 | `@parmana/policy`              | Deterministic policy evaluation, sequential rules, first-match semantics                                                                 |
 | `@parmana/execution-gateway`   | The sole boundary that releases an approved request to a connector                                                                       |
