@@ -544,6 +544,45 @@ tutorial 62 JSON fixtures. Verified: the typecheck passes, and the full examples
 **Still open:** the two helpers are shims for the tutorial data. They do not validate the fixtures beyond the enum and
 date checks, and `archive/` is not type-checked.
 
+## INC-16 — Test database, container registry and secrets deleted during an AWS teardown (OPERATIONS, CREDENTIALS)
+
+**What:** On 2026-11-26 between 21:40 and 21:44 IST, the IAM user `parmana-deployer` (access key created 2026-11-25)
+ran a teardown of the core stack in `ap-south-1`. CloudTrail shows `DeleteDBInstance` (the test database, with no final
+snapshot and no retained automated backups), `DeleteRepository` (the ECR repository and its images), and four
+`DeleteSecret` calls (`parmana/database-url`, `parmana/migration-database-url`, `parmana/app-db-password`,
+`parmana/webhook-secret`). The owner confirmed the database held test data. The owner has not yet said whether the
+teardown was intended, so the cause is recorded as unconfirmed.
+
+**Impact:** the test database contents and the ECR images cannot be recovered from AWS. The four secrets were
+recoverable only until they were permanently deleted. No production data was reported lost. The Supabase database was
+not affected.
+
+**Root cause (to confirm):** a long-lived IAM access key with deletion rights was held in the working environment, and
+the teardown ran without deletion protection or a final snapshot.
+
+**Resolution:**
+- The deployer key was deactivated, then deleted, and the user was deleted. No activity from the key was recorded after the teardown.
+- The root account has MFA enabled and no active access keys, checked with a credential report.
+- All Parmana IAM users, roles and customer-managed policies were removed.
+- At the owner's request, the `dip-*` resources were removed as well: the `dip-prod` ECS cluster, the `dip-api` ECR
+  repository and its log group, the `dip-*` IAM users, roles and policies, and the KMS keys and aliases.
+- The KMS keys are scheduled for deletion. The ap-south-1 keys are due on 2026-12-04, and the us-east-1 keys follow
+  the same 7-day window.
+- A check of Cost Explorer and the regional resource scan shows no remaining resources except the payment method and
+  the keys awaiting deletion.
+
+**Still open:**
+- Confirm the teardown was intended, and record the cause.
+- Before 2026-12-04, confirm that no signed evidence needs verifying with the deleted signing keys. Cancel the deletion
+  if one does.
+- Confirm that no live `dip-*` service depended on the removed resources.
+- Rebuild from scratch with deletion protection, a final snapshot on delete, and no long-lived deployer keys.
+
+**Lessons:**
+- Teardown scripts should not run without a snapshot and deletion protection on the database.
+- Tag-based resource scans miss untagged resources such as CloudWatch log groups and ECR repositories. Scan each service directly.
+- KMS keys cannot be deleted immediately. They should be disabled first, and deletion scheduled only after confirmation.
+
 ---
 
 **Open (owner action):** the Open issues table on `docs/site/security/limitations.mdx` lost its header and its first column

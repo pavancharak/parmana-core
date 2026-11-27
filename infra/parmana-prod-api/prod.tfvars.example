@@ -1,0 +1,7 @@
+# PRODUCTION ENVIRONMENT TEMPLATE. Copy to prod.tfvars (untracked) and fill in the values.
+expected_account_id        = "<ACCOUNT_ID>"
+region                     = "ap-south-1"
+vpc_id                     = "<VPC-ID>"
+private_subnet_ids         = ["<PRIVATE-SUBNET-A>", "<PRIVATE-SUBNET-B>"]
+database_security_group_id = "<DB-SG-ID>"
+deploy_service             = false
