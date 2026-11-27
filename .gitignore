@@ -180,3 +180,7 @@ docs/OPEN-SOURCE-WORK.md
 **/*.tfstate
 **/*.tfstate.*
 **/.terraform/
+
+# Real environment values stay local. Only *.tfvars.example templates are tracked.
+infra/**/*.tfvars
+!infra/**/*.tfvars.example

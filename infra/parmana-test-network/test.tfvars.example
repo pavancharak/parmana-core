@@ -1,0 +1,5 @@
+# TEST ENVIRONMENT TEMPLATE. Copy to test.tfvars (untracked) and fill in the values.
+environment         = "test"
+region              = "ap-south-1"
+expected_account_id = "<TEST_ACCOUNT_ID>"
+vpc_cidr            = "10.20.0.0/16"
