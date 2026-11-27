@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Architecture · Parmana developer docs</title>
-<meta name="description" content="Architecture Portal home · Overview · Security This page shows how a request moves through Parmana, where the trust boundaries are, which steps are synchronous, and where asynchronous work happens. The diagrams are Mermaid. They render on G">
+<meta name="description" content="Architecture Portal home · Overview · Security This page shows how a request moves through Parmana, where the trust boundaries are, which steps are synchronous, and where asynchronous work happens. The request path is written as numbered st">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="portal.css">
 </head>
@@ -28,7 +28,7 @@
 <div class="shell">
   <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
 <div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="index.html">Parmana developer portal</a></li><li><a href="overview.html">Overview</a></li><li><a href="getting-started.html">Getting started</a></li><li><a href="faq.html">Frequently asked questions</a></li></ul></div>
-<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="architecture.html" aria-current="page">Architecture</a></li><li><a href="glossary.html">Glossary</a></li><li><a href="policies/index.html">Policy management</a></li><li><a href="security/index.html">Security and cryptographic verification</a></li><li><a href="security/evidence-verification.html">Evidence verification</a></li><li><a href="security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="architecture.html" aria-current="page">Architecture</a></li><li><a href="glossary.html">Glossary</a></li><li><a href="security/key-management.html">Key management</a></li><li><a href="policies/index.html">Policy management</a></li><li><a href="policies/payment-refund-coverage.html">Coverage of the production policy</a></li><li><a href="security/index.html">Security and cryptographic verification</a></li><li><a href="security/evidence-verification.html">Evidence verification</a></li><li><a href="security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
 <div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="tutorials/index.html">Tutorials</a></li><li><a href="tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="examples/index.html">Runnable examples</a></li></ul></div>
 <div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="api/index.html">REST API reference</a></li><li><a href="api/endpoints.html">Core endpoints</a></li><li><a href="api/endpoint-index.html">Endpoint index</a></li></ul></div>
 <div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="sdk/index.html">SDKs and packages</a></li><li><a href="sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="sdk/python.html">Python SDK: parmana</a></li><li><a href="sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="sdk/python-method-index.html">Python SDK method index</a></li><li><a href="packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
@@ -40,7 +40,7 @@
     <article>
 <h1 id="architecture">Architecture<a class="anchor" href="#architecture" aria-label="Link to this section">#</a></h1>
 <p><a href="index.html">Portal home</a> · <a href="overview.html">Overview</a> · <a href="security/index.html">Security</a></p>
-<p>This page shows how a request moves through Parmana, where the trust boundaries are, which steps are synchronous, and where asynchronous work happens. The diagrams are Mermaid. They render on GitHub and in most Markdown viewers.</p>
+<p>This page shows how a request moves through Parmana, where the trust boundaries are, which steps are synchronous, and where asynchronous work happens. The request path is written as numbered steps. The other diagrams are Mermaid, and they render on GitHub and in most Markdown viewers.</p>
 <h2 id="components">Components<a class="anchor" href="#components" aria-label="Link to this section">#</a></h2>
 <div class="table-wrap"><table>
 <thead>
@@ -102,27 +102,23 @@
 </tr>
 </tbody></table></div>
 <h2 id="1-request-path-application--sdk--service--decision--execution">1. Request path: application → SDK → service → decision → execution<a class="anchor" href="#1-request-path-application--sdk--service--decision--execution" aria-label="Link to this section">#</a></h2>
-<div class="code"><div class="code-bar"><span>mermaid</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-mermaid">flowchart LR
-  APP["Application or agent"] --&gt;|"Business Transaction"| SDK["SDK&lt;br/&gt;(@parmana/sdk, parmana)"]
-  SDK --&gt;|"HTTPS, Authorization: Bearer"| API["Parmana API"]
-  API --&gt; AUTH{"Caller authenticated&lt;br/&gt;and allowed to act&lt;br/&gt;for this principal&lt;br/&gt;and invoke this action?"}
-  AUTH -- no --&gt; R1["403 / 401&lt;br/&gt;nothing stored as executed"]
-  AUTH -- yes --&gt; VAL{"Structure valid,&lt;br/&gt;id not used before?"}
-  VAL -- no --&gt; R2["400 / 409"]
-  VAL -- yes --&gt; PV["Policy version in effect&lt;br/&gt;(latest approved for the name)"]
-  PV --&gt; EV["Policy evaluation&lt;br/&gt;signals checked against bindings,&lt;br/&gt;sources and approval rules"]
-  EV --&gt; HA{"Signed human approval&lt;br/&gt;verified? (scope, amount,&lt;br/&gt;expiry, target, single use)"}
-  HA -- no --&gt; R3["403 POLICY_DENIED&lt;br/&gt;or approval mismatch"]
-  HA -- yes --&gt; DEC["Decision: APPROVED"]
-  DEC --&gt; GW["Execution gateway&lt;br/&gt;re-verifies the signed authorization"]
-  GW --&gt; CON["Connector"]
-  CON --&gt; BIZ["Business system&lt;br/&gt;(payment, refund, ...)"]
-  GW --&gt; REC["Execution Trust Record&lt;br/&gt;written and signed"]
-  REC --&gt; APP</code></pre></div>
+<ol>
+<li>The application or agent builds a Business Transaction and passes it to the SDK (<code>@parmana/sdk</code>, <code>parmana</code>).</li>
+<li>The SDK sends it to the Parmana API over HTTPS with <code>Authorization: Bearer</code>.</li>
+<li>The API checks that the caller is authenticated, is allowed to act for this principal, and is allowed to invoke this action. If not, it returns <code>403</code> or <code>401</code>. Nothing is stored as executed, and the request stops here.</li>
+<li>The API checks that the structure is valid and that the ID has not been used before. If not, it returns <code>400</code> or <code>409</code>, and the request stops here.</li>
+<li>The runtime loads the policy version in effect, which is the latest approved version for the policy name.</li>
+<li>Policy evaluation checks the signals against bindings, sources, and approval rules.</li>
+<li>The API verifies the signed human approval for scope, amount, expiry, target, and single use. If it fails, the API returns <code>403 POLICY_DENIED</code> or reports an approval mismatch, and the request stops here.</li>
+<li>The decision is <strong>APPROVED</strong>.</li>
+<li>The execution gateway re-verifies the signed authorization.</li>
+<li>The gateway releases the request to the connector, which performs the business action (payment, refund, and so on).</li>
+<li>The gateway writes a signed Execution Trust Record and returns it to the application.</li>
+</ol>
 <p>Each refusal is a final answer for that request. Nothing runs. When the caller-authentication audit sink is configured, the principal, capability and structural refusals are also written to the caller audit trail. The outcome of a refused request is in the response body (<code>error</code>, and where present <code>code</code>), described in the <a href="reference/error-codes.html">error catalogue</a>.</p>
 <h2 id="2-maker-checker-workflow-policy-changes">2. Maker-checker workflow (policy changes)<a class="anchor" href="#2-maker-checker-workflow-policy-changes" aria-label="Link to this section">#</a></h2>
 <p>No policy version takes effect until a second person approves it. The two people sign with different keys, and the step-up key is separate from the API key.</p>
-<div class="code"><div class="code-bar"><span>mermaid</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-mermaid">sequenceDiagram
+<pre class="mermaid">sequenceDiagram
   autonumber
   participant Maker as Maker (human, USER key)
   participant API as Parmana API
@@ -139,11 +135,11 @@
   API-&gt;&gt;API: caller is a human (USER)&lt;br/&gt;caller is listed for this policy (POLICY_CHANGE_CHECKERS)&lt;br/&gt;envelope verifies against the checker's step-up key&lt;br/&gt;checker is not the maker
   API-&gt;&gt;Store: write signed PolicyChangeApprovalRecord
   API-&gt;&gt;Files: write policy.json for the version
-  API--&gt;&gt;Checker: 200 APPROVED</code></pre></div>
+  API--&gt;&gt;Checker: 200 APPROVED</pre>
 <p>The checker&#39;s step-up envelope is signed on the checker&#39;s machine and sent with the checker&#39;s own token. The envelope expires after 120 seconds. Each layer (human caller, maker not equal to checker, step-up envelope) is enforced on its own: the tutorial shows each one refusing a request that would pass the others. See <a href="tutorials/maker-checker.html">Maker-checker</a>.</p>
 <h2 id="3-ai-agent-authorization-workflow">3. AI agent authorization workflow<a class="anchor" href="#3-ai-agent-authorization-workflow" aria-label="Link to this section">#</a></h2>
 <p>An agent is a caller with an API key that can invoke only the actions it is allowed. It can request an action. It cannot approve one. The approval must be in the transaction when it is declared, because a declared transaction executes as declared.</p>
-<div class="code"><div class="code-bar"><span>mermaid</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-mermaid">sequenceDiagram
+<pre class="mermaid">sequenceDiagram
   autonumber
   participant Agent as AI agent (SDK, API key)
   participant Review as Review workflow (outside Parmana)
@@ -165,10 +161,10 @@
     API--&gt;&gt;Agent: 200 Execution Trust Record (APPROVED)
   else refused
     API--&gt;&gt;Agent: 403 (POLICY_DENIED or approval mismatch)
-  end</code></pre></div>
+  end</pre>
 <p>The approval is produced by a person, on their own machine, with a key the agent never sees. The agent carries it as data. The server verifies it and does not take the agent&#39;s word for it. A transaction declared without its approval is refused on execution, and cannot be approved later (see <a href="tutorials/ai-agents.html">AI agents</a>). A policy whose approve rule does not require a verified human approval is refused at validation, as tutorial 120 shows (see <a href="policies/index.html">Policy management</a>).</p>
 <h2 id="4-evidence-generation-and-verification">4. Evidence generation and verification<a class="anchor" href="#4-evidence-generation-and-verification" aria-label="Link to this section">#</a></h2>
-<div class="code"><div class="code-bar"><span>mermaid</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-mermaid">flowchart TD
+<pre class="mermaid">flowchart TD
   T["Business Transaction"] --&gt; D["Decision + execution outcome"]
   D --&gt; CANON["Canonical JSON&lt;br/&gt;(sorted keys, no whitespace, UTF-8)"]
   CANON --&gt; HASH["SHA-256 → trustRecordHash"]
@@ -180,10 +176,10 @@
   TR --&gt; RC["Receipt&lt;br/&gt;POST /receipt (only if VERIFIED)"]
   TR --&gt; OFF["Offline verification&lt;br/&gt;SDK or parmana-verify,&lt;br/&gt;with keys you pin"]
 
-  PIN["Pinned public key&lt;br/&gt;(fingerprint checked out of band)"] --&gt; OFF</code></pre></div>
+  PIN["Pinned public key&lt;br/&gt;(fingerprint checked out of band)"] --&gt; OFF</pre>
 <p>Verification does not depend on the server being honest about the result. An independent party with the record and the pinned key can reach the same answer. The details of what is covered, and what is not, are in <a href="security/index.html">Security</a> and <a href="security/evidence-verification.html">Evidence verification</a>.</p>
 <h2 id="5-deployment-architecture">5. Deployment architecture<a class="anchor" href="#5-deployment-architecture" aria-label="Link to this section">#</a></h2>
-<div class="code"><div class="code-bar"><span>mermaid</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-mermaid">flowchart LR
+<pre class="mermaid">flowchart LR
   subgraph Client["Client network"]
     A1["Application"] --- S1["SDK"]
     AG["AI agent"] --- S2["SDK"]
@@ -210,7 +206,7 @@
   S1 -- "HTTPS, Bearer key" --&gt; API
   S2 -- "HTTPS, Bearer key" --&gt; API
   API -- "signed release" --&gt; CON
-  VER -. "records + pinned keys only" .- DB</code></pre></div>
+  VER -. "records + pinned keys only" .- DB</pre>
 <p>Trust boundaries, from the outside in:</p>
 <ol>
 <li><strong>The client network to Parmana.</strong> Crossed over HTTPS with a caller key. The SDK refuses plain HTTP to any host other than loopback.</li>
@@ -346,6 +342,16 @@
 </div>
 <script>window.PORTAL_ROOT = "";</script>
 <script src="search-index.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) {
+    window.mermaid.initialize({
+      startOnLoad: true,
+      securityLevel: "strict",
+      theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default",
+    });
+  }
+</script>
 <script src="portal.js"></script>
 </body>
 </html>

@@ -7,6 +7,8 @@ import { createApp } from "../../src/app.js";
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * Phase 2D — restored.
@@ -58,7 +60,13 @@ describe("Execution Failure", () => {
       },
     });
 
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
     const app = createApp(application, { callerAuth: "disabled" });
 
     const transaction = await createBusinessTransaction();
@@ -153,7 +161,13 @@ describe("Execution Failure", () => {
       },
     });
 
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
     const app = createApp(application, { callerAuth: "disabled" });
 
     for (let attempt = 0; attempt < 3; attempt += 1) {

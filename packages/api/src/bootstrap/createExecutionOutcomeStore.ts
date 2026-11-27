@@ -6,6 +6,7 @@ import {
 } from "@parmana/storage";
 
 import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
+import { localModeEnabled } from "./localMode.js";
 
 /**
  * Creates the ExecutionOutcomeStore used by the ExecutionGateway (G-125,
@@ -13,15 +14,16 @@ import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
  * returned, so a retry after a lost response can recover the result instead
  * of being refused with no information.
  *
- * Test wiring (NODE_ENV=test): MemoryExecutionOutcomeStore, the same split
- * createNonceStore.ts uses.
+ * Local mode (PARMANA_LOCAL_MODE=true under NODE_ENV test or development,
+ * see localMode.ts): MemoryExecutionOutcomeStore. NODE_ENV alone does not
+ * select memory, the same rule createNonceStore.ts follows.
  *
  * Production: PostgresExecutionOutcomeStore. Fails closed at startup without
  * DATABASE_URL, never falls back to memory, since a silent fallback would
  * bring back the unknown-outcome gap with no signal.
  */
 export function createExecutionOutcomeStore(): ExecutionOutcomeStore {
-  if (process.env.NODE_ENV === "test") {
+  if (localModeEnabled()) {
     return new MemoryExecutionOutcomeStore();
   }
 

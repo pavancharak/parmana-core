@@ -3,11 +3,13 @@ import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import { PostgresPoolFactory, PostgresNonceStore } from "@parmana/storage";
 
 import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
+import { localModeEnabled } from "./localMode.js";
 
 /**
  * Creates the NonceStore used by the ExecutionGateway.
  *
- * Test wiring (NODE_ENV=test): MemoryNonceStore — the same
+ * Local mode (PARMANA_LOCAL_MODE=true under NODE_ENV test or development,
+ * see localMode.ts): MemoryNonceStore — the same
  * production/test split every credential provider in this directory
  * uses (for example, a credential provider).
  *
@@ -26,7 +28,7 @@ import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
  * this generalizes from).
  */
 export function createNonceStore(): NonceStore {
-  if (process.env.NODE_ENV === "test") {
+  if (localModeEnabled()) {
     return new MemoryNonceStore();
   }
 

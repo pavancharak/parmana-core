@@ -10,3 +10,4 @@ export * from "./TrustProfiles.js";
 export * from "./ApiKeyEntry.js";
 export * from "./ConfigUtils.js";
 export * from "./Doctor.js";
+export * from "./EffectiveConfig.js";

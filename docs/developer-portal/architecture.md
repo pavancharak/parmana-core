@@ -2,7 +2,7 @@
 
 [Portal home](README.md) · [Overview](overview.md) · [Security](security/README.md)
 
-This page shows how a request moves through Parmana, where the trust boundaries are, which steps are synchronous, and where asynchronous work happens. The diagrams are Mermaid. They render on GitHub and in most Markdown viewers.
+This page shows how a request moves through Parmana, where the trust boundaries are, which steps are synchronous, and where asynchronous work happens. The request path is written as numbered steps. The other diagrams are Mermaid, and they render on GitHub and in most Markdown viewers.
 
 ## Components
 
@@ -21,25 +21,17 @@ This page shows how a request moves through Parmana, where the trust boundaries 
 
 ## 1. Request path: application → SDK → service → decision → execution
 
-```mermaid
-flowchart LR
-  APP["Application or agent"] -->|"Business Transaction"| SDK["SDK<br/>(@parmana/sdk, parmana)"]
-  SDK -->|"HTTPS, Authorization: Bearer"| API["Parmana API"]
-  API --> AUTH{"Caller authenticated<br/>and allowed to act<br/>for this principal<br/>and invoke this action?"}
-  AUTH -- no --> R1["403 / 401<br/>nothing stored as executed"]
-  AUTH -- yes --> VAL{"Structure valid,<br/>id not used before?"}
-  VAL -- no --> R2["400 / 409"]
-  VAL -- yes --> PV["Policy version in effect<br/>(latest approved for the name)"]
-  PV --> EV["Policy evaluation<br/>signals checked against bindings,<br/>sources and approval rules"]
-  EV --> HA{"Signed human approval<br/>verified? (scope, amount,<br/>expiry, target, single use)"}
-  HA -- no --> R3["403 POLICY_DENIED<br/>or approval mismatch"]
-  HA -- yes --> DEC["Decision: APPROVED"]
-  DEC --> GW["Execution gateway<br/>re-verifies the signed authorization"]
-  GW --> CON["Connector"]
-  CON --> BIZ["Business system<br/>(payment, refund, ...)"]
-  GW --> REC["Execution Trust Record<br/>written and signed"]
-  REC --> APP
-```
+1. The application or agent builds a Business Transaction and passes it to the SDK (`@parmana/sdk`, `parmana`).
+2. The SDK sends it to the Parmana API over HTTPS with `Authorization: Bearer`.
+3. The API checks that the caller is authenticated, is allowed to act for this principal, and is allowed to invoke this action. If not, it returns `403` or `401`. Nothing is stored as executed, and the request stops here.
+4. The API checks that the structure is valid and that the ID has not been used before. If not, it returns `400` or `409`, and the request stops here.
+5. The runtime loads the policy version in effect, which is the latest approved version for the policy name.
+6. Policy evaluation checks the signals against bindings, sources, and approval rules.
+7. The API verifies the signed human approval for scope, amount, expiry, target, and single use. If it fails, the API returns `403 POLICY_DENIED` or reports an approval mismatch, and the request stops here.
+8. The decision is **APPROVED**.
+9. The execution gateway re-verifies the signed authorization.
+10. The gateway releases the request to the connector, which performs the business action (payment, refund, and so on).
+11. The gateway writes a signed Execution Trust Record and returns it to the application.
 
 Each refusal is a final answer for that request. Nothing runs. When the caller-authentication audit sink is configured, the principal, capability and structural refusals are also written to the caller audit trail. The outcome of a refused request is in the response body (`error`, and where present `code`), described in the [error catalogue](reference/error-codes.md).
 

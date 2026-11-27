@@ -279,13 +279,12 @@ A repaired record has its own `createdAt`, the time of the repair. The times of 
     {
       "valid": true,
       "hashValid": true,
-      "legacySignatureValid": true,
       "algorithmsChecked": ["ed25519"],
       "errors": []
     }
     ```
 
-    The exit code is `0` when valid, `1` when not, `2` for wrong arguments. If the intent was altered after signing, both `hashValid` and `legacySignatureValid` are `false`.
+    The exit code is `0` when valid, `1` when not, `2` for wrong arguments. If the intent was altered after signing, both `hashValid` and `valid` are `false`.
 
   </Tab>
 </Tabs>
@@ -386,7 +385,7 @@ intent = json.load(open("intent.json"))
 public_key = open("default.public.pem").read()
 
 result = verify_execution_intent_offline(intent, {"default": public_key})
-print(result.valid, result.hash_valid, result.legacy_signature_valid)
+print(result.valid, result.hash_valid)
 ```
 
 It agrees with the server: a real server signed intent, and intents signed by the TypeScript signer including non ASCII text, all verify in Python.

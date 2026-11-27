@@ -6,6 +6,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // docs/internal/VERIFICATION-GAPS.md G-32 / docs/internal/CLAIMS.md 2.28: RuntimeAuthorizationSigner
@@ -56,6 +57,7 @@ const policyRepository = new FilePolicyRepository(
 const trustRecords = new MemoryExecutionTrustRecordRepository();
 
 const runtime = new RuntimeBuilder()
+  .withBusinessSignalSources(demoTrustedSources())
   .withSignalStateVerifier(demoApprovalSignalVerifier())
   .withPolicyRepository(policyRepository)
   .build(trustRecords);

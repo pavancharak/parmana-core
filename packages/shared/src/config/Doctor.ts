@@ -393,13 +393,13 @@ function checkCrypto(
   }
 
   if (provider === KeyProviders.AWS_KMS) {
-    if (env.CRYPTO_MODE === "hybrid") {
+    if (env.CRYPTO_MODE === "hybrid" && env.PARMANA_HYBRID_KMS !== "true") {
       add({
         name: "KEY_PROVIDER",
         level: "fail",
         message:
           "CRYPTO_MODE=hybrid is not supported with KEY_PROVIDER=aws-kms",
-        fix: "Use CRYPTO_MODE=single with KMS, or KEY_PROVIDER=local for hybrid signing",
+        fix: "Use CRYPTO_MODE=single with KMS, or KEY_PROVIDER=local for hybrid signing. To try hybrid with KMS, set PARMANA_HYBRID_KMS=true (not verified against a real KMS key)",
       });
       return;
     }

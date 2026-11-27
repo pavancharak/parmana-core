@@ -2,6 +2,7 @@ export * from "./business-transaction-repository.js";
 export * from "./execution-trust-record-repository.js";
 export * from "./execution-intent-repository.js";
 export * from "./refusal-record-repository.js";
+export * from "./refusal-record-outbox-repository.js";
 export * from "./challenge-record-repository.js";
 export * from "./policy-repository.js";
 export * from "./pending-policy-change-repository.js";

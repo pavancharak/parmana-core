@@ -91,7 +91,7 @@ The default configuration of this build produces schema 2 records with one signa
 { "allowLegacyV2": true, "allowLegacyOnly": true, "keys": [ … ] }
 ```
 
-With those settings, a schema 2 record is accepted with `coverage: legacy`. **Know what that means.** The signature covers only `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `overrides`, `executions` and `createdAt`. A change to `updatedAt`, `evidenceAnchor`, `verifications` or `receipts` is not detected. This was reproduced in this portal: changing `updatedAt` left `valid: true`.
+With those settings, a schema 2 record is accepted with `coverage: legacy`. **Know what that means.** The signature covers only `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `executions` and `createdAt`. A change to `updatedAt`, `evidenceAnchor`, `verifications` or `receipts` is not detected. This was reproduced in this portal: changing `updatedAt` left `valid: true`.
 
 Prefer schema 3 for records you must rely on. See [Security: schema versions and coverage](README.md#schema-versions-and-coverage).
 

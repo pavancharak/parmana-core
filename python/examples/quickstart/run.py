@@ -79,7 +79,7 @@ def run_quickstart(
     print(f"\nBusiness Transaction ID: {transaction.business_transaction_id}")
     print(f"Trust Record ID:         {trust_record.trust_record_id}")
     print(f"Trust Record Hash:       {trust_record.trust_record_hash}")
-    print(f"Signature Algorithm:     {trust_record.signature.algorithm}")
+    print(f"Signature Algorithm:     {trust_record.signatures[0].algorithm}")
 
     print("\nFull Execution Trust Record:")
     print(json.dumps(asdict(trust_record), indent=2, default=str))

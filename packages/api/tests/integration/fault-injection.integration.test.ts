@@ -17,6 +17,9 @@ import {
 import { createApp } from "../../src/app.js";
 
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+
+const trustedFacts = createTrustedFacts();
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 import { testApprovalSignalVerifier } from "../../../../test-support/approvals.js";
 
@@ -147,6 +150,10 @@ function buildFaultyApp(): FaultyApp {
     undefined,
     signingReadiness,
     intents,
+    undefined,
+    undefined,
+    undefined,
+    trustedFacts.registry,
   );
 
   return {

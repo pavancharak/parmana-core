@@ -9,6 +9,7 @@ import { PaymentService } from "./PaymentService.js";
 import transaction from "./transaction.json" with { type: "json" };
 import { demoApprovalSignalVerifier } from "../../shared/helpers/demo-approval.js";
 import { withRequiredFields } from "../../shared/helpers/business-transaction.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 async function main(): Promise<void> {
   console.log();
@@ -30,6 +31,7 @@ async function main(): Promise<void> {
   //
 
   const runtime = new RuntimeBuilder()
+    .withBusinessSignalSources(demoTrustedSources())
     .withSignalStateVerifier(demoApprovalSignalVerifier())
     .withPolicyRepository(policyRepository)
     .build(trustRecords);

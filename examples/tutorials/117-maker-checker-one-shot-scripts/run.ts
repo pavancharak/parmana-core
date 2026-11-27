@@ -14,6 +14,7 @@ import { PolicyChangeCrypto } from "@parmana/crypto";
 import { FilePolicyRepository } from "@parmana/policy";
 import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import { MemoryPolicyChangeApprovalRecordRepository } from "@parmana/storage";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // "Sign and submit in one step" in docs/site/guides/policy-lifecycle-and-approvals.mdx: chaining
@@ -138,7 +139,13 @@ const authenticator = new StaticKeyAuthenticator([
 ]);
 
 const executionSystem = await createExecutionSystem();
-const application = createApplication(executionSystem);
+const application = createApplication(
+  executionSystem,
+  undefined,
+  undefined,
+  undefined,
+  demoTrustedSources(),
+);
 const app = createApp(application, {
   callerAuth: { authenticator, auditSink: { record: async () => {} } },
   stepUpVerifier: new PolicyChangeStepUpVerifier({

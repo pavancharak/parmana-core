@@ -3,24 +3,16 @@
   "policyVersion": "1.0.0",
   "schemaVersion": "1.0.0",
   "description": "Authorizes issuance of a new API key after validating requester identity, scope authorization, key lifetime, and issuance risk.",
-
   "signalsSchema": {
     "requesterVerified": "boolean",
     "scopeAuthorized": "boolean",
     "keyLifetimeDays": "number",
     "riskScore": "number"
   },
-
   "boundSignals": {
     "keyLifetimeDays": "parameters.lifetimeDays"
   },
-
-  "unboundSignalReasons": {
-    "requesterVerified": "Independently attested by identity verification at authentication time; no Intent-side equivalent field exists to bind against.",
-    "scopeAuthorized": "Result of an independent entitlement check against the requester's granted scopes; not a value the Intent itself declares.",
-    "riskScore": "A computed issuance-risk score (requester history, requested scope breadth), not a value the caller's Intent declares or could be checked against."
-  },
-
+  "unboundSignalReasons": {},
   "rules": [
     {
       "id": "approve-key-issuance",
@@ -111,5 +103,22 @@
         "reason": "API key issuance rejected because one or more required policy conditions were not satisfied."
       }
     }
-  ]
+  ],
+  "signalSources": {
+    "requesterVerified": {
+      "source": "trusted-test",
+      "claim": "fact.requesterVerified",
+      "subject": "target"
+    },
+    "riskScore": {
+      "source": "trusted-test",
+      "claim": "fact.riskScore",
+      "subject": "target"
+    },
+    "scopeAuthorized": {
+      "source": "trusted-test",
+      "claim": "fact.scopeAuthorized",
+      "subject": "target"
+    }
+  }
 }

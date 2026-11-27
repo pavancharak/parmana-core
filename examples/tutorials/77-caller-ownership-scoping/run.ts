@@ -6,6 +6,7 @@ import {
   demoApprovalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // Without this check, every transaction-scoped route (trust-records,
@@ -99,7 +100,13 @@ console.log();
 // which holds the payment-limit 1.0.0 policy this tutorial approves.
 const dir = path.resolve(import.meta.dirname, "../../../fixtures/policies");
 const executionSystem = await createExecutionSystem();
-const application = createApplication(executionSystem, demoApprovalVerifier());
+const application = createApplication(
+  executionSystem,
+  demoApprovalVerifier(),
+  undefined,
+  undefined,
+  demoTrustedSources(),
+);
 
 //
 // Governance is always on (D19). payment-limit 1.0.0 must have a signed

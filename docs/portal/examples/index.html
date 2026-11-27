@@ -28,7 +28,7 @@
 <div class="shell">
   <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
 <div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
-<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../security/key-management.html">Key management</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../policies/payment-refund-coverage.html">Coverage of the production policy</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
 <div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="index.html" aria-current="page">Runnable examples</a></li></ul></div>
 <div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
 <div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
@@ -75,6 +75,36 @@ bash ~/.parmana/governed-quickstart/start-server.sh                 # leave it r
 <td>The same flow with the Python SDK.</td>
 <td>Approves <code>2.1.0</code></td>
 <td><strong>Yes, passed</strong></td>
+</tr>
+<tr>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/python/declare_then_execute.py"><code>governed-quickstart/python/declare_then_execute.py</code></a></td>
+<td>The declare-then-execute flow with the Python SDK: declare, read the status, execute, read the status with history.</td>
+<td><code>GOVERNED_POLICY_VERSION</code> (default <code>2.1.0</code>)</td>
+<td><strong>Yes, passed</strong> against a live server</td>
+</tr>
+<tr>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/python/approval_cases.py"><code>governed-quickstart/python/approval_cases.py</code></a></td>
+<td>The five approval cases with the Python SDK: A to D refused, E approved.</td>
+<td><code>GOVERNED_POLICY_VERSION</code></td>
+<td><strong>Yes, passed</strong>: A to D refused, E approved</td>
+</tr>
+<tr>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/python/maker_checker_cli.py"><code>governed-quickstart/python/maker_checker_cli.py</code></a></td>
+<td>The <code>parmana-ops</code> maker-checker steps with the Python SDK: propose a version from a file, a refused self-approval, a step-up envelope signed locally and written to a file, then the checker&#39;s approval. Approves <code>2.1.1</code>, which supersedes <code>2.1.0</code>: run it on a fresh setup.</td>
+<td>Approves <code>2.1.1</code></td>
+<td><strong>Yes, passed</strong> against a live server</td>
+</tr>
+<tr>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/python/governance_changes.py"><code>governed-quickstart/python/governance_changes.py</code></a></td>
+<td>Three governance changes with the Python SDK: an approver key, proposed by the maker and approved by the checker; an authority grant, approved the same way; and an external connector to a localhost endpoint, refused at proposal. Approving a connector is not shown.</td>
+<td>Not used</td>
+<td><strong>Yes, passed</strong> against a live server</td>
+</tr>
+<tr>
+<td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/python/connector_and_signal_source.py"><code>governed-quickstart/python/connector_and_signal_source.py</code></a></td>
+<td>An external connector to an https endpoint, and a business signal source. Each is proposed by the maker, refused when the maker tries to approve it, then approved by the checker. Approval checks that the endpoint resolves to public addresses; on the network this was run from, both were approved.</td>
+<td>Not used</td>
+<td><strong>Yes, passed</strong> against a live server</td>
 </tr>
 <tr>
 <td><a href="https://github.com/pavancharak/parmana-core/blob/main/docs/developer-portal/examples/governed-quickstart/typescript/declare-then-execute.ts"><code>governed-quickstart/typescript/declare-then-execute.ts</code></a></td>

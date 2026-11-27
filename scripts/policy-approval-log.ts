@@ -1,7 +1,13 @@
 import "dotenv/config";
 
 import { execFileSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -49,17 +55,37 @@ import {
  */
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const LOG_PATH = "governance/policy-approvals.jsonl";
-const KEYS_PATH = "governance/policy-approval-keys.json";
+
+// Where the log, the keys and the policies live. Each defaults to this checkout,
+// and each can be set to another folder, so an organization's own repository can
+// be the root of its own governance. A relative value is resolved from the
+// current directory, as PARMANA_POLICY_DIR is for the server.
+function resolveDir(value: string | undefined, fallback: string): string {
+  return value !== undefined && value.trim() !== ""
+    ? path.resolve(process.cwd(), value)
+    : fallback;
+}
+const governanceDir = resolveDir(
+  process.env.PARMANA_GOVERNANCE_DIR,
+  path.join(root, "governance"),
+);
+const policiesDir = resolveDir(
+  process.env.PARMANA_POLICY_DIR,
+  path.join(root, "policies"),
+);
+const LOG_FILE = "policy-approvals.jsonl";
+const KEYS_FILE = "policy-approval-keys.json";
+const LOG_PATH = path.join(governanceDir, LOG_FILE);
+const KEYS_PATH = path.join(governanceDir, KEYS_FILE);
 const DEFAULT_API_URL = "https://parmana-api-real.vercel.app";
 
 function readLog(): LogEntry[] {
-  const file = path.join(root, LOG_PATH);
+  const file = LOG_PATH;
   return existsSync(file) ? parseLog(readFileSync(file, "utf8")) : [];
 }
 
 function readKeys(): Record<string, string[]> {
-  const file = path.join(root, KEYS_PATH);
+  const file = KEYS_PATH;
   return existsSync(file)
     ? (JSON.parse(readFileSync(file, "utf8")) as Record<string, string[]>)
     : {};
@@ -67,7 +93,7 @@ function readKeys(): Record<string, string[]> {
 
 function readPolicies(): Map<string, unknown> {
   const policies = new Map<string, unknown>();
-  const dir = path.join(root, "policies");
+  const dir = policiesDir;
   for (const name of readdirSync(dir, { withFileTypes: true })) {
     if (!name.isDirectory()) continue;
     for (const version of readdirSync(path.join(dir, name.name), {
@@ -89,13 +115,14 @@ function logAtRef(ref: string): LogEntry[] {
   // The commit must exist, or the append only check would pass by
   // comparing against nothing.
   execFileSync("git", ["cat-file", "-e", `${ref}^{commit}`], {
-    cwd: root,
+    cwd: governanceDir,
     stdio: "ignore",
   });
   let text: string;
   try {
-    text = execFileSync("git", ["show", `${ref}:${LOG_PATH}`], {
-      cwd: root,
+    // "./" makes git resolve the path from the governance folder, wherever it is.
+    text = execFileSync("git", ["show", `${ref}:./${LOG_FILE}`], {
+      cwd: governanceDir,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
     });
@@ -124,7 +151,7 @@ function verify(args: string[]): number {
     base === undefined || isAppendOnly(logAtRef(base), entries)
       ? []
       : [
-          `${LOG_PATH} changed or removed entries that ${base} has; it may only grow.`,
+          `${LOG_FILE} changed or removed entries that ${base} has; it may only grow.`,
         ];
   const requireCoverage = args.includes("--require-coverage");
 
@@ -237,11 +264,9 @@ async function exportOrCheck(write: boolean, only?: string): Promise<number> {
       throw new Error(`Fetching key "${keyId}" failed: ${response.status}`);
     keys[keyId] = [((await response.json()) as { pem: string }).pem];
   }
-  writeFileSync(path.join(root, LOG_PATH), serializeLog(entries));
-  writeFileSync(
-    path.join(root, KEYS_PATH),
-    `${JSON.stringify(keys, null, 2)}\n`,
-  );
+  mkdirSync(governanceDir, { recursive: true });
+  writeFileSync(LOG_PATH, serializeLog(entries));
+  writeFileSync(KEYS_PATH, `${JSON.stringify(keys, null, 2)}\n`);
   console.log(
     `Appended ${added} approval(s); the log now holds ${entries.length}.`,
   );

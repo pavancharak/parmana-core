@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coverage of the production policy · Parmana developer docs</title>
+<meta name="description" content="Coverage of the production policy Policy management · Refund authorization tutorial · Error codes This page says which policy Parmana runs in production, what the automated tests check about it, and which tests do not. It is written so you ">
+<link rel="icon" href="../logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../portal.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
+  <a class="brand" href="../index.html">
+    <span class="mark" aria-hidden="true"></span>
+    <span>Parmana <em>developer docs</em></span>
+  </a>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search the docs" autocomplete="off" aria-label="Search the docs">
+    <kbd aria-hidden="true">/</kbd>
+    <div id="results" class="results" role="listbox" hidden></div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/pavancharak/parmana-core" rel="noopener" target="_blank">GitHub</a>
+    <a class="btn" href="../getting-started.html">Get started</a>
+  </nav>
+</header>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+<div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../security/key-management.html">Key management</a></li><li><a href="index.html">Policy management</a></li><li><a href="payment-refund-coverage.html" aria-current="page">Coverage of the production policy</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Operate</div><ul><li><a href="../deployment/index.html">Deployment and operations</a></li><li><a href="../reference/index.html">Developer reference</a></li><li><a href="../reference/environment-variables.html">Environment variable reference</a></li><li><a href="../reference/error-codes.html">Error code catalogue</a></li><li><a href="../reference/error-code-index.html">Error code index</a></li><li><a href="../troubleshooting/index.html">Troubleshooting</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Project</div><ul><li><a href="../CHANGELOG.html">Changelog</a></li><li><a href="../COVERAGE.html">Documentation coverage and verification report</a></li><li><a href="../FINDINGS.html">Findings: open items after the production-readiness pass</a></li></ul></div>
+  </aside>
+  <main class="content">
+    <div class="crumb"><span>Concepts</span><span class="sep">/</span><span>Coverage of the production policy</span></div>
+    <article>
+<h1 id="coverage-of-the-production-policy">Coverage of the production policy<a class="anchor" href="#coverage-of-the-production-policy" aria-label="Link to this section">#</a></h1>
+<p><a href="index.html">Policy management</a> · <a href="../tutorials/refund-authorization.html">Refund authorization tutorial</a> · <a href="../reference/error-codes.html">Error codes</a></p>
+<p>This page says which policy Parmana runs in production, what the automated tests check about it, and which tests do not. It is written so you can judge how far to rely on the test suite when you integrate.</p>
+<h2 id="the-policy-production-runs">The policy production runs<a class="anchor" href="#the-policy-production-runs" aria-label="Link to this section">#</a></h2>
+<p>Production runs one policy: <code>payment-refund</code>, version <code>1.0.0</code>. It governs the action <code>payments:refund</code>. Every other policy in the repository is retired. Retired policies are kept only as test fixtures, and they do not decide anything in production.</p>
+<p>The policy has three rules, checked in this order:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>refuse-not-refundable</code></td>
+<td>Refuses the refund when the payment is not refundable. The signal comes from the payment source (Razorpay).</td>
+</tr>
+<tr>
+<td><code>tier-2-with-exact-approval</code></td>
+<td>Approves the refund only when a manager approval is present, and that approval is bound to the exact amount in the request.</td>
+</tr>
+<tr>
+<td><code>reject-by-default</code></td>
+<td>Rejects any request that no earlier rule approves.</td>
+</tr>
+</tbody></table></div>
+<h2 id="what-the-tests-check">What the tests check<a class="anchor" href="#what-the-tests-check" aria-label="Link to this section">#</a></h2>
+<p>The suite includes a test that loads the production policy file, validates it against the policy schema, and checks each of the three rules and the refusal reason. The test runs with the package&#39;s test suite, so a change to the production policy that breaks one of these rules fails the suite.</p>
+<h2 id="what-the-tests-do-not-check">What the tests do not check<a class="anchor" href="#what-the-tests-do-not-check" aria-label="Link to this section">#</a></h2>
+<p>Many other tests and examples use retired policies. They exercise the policy engine, the runtime and the signing pipeline, but their decisions are not production decisions. Read a passing example as proof of the mechanism, not as proof of what production will approve or refuse.</p>
+<p>The tests do not check the live payment source. Whether Razorpay reports a payment as refundable is outside what the suite can prove.</p>
+<h2 id="how-to-check-a-decision-yourself">How to check a decision yourself<a class="anchor" href="#how-to-check-a-decision-yourself" aria-label="Link to this section">#</a></h2>
+<p>Each decision returns a refusal or an execution record. You can check a refusal without an API key:</p>
+<div class="code"><div class="code-bar"><span>text</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-text">POST /refusal/verify</code></pre></div>
+<p>Retrieve a stored refusal by its business transaction ID:</p>
+<div class="code"><div class="code-bar"><span>text</span><button type="button" class="copy" aria-label="Copy code">Copy</button></div><pre><code class="language-text">GET /refusal/{businessTransactionId}</code></pre></div>
+<p>The verifier that checks a record offline is described in <a href="../security/evidence-verification.html">Evidence verification</a>.</p>
+
+    </article>
+    <div class="meta"><a href="https://github.com/pavancharak/parmana-core/edit/main/docs/developer-portal/policies/payment-refund-coverage.md" rel="noopener" target="_blank">Edit this page on GitHub</a></div>
+    <nav class="pager" aria-label="Pager"><a class="pn prev" href="index.html"><span>Previous</span>Policy management</a><a class="pn next" href="../security/index.html"><span>Next</span>Security and cryptographic verification</a></nav>
+    <footer class="foot">Generated from docs/developer-portal. Verified against the repository at the time of writing; see the Project section for coverage and open findings.</footer>
+  </main>
+  <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><ul><li class="d2"><a href="#the-policy-production-runs">The policy production runs</a></li><li class="d2"><a href="#what-the-tests-check">What the tests check</a></li><li class="d2"><a href="#what-the-tests-do-not-check">What the tests do not check</a></li><li class="d2"><a href="#how-to-check-a-decision-yourself">How to check a decision yourself</a></li></ul></nav>
+</div>
+<script>window.PORTAL_ROOT = "../";</script>
+<script src="../search-index.js"></script>
+<script src="../portal.js"></script>
+</body>
+</html>

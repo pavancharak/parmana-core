@@ -2,14 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.parmanasystems.com/common/execution-trust-record.schema.json",
   "title": "Execution Trust Record",
-  "description": "Canonical immutable record representing everything Parmana knows about a Business Transaction: the authoritative source for replay, verification, audit, and receipt generation. One Execution Trust Record exists per Business Transaction. overrides, executions, verifications, and receipts are append-only: existing entries are never modified or removed.",
+  "description": "Canonical immutable record representing everything Parmana knows about a Business Transaction: the authoritative source for replay, verification, audit, and receipt generation. One Execution Trust Record exists per Business Transaction. executions, verifications, and receipts are append-only: existing entries are never modified or removed.",
   "type": "object",
   "additionalProperties": true,
   "required": [
     "trustRecordId",
     "businessTransactionId",
     "transaction",
-    "overrides",
     "executions",
     "verifications",
     "receipts",
@@ -29,13 +28,6 @@
     },
     "transaction": {
       "$ref": "./business-transaction.schema.json"
-    },
-    "overrides": {
-      "type": "array",
-      "description": "Override history. Append-only; empty on every transaction in this repository today (no route creates an Override).",
-      "items": {
-        "$ref": "./override.schema.json"
-      }
     },
     "executions": {
       "type": "array",
@@ -180,7 +172,6 @@
         "status": "RECEIVED",
         "createdAt": "2026-07-07T16:38:59.325Z"
       },
-      "overrides": [],
       "executions": [
         {
           "executionId": "2be38c15-f93c-4621-9a1c-7570c130dea0",

@@ -11,7 +11,23 @@ import { FileKeyProvider } from "@parmana/crypto";
 import { EnvelopeVerifier, MemoryNonceStore } from "@parmana/envelope-verifier";
 import { requireParmanaAuthorization } from "@parmana/envelope-verifier/express";
 
-import { FilePolicyRepository } from "@parmana/policy";
+import type {
+  SignalStateVerifier,
+  SignalStateViolation,
+} from "@parmana/policy";
+
+import { governedPolicyDirectory } from "../shared/helpers/demo-policy-governance.js";
+
+//
+// The release check's live signal source. The signals in this demo have not
+// changed between authorization and release, so it reports no violations. A
+// deployment wires a verifier that re-reads real-world state here.
+//
+class NothingChangedSignalVerifier implements SignalStateVerifier {
+  async findViolations(): Promise<readonly SignalStateViolation[]> {
+    return [];
+  }
+}
 
 import {
   MemoryBusinessTransactionRepository,
@@ -35,6 +51,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../shared/helpers/demo-trusted-sources.js";
 
 //
 // To run this example under the post-quantum provider instead of
@@ -130,7 +147,7 @@ function ensureKeysAvailable(): void {
  * it also records the HTTP response so this example can show it
  * as proof of Scenario 1.
  *
- * This Connector never runs directly: RuntimeFactory.create() is
+ * This Connector never runs directly: RuntimeFactory.create(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, demoTrustedSources()) is
  * wired with an ExecutionGateway wrapping this Connector, so every
  * request is verified (signature, expiry, TTL, content hash,
  * nonce) before this class ever sees it. The Gateway is the only
@@ -250,9 +267,11 @@ async function main(): Promise<void> {
   const transactions = new MemoryBusinessTransactionRepository();
   const trustRecords = new MemoryExecutionTrustRecordRepository();
 
-  const policyRepository = new FilePolicyRepository(
+  // Policy Governance approvals for every fixture policy, on a scratch copy.
+  const governed = await governedPolicyDirectory(
     path.join(repoRoot, "fixtures", "policies"),
   );
+  const policyRepository = governed.policyRepository;
 
   const gatewayPublicKey = await new FileKeyProvider().getPublicKey("default");
 
@@ -261,8 +280,9 @@ async function main(): Promise<void> {
   const connector = new RecordingHttpConnector(RECEIVING_SIDE_URL);
 
   const gateway = new ExecutionGateway({
-    // Legacy fixture: predates fail-closed policy binding.
-    allowUnverifiedPolicy: true,
+    signalStateVerifier: new NothingChangedSignalVerifier(),
+    policyRepository,
+    policyApprovalVerifier: governed.policyApprovalVerifier,
     publicKey: gatewayPublicKey,
     nonceStore,
     connector,
@@ -275,6 +295,14 @@ async function main(): Promise<void> {
     gateway,
     undefined,
     demoApprovalSignalVerifier(),
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    demoTrustedSources(),
   );
 
   console.log(

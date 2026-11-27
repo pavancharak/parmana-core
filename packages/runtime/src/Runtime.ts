@@ -45,6 +45,11 @@ export class Runtime {
     return this.engine.decide(request, options);
   }
 
+  /** Writes the Refusal Records still pending in the outbox. See RuntimeEngine. */
+  public async drainRefusalOutbox(limit?: number) {
+    return this.engine.drainRefusalOutbox(limit);
+  }
+
   public async execute(
     transaction: BusinessTransaction,
   ): Promise<RuntimeResult> {

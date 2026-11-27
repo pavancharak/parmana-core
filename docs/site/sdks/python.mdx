@@ -137,6 +137,7 @@ Enums are real Python `str, Enum` classes (e.g. `SignatureAlgorithm`,
 ## Errors, correctly mapped to real conditions
 
 ```python
+transaction = ...  # a BusinessTransaction you already created, as in create_business_transaction() below
 from parmana import ConflictError, NotFoundError, ValidationError
 
 try:
@@ -180,6 +181,10 @@ GETs with backoff on 429/502/503/504, POSTs are never retried.
 ## Every product endpoint has a method
 
 ```python
+transaction = ...  # a BusinessTransaction, built as in create_business_transaction() below
+id = "<businessTransactionId>"  # an id you already have
+record = ...  # an ExecutionTrustRecord you already have
+step_up = ...  # the checker's signed step up authorization, from "Approve a policy change" below
 client.execution.execute(transaction)             # POST /execute
 client.execution.health()                         # GET /health
 client.execution.version()                        # GET /version (the server's version)
@@ -247,6 +252,8 @@ automatically:
 ```python
 from parmana import ParmanaClient, PolicyReference, create_business_transaction
 
+endpoint = "http://127.0.0.1:3000"
+approval = ...  # the approver's signed approval, from sign_approval() in "Sign an approval" below
 client = ParmanaClient(endpoint=endpoint)
 
 transaction = create_business_transaction(
@@ -284,6 +291,20 @@ server's idempotency key. `authority_type` defaults to `AuthorityType.SERVICE` (
 generated ids round-trip correctly through a real running server, not just in isolation).
 
 ## New in 1.6.0
+
+The examples in this section and the next two use three clients: `maker` proposes a change, `checker` approves it, and `proposer` is the maker's client in the approver examples. Each uses its own API key, and each is a human credential.
+
+```python
+from pathlib import Path
+
+from parmana import ParmanaClient
+from parmana.crypto import sign_approval, sign_policy_change_step_up
+
+endpoint = "http://127.0.0.1:3000"
+maker = ParmanaClient(endpoint=endpoint, api_key="pk_local_... (maker)")
+checker = ParmanaClient(endpoint=endpoint, api_key="pk_local_... (checker)")
+proposer = maker
+```
 
 ### Register a business signal source
 
@@ -324,6 +345,7 @@ Say which agent may have which action decided, within which limits, until when. 
 decides a request only for a caller holding a grant in force.
 
 ```python
+step_up = ...  # the checker's signed step up authorization, from "Approve a policy change" below
 change = maker.authority_grants.propose_grant(
     caller_id="warehouse-agent",
     capability="erp:release-goods",
@@ -459,6 +481,7 @@ change = proposer.approvers.propose_add(
     approver_id="approver-example",
     key_id="approver-example-key-1",
     public_key_pem=public_key_pem,  # the approver's.public.pem file
+    capabilities=["erp:pay-invoice"],  # 1 to 50 capabilities the approver may approve
     reason="The approver approves refunds for the West region from October.",
 )
 
@@ -519,7 +542,7 @@ pem = client.public_key("default").pem
 
 record = client.trust_record("5015499d-b7ba-48fe-a9ad-821862d70ad0")
 result = verify_execution_trust_record_offline(record, {"default": pem})
-# OfflineVerificationResult(valid=True, hash_valid=True, legacy_signature_valid=True,...)
+# OfflineVerificationResult(valid=True, hash_valid=True, hybrid_signatures_valid=True,...)
 
 view = client.execution_intent("5015499d-b7ba-48fe-a9ad-821862d70ad0")
 verify_execution_intent_offline(view.intent, {"default": pem})

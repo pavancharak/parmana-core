@@ -18,7 +18,7 @@ The decision record is [ADR-0016](../../../docs/internal/adr/ADR-0016-Whole-Reco
 
 | Schema version         | Signatures                                                             | Fields covered                                                                                                                                                                                | Coverage reported |
 | ---------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| **2** (or unversioned) | Legacy `signature` (ed25519), plus `signatures` only when hybrid is on | `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `overrides`, `executions`, `createdAt`                                                                              | `legacy`          |
+| **2** (or unversioned) | Legacy `signature` (ed25519), plus `signatures` only when hybrid is on | `trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `executions`, `createdAt`                                                                                           | `legacy`          |
 | **3**                  | Hybrid `signatures`: ed25519 and dilithium3, both required             | Every top-level field except `signature`, `signatures`, `schemaVersion`, `verifications` and `receipts`. `schemaVersion` is part of the hybrid message, so changing it breaks the signatures. | `full`            |
 
 The exclusion list is the same in the verifier's `docs/FORMAT.md` and in the signing code (`WHOLE_RECORD_EXCLUDED_FIELDS` in `packages/crypto/src/ExecutionTrustRecordCanonicalView.ts`). It was checked against both on 2026-11-20.
@@ -48,7 +48,7 @@ With the v3 settings below, a record reported `"coverage":"full"` under the veri
 | `CRYPTO_MODE`                   | `single`  | `hybrid` makes the server add a `signatures` array to each record. In `single` mode there is no hybrid envelope.                                                 |
 | `PRIMARY_SIGNATURE_PROVIDER`    | `ed25519` | The primary algorithm.                                                                                                                                           |
 | `SECONDARY_SIGNATURE_PROVIDER`  | none      | Required when `CRYPTO_MODE=hybrid`. Must differ from the primary. The server refuses to start otherwise.                                                         |
-| `HYBRID_SCHEMA_VERSION`         | `3`       | `2` or `3`. Unset means 3. `2` is the rollback. Any other value is refused at start-up.                                                                          |
+| `HYBRID_SCHEMA_VERSION`         | `3`       | `3` only. Unset means 3. `2` is refused at start-up (discarded, D24). Any other value is refused too.                                                            |
 | `HYBRID_SCHEMA_V3_ACKNOWLEDGED` | not read  | Ignored. It was the issuance gate until schema 3 became the default. Remove it from environment files.                                                           |
 | `HYBRID_SIGNATURE_REQUIRED`     | `false`   | When `true`, verifying a record with no `signatures` array, or a partial one, is a rejection, whatever its version.                                              |
 | `HYBRID_REQUIRED_FROM`          | none      | The cutover (UTC, ending in `Z`). From this instant, a record needs a valid hybrid envelope. Enforced by the server's verification path as well as by verifiers. |
@@ -56,7 +56,7 @@ With the v3 settings below, a record reported `"coverage":"full"` under the veri
 Start-up refusals you will see:
 
 - `CRYPTO_MODE=hybrid` without `SECONDARY_SIGNATURE_PROVIDER`, or with the same provider as the primary.
-- A `HYBRID_SCHEMA_VERSION` that is neither `2` nor `3`.
+- A `HYBRID_SCHEMA_VERSION` other than `3`, including `2`, which is discarded (D24).
 - A `HYBRID_REQUIRED_FROM` that is not a UTC ISO-8601 timestamp.
 
 If `CRYPTO_MODE=hybrid` is set but no secondary provider is, the server releases the action and then fails to write the record. Its response is `500` with `Secondary signature provider is not configured.`. The start-up check above now stops this before any action is released.
@@ -114,7 +114,7 @@ Each step is for each deployment. Do not skip a step.
 
 ### Rollback
 
-Setting `HYBRID_SCHEMA_VERSION` back to `2` returns new records to schema 2. Keep the hybrid settings and the cutover in place, so records stay hybrid-signed and the cutover stays enforced. **Not tested in this repository. Check it on a non-production deployment before relying on it.**
+Schema version 2 has been discarded (decision D24), so there is no rollback to it: `HYBRID_SCHEMA_VERSION=2` is refused at start-up. Keep the hybrid settings and the cutover in place, so records stay hybrid-signed and the cutover stays enforced. **Not tested in this repository. Check it on a non-production deployment before relying on it.**
 
 ## Cost: size and speed
 

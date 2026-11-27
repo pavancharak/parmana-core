@@ -5,6 +5,7 @@ import {
   demoApprovalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // RFC-0021: every policy REJECT produces a durable, signed Refusal
@@ -84,7 +85,13 @@ console.log("==================================================");
 console.log();
 
 const executionSystem = await createExecutionSystem();
-const application = createApplication(executionSystem, demoApprovalVerifier());
+const application = createApplication(
+  executionSystem,
+  demoApprovalVerifier(),
+  undefined,
+  undefined,
+  demoTrustedSources(),
+);
 
 // riskScore: 999 fails payment-limit/1.0.0's own risk-score rule
 // (requires <= 20) -- an ordinary PolicyEngine REJECT.

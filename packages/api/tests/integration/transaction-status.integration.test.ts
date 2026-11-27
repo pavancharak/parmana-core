@@ -16,6 +16,8 @@ import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 import { transactionStatusEventRepository } from "../../src/repositories.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * Decision D23 over HTTP: declare (POST /transactions), execute
@@ -30,7 +32,13 @@ describe("Transaction status (D23) over HTTP", () => {
   function buildApp() {
     const { executionSystem } = createInspectableExecutionSystem();
 
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     const authenticator = new StaticKeyAuthenticator([
       {
@@ -280,7 +288,13 @@ describe("Transaction status (D23): tenant on execute, and two executes at once"
 
   function buildTenantApp() {
     const { executionSystem } = createInspectableExecutionSystem();
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
     // Two keys of one caller: the key changed its tenant list after the declare.
     const authenticator = new StaticKeyAuthenticator([
       {

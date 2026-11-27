@@ -108,7 +108,7 @@ These are tracked outside this repository. Each needs an owner decision:
 
 - Security reports are with the maintainers.
 - G-133: there has been no live run between parmana-core and parmana-connect. Needs a public HTTPS endpoint for the connector.
-- G-134: the production connector key is not pinned. Needs its fingerprint confirmed through a second channel.
+- G-134: the production connector key is not pinned. Code now requires the pin while release-only is on (2026-11-25, parmana-connect branch `claude/g-134-pin-connector-key`). Needs its fingerprint confirmed through a second channel and set on the deployed connector.
 
 ## 4. Checking the repository
 
@@ -128,3 +128,16 @@ npx vitest run
 - Three TypeScript test files are empty placeholders (`HealthApi`, `ParmanaClient`, `PolicyApi`). This predates today's work.
 - Option A is tested with a fake secrets provider. It has not been run against AWS Secrets Manager.
 - Whether Vercel's OIDC role can read the secret is not yet verified.
+
+## 9. Update 2026-11-21: key management
+
+- **Built, not verified against AWS:** a KMS primary for hybrid signing behind `PARMANA_HYBRID_KMS` (F25). **Partly verified:** the dilithium3 secondary key from Secrets Manager (F26), in a test account only.
+- **Infrastructure:** `infra/parmana-prod-signing/main.tf` adds the secret, its KMS key and its read policy. Applied to the test account only; production not applied (PROD-1). See PR #760.
+- **Owner decisions open:** KM-1 (lift the hybrid + KMS refusal by default, after a real run) and KM-2 (confirm the secret's readers). Recorded in `docs/assurance/OPEN_ITEMS.md`.
+
+## 10. Update 2026-11-21: test account run
+
+- The Terraform stack in `infra/parmana-test-signing` was applied in a separate test account. Production was not applied.
+- The server role read the test secret from EC2, and the stored key is ML-DSA-65. Full record: `runbooks/TEST-ACCOUNT-SECRET-CHECK.md`.
+- A key of unknown origin was stored in the test secret and then removed (F27). The store script now generates a fresh key every time.
+- Open: PROD-1 (production state and production key, owner), and CLEAN-1 (terminate the check instance, delete the runner's access key, and related cleanup).

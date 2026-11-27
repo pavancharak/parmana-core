@@ -5,7 +5,6 @@ export * from "./nonce-already-consumed-error.js";
 export * from "./outcome-unknown-error.js";
 export * from "./connector-not-registered-error.js";
 export * from "./policy-not-found-error.js";
-export * from "./override-not-allowed-error.js";
 export * from "./verification-failed-error.js";
 export * from "./receipt-generation-error.js";
 export * from "./conflict-error.js";

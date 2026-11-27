@@ -1,4 +1,5 @@
 // Tutorial 124: an operator trips the kill switch, a request is refused
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 // with KILL_SWITCH_ACTIVE, status still answers, and a reset lets the next
 // request through. Runs against the real app on an ephemeral port, with
 // in-memory stores, so nothing leaves this machine.
@@ -40,7 +41,13 @@ const authenticator = new StaticKeyAuthenticator([
   },
 ]);
 
-const application = createApplication(await createExecutionSystem());
+const application = createApplication(
+  await createExecutionSystem(),
+  undefined,
+  undefined,
+  undefined,
+  demoTrustedSources(),
+);
 const app = createApp(application, {
   callerAuth: { authenticator, auditSink: { record: async () => {} } },
   killSwitch,

@@ -4,6 +4,8 @@ import {
   type SigningReadiness,
 } from "@parmana/runtime";
 
+import { localModeEnabled } from "./localMode.js";
+
 /**
  * How long a successful signing probe is trusted before the next request
  * probes again. A failure is never cached, so recovery is seen at once.
@@ -18,20 +20,16 @@ const SIGNING_READINESS_TTL_MS = 60_000;
  *
  * This check has its own environment rule, which is not the policy verifier's
  * (createPolicyExecutionVerifier() is on in every environment). Relaxed only
- * when NODE_ENV is exactly "test" or "development", where it stays off
- * unless SIGNING_READINESS_CHECK is exactly "true". In production, or with
- * NODE_ENV unset or any other value, it is enforced and no variable can
- * turn it off.
+ * in local mode (localMode.ts: PARMANA_LOCAL_MODE=true under NODE_ENV "test" or
+ * "development"), where it stays off unless SIGNING_READINESS_CHECK is exactly
+ * "true". Everywhere else it is enforced, and NODE_ENV alone never turns it off.
  *
  * The probe runs a real signing round trip, so under KMS it makes a Sign
  * call and a GetPublicKey call at most once per minute per instance, not
  * once per request.
  */
 export function createSigningReadiness(): SigningReadiness | undefined {
-  const env = process.env.NODE_ENV;
-  const relaxed = env === "test" || env === "development";
-
-  if (relaxed && process.env.SIGNING_READINESS_CHECK !== "true") {
+  if (localModeEnabled() && process.env.SIGNING_READINESS_CHECK !== "true") {
     return undefined;
   }
 

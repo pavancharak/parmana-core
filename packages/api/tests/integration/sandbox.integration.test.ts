@@ -21,6 +21,8 @@ import {
   SANDBOX_CAPABILITY,
 } from "../../src/routes/sandbox-approvals.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * ADR-0014 at the HTTP boundary: CORS for listed origins only, and the
@@ -42,24 +44,33 @@ function buildApp(
 ) {
   const { executionSystem } = createInspectableExecutionSystem();
 
-  return createApp(createApplication(executionSystem), {
-    callerAuth: {
-      authenticator: new StaticKeyAuthenticator([
-        {
-          callerId: "sandbox-visitor",
-          keyHash: hashApiKey(VISITOR_KEY),
-          allowedCapabilities: [SANDBOX_CAPABILITY],
-        },
-      ]),
-      auditSink: new InMemoryCallerAuditSink(),
+  return createApp(
+    createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    ),
+    {
+      callerAuth: {
+        authenticator: new StaticKeyAuthenticator([
+          {
+            callerId: "sandbox-visitor",
+            keyHash: hashApiKey(VISITOR_KEY),
+            allowedCapabilities: [SANDBOX_CAPABILITY],
+          },
+        ]),
+        auditSink: new InMemoryCallerAuditSink(),
+      },
+      ...(options.corsOrigins !== undefined
+        ? { corsOrigins: options.corsOrigins }
+        : {}),
+      ...(options.sandbox === true
+        ? { sandboxApprover: { ...DEMO_APPROVER, privateKey: demo.privateKey } }
+        : {}),
     },
-    ...(options.corsOrigins !== undefined
-      ? { corsOrigins: options.corsOrigins }
-      : {}),
-    ...(options.sandbox === true
-      ? { sandboxApprover: { ...DEMO_APPROVER, privateKey: demo.privateKey } }
-      : {}),
-  });
+  );
 }
 
 function sandboxVerifier() {

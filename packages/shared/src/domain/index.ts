@@ -10,7 +10,6 @@ export * from "./execution-evidence.js";
 export * from "./execution-correspondence.js";
 export * from "./execution-reconciliation.js";
 export * from "./metadata.js";
-export * from "./override.js";
 export * from "./verification.js";
 export * from "./receipt.js";
 export * from "./execution-trust-record.js";

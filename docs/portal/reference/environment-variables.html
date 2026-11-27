@@ -28,7 +28,7 @@
 <div class="shell">
   <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
 <div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
-<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../security/key-management.html">Key management</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../policies/payment-refund-coverage.html">Coverage of the production policy</a></li><li><a href="../security/index.html">Security and cryptographic verification</a></li><li><a href="../security/evidence-verification.html">Evidence verification</a></li><li><a href="../security/schema-v3.html">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
 <div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
 <div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
 <div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
@@ -358,6 +358,22 @@
 <td>Without it, hybrid execution releases the action and then fails to record it (observed: <code>500</code>).</td>
 </tr>
 <tr>
+<td><code>PARMANA_HYBRID_KMS</code></td>
+<td><code>false</code></td>
+<td><code>true</code> lets hybrid signing use a KMS primary key</td>
+<td>No</td>
+<td>Implemented, not verified against a real KMS key</td>
+<td>Refuses <code>CRYPTO_MODE=hybrid</code> with <code>KEY_PROVIDER=aws-kms</code> unless set. See F25.</td>
+</tr>
+<tr>
+<td><code>PARMANA_SECONDARY_KEY_SECRET_ID</code></td>
+<td>none</td>
+<td>AWS Secrets Manager secret (name or ARN) holding the secondary private key as PEM; read in <code>AWS_REGION</code></td>
+<td>No</td>
+<td>Implemented, not verified against real Secrets Manager</td>
+<td>The key is read at startup and cached 5 minutes; it is not written to disk. Its key files are not required. See F26.</td>
+</tr>
+<tr>
 <td><code>HASH_PROVIDER</code></td>
 <td><code>sha256</code></td>
 <td><code>sha256</code>, <code>sha3-512</code>, <code>blake3</code></td>
@@ -384,7 +400,7 @@
 <tr>
 <td><code>HYBRID_SCHEMA_VERSION</code></td>
 <td><code>3</code> (unset)</td>
-<td><code>2</code>, <code>3</code></td>
+<td><code>3</code></td>
 <td>No</td>
 <td>Implemented (<code>3</code> exercised)</td>
 <td><code>3</code> covers the whole record (see <a href="../security/index.html#schema-versions-and-coverage">Security</a>).</td>
@@ -612,7 +628,7 @@ PARMANA_API_KEYS='[{"callerId":"…","keyHash":"…","allowedCapabilities":["…
 POLICY_CHANGE_CHECKERS='{"vendor-payment":["…"]}'
 CRYPTO_MODE=hybrid
 SECONDARY_SIGNATURE_PROVIDER=dilithium3
-# HYBRID_SCHEMA_VERSION defaults to 3. Set 2 only to roll back.</code></pre></div>
+# HYBRID_SCHEMA_VERSION is always 3. Schema version 2 is discarded (decision D24); setting 2 is refused at start-up.</code></pre></div>
 <p>This is an illustrative set. The values are placeholders. Check each one against your deployment before you use it.</p>
 
     </article>

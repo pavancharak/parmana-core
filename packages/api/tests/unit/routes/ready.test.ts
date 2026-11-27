@@ -6,6 +6,8 @@ import { PostgresPoolFactory } from "@parmana/storage";
 import { createApplication } from "../../../src/application.js";
 import { createApp } from "../../../src/app.js";
 import { createExecutionSystem } from "../../../src/bootstrap/createExecutionSystem.js";
+import { createTrustedFacts } from "../../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 const ENV_KEYS = [
   "NODE_ENV",
@@ -18,7 +20,13 @@ async function buildApp(
   callerAuth: Parameters<typeof createApp>[1]["callerAuth"] = "disabled",
 ) {
   const executionSystem = await createExecutionSystem();
-  const application = createApplication(executionSystem);
+  const application = createApplication(
+    executionSystem,
+    undefined,
+    undefined,
+    undefined,
+    trustedFacts.registry,
+  );
   return createApp(application, { callerAuth });
 }
 

@@ -15,7 +15,6 @@ import { BusinessTrustRecordBuilder } from "./BusinessTrustRecordBuilder.js";
  *
  * • Business Transaction
  * • Execution
- * • Override (optional)
  * • Verification (optional)
  * • Receipt (optional)
  *

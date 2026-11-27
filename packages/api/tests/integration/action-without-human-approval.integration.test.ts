@@ -7,6 +7,8 @@ import { createApp } from "../../src/app.js";
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * EV-04: no action is authorized without a signed approval from a trusted
@@ -27,9 +29,18 @@ function refused(status: number): boolean {
 describe("Action without a human approval (HTTP boundary)", () => {
   it("authorizes the same transaction when its signed approval is present (control)", async () => {
     const { executionSystem, auditSink } = createInspectableExecutionSystem();
-    const app = createApp(createApplication(executionSystem), {
-      callerAuth: "disabled",
-    });
+    const app = createApp(
+      createApplication(
+        executionSystem,
+        undefined,
+        undefined,
+        undefined,
+        trustedFacts.registry,
+      ),
+      {
+        callerAuth: "disabled",
+      },
+    );
 
     const response = await request(app)
       .post("/execute")
@@ -44,9 +55,18 @@ describe("Action without a human approval (HTTP boundary)", () => {
 
   it("refuses an action that carries no approval at all", async () => {
     const { executionSystem, auditSink } = createInspectableExecutionSystem();
-    const app = createApp(createApplication(executionSystem), {
-      callerAuth: "disabled",
-    });
+    const app = createApp(
+      createApplication(
+        executionSystem,
+        undefined,
+        undefined,
+        undefined,
+        trustedFacts.registry,
+      ),
+      {
+        callerAuth: "disabled",
+      },
+    );
 
     const transaction = await createBusinessTransaction();
     const { [APPROVAL_ARTIFACT]: _removed, ...signals } =
@@ -66,9 +86,18 @@ describe("Action without a human approval (HTTP boundary)", () => {
 
   it("refuses an action that claims approval with a plain flag and no signed artifact", async () => {
     const { executionSystem, auditSink } = createInspectableExecutionSystem();
-    const app = createApp(createApplication(executionSystem), {
-      callerAuth: "disabled",
-    });
+    const app = createApp(
+      createApplication(
+        executionSystem,
+        undefined,
+        undefined,
+        undefined,
+        trustedFacts.registry,
+      ),
+      {
+        callerAuth: "disabled",
+      },
+    );
 
     const transaction = await createBusinessTransaction();
     const { [APPROVAL_ARTIFACT]: _removed, ...signals } =
@@ -85,9 +114,18 @@ describe("Action without a human approval (HTTP boundary)", () => {
 
   it("refuses an action whose signed approval has been forged", async () => {
     const { executionSystem, auditSink } = createInspectableExecutionSystem();
-    const app = createApp(createApplication(executionSystem), {
-      callerAuth: "disabled",
-    });
+    const app = createApp(
+      createApplication(
+        executionSystem,
+        undefined,
+        undefined,
+        undefined,
+        trustedFacts.registry,
+      ),
+      {
+        callerAuth: "disabled",
+      },
+    );
 
     const transaction = await createBusinessTransaction();
     const artifact = (

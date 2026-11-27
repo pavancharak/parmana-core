@@ -3,7 +3,6 @@
   "policyVersion": "1.0.0",
   "schemaVersion": "1.0.0",
   "description": "Authorizes production deployments after validating deployment approval, successful verification, rollback readiness, maintenance window, and deployment risk assessment.",
-
   "signalsSchema": {
     "deploymentApproved": "boolean",
     "changeVerified": "boolean",
@@ -11,15 +10,7 @@
     "maintenanceWindow": "boolean",
     "riskScore": "number"
   },
-
-  "unboundSignalReasons": {
-    "deploymentApproved": "Attested by a separate change-management approval step; the Intent carries no approval-status field to bind against.",
-    "changeVerified": "Result of an independent pre-deployment verification check; not a value the Intent itself declares.",
-    "rollbackReady": "Result of an independent rollback-plan validation; not expressible via the Intent's target/parameters.",
-    "maintenanceWindow": "A point-in-time schedule check against the current clock; not a property of the Intent being executed.",
-    "riskScore": "A computed deployment-risk score, not a value the caller's Intent declares or could be checked against."
-  },
-
+  "unboundSignalReasons": {},
   "rules": [
     {
       "id": "approve-deployment",
@@ -115,5 +106,32 @@
         "reason": "Production deployment rejected because one or more required policy conditions were not satisfied."
       }
     }
-  ]
+  ],
+  "signalSources": {
+    "changeVerified": {
+      "source": "trusted-test",
+      "claim": "fact.changeVerified",
+      "subject": "target"
+    },
+    "deploymentApproved": {
+      "source": "trusted-test",
+      "claim": "fact.deploymentApproved",
+      "subject": "target"
+    },
+    "maintenanceWindow": {
+      "source": "trusted-test",
+      "claim": "fact.maintenanceWindow",
+      "subject": "target"
+    },
+    "riskScore": {
+      "source": "trusted-test",
+      "claim": "fact.riskScore",
+      "subject": "target"
+    },
+    "rollbackReady": {
+      "source": "trusted-test",
+      "claim": "fact.rollbackReady",
+      "subject": "target"
+    }
+  }
 }

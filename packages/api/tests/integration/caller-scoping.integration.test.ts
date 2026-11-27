@@ -11,6 +11,8 @@ import { InMemoryCallerAuditSink } from "../../src/auth/InMemoryCallerAuditSink.
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * Found by adversarial testing: /transactions, /trust-records, /verify,
@@ -32,7 +34,13 @@ describe("Caller scoping (HTTP boundary, IDOR regression)", () => {
 
   function buildApp() {
     const { executionSystem } = createInspectableExecutionSystem();
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     const authenticator = new StaticKeyAuthenticator([
       {

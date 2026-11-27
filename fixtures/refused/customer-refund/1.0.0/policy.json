@@ -3,24 +3,16 @@
   "policyVersion": "1.0.0",
   "schemaVersion": "1.0.0",
   "description": "Authorizes customer refunds after validating refund eligibility, approval, fraud assessment, and refund amount limits.",
-
   "signalsSchema": {
     "refundEligible": "boolean",
     "managerApproved": "boolean",
     "fraudCheckPassed": "boolean",
     "refundAmount": "number"
   },
-
   "boundSignals": {
     "refundAmount": "parameters.amount"
   },
-
-  "unboundSignalReasons": {
-    "refundEligible": "Result of an independent eligibility check against the customer/order record; not a value the Intent itself declares.",
-    "managerApproved": "Attested by a separate human-approval step; the Intent carries no approval-status field to bind against.",
-    "fraudCheckPassed": "Result of an independent fraud-assessment system; not something the Intent's target/parameters could express."
-  },
-
+  "unboundSignalReasons": {},
   "rules": [
     {
       "id": "approve-refund",
@@ -87,5 +79,22 @@
         "reason": "Refund rejected because one or more required policy conditions were not satisfied."
       }
     }
-  ]
+  ],
+  "signalSources": {
+    "fraudCheckPassed": {
+      "source": "trusted-test",
+      "claim": "fact.fraudCheckPassed",
+      "subject": "target"
+    },
+    "managerApproved": {
+      "source": "trusted-test",
+      "claim": "fact.managerApproved",
+      "subject": "target"
+    },
+    "refundEligible": {
+      "source": "trusted-test",
+      "claim": "fact.refundEligible",
+      "subject": "target"
+    }
+  }
 }

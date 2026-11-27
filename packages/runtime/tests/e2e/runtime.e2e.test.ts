@@ -30,6 +30,10 @@ import {
   testApprovalSignalVerifier,
   withTestApproval,
 } from "../../../../test-support/approvals.js";
+import { TrustedSignalResolver } from "../../src/business-validation/TrustedSignalResolver.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+
+const trustedFacts = createTrustedFacts();
 
 /**
  * RuntimeEngine End-to-End tests.
@@ -116,6 +120,13 @@ describe("RuntimeEngine E2E", () => {
       undefined,
       undefined,
       testApprovalSignalVerifier(),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      new TrustedSignalResolver(trustedFacts.registry),
     );
 
     const result = await runtime.execute(await withTestApproval(transaction));
@@ -145,6 +156,13 @@ describe("RuntimeEngine E2E", () => {
       undefined,
       undefined,
       testApprovalSignalVerifier(),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      new TrustedSignalResolver(trustedFacts.registry),
     );
 
     const transaction: BusinessTransaction = {
@@ -230,6 +248,13 @@ describe("RuntimeEngine E2E", () => {
       undefined,
       undefined,
       testApprovalSignalVerifier(),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      new TrustedSignalResolver(trustedFacts.registry),
     );
 
     const exploitTransaction: BusinessTransaction = {
@@ -308,6 +333,11 @@ describe("RuntimeEngine E2E", () => {
       testApprovalSignalVerifier(),
       undefined,
       policyExecutionVerifier,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      new TrustedSignalResolver(trustedFacts.registry),
     );
 
     // Otherwise a fully valid, approving transaction -- same fixture
@@ -382,6 +412,11 @@ describe("RuntimeEngine E2E", () => {
       testApprovalSignalVerifier(),
       undefined,
       policyExecutionVerifier,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      new TrustedSignalResolver(trustedFacts.registry),
     );
 
     const transaction: BusinessTransaction = {
@@ -468,6 +503,10 @@ describe("RuntimeEngine E2E", () => {
       undefined,
       undefined,
       policyGovernanceAnchorResolver,
+      undefined,
+      undefined,
+      undefined,
+      new TrustedSignalResolver(trustedFacts.registry),
     );
 
     const transaction: BusinessTransaction = {
@@ -556,6 +595,10 @@ describe("RuntimeEngine E2E", () => {
       undefined,
       undefined,
       policyGovernanceAnchorResolver,
+      undefined,
+      undefined,
+      undefined,
+      new TrustedSignalResolver(trustedFacts.registry),
     );
 
     const transaction: BusinessTransaction = {
@@ -625,6 +668,13 @@ describe("RuntimeEngine E2E", () => {
       undefined,
       undefined,
       testApprovalSignalVerifier(),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      new TrustedSignalResolver(trustedFacts.registry),
     );
     await expect(runtime.execute({} as BusinessTransaction)).rejects.toThrow();
   });

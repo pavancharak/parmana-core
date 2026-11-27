@@ -157,7 +157,7 @@ Its output, in order:
    outcome: APPROVED
 5. verification
    server verification: VERIFIED
-   offline (SDK): valid=true coverage=legacy hashValid=true legacySignatureValid=true
+   offline (SDK): valid=true hashValid=true hybridSignaturesValid=true
 6. the same transaction is submitted again (expected to be refused)
    refused as expected: ConflictError (HTTP 409): ... already exists.
 ```

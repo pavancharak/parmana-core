@@ -1,6 +1,10 @@
 // Tests must not read a developer's local .env: it would leak values into tests
 // that expect them unset. Loaders check this flag before reading any file.
 process.env.PARMANA_SKIP_DOTENV = "1";
+// Tests run in local mode, the only mode that lets replay, intent, signing and
+// caller-auth checks relax (packages/api/src/bootstrap/localMode.ts). It needs
+// NODE_ENV=test as well, which vitest sets. Production never sets this flag.
+process.env.PARMANA_LOCAL_MODE ??= "true";
 // The policy folder for tests is the fixture copy of the older policies in
 // fixtures/policies. The live policies/ folder holds only the policies in use.
 // A developer's own setting is kept.

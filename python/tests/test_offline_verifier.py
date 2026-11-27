@@ -64,7 +64,7 @@ def test_python_verifier_accepts_a_typescript_signed_record() -> None:
 
         assert verification.valid is True
         assert verification.hash_valid is True
-        assert verification.legacy_signature_valid is True
+        assert verification.hybrid_signatures_valid is True
         assert verification.errors == []
         assert "ed25519" in verification.algorithms_checked
 
@@ -111,7 +111,7 @@ def test_python_verifier_accepts_a_large_record_signed_as_a_kms_commitment() -> 
 
         assert verification.valid is True
         assert verification.hash_valid is True
-        assert verification.legacy_signature_valid is True
+        assert verification.hybrid_signatures_valid is True
         assert verification.errors == []
 
 

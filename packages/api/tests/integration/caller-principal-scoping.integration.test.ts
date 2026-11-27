@@ -11,6 +11,8 @@ import { InMemoryCallerAuditSink } from "../../src/auth/InMemoryCallerAuditSink.
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * HTTP-level proof that a principal-binding violation (an authenticated
@@ -37,7 +39,13 @@ describe("Caller principal scoping (HTTP boundary)", () => {
 
   function buildApp() {
     const { executionSystem } = createInspectableExecutionSystem();
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     const authenticator = new StaticKeyAuthenticator([
       {

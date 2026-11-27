@@ -3,11 +3,11 @@ The local test approver, for tests that run a real server.
 
 No agent action is authorized without a signed human approval
 (docs/internal/CLAIMS.md 2.47), so a test that expects an approved action signs
-one. A server started with NODE_ENV=test trusts the approver
-``local-test-approver`` with the public key in the file
-PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE names
-(packages/api/src/bootstrap/codeApprovalIssuers.ts). Any other NODE_ENV
-refuses to start with that variable set.
+one. A server started in local mode (PARMANA_LOCAL_MODE=true with
+NODE_ENV=test) trusts the approver ``local-test-approver`` with the public key
+in the file PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE names
+(packages/api/src/bootstrap/codeApprovalIssuers.ts). Without local mode the
+server refuses to start with that variable set.
 """
 
 from __future__ import annotations

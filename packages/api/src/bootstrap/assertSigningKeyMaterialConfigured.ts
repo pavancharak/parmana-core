@@ -183,11 +183,15 @@ function assertHybridKeyMaterialConfigured(
     );
   }
 
+  // With PARMANA_SECONDARY_KEY_SECRET_ID, the secondary key is read from the secret at startup
+  // (assertSecondaryKeySecretReachable), so its file is not required here.
+  const secretSecondary = loadConfig().keys.secondaryKeySecretId !== undefined;
   const keyIds = new Set([
     DEFAULT_KEY_ID,
     currentVerificationKeyId(),
-    DEFAULT_SECONDARY_KEY_ID,
-    currentVerificationSecondaryKeyId(),
+    ...(secretSecondary
+      ? []
+      : [DEFAULT_SECONDARY_KEY_ID, currentVerificationSecondaryKeyId()]),
   ]);
 
   const missing = [...keyIds].filter(
@@ -264,5 +268,51 @@ export function writeKeyMaterialJson(
     if (!existsSync(publicPath)) {
       writeFileSync(publicPath, entry.publicKeyPem, { mode: 0o644 });
     }
+  }
+}
+
+/**
+ * With PARMANA_SECONDARY_KEY_SECRET_ID set, reads the secondary key from the secret and parses it,
+ * so a missing or malformed secret stops the server at startup instead of on the first record.
+ * Does nothing when no secret is configured.
+ */
+export async function assertSecondaryKeySecretReachable(
+  readSecret?: (secretId: string) => Promise<string>,
+): Promise<void> {
+  const config = loadConfig();
+  const secretId = config.keys.secondaryKeySecretId;
+  if (secretId === undefined) return;
+
+  const { createPrivateKey } = await import("node:crypto");
+  const read =
+    readSecret ?? (await import("@parmana/crypto")).readSecretFromAws;
+
+  let pem: string;
+  try {
+    pem = await read(secretId);
+  } catch (error) {
+    throw new Error(
+      `PARMANA_SECONDARY_KEY_SECRET_ID is set to "${secretId}", but the secret could not be read. ` +
+        "Refusing to start: the secondary key signs every hybrid record. Check the secret's name, " +
+        "AWS_REGION, and that the server role may call GetSecretValue on it.",
+      { cause: error },
+    );
+  }
+
+  // The message names the secret and the key type, never the key material.
+  let keyType: string;
+  try {
+    keyType = createPrivateKey(pem).asymmetricKeyType ?? "unknown";
+  } catch {
+    throw new Error(
+      `The secret "${secretId}" does not hold a private key in PEM (PKCS#8) form. ` +
+        "Refusing to start. Store the dilithium3 private key as PEM.",
+    );
+  }
+  if (keyType !== "ml-dsa-65") {
+    throw new Error(
+      `The secret "${secretId}" holds a ${keyType} key, but the secondary key must be dilithium3 ` +
+        "(ML-DSA-65). Refusing to start rather than fail on the first hybrid record.",
+    );
   }
 }

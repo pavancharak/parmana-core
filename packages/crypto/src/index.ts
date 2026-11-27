@@ -89,3 +89,9 @@ export * from "./errors/CryptoError.js";
 export * from "./support/MlDsaSupport.js";
 
 export * from "./KeyGeneration.js";
+
+export {
+  readSecretFromAws,
+  SecretSecondaryKeyProvider,
+  type SecretReader,
+} from "./providers/key/SecretSecondaryKeyProvider.js";

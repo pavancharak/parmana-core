@@ -133,6 +133,28 @@ export interface GatewayVerificationResult {
    */
   readonly signalDivergence?: readonly SignalStateViolation[];
 
+  /**
+   * The signal-freshness determination, separate from the release decision (R5). Present whenever
+   * the signal check was reached.
+   *
+   * - passed: the signals hash-match the authorization and the verifier found no divergence.
+   * - refuted: the signals were checked and failed (hash_mismatch, or verifier_divergence).
+   * - not_run: the check could not establish anything. no_signals_hash means the authorization
+   *   carried no hash to check against; verifier_not_consulted means no verifier was wired (test
+   *   opt-out only). Neither is a finding that the signals were bad.
+   *
+   * signalsStillCurrent is unchanged and is false for both not_run reasons, so the release is refused
+   * either way. This field lets a reader tell which one happened.
+   */
+  readonly signalCheck?: {
+    readonly status: "passed" | "refuted" | "not_run";
+    readonly reason?:
+      | "no_signals_hash"
+      | "verifier_not_consulted"
+      | "hash_mismatch"
+      | "verifier_divergence";
+  };
+
   /** The signal keys of business conditions past their validUntil. */
   readonly expiredConditions?: readonly string[];
 

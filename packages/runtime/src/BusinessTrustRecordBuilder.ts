@@ -2,9 +2,9 @@ import crypto from "node:crypto";
 
 import {
   CryptoBootstrap,
-  currentSigningKeyId,
   TrustRecordHasher,
   VerificationCrypto,
+  WHOLE_RECORD_SCHEMA_VERSION,
 } from "@parmana/crypto";
 
 import {
@@ -124,8 +124,6 @@ export class BusinessTrustRecordBuilder {
         ? { authorization: context.authorization }
         : {}),
 
-      overrides: context.override ? [context.override] : [],
-
       executions: [context.execution],
 
       verifications: context.verification ? [context.verification] : [],
@@ -146,16 +144,6 @@ export class BusinessTrustRecordBuilder {
       ...draft,
 
       trustRecordHash: "",
-
-      signature: {
-        algorithm: CryptoBootstrap.create().signature.algorithm,
-
-        keyId: currentSigningKeyId(),
-
-        value: "",
-
-        signedAt: now,
-      },
     };
 
     const trustRecordHash = await this.crypto.hash(trustRecord);
@@ -166,29 +154,17 @@ export class BusinessTrustRecordBuilder {
       trustRecordHash,
     };
 
-    const signature = await this.crypto.sign(recordWithHash);
-
     //
-    // Hybrid Signature Support milestone, Phase A: additive second
-    // signature pass, only when CRYPTO_MODE=hybrid. The legacy
-    // `signature` above is unaffected either way.
+    // Schema version 3 only (decision D24): the signatures array covers the whole record. Single
+    // mode carries one signature, for the configured primary algorithm; hybrid mode carries one per
+    // configured algorithm. There is no separate legacy signature.
     //
-    if (this.config.crypto.mode !== "hybrid") {
-      return {
-        ...recordWithHash,
-
-        signature,
-      };
-    }
-
-    const signatures = await this.crypto.signHybrid(recordWithHash);
+    const signatures = await this.crypto.signWholeRecord(recordWithHash);
 
     return {
       ...recordWithHash,
 
-      signature,
-
-      schemaVersion: this.config.crypto.hybridSchemaVersion,
+      schemaVersion: WHOLE_RECORD_SCHEMA_VERSION,
 
       signatures,
     };

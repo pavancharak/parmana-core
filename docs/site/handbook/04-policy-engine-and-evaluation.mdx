@@ -69,8 +69,12 @@ against the supplied `signals`. This is deterministic by construction: the same 
 same signals always produce the same matched rule, because iteration order is fixed array
 order, not a scored or prioritized search.
 
-A missing fact never satisfies a leaf condition (`PolicyEngine.ts:121-123`: `if (signal ===
-undefined) return false`), an absent signal is not treated as a wildcard or a pass.
+A missing fact is never treated as a wildcard or a pass. A leaf that reads a missing fact is
+UNKNOWN, not false. Conditions combine with three-valued logic: an `all` with a false part is
+false, an `any` with a true part is true, and otherwise an UNKNOWN part makes the result UNKNOWN.
+If the first rule whose result is still undecided is UNKNOWN, evaluation stops and the verdict is
+`REJECT` with `matchedRuleId: "missing-fact"`, and `evidence` lists the missing facts (PC-004,
+R5). A later rule cannot match past it.
 
 If no rule matches, `PolicyDecision.outcome` defaults to `REJECT` via `toOutcome`'s `default`
 branch (`PolicyEngine.ts:163-169`) with `reason: "no_rule_matched"` (`PolicyEngine.ts:75`) and `matchedRuleId:
@@ -83,6 +87,26 @@ The returned `PolicyDecision` (`packages/policy/src/types/PolicyDecision.ts`) ca
 rules were checked before a match), and `matchedPath` (the full trace of rule IDs visited),
 enough for an auditor to reconstruct exactly why a decision came out the way it did, without
 re-running the engine.
+
+Two fields were added to close R3 and R5 of the SAFE approval-to-execution discussion
+(`docs/internal/VERIFICATION-GAPS.md`, G-147 and G-148):
+
+- `evaluationMethod` (`{ id, version }`) names the method that produced the verdict. The engine
+  sets it on every verdict, currently `deterministic-rules` version `2`. The runtime copies it into
+  the recorded `Decision` and does not name the method itself. Refusals the runtime makes before
+  or instead of the engine's verdict carry `runtime-gate` version `1`.
+- `evidence` says whether the evidence the verdict was decided on was complete:
+  - `{ status: "sufficient" }`: every fact the evaluation read was present with its declared type.
+  - `{ status: "insufficient", missingFacts }`: a fact the evaluation needed was not sent. The
+    verdict is a refusal, but it is not a finding that the facts were bad.
+  - `{ status: "invalid", invalidFacts }`: a fact was sent with a type the policy does not declare.
+
+`outcome` stays `REJECT` for all three evidence statuses, so consumers that only read the outcome
+are unaffected. A reader that needs to tell "the evidence was absent" from "the evidence showed a
+refusal" must read `evidence`, not the `matchedRuleId` string.
+
+The method is re-runnable: re-evaluating the same policy with the same signals using the named
+method reproduces the verdict, including `evidence`. A test asserts this.
 
 ### Loading and validating: `PolicyRouter`
 

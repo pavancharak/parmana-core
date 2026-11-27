@@ -14,10 +14,7 @@
     "amount": "parameters.amount",
     "targetId": "target"
   },
-  "unboundSignalReasons": {
-    "riskScore": "A computed risk score, not a value the caller's Intent declares or could be checked against.",
-    "withinOrgLimits": "Result of a check against the organization's configured limits; not a value the Intent itself declares."
-  },
+  "unboundSignalReasons": {},
   "approvalSignals": {
     "humanApproved": {
       "resourceId": "target",
@@ -101,5 +98,17 @@
         "reason": "Action rejected because one or more required policy conditions were not satisfied, including a verified human approval."
       }
     }
-  ]
+  ],
+  "signalSources": {
+    "riskScore": {
+      "source": "trusted-test",
+      "claim": "fact.riskScore",
+      "subject": "target"
+    },
+    "withinOrgLimits": {
+      "source": "trusted-test",
+      "claim": "fact.withinOrgLimits",
+      "subject": "target"
+    }
+  }
 }

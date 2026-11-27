@@ -317,7 +317,6 @@ const DOMAIN_FILES = [
   "business-validation.ts",
   "decision.ts",
   "execution.ts",
-  "override.ts",
   "receipt.ts",
   "verification.ts",
   "evidence-anchor.ts",
@@ -426,11 +425,6 @@ const MODULES: ModuleSpec[] = [
       "Execution",
     ],
     docSource: "domain/decision.ts, domain/execution.ts",
-  },
-  {
-    file: "override",
-    types: ["Override"],
-    docSource: "domain/override.ts",
   },
   {
     file: "receipt",

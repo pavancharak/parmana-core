@@ -6,14 +6,14 @@ import { MemoryExecutionTrustRecordRepository } from "@parmana/storage";
 import {
   buildBusinessTransaction,
   buildReceiptPair,
-  buildSignedMultiExecutionOverrideRecord,
+  buildSignedMultiExecutionRecord,
   buildVerificationPair,
 } from "../../../packages/storage/tests/fixtures/multi-item-trust-record.js";
 
 //
 // A signed Execution Trust Record's hash is computed over its full
 // contents -- including the ORDER of items within its executions/
-// overrides/verifications/receipts collections. A repository that
+// verifications/receipts collections. A repository that
 // silently reorders items on the round trip (e.g. loading them back
 // via a query with no explicit ORDER BY) would recompute to a
 // different hash than what was actually signed -- a real bug this
@@ -30,13 +30,13 @@ console.log("==================================================");
 console.log();
 
 const transaction = buildBusinessTransaction(crypto.randomUUID());
-const signedRecord = await buildSignedMultiExecutionOverrideRecord(transaction);
+const signedRecord = await buildSignedMultiExecutionRecord(transaction);
 
 const repository = new MemoryExecutionTrustRecordRepository();
 await repository.create(signedRecord);
 
 console.log(
-  `Created a Trust Record with ${signedRecord.executions.length} executions and ${signedRecord.overrides.length} overrides.`,
+  `Created a Trust Record with ${signedRecord.executions.length} executions.`,
 );
 console.log();
 
@@ -84,9 +84,6 @@ const reloaded = await repository.findByTransactionId(
 const executionsOrderPreserved =
   JSON.stringify(reloaded!.executions.map((e) => e.executionId)) ===
   JSON.stringify(signedRecord.executions.map((e) => e.executionId));
-const overridesOrderPreserved =
-  JSON.stringify(reloaded!.overrides.map((o) => o.overrideId)) ===
-  JSON.stringify(signedRecord.overrides.map((o) => o.overrideId));
 const verificationsOrderPreserved =
   JSON.stringify(reloaded!.verifications.map((v) => v.verificationId)) ===
   JSON.stringify([verification1.verificationId, verification2.verificationId]);
@@ -95,7 +92,6 @@ const receiptsOrderPreserved =
   JSON.stringify([receipt1.receiptId, receipt2.receiptId]);
 
 console.log(`executions order preserved     : ${executionsOrderPreserved}`);
-console.log(`overrides order preserved      : ${overridesOrderPreserved}`);
 console.log(`verifications order preserved  : ${verificationsOrderPreserved}`);
 console.log(`receipts order preserved       : ${receiptsOrderPreserved}`);
 console.log();
@@ -118,7 +114,6 @@ console.log();
 
 const allPassed =
   executionsOrderPreserved &&
-  overridesOrderPreserved &&
   verificationsOrderPreserved &&
   receiptsOrderPreserved &&
   hashMatches &&

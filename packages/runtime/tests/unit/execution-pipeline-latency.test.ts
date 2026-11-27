@@ -8,7 +8,6 @@ import {
   type Execution,
   type ExecutionTrustRecord,
   type ExecutionTrustRecordRepository,
-  type Override,
   type Receipt,
   type Verification,
 } from "@parmana/shared";
@@ -89,7 +88,6 @@ class InMemoryExecutionTrustRecordRepository implements ExecutionTrustRecordRepo
 
   async appendExecution(_id: string, _execution: Execution): Promise<void> {}
   async replaceExecution(_execution: Execution): Promise<void> {}
-  async appendOverride(_id: string, _override: Override): Promise<void> {}
   async appendVerification(
     _id: string,
     _verification: Verification,

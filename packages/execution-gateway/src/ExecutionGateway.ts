@@ -148,6 +148,18 @@ export interface ExecutionGatewayOptions {
   readonly allowUnverifiedPolicy?: boolean;
 
   /**
+   * Explicit, loudly named opt out from fail-closed signal binding.
+   * By default the Gateway REQUIRES a signalStateVerifier at
+   * construction. Without one it cannot establish that the signals an
+   * authorization was decided on are still current, and it refuses
+   * construction rather than releasing unverified. Only test fixtures
+   * that exercise other behaviour should set this; production bootstrap
+   * must not. With it set and no verifier, a matching signalsHash is
+   * compared but signalsStillCurrent stays "not run", never a pass.
+   */
+  readonly allowUnverifiedSignals?: boolean;
+
+  /**
    * Optional Signal/State Verifier used for the signal-freshness check
    * (G-31): independently re-deriving, at the execution boundary, the
    * real-world facts an authorization's signals declared, and rejecting
@@ -340,6 +352,23 @@ export class ExecutionGateway implements ExecutionSystem {
       );
     }
 
+    //
+    // G-149 permanent fix: signal binding fails closed in the same way.
+    // Without a verifier the release cannot establish that the signals are
+    // still current, so construction is refused unless the named test
+    // opt-out is set.
+    //
+    if (
+      options.signalStateVerifier === undefined &&
+      options.allowUnverifiedSignals !== true
+    ) {
+      throw new Error(
+        "ExecutionGateway requires a signalStateVerifier: it fails closed on " +
+          "signal freshness. Set allowUnverifiedSignals only for test " +
+          "fixtures, never in production.",
+      );
+    }
+
     this.connector = options.connector;
     this.executionControl = options.executionControl;
   }
@@ -486,24 +515,27 @@ export class ExecutionGateway implements ExecutionSystem {
     let signalsStillCurrent: boolean | undefined;
     let signalsHashMismatch: GatewayVerificationResult["signalsHashMismatch"];
     let signalDivergence: GatewayVerificationResult["signalDivergence"];
+    let signalCheck: GatewayVerificationResult["signalCheck"];
 
     const { signalsHash } = request.authorization.payload;
 
     //
     // G-149: an authorization with no signalsHash cannot show that the signals it was decided on
-    // are still current, so it is refused at release when the signal verifier is wired. RuntimeEngine
-    // signs a hash for every authorization it issues now, so only an authorization issued before that
-    // check existed has none. An absent check must never be a pass.
+    // are still current, so it is refused at release regardless of whether a signal verifier is
+    // wired. RuntimeEngine signs a hash for every authorization it issues now, so only an
+    // authorization issued before that check existed has none. An absent check must never be a pass.
     //
-    if (signalsHash === undefined && this.signalStateVerifier !== undefined) {
+    // The hash comparison does not need a verifier, so drift is detected whenever a hash is present.
+    // The verifier is consulted only for divergence from verified external state.
+    //
+    if (signalsHash === undefined) {
       signalsStillCurrent = false;
+      signalCheck = { status: "not_run", reason: "no_signals_hash" };
     } else if (
       passed &&
       businessTransactionHashMatches &&
       policyStillCurrent !== false &&
-      policyGovernanceVerified !== false &&
-      this.signalStateVerifier !== undefined &&
-      signalsHash !== undefined
+      policyGovernanceVerified !== false
     ) {
       //
       // A request without signals is hashed as `{}`, exactly as
@@ -517,10 +549,13 @@ export class ExecutionGateway implements ExecutionSystem {
 
       if (currentSignalsHash !== signalsHash) {
         signalsStillCurrent = false;
+        signalCheck = { status: "refuted", reason: "hash_mismatch" };
         signalsHashMismatch = {
           expected: signalsHash,
           actual: currentSignalsHash,
         };
+      } else if (this.signalStateVerifier === undefined) {
+        signalCheck = { status: "not_run", reason: "verifier_not_consulted" };
       } else {
         const violations = await this.signalStateVerifier.findViolations(
           {
@@ -538,6 +573,9 @@ export class ExecutionGateway implements ExecutionSystem {
 
         if (violations.length > 0) {
           signalDivergence = violations;
+          signalCheck = { status: "refuted", reason: "verifier_divergence" };
+        } else {
+          signalCheck = { status: "passed" };
         }
       }
     }
@@ -677,6 +715,7 @@ export class ExecutionGateway implements ExecutionSystem {
       ...(policyContentMismatch ? { policyContentMismatch } : {}),
       ...(policyGovernanceViolation ? { policyGovernanceViolation } : {}),
       ...(signalsHashMismatch ? { signalsHashMismatch } : {}),
+      ...(signalCheck ? { signalCheck } : {}),
       ...(signalDivergence ? { signalDivergence } : {}),
       ...(expiredConditions !== undefined && expiredConditions.length > 0
         ? { expiredConditions }

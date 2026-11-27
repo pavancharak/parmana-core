@@ -224,7 +224,7 @@ The Python `approve_policy_change` takes the envelope as a `dict`. Sign it immed
 
 ## Offline verification: `verify_execution_trust_record_offline`
 
-Pass `require_full_coverage=True` to fail closed on legacy records: the result is `valid=False`, and `errors` says why. The default is `False`, which keeps the result of earlier releases (FINDINGS F2).
+Records are schema version 3 only (decision D24). A record with one valid signature is accepted, unless it was created at or after `hybrid_required_from`; from that instant, both hybrid signatures are required. Pass the cutover as `hybrid_required_from="2026-12-01T00:00:00Z"`.
 
 ```python
 import json
@@ -234,7 +234,7 @@ with open("record.json") as f:
     record = json.load(f)
 
 result = verify_execution_trust_record_offline(record, {"default": public_key_pem})
-print(result.valid, result.coverage, result.hash_valid, result.legacy_signature_valid)
+print(result.valid, result.hash_valid, result.hybrid_signatures_valid)
 print(result.errors)
 ```
 

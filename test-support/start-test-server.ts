@@ -8,11 +8,14 @@
  * policy without an approval record, and the execution verifier refuses
  * every execution (D19).
  *
- * The import of the server happens after seeding, so the server module
- * loads into a process whose approval repository is already populated.
+ * The policies' trusted signal source is the in-process one from
+ * trusted-test-source.ts, passed to startServer. Nothing leaves this process:
+ * the server does not need a public business system to run the tests.
  */
 import { seedPolicyGovernanceApprovals } from "./policy-governance.js";
+import { trustedTestSources } from "./trusted-test-source.js";
 
 await seedPolicyGovernanceApprovals();
 
-await import("../packages/api/src/server.js");
+const { startServer } = await import("../packages/api/src/startServer.js");
+await startServer({ businessSignalSources: trustedTestSources() });

@@ -1,3 +1,4 @@
+import { TrustRecordHasher } from "@parmana/crypto";
 import { generateKeyPairSync } from "node:crypto";
 
 import { describe, expect, it } from "vitest";
@@ -55,6 +56,7 @@ async function sign(
       businessTransactionId: CONTENT.businessTransactionId,
       policyName: "policy-a",
       policyVersion: "1.0.0",
+      signalsHash: await new TrustRecordHasher(crypto).hash({}),
       executableContent: CONTENT,
     },
     privateKey,
@@ -101,6 +103,7 @@ function gatewayFor(
   store = new MemoryExecutionOutcomeStore(),
 ) {
   return new ExecutionGateway({
+    allowUnverifiedSignals: true,
     // Legacy fixture: predates fail-closed policy binding. The outcome
     // behaviour under test does not depend on policy binding.
     allowUnverifiedPolicy: true,

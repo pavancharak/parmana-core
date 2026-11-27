@@ -1,0 +1,8 @@
+# node v24.22.3; parmana-verifier 4eb6dffa895188e7575eda542bf91ba66945836d
+$ node bin/parmana-verify.mjs record.json trust.json
+{"valid":true,"errors":[],"checks":{"trustRecordHash":true,"signatures":true},"correspondence":{"status":"passed","executions":[{"executionId":"683afe56-1160-4586-98f0-c9b99b3b3566","result":{"status":"passed"}}]}}
+exit 0
+
+$ node bin/parmana-verify.mjs tampered-record.json trust.json
+{"valid":false,"errors":["trustRecordHash mismatch: expected 705564d013f539e5afdc3c15564232218d3e29c599a0fd01e4f6d9652402ebd1.","signature verification failed for keyId \"default\" (ed25519)."],"checks":{"trustRecordHash":false,"signatures":false},"correspondence":{"status":"passed","executions":[{"executionId":"683afe56-1160-4586-98f0-c9b99b3b3566","result":{"status":"passed"}}]}}
+exit 1

@@ -69,7 +69,6 @@ function measure(mode: Mode, keyDir: string, iterations: number): void {
         createdAt: new Date(at),
         signals: { amount: 100 },
       },
-      overrides: [],
       executions: [],
       createdAt: new Date(at),
       updatedAt: new Date(at),

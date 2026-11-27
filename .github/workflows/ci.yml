@@ -37,6 +37,10 @@ jobs:
 
     env:
       NODE_ENV: test
+      # Local mode (packages/api/src/bootstrap/localMode.ts) is what lets the
+      # test environment use the in-memory nonce store and skip caller auth.
+      # NODE_ENV alone no longer does.
+      PARMANA_LOCAL_MODE: "true"
       TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
       # Required at startup by packages/shared/src/config/Config.ts —
       # points at the fixture policies the tests read (fixtures/policies),

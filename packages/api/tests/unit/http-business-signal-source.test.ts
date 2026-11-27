@@ -173,12 +173,12 @@ function source(
 }
 
 describe("HttpBusinessSignalSource", () => {
-  it("sends a signed query for exactly this fact, and returns an unsigned source's answer unverified", async () => {
+  it("sends a signed query for exactly this fact, and refuses an unsigned answer from a source with no key", async () => {
     const { source: http, system } = source((query) => ({
       body: { answer: answerTo(query) },
     }));
 
-    const answer = await http.resolve(QUERY);
+    await expect(http.resolve(QUERY)).rejects.toThrow(/no registered key/);
 
     expect(system.received).toHaveLength(1);
     const [{ url, timeoutMs, signed }] = system.received;
@@ -200,19 +200,21 @@ describe("HttpBusinessSignalSource", () => {
       issuedAt: NOW.toISOString(),
       expiresAt: new Date(NOW.getTime() + 60_000).toISOString(),
     });
-
-    expect(answer).toEqual({
-      kind: "observed",
-      value: true,
-      sourceIdentity: ENDPOINT,
-      observedAt: new Date(NOW.getTime() - 2_000),
-    });
   });
 
   it("puts the disclosed parameters in the signed query, and only when there are some", async () => {
-    const { source: http, system } = source((query) => ({
-      body: { answer: answerTo(query) },
-    }));
+    const { source: http, system } = source(
+      (query) => {
+        const answer = answerTo(query);
+        return {
+          body: {
+            answer,
+            signature: { algorithm: "ed25519", value: signAnswer(answer) },
+          },
+        };
+      },
+      { publicKeyPem: sourcePublicKeyPem },
+    );
 
     await http.resolve({ ...QUERY, parameters: { amount: 500 } });
     await http.resolve(QUERY);
@@ -224,9 +226,18 @@ describe("HttpBusinessSignalSource", () => {
   });
 
   it("uses a fresh nonce for every query", async () => {
-    const { source: http, system } = source((query) => ({
-      body: { answer: answerTo(query) },
-    }));
+    const { source: http, system } = source(
+      (query) => {
+        const answer = answerTo(query);
+        return {
+          body: {
+            answer,
+            signature: { algorithm: "ed25519", value: signAnswer(answer) },
+          },
+        };
+      },
+      { publicKeyPem: sourcePublicKeyPem },
+    );
 
     await http.resolve(QUERY);
     await http.resolve(QUERY);

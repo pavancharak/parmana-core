@@ -464,6 +464,15 @@ Phase status change: none.
 
 ---
 
+### 2026-11-22: dated note correcting the chain-head open item (2026-11-14 entries)
+
+- **Correction:** the open item "Chain-head check in `CallerAuditChainVerifier.ts` is not covered" (2026-11-14, crypto mutation campaign and re-run) is out of date. Unit tests for the anchored chain head already exist in `packages/crypto/tests/unit/caller-audit-chain-verifier.test.ts` (describe block "anchored chain head", six tests).
+- **Evidence:** a targeted mutation run of that one file on 2026-11-22, Node 24.22.3, `STRYKER_PACKAGE=crypto STRYKER_MUTATE=packages/crypto/src/CallerAuditChainVerifier.ts STRYKER_REPORT_NAME=crypto-chain-head npx stryker run`. Result: 58 of 58 mutants killed, 0 survived, including the anchor-branch conditionals, equality operators and the anchor error string (report `reports/mutation/crypto-chain-head.json`, not committed; gitignored).
+- **Not corrected here:** the 2026-11-14 survivor counts for the full crypto package (114 on the owner's Windows run, 115 on the Linux sandbox). Those came from runs whose reports are not in this repository. They are re-measured by the entry below.
+- **Phase 1 item 2 (chain-head):** the tests already existed. No new test was needed to meet the item's exit criterion, which is that the check is covered and its mutants are re-run. That criterion is met by the run above.
+
+---
+
 ### Entry template
 
 Copy this for each new run.
@@ -483,3 +492,178 @@ Survivor classification: N of M classified.
 Open items:
 1.
 ```
+
+### 2026-11-22: test reach by package, and survivor classification checker
+
+- **Command:** `node scripts/assurance-test-reach.mjs`; `npx tsx scripts/check-survivor-classification.ts crypto-chain-head --strict` (no survivors in that report); a temporary two-survivor report to test the survivor path, deleted afterwards.
+- **Runtime:** Node 24.22.3, Linux sandbox.
+- **Commit tested:** the commit that adds these scripts (recorded in the pull request).
+- **Branch:** `claude/laughing-meitner-cqaxvi`.
+
+**Results:** every package with source has tests that import `src/` directly. No test imports its own package by name, which resolves to `dist/`. Counts are in `docs/assurance/TEST_REACH.md`. The survivor checker counted the temporary report's two survivors correctly, classified both, and reported no stale rows.
+
+**Not measured:** a test that reaches package X's `src/` only through another package's `dist/`. The cross-package limit is recorded in `TEST_REACH.md`.
+
+**Checks not run:** the full mutation campaign for any package other than the one pre-run in the chain-head check. Those are queued (see `scripts/` and the scratchpad queue) and will be recorded when they finish.
+
+**Survivor classification:** not applicable to this run. No survivors were classified.
+
+**Phase status change:** none. These are non-blocking tools. The strict mode is not yet in CI, which needs an owner decision (see EXECUTION_PLAN.md section 9).
+
+### 2026-11-27: outcome-store local-mode fix and gateway wiring tests
+
+- **Command:**
+  - `npx vitest run packages/api/tests/unit/bootstrap/create-execution-outcome-store.test.ts packages/api/tests/unit/bootstrap/create-nonce-store.test.ts packages/execution-gateway/tests/unit/gateway-release-wiring.test.ts`
+  - Regression check: the outcome-store factory restored to its parent commit (`34bcfea`), the same test file run, then the fix restored.
+  - `npx vitest run packages/api/tests/unit packages/execution-gateway`
+  - `npx vitest run tests/assurance/frozen-core.test.ts tests/architecture/execution-boundary.test.ts`
+  - `npx prettier --check` on the three changed files.
+  - Setup before the suite run: `npm ci --ignore-scripts`, `npm rebuild re2`, `npm run build --workspace=typescript`.
+- **Runtime:** Node 24.22.3 (observed; `.nvmrc` pins 24.22.2), Linux sandbox. Duration not recorded for the full suite run.
+- **Commit tested:** `799fcab` (the fix and the tests). Follow-up `a197a1b` is a prettier-only formatting change to one test file, re-run after formatting.
+- **Branch:** `claude/trusting-goodall-djgzgs`
+- **Run by:** session (Claude Code), at the owner's direction
+
+**Results**
+
+| Measurement                                                                               |                                                                                                    Value |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------: |
+| Outcome-store tests, after the fix                                                        |                                                                                              5 of 5 pass |
+| Same outcome-store test file, against the parent factory (`34bcfea`)                      |                                                                 4 pass, 1 fail (the NODE_ENV-alone case) |
+| Three targeted files (outcome store, nonce store, gateway wiring)                         |                                                                                            13 of 13 pass |
+| `packages/api/tests/unit` and `packages/execution-gateway`, after the setup above         |                                                                           134 files, 937 tests, all pass |
+| Same two packages, before the setup above                                                 | 56 files failed at load (missing `re2` native module; `@parmana/sdk` unresolved). Environment, not code. |
+| `tests/assurance/frozen-core.test.ts` and `tests/architecture/execution-boundary.test.ts` |                                                                                           163 tests pass |
+| `prettier --check` on the three changed files                                             |                                                                                                     pass |
+
+**Checks not run**
+
+- Integration tests (`packages/*/tests/integration`), which need PostgreSQL. CI runs them with `TEST_DATABASE_URL`. Not run here.
+- Full root `npm test` (the repository-wide suite). Not run here.
+- Mutation testing, the bypass and kill-switch probe workflows, and secret scanning. Not run.
+- Commit signature verification. The commit is SSH-signed, but this environment has an empty public key file and no allowed-signers file, so it cannot be verified locally. GitHub's verified status was not read.
+
+**Survivor classification:** not applicable. No mutation run.
+
+**Open items**
+
+1. Audit failure after a successful connector call is not verified (review finding 3). Needs a fault-injection test.
+2. Whether the connector enforces authorization itself, outside the gateway (review finding 4). Depends on whether `parmana-connectors` can be called without the gateway, which is not yet confirmed.
+3. The gateway's `connector` option (direct path) is accepted when passed. Production wiring does not pass it, but no test asserts that.
+4. Postgres durability of the outcome store is tested only in CI integration tests, not here.
+5. `packages/execution-gateway/` is owned by `@pavancharak` in `.github/CODEOWNERS`. The new test file and the `packages/api` change need that owner's review.
+
+**Phase status change:** none. This work covers one fail-closed item listed under Phase 2, item 3. Phase 2 stays "Not started" because its exit criteria are not met.
+
+### 2026-11-27: full suite and database-backed tests on a local PostgreSQL 16
+
+- **Command:** `npm test` with `DATABASE_URL` and `TEST_DATABASE_URL` set to a local PostgreSQL 16.15 at `127.0.0.1:5432`, migrations applied with `psql -f scripts/apply-all-migrations.sql`. Then `npx vitest run packages/api/tests/integration/replay.integration.test.ts` and `npx vitest run packages/storage/tests/contract packages/api/tests/integration/evidence-append-only.integration.test.ts packages/api/tests/integration/policy-approval-read-grants.integration.test.ts`.
+- **Runtime:** Node 24.22.3, Linux sandbox. PostgreSQL 16.15 (local, trust auth, password set for the test URL). Vitest reported: Duration 105.47s (import 46%, tests 38%, transform 8%, setup 6%, worker 1%).
+- **Commit tested:** `e0e0a98` (documentation on top of `799fcab` and `a197a1b`). The code under test is `799fcab`.
+- **Branch:** `claude/trusting-goodall-djgzgs`
+- **Run by:** session (Claude Code), at the owner's direction
+
+**Results**
+
+| Measurement                                                         | Value                                                    |
+| ------------------------------------------------------------------- | -------------------------------------------------------- |
+| `npm test` test files                                               | 501 passed, 1 skipped (502)                              |
+| `npm test` tests                                                    | 4,659 passed, 1 expected fail, 1 skipped, 2 todo (4,663) |
+| Replay integration                                                  | 2 of 2 pass                                              |
+| Storage contract, evidence append-only, policy-approval read grants | 24 of 24 pass                                            |
+| Exit code                                                           | 0                                                        |
+
+**Checks not run**
+
+- The CI-only steps that need Docker (`postgres:16` image for `psql`), the cross-version Node matrix, and the separate workflows (CodeQL, scorecard, DCO, signatures, dependency review). Not run here.
+- The migration test against a database that already holds old audit rows (a separate CI step). Not run here.
+- The commit signature check on GitHub. The GitHub commit API used here did not return a verification field, so the verified badge was not read.
+
+**Survivor classification:** not applicable. No mutation run.
+
+**Open items**
+
+1. GW-1: production wiring does not pass the gateway's `connector` option, but no test asserts it.
+2. GW-2: the connector boundary is the custody of the release-signing key. The connectors execute endpoint checks an Ed25519 signature over the release (key ID `default`), not the original authorization. Core signs releases in `GatewayExternalAdapter` with the same `SignerBootstrap` signer it uses for authorizations. Open: whether that signer is reachable outside the gateway, and whether the connectors can be called without a release the gateway signed.
+3. GW-3: audit failure after a successful connector call is not verified.
+4. The branch showed no GitHub Actions runs when checked, so CI on `e0e0a98` has not been confirmed.
+
+**Phase status change:** none.
+
+### 2026-11-27: end-to-end runtime record, checked by the independent verifier
+
+- **Command:** a temporary vitest test (removed afterwards, not committed) ran `POST /execute`, `/receipt`, `/verify` and `/replay` through the API test app, with a local PostgreSQL 16 and migrations applied. The public key was copied from the test key directory. Then `node bin/parmana-verify.mjs record.json trust.json` and the same command on a tampered copy, run from a clone of `pavancharak/parmana-verifier` at commit `4eb6dff`.
+- **Runtime:** Node 24.22.3, Linux sandbox. The verifier reads only the record and the trust file, with no network access.
+- **Commit tested:** `42837e9` (core, branch `claude/trusting-goodall-djgzgs`). Verifier `4eb6dff`.
+- **Branch:** `claude/trusting-goodall-djgzgs`
+- **Run by:** session (Claude Code), at the owner's direction
+
+**Results**
+
+| Measurement                                                             | Value                                                                                                          |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `POST /execute` status                                                  | 200. The response body is an Execution Trust Record, schema version 3, with one Ed25519 signature (`default`). |
+| Independent verifier, runtime record                                    | `valid: true`, exit 0. Trust record hash and signature pass. Correspondence `passed` for one execution.        |
+| Independent verifier, record with one field changed                     | `valid: false`, exit 1. Hash mismatch and signature failure.                                                   |
+| Generator-signed hybrid record (`scripts/generate-verifier-vectors.ts`) | `valid: true`, exit 0. Its tampered copy fails the same way.                                                   |
+
+Evidence: `docs/assurance/evidence/2026-11-27-e2e-runtime/`. It holds the transaction, record, receipt, verify and replay responses, trust file, public key, tampered copy, verifier output, and a README. It contains no private key.
+
+**Checks not run**
+
+- The production signing keys. This run used the test environment's ephemeral key.
+- Out-of-band key pinning. The fingerprint was computed by the verifier from the key this test process produced.
+- An independent review of the verifier.
+- The full flow through the gateway and a real connector. This run covers declare, execute, receipt, verify and replay through the API. It does not show the connector call.
+
+**Survivor classification:** not applicable.
+
+**Open items**
+
+1. Run the same export against a production-like key, with the fingerprint published and checked out of band.
+2. Repeat with a real connector, to cover the executed side effect.
+3. GW-1 to GW-3 from earlier entries remain open.
+
+**Phase status change:** none.
+
+### 2026-11-27: follow-up on the four limits of the end-to-end run
+
+- **Commands:** `grep` of `docs/` for published public keys and fingerprints; `PARMANA_POLICY_DIR=./fixtures/policies npx tsx examples/04-verified-execution/run.ts`; `npm test` in a clone of `pavancharak/parmana-verifier` at `4eb6dff`.
+- **Runtime:** Node 24.22.3, Linux sandbox.
+- **Commit tested:** `bd2a617` (core). Verifier `4eb6dff`.
+- **Branch:** `claude/trusting-goodall-djgzgs`
+- **Run by:** session (Claude Code), at the owner's direction
+
+**Each limit, and what this run did about it**
+
+1. **Production keys: not closed.** No production public key is published in the repository. The two fingerprints in the docs are a local-run example (`60fb0c…`, in `developer-portal/security/evidence-verification.md`) and a container image digest (`7e17df…`, not a key). Production signing is in AWS KMS, and this session has no AWS access. An operator with that access must export the production public key.
+2. **Key pinning: not closed.** The out-of-band comparison needs a second channel from the owner or operator. Nothing here can perform it.
+3. **Connector call: partly closed.** Example 04 drives the gateway through `RecordingHttpConnector` to a local receiver. Scenario 1 (valid envelope) is accepted with HTTP 200, and the connector receives the authorized request. Scenario 5 (modified payload) is refused at the gateway, and the connector is not called. This is a local receiver, not a vendor, so no real side effect was produced.
+4. **Verifier review: not closed.** The verifier's own suite passes, 103 of 103. That shows its claims reproduce. It is not an independent review.
+
+**Results**
+
+| Measurement                             | Value                                        |
+| --------------------------------------- | -------------------------------------------- |
+| `examples/04-verified-execution/run.ts` | exit 0. Scenarios 1 to 5 as described above. |
+| Verifier `npm test`                     | 103 tests, 103 pass, 0 fail                  |
+
+**Checks not run**
+
+- Production key export from KMS: no AWS access.
+- Out-of-band fingerprint comparison: needs the owner or operator.
+- A connector call to a real vendor.
+- An independent review of the verifier.
+
+**Survivor classification:** not applicable.
+
+**Open items**
+
+1. Export the production public key from KMS and publish its fingerprint.
+2. Compare that fingerprint through a second channel, as the verifier README requires.
+3. Run one real vendor connector call, and check its side effect.
+4. Arrange an independent review of `parmana-verifier`.
+
+Evidence: `docs/assurance/evidence/2026-11-27-e2e-runtime/example-04-gateway-to-connector.log` and `verifier-own-tests.log`. Neither contains a private key.
+
+**Phase status change:** none.

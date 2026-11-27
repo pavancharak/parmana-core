@@ -43,7 +43,23 @@ import {
   PolicyEngine,
   PolicyOutcome,
   type Policy,
+  type SignalStateVerifier,
+  type SignalStateViolation,
 } from "@parmana/policy";
+
+import { governedPolicyObjects } from "../../shared/helpers/demo-policy-governance.js";
+
+//
+// The release check's live signal source. This demo's signals have not
+// changed between authorization and release, so it reports no violations.
+// A deployment wires a verifier that re-reads real-world state here; the
+// gateway refuses to construct without one (see ExecutionGateway).
+//
+class NothingChangedSignalVerifier implements SignalStateVerifier {
+  async findViolations(): Promise<readonly SignalStateViolation[]> {
+    return [];
+  }
+}
 
 import type { ExecutionRequest } from "@parmana/execution-system";
 import type { ExecutableContent, ExecutionResult } from "@parmana/shared";
@@ -148,6 +164,9 @@ async function main(): Promise<void> {
 
   const crypto = CryptoBootstrap.create();
 
+  // Policy Governance approval for this example's policy, on a scratch copy.
+  const governed = await governedPolicyObjects([policy]);
+
   console.log("Stage 3 - Signed Authorization");
 
   console.log("--------------------------------------------------");
@@ -159,6 +178,15 @@ async function main(): Promise<void> {
       businessTransactionId: content.businessTransactionId,
       policyName: policy.policyId,
       policyVersion: policy.policyVersion,
+      // The hash the Gateway recomputes from the stored policy at release.
+      policyContentHash: await new TrustRecordHasher(crypto).hash(
+        await governed.policyRepository.load(
+          policy.policyId,
+          policy.policyVersion,
+        ),
+      ),
+      // Signed over the empty signals this example's requests carry.
+      signalsHash: await new TrustRecordHasher(crypto).hash({}),
       executableContent: content,
     },
     runtimePrivateKey,
@@ -315,8 +343,9 @@ async function main(): Promise<void> {
   console.log("--------------------------------------------------");
 
   const previewGateway = new ExecutionGateway({
-    // Legacy fixture: predates fail-closed policy binding.
-    allowUnverifiedPolicy: true,
+    signalStateVerifier: new NothingChangedSignalVerifier(),
+    policyRepository: governed.policyRepository,
+    policyApprovalVerifier: governed.policyApprovalVerifier,
     publicKey: runtimePublicKey,
     nonceStore: new MemoryNonceStore(),
     connector: {
@@ -383,8 +412,9 @@ async function main(): Promise<void> {
   // reached through the production Gateway's execute().
   //
   const productionGateway = new ExecutionGateway({
-    // Legacy fixture: predates fail-closed policy binding.
-    allowUnverifiedPolicy: true,
+    signalStateVerifier: new NothingChangedSignalVerifier(),
+    policyRepository: governed.policyRepository,
+    policyApprovalVerifier: governed.policyApprovalVerifier,
     publicKey: runtimePublicKey,
     nonceStore: new MemoryNonceStore(),
     executionControl: {

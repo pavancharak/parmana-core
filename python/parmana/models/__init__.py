@@ -45,7 +45,6 @@ from .execution import (
     ExecutionMode,
     Execution,
 )
-from .override import Override
 from .receipt import Receipt
 from .verification import VerificationStatus, Verification
 from .trust_record import EvidenceAnchor, ExecutionTrustRecord
@@ -105,7 +104,6 @@ __all__ = [
     "ExecutionStatus",
     "ExecutionTrustRecord",
     "Intent",
-    "Override",
     "PendingPolicyChange",
     "PendingPolicyChangeStatus",
     "PolicyGovernanceAnchor",

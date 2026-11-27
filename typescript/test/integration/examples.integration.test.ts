@@ -27,6 +27,13 @@ import { fileURLToPath } from "node:url";
 
 import { signTestApproval } from "../../../test-support/approvals.js";
 import { seedPolicyGovernanceApprovals } from "../../../test-support/policy-governance.js";
+import {
+  createTrustedFacts,
+  PAYMENT_FACTS,
+} from "../../../packages/api/tests/helpers/trusted-facts.js";
+
+// The examples declare riskScore 5, so the trusted source answers that value.
+const trustedFacts = createTrustedFacts({ ...PAYMENT_FACTS, riskScore: 5 });
 
 /**
  * What a trusted approver signs for both examples: this capability,
@@ -63,7 +70,13 @@ beforeAll(async () => {
     await import("../../../packages/api/src/bootstrap/createExecutionSystem.js");
 
   const executionSystem = await createExecutionSystem();
-  const application = createApplication(executionSystem);
+  const application = createApplication(
+    executionSystem,
+    undefined,
+    undefined,
+    undefined,
+    trustedFacts.registry,
+  );
 
   // callerAuth: "disabled", no apiKey -- matches the example's own
   // ParmanaClient construction exactly (it never sets one either), and
@@ -98,7 +111,7 @@ describe("typescript/examples/02-execute.ts against a real local @parmana/api in
     expect(trustRecord.trustRecordId).toBeTruthy();
     expect(trustRecord.executions).toHaveLength(1);
     expect(trustRecord.executions[0]?.decision.outcome).toBe("APPROVED");
-    expect(trustRecord.signature.algorithm).toBe("ed25519");
+    expect(trustRecord.signatures?.[0]?.algorithm).toBe("ed25519");
   });
 });
 
@@ -123,7 +136,7 @@ describe("typescript/examples/06-create-business-transaction.ts against a real l
     expect(trustRecord.trustRecordId).toBeTruthy();
     expect(trustRecord.executions).toHaveLength(1);
     expect(trustRecord.executions[0]?.decision.outcome).toBe("APPROVED");
-    expect(trustRecord.signature.algorithm).toBe("ed25519");
+    expect(trustRecord.signatures?.[0]?.algorithm).toBe("ed25519");
 
     // The property this example exists to prove: every id pair the
     // builder derives round-trips correctly through a real server,

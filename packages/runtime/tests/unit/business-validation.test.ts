@@ -83,7 +83,6 @@ class TrustRecords implements ExecutionTrustRecordRepository {
   }
   async appendExecution(): Promise<void> {}
   async replaceExecution(): Promise<void> {}
-  async appendOverride(): Promise<void> {}
   async appendVerification(): Promise<void> {}
   async appendReceipt(): Promise<void> {}
 }
@@ -250,7 +249,9 @@ describe("business validation (RFC-0023)", () => {
       verificationStatus: "VERIFIED",
     });
     expect(assessment?.execution).toBeUndefined();
-    expect(orders.calls).toBe(1);
+    // Twice: the probe that checks the approval does not rest on declared facts asks the source too, then the
+    // decision asks it once more.
+    expect(orders.calls).toBe(2);
 
     // Phase 4: the fact is signed into the authorization as a condition,
     // with the value the source gave and until when it holds.
@@ -395,12 +396,10 @@ describe("business validation (RFC-0023)", () => {
       policy,
     );
 
-    const result = await runtime(policy, [], new RefusalRecords()).execute(
-      transaction,
-    );
-
-    expect(result.context.decision.assessment?.businessValidation.status).toBe(
-      BusinessValidationStatus.NOT_EVALUATED,
-    );
+    // A fact the caller declared, with no trusted source behind it, may refuse the request but cannot approve
+    // it. The refusal is the outcome here; the business validation is still NOT_EVALUATED, never VALID.
+    await expect(
+      runtime(policy, [], new RefusalRecords()).execute(transaction),
+    ).rejects.toThrow(/requires_trusted_facts/);
   });
 });

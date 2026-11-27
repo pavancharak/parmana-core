@@ -780,7 +780,6 @@ paths:
                       signature: HZaohm/v3xrJTp+VrcJmLLcIG1SMl3LyPcHQUF6UHo7J9Z/KY92brpU92xVnPhVJJMaB+fd7nVRQ96k3OP7DBQ==
                       keyId: default
                       algorithm: ed25519
-                    overrides: []
                     executions:
                       - executionId: 21a57d3e-bed5-4a73-8af9-2ac2d7e8326e
                         businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
@@ -913,7 +912,6 @@ paths:
                         riskScore: 12
                       status: RECEIVED
                       createdAt: "2026-07-13T17:36:00.965Z"
-                    overrides: []
                     executions:
                       - executionId: 90746492-7721-4228-b244-67bf8a45ca68
                         businessTransactionId: 44b34a79-e0f2-49d7-a48e-e52fff88182e
@@ -1665,7 +1663,6 @@ paths:
                       signature: HZaohm/v3xrJTp+VrcJmLLcIG1SMl3LyPcHQUF6UHo7J9Z/KY92brpU92xVnPhVJJMaB+fd7nVRQ96k3OP7DBQ==
                       keyId: default
                       algorithm: ed25519
-                    overrides: []
                     executions:
                       - executionId: 21a57d3e-bed5-4a73-8af9-2ac2d7e8326e
                         businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
@@ -2791,7 +2788,6 @@ paths:
                               "keyId": "default",
                               "algorithm": "ed25519",
                             },
-                          "overrides": [],
                           "executions":
                             [
                               {
@@ -3055,7 +3051,6 @@ paths:
                               "keyId": "default",
                               "algorithm": "ed25519",
                             },
-                          "overrides": [],
                           "executions":
                             [
                               {
@@ -3784,7 +3779,6 @@ paths:
                             "keyId": "default",
                             "algorithm": "ed25519",
                           },
-                        "overrides": [],
                         "executions":
                           [
                             {
@@ -3997,7 +3991,6 @@ paths:
                         riskScore: 12
                       status: RECEIVED
                       createdAt: "2026-07-13T17:36:00.965Z"
-                    overrides: []
                     executions:
                       - executionId: 90746492-7721-4228-b244-67bf8a45ca68
                         businessTransactionId: 44b34a79-e0f2-49d7-a48e-e52fff88182e
@@ -5194,6 +5187,7 @@ paths:
                       "approverId": "approver-example",
                       "keyId": "approver-example-key-1",
                       "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\n-----END PUBLIC KEY-----\n",
+                      "capabilities": ["erp:pay-invoice"],
                       "reason": "The approver approves refunds for the West region from October.",
                       "proposedBy": "human-maker",
                       "proposedAt": "2026-09-28T19:05:59.726Z",
@@ -8662,6 +8656,7 @@ components:
           enum:
             [
               NO_APPROVED_POLICY,
+              ACTION_NOT_LIVE,
               POLICY_INVALID,
               SOURCE_UNAVAILABLE,
               SOURCE_NOT_VERIFIED,

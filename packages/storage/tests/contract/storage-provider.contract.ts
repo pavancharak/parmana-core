@@ -8,7 +8,7 @@ import type { StorageProvider } from "../../src/StorageProvider.js";
 
 import {
   buildBusinessTransaction,
-  buildSignedMultiExecutionOverrideRecord,
+  buildSignedMultiExecutionRecord,
 } from "../fixtures/multi-item-trust-record.js";
 
 /**
@@ -152,8 +152,7 @@ export function runStorageProviderContract(
 
         await provider.businessTransactions.create(transaction);
 
-        const signed =
-          await buildSignedMultiExecutionOverrideRecord(transaction);
+        const signed = await buildSignedMultiExecutionRecord(transaction);
 
         // Production order (packages/runtime): the header is written first,
         // then each Execution is appended. The header is written without

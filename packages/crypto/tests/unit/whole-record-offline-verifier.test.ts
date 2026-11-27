@@ -52,7 +52,6 @@ function draftRecord(
       status: "RECEIVED",
       createdAt,
     } as ExecutionTrustRecord["transaction"],
-    overrides: [],
     executions: [],
     verifications: [],
     receipts: [],
@@ -198,21 +197,16 @@ describe.skipIf(!isMlDsa65Supported())(
       expect(result.valid).toBe(false);
     });
 
-    it("accepts the same updatedAt change on a version 2 record, which shows the gap version 3 closes", async () => {
+    it("refuses a version 2 record outright, so the gap version 2 had cannot be used (D24)", async () => {
       const record = await buildHybridRecord(2);
 
-      const tampered = {
-        ...record,
-        updatedAt: new Date("2026-02-01T00:00:00Z"),
-      } as ExecutionTrustRecord;
-
       const result = await verifyExecutionTrustRecordOffline(
-        tampered,
+        record,
         trustedKeys(),
       );
 
-      expect(result.hybridSignaturesValid).toBe(true);
-      expect(result.valid).toBe(true);
+      expect(result.valid).toBe(false);
+      expect(result.errors.join(" ")).toMatch(/only schemaVersion 3/);
     });
 
     it("rejects a version 3 record relabelled as version 2, because the signed view differs", async () => {

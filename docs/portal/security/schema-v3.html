@@ -28,7 +28,7 @@
 <div class="shell">
   <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
 <div class="nav-group"><div class="nav-title">Get started</div><ul><li><a href="../index.html">Parmana developer portal</a></li><li><a href="../overview.html">Overview</a></li><li><a href="../getting-started.html">Getting started</a></li><li><a href="../faq.html">Frequently asked questions</a></li></ul></div>
-<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="index.html">Security and cryptographic verification</a></li><li><a href="evidence-verification.html">Evidence verification</a></li><li><a href="schema-v3.html" aria-current="page">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
+<div class="nav-group"><div class="nav-title">Concepts</div><ul><li><a href="../architecture.html">Architecture</a></li><li><a href="../glossary.html">Glossary</a></li><li><a href="key-management.html">Key management</a></li><li><a href="../policies/index.html">Policy management</a></li><li><a href="../policies/payment-refund-coverage.html">Coverage of the production policy</a></li><li><a href="index.html">Security and cryptographic verification</a></li><li><a href="evidence-verification.html">Evidence verification</a></li><li><a href="schema-v3.html" aria-current="page">Schema version 3: whole-record signatures, the cutover and the rollout</a></li></ul></div>
 <div class="nav-group"><div class="nav-title">Tutorials</div><ul><li><a href="../tutorials/index.html">Tutorials</a></li><li><a href="../tutorials/maker-checker.html">Tutorial: maker-checker approval of a policy change</a></li><li><a href="../tutorials/transaction-limits.html">Tutorial: enforce transaction limits</a></li><li><a href="../tutorials/refund-authorization.html">Tutorial: authorize a refund</a></li><li><a href="../tutorials/nodejs-integration.html">Tutorial: integrate Parmana into a Node.js service</a></li><li><a href="../tutorials/python-integration.html">Tutorial: integrate Parmana into a Python application</a></li><li><a href="../tutorials/ai-agents.html">Tutorial: let an AI agent act through Parmana</a></li><li><a href="../tutorials/fintech-integration.html">Tutorial: gate vendor payments in a fintech application</a></li><li><a href="../examples/index.html">Runnable examples</a></li></ul></div>
 <div class="nav-group"><div class="nav-title">API reference</div><ul><li><a href="../api/index.html">REST API reference</a></li><li><a href="../api/endpoints.html">Core endpoints</a></li><li><a href="../api/endpoint-index.html">Endpoint index</a></li></ul></div>
 <div class="nav-group"><div class="nav-title">SDKs and packages</div><ul><li><a href="../sdk/index.html">SDKs and packages</a></li><li><a href="../sdk/typescript.html">TypeScript SDK: @parmana/sdk</a></li><li><a href="../sdk/python.html">Python SDK: parmana</a></li><li><a href="../sdk/cli.html">Operator CLI: @parmana/cli (parmana-ops)</a></li><li><a href="../sdk/verifier.html">Offline verifier: @parmana/verifier and parmana-verifier</a></li><li><a href="../sdk/connector-sdk.html">Connector SDK: @parmana/connector-sdk and parmana-connector-sdk</a></li><li><a href="../sdk/typescript-method-index.html">TypeScript SDK method index</a></li><li><a href="../sdk/python-method-index.html">Python SDK method index</a></li><li><a href="../packages/envelope-verifier-api.html">@parmana/envelope-verifier: API reference</a></li><li><a href="../packages/execution-system-api.html">@parmana/execution-system: API reference</a></li><li><a href="../packages/publishing-envelope-verifier-and-execution-system.html">Publishing @parmana/envelope-verifier and @parmana/execution-system</a></li></ul></div>
@@ -63,7 +63,7 @@
 <tbody><tr>
 <td><strong>2</strong> (or unversioned)</td>
 <td>Legacy <code>signature</code> (ed25519), plus <code>signatures</code> only when hybrid is on</td>
-<td><code>trustRecordId</code>, <code>businessTransactionId</code>, <code>transaction</code>, <code>authorization</code>, <code>overrides</code>, <code>executions</code>, <code>createdAt</code></td>
+<td><code>trustRecordId</code>, <code>businessTransactionId</code>, <code>transaction</code>, <code>authorization</code>, <code>executions</code>, <code>createdAt</code></td>
 <td><code>legacy</code></td>
 </tr>
 <tr>
@@ -130,7 +130,7 @@
 <tr>
 <td><code>HYBRID_SCHEMA_VERSION</code></td>
 <td><code>3</code></td>
-<td><code>2</code> or <code>3</code>. Unset means 3. <code>2</code> is the rollback. Any other value is refused at start-up.</td>
+<td><code>3</code> only. Unset means 3. <code>2</code> is refused at start-up (discarded, D24). Any other value is refused too.</td>
 </tr>
 <tr>
 <td><code>HYBRID_SCHEMA_V3_ACKNOWLEDGED</code></td>
@@ -151,7 +151,7 @@
 <p>Start-up refusals you will see:</p>
 <ul>
 <li><code>CRYPTO_MODE=hybrid</code> without <code>SECONDARY_SIGNATURE_PROVIDER</code>, or with the same provider as the primary.</li>
-<li>A <code>HYBRID_SCHEMA_VERSION</code> that is neither <code>2</code> nor <code>3</code>.</li>
+<li>A <code>HYBRID_SCHEMA_VERSION</code> other than <code>3</code>, including <code>2</code>, which is discarded (D24).</li>
 <li>A <code>HYBRID_REQUIRED_FROM</code> that is not a UTC ISO-8601 timestamp.</li>
 </ul>
 <p>If <code>CRYPTO_MODE=hybrid</code> is set but no secondary provider is, the server releases the action and then fails to write the record. Its response is <code>500</code> with <code>Secondary signature provider is not configured.</code>. The start-up check above now stops this before any action is released.</p>
@@ -224,7 +224,7 @@
 <li><strong>Tell consumers what to require.</strong> Each consumer that needs the whole record should require <code>coverage: &quot;full&quot;</code>, or use <code>requireFullCoverage</code>.</li>
 </ol>
 <h3 id="rollback">Rollback<a class="anchor" href="#rollback" aria-label="Link to this section">#</a></h3>
-<p>Setting <code>HYBRID_SCHEMA_VERSION</code> back to <code>2</code> returns new records to schema 2. Keep the hybrid settings and the cutover in place, so records stay hybrid-signed and the cutover stays enforced. <strong>Not tested in this repository. Check it on a non-production deployment before relying on it.</strong></p>
+<p>Schema version 2 has been discarded (decision D24), so there is no rollback to it: <code>HYBRID_SCHEMA_VERSION=2</code> is refused at start-up. Keep the hybrid settings and the cutover in place, so records stay hybrid-signed and the cutover stays enforced. <strong>Not tested in this repository. Check it on a non-production deployment before relying on it.</strong></p>
 <h2 id="cost-size-and-speed">Cost: size and speed<a class="anchor" href="#cost-size-and-speed" aria-label="Link to this section">#</a></h2>
 <p>Measured on 2026-11-20 with the built packages in this repository, using the server&#39;s own signing code (<code>VerificationCrypto</code>) and the TypeScript SDK&#39;s offline verifier. The record was a minimal one (one transaction, no executions), so treat the byte counts as the cost of the signature envelope, not a size for production records. To reproduce these figures on your hardware, run <code>npx tsx scripts/bench-whole-record-cost.ts 1000</code> from the repository root after <code>npm run build:packages</code>. Each figure is the average over 1000 iterations, from two runs that agreed to within about 0.1 ms.</p>
 <div class="table-wrap"><table>

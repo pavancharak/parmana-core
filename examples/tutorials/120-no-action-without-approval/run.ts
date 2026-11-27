@@ -19,6 +19,10 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import {
+  demoTrustedSources,
+  recordDemoFacts,
+} from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // No AI agent action is authorized without a signed human approval, reads
@@ -64,8 +68,18 @@ function policyWith(
     ...(withApprovalSignal && {
       approvalSignals: { humanApproved: { resourceId: "target" } },
     }),
+    // riskScore comes from a trusted business system: the caller's word can refuse, never approve. Declared
+    // only where a rule reads it.
+    ...(JSON.stringify(condition).includes('"riskScore"') && {
+      signalSources: {
+        riskScore: {
+          source: "trusted-test",
+          claim: "fact.riskScore",
+          subject: "target",
+        },
+      },
+    }),
     unboundSignalReasons: {
-      riskScore: "Declared by the caller; it can only refuse.",
       ...(!withApprovalSignal && {
         humanApproved:
           "Declared by the caller, with no signed approval behind it.",
@@ -241,7 +255,10 @@ async function run(
   tx: BusinessTransaction,
   expected: boolean,
 ): Promise<void> {
-  let builder = new RuntimeBuilder().withPolicyRepository(repository as never);
+  recordDemoFacts(tx.signals);
+  let builder = new RuntimeBuilder()
+    .withBusinessSignalSources(demoTrustedSources())
+    .withPolicyRepository(repository as never);
   if (withVerifier) {
     builder = builder.withSignalStateVerifier(demoApprovalSignalVerifier());
   }

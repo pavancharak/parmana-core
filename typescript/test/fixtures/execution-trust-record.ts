@@ -24,8 +24,6 @@ export const executionTrustRecord: ExecutionTrustRecord = {
 
   transaction: businessTransaction,
 
-  overrides: [],
-
   executions: [
     {
       executionId: "execution-001",

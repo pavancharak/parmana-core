@@ -1,0 +1,19 @@
+---
+title: "Interface: PolicyV2Decision"
+---
+
+The recorded decision. released is always false: a policy version 2
+decision never releases anything by itself. A REVIEW outcome carries a
+reviewId; read the review with policyV2Review until it is final.
+
+## Members
+
+| Name        | Kind     | Type                                                                                      | Description |
+| ----------- | -------- | ----------------------------------------------------------------------------------------- | ----------- |
+| `outcome`   | Property | [`PolicyV2Outcome`](/sdks/reference/typescript/type-aliases/PolicyV2Outcome)              |             |
+| `reason`    | Property | `string`                                                                                  |             |
+| `tier?`     | Property | `string \| undefined`                                                                     |             |
+| `refusal?`  | Property | [`PolicyV2Refusal`](/sdks/reference/typescript/interfaces/PolicyV2Refusal)` \| undefined` |             |
+| `recordId`  | Property | `string`                                                                                  |             |
+| `released`  | Property | `false`                                                                                   |             |
+| `reviewId?` | Property | `string \| undefined`                                                                     |             |

@@ -10,8 +10,8 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * There is no fixed public API base URL. Every deployment has its own, so ask the operator for it.
 * Authentication: every request carries `Authorization: Bearer <key>`. The operator issues the key.
 * On any running server, the machine readable API description is at `/openapi.json`, `/openapi.yaml` and `/api-manifest.json`.
-* TypeScript SDK: `@parmana/sdk` 4.1.1 on npm.
-* Python SDK: `parmana` 4.1.1 on PyPI.
+* TypeScript SDK: `@parmana/sdk` 5.0.0 on npm.
+* Python SDK: `parmana` 5.0.0 on PyPI.
 * If you are an AI agent, start with https://docs.parmanasystems.com/agents/integrate and follow it exactly.
 * For the integration pages concatenated into one document, read https://docs.parmanasystems.com/llms-full.txt.
 
@@ -63,11 +63,11 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [Storage](https://docs.parmanasystems.com/storage/overview): Append-only persistence for Business Transactions, Trust Records, and policies.
 ## Guides: Command-line tools
 
-* [CLI quickstart](https://docs.parmanasystems.com/cli/quickstart): Install the parmana command, set your token, and run your first read and dry run in about five minutes.
+* [CLI quickstart](https://docs.parmanasystems.com/cli/quickstart): Install the parmana-ops command, set your token, and run your first read and dry run in about five minutes.
 * [Concepts](https://docs.parmanasystems.com/cli/concepts): How a policy change moves from proposal to approval to a signed log entry, and what the CLI does and does not decide.
 * [Command reference](https://docs.parmanasystems.com/cli/reference): Every parmana command, its options, environment variables and examples. Generated from the command table in the CLI source.
 * [Configuration](https://docs.parmanasystems.com/cli/configuration): Environment variables, the config file, profiles, and the precedence rules for choosing the API address and the token.
-* [Errors and how to fix them](https://docs.parmanasystems.com/cli/errors): Every error the parmana command reports: what it means, why it happens, and the next step. Server refusals, usage errors and network failures.
+* [Errors and how to fix them](https://docs.parmanasystems.com/cli/errors): Every error the parmana-ops command reports: what it means, why it happens, and the next step. Server refusals, usage errors and network failures.
 * [Recipes](https://docs.parmanasystems.com/cli/recipes): Practical ways to use the parmana command: reviewing a change with a dry run, scripting with JSON output, and running the approval flow in CI.
 * [Security model](https://docs.parmanasystems.com/cli/security): Where the parmana command keeps secrets, what it never prints or stores, which requests it sends and which it refuses to repeat, and what remains your responsibility.
 * [CLI changelog](https://docs.parmanasystems.com/cli/changelog): A dated record of changes to the parmana command, including the versioning rules.

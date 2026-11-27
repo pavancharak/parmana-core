@@ -240,6 +240,21 @@ export interface KeyConfig {
    * Root directory containing all Parmana keys.
    */
   readonly keyDirectory: string;
+
+  /**
+   * PARMANA_HYBRID_KMS=true. With KEY_PROVIDER=aws-kms and CRYPTO_MODE=hybrid, the primary
+   * (ed25519) signature is made by the KMS key, and the primary private key is never read into the
+   * process. Off by default: the hybrid-with-KMS combination is refused at startup until it has
+   * been verified against a real KMS key (F25).
+   */
+  readonly hybridKmsPrimary: boolean;
+
+  /**
+   * PARMANA_SECONDARY_KEY_SECRET_ID. The name or ARN of an AWS Secrets Manager secret that holds the
+   * secondary (post-quantum) private key as PEM. When set, the secondary key is read from the secret
+   * and is never written to disk. Unset means the secondary key is a file in keyDirectory.
+   */
+  readonly secondaryKeySecretId: string | undefined;
 }
 /**
  * Secrets backend configuration (ADR-0009). Selects where connector
@@ -356,20 +371,22 @@ export interface LoggingConfig {
  * rollback. Any other value throws, so a typo cannot pick a schema version
  * silently. The former HYBRID_SCHEMA_V3_ACKNOWLEDGED gate is no longer read.
  */
-export function parseHybridSchemaVersion(value: string | undefined): 2 | 3 {
+export function parseHybridSchemaVersion(value: string | undefined): 3 {
   if (value === undefined || value.trim() === "") {
     return 3;
-  }
-
-  if (value === "2") {
-    return 2;
   }
 
   if (value === "3") {
     return 3;
   }
 
-  throw new Error(`HYBRID_SCHEMA_VERSION must be 2 or 3, got "${value}".`);
+  if (value === "2") {
+    throw new Error(
+      "HYBRID_SCHEMA_VERSION=2 is no longer supported: schema version 2 is discarded (decision D24). Remove the variable, or set it to 3.",
+    );
+  }
+
+  throw new Error(`HYBRID_SCHEMA_VERSION must be 3, got "${value}".`);
 }
 
 /**
@@ -441,6 +458,11 @@ export function loadConfig(): Readonly<Config> {
       provider: parseKeyProvider(process.env.KEY_PROVIDER),
 
       keyDirectory: process.env.PARMANA_KEY_DIR!,
+
+      hybridKmsPrimary: process.env.PARMANA_HYBRID_KMS === "true",
+
+      secondaryKeySecretId:
+        process.env.PARMANA_SECONDARY_KEY_SECRET_ID?.trim() || undefined,
     }),
 
     secrets: Object.freeze({

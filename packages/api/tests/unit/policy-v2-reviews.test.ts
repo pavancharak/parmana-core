@@ -70,6 +70,7 @@ async function setup() {
       .map((g) => ({ reviewerId: g.reviewerId, capability: g.capability })),
   );
   const item = queue.open({
+    decisionRecord: { recordId: "ev-1", hash: "0".repeat(64) },
     capability: CAP,
     target: "inv-1",
     requester: "partner-a",

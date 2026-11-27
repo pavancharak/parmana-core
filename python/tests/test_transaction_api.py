@@ -93,7 +93,6 @@ class FakeTransport:
                 trust_record_id="tr-001",
                 business_transaction_id="tx-001",
                 transaction=transaction,
-                overrides=[],
                 executions=[],
                 verifications=[],
                 receipts=[],

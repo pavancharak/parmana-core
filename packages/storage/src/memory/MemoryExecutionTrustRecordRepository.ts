@@ -3,7 +3,6 @@ import {
   ExecutionStatus,
   ExecutionTrustRecord,
   ExecutionTrustRecordRepository,
-  Override,
   Receipt,
   Verification,
 } from "@parmana/shared";
@@ -63,24 +62,6 @@ export class MemoryExecutionTrustRecordRepository implements ExecutionTrustRecor
     };
 
     this.records.set(execution.businessTransactionId, updated);
-  }
-
-  async appendOverride(
-    businessTransactionId: string,
-    overrideArtifact: Override,
-  ): Promise<void> {
-    const record = this.records.get(businessTransactionId);
-
-    if (!record) {
-      return;
-    }
-
-    const updated: ExecutionTrustRecord = {
-      ...record,
-      overrides: [...record.overrides, overrideArtifact],
-    };
-
-    this.records.set(businessTransactionId, updated);
   }
 
   async appendVerification(

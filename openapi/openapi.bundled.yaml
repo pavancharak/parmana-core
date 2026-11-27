@@ -1164,7 +1164,6 @@ paths:
                       signature: HZaohm/v3xrJTp+VrcJmLLcIG1SMl3LyPcHQUF6UHo7J9Z/KY92brpU92xVnPhVJJMaB+fd7nVRQ96k3OP7DBQ==
                       keyId: default
                       algorithm: ed25519
-                    overrides: []
                     executions:
                       - executionId: 21a57d3e-bed5-4a73-8af9-2ac2d7e8326e
                         businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
@@ -1299,7 +1298,6 @@ paths:
                         riskScore: 12
                       status: RECEIVED
                       createdAt: 2026-07-13T17:36:00.965Z
-                    overrides: []
                     executions:
                       - executionId: 90746492-7721-4228-b244-67bf8a45ca68
                         businessTransactionId: 44b34a79-e0f2-49d7-a48e-e52fff88182e
@@ -2570,7 +2568,6 @@ paths:
                       signature: HZaohm/v3xrJTp+VrcJmLLcIG1SMl3LyPcHQUF6UHo7J9Z/KY92brpU92xVnPhVJJMaB+fd7nVRQ96k3OP7DBQ==
                       keyId: default
                       algorithm: ed25519
-                    overrides: []
                     executions:
                       - executionId: 21a57d3e-bed5-4a73-8af9-2ac2d7e8326e
                         businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
@@ -4386,7 +4383,6 @@ paths:
                         signature: TDZgeHSqXhdacOLBUZzEMIFFTP1BkF68hTrvtQrI3SWJo7MApe6JqPTou7xoqzKK7tBwvDrG25mTyRA3TUA8AQ==
                         keyId: default
                         algorithm: ed25519
-                      overrides: []
                       executions:
                         - executionId: ad87bb66-5811-404b-bdbf-f8196bfec100
                           businessTransactionId: 0815b845-20b0-4c45-9582-31fce04eaf58
@@ -4580,7 +4576,6 @@ paths:
                         signature: TDZgeHSqXhdacOLBUZzEMIFFTP1BkF68hTrvtQrI3SWJo7MApe6JqPTou7xoqzKK7tBwvDrG25mTyRA3TUA8AQ==
                         keyId: default
                         algorithm: ed25519
-                      overrides: []
                       executions:
                         - executionId: ad87bb66-5811-404b-bdbf-f8196bfec100
                           businessTransactionId: 0815b845-20b0-4c45-9582-31fce04eaf58
@@ -5551,7 +5546,6 @@ paths:
                         signature: 2mCcxfvZ1LIGiFnfHH8ug+Azw7W8AiXMyWmx98z2bDVK9cUZyutsOQD/pLxJ4YBwcjl003acuqkU1iB2OX3sAA==
                         keyId: default
                         algorithm: ed25519
-                      overrides: []
                       executions:
                         - executionId: d405986b-899c-40d6-bba4-71f885e5a6a9
                           businessTransactionId: b09eb4f2-30f8-4783-bd23-4092eabc8378
@@ -5784,7 +5778,6 @@ paths:
                         riskScore: 12
                       status: RECEIVED
                       createdAt: 2026-07-13T17:36:00.965Z
-                    overrides: []
                     executions:
                       - executionId: 90746492-7721-4228-b244-67bf8a45ca68
                         businessTransactionId: 44b34a79-e0f2-49d7-a48e-e52fff88182e
@@ -7707,6 +7700,8 @@ paths:
                       -----BEGIN PUBLIC KEY-----
                       MCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=
                       -----END PUBLIC KEY-----
+                    capabilities:
+                      - erp:pay-invoice
                     reason: The approver approves refunds for the West region from October.
                     proposedBy: human-maker
                     proposedAt: 2026-09-28T19:05:59.726Z
@@ -7828,6 +7823,7 @@ paths:
                 public_key_pem=Path(
                     "approver-example__approver-example-key-1.public.pem"
                 ).read_text(),
+                capabilities=["erp:pay-invoice"],
                 reason="The example approver approves refunds for the West region from October.",
             )
 
@@ -14057,6 +14053,7 @@ components:
           type: string
           enum:
             - NO_APPROVED_POLICY
+            - ACTION_NOT_LIVE
             - POLICY_INVALID
             - SOURCE_UNAVAILABLE
             - SOURCE_NOT_VERIFIED
@@ -15047,41 +15044,6 @@ components:
             riskScore: 10
           status: RECEIVED
           createdAt: 2026-07-07T16:38:59.325Z
-    override.schema:
-      title: Override
-      description: Immutable trust artifact recording an authorized human override for
-        a Business Transaction. No API route in this repository currently
-        creates an Override; this schema exists only because
-        ExecutionTrustRecord.overrides is part of the append-only Trust Record
-        shape; every captured example has an empty overrides array.
-      type: object
-      additionalProperties: true
-      required:
-        - overrideId
-        - businessTransactionId
-        - approvedBy
-        - reason
-        - approvedAt
-      properties:
-        overrideId:
-          type: string
-          description: Unique Override identifier.
-        businessTransactionId:
-          type: string
-          description: Business Transaction to which this Override belongs.
-        approvedBy:
-          type: string
-          description: Authorized user or system that approved the Override.
-        reason:
-          type: string
-          description: Human-readable reason for the Override.
-        justification:
-          type: string
-          description: Optional business justification.
-        approvedAt:
-          type: string
-          format: date-time
-          description: UTC timestamp when the Override was approved.
     decision.schema:
       title: Decision
       description: Immutable result of evaluating an Intent against a Policy. Decision
@@ -15468,16 +15430,14 @@ components:
       description: "Canonical immutable record representing everything Parmana knows
         about a Business Transaction: the authoritative source for replay,
         verification, audit, and receipt generation. One Execution Trust Record
-        exists per Business Transaction. overrides, executions, verifications,
-        and receipts are append-only: existing entries are never modified or
-        removed."
+        exists per Business Transaction. executions, verifications, and receipts
+        are append-only: existing entries are never modified or removed."
       type: object
       additionalProperties: true
       required:
         - trustRecordId
         - businessTransactionId
         - transaction
-        - overrides
         - executions
         - verifications
         - receipts
@@ -15494,12 +15454,6 @@ components:
           description: Business Transaction identifier.
         transaction:
           $ref: "#/components/schemas/business-transaction.schema"
-        overrides:
-          type: array
-          description: Override history. Append-only; empty on every transaction in this
-            repository today (no route creates an Override).
-          items:
-            $ref: "#/components/schemas/override.schema"
         executions:
           type: array
           description: Execution history. Append-only.
@@ -15634,7 +15588,6 @@ components:
               riskScore: 10
             status: RECEIVED
             createdAt: 2026-07-07T16:38:59.325Z
-          overrides: []
           executions:
             - executionId: 2be38c15-f93c-4621-9a1c-7570c130dea0
               businessTransactionId: eed2a972-1bf5-4166-8472-761f76fbf1b2
@@ -16947,6 +16900,15 @@ components:
         rejectionReason:
           type: string
           description: Present when REJECTED.
+        capabilities:
+          type: array
+          minItems: 1
+          maxItems: 50
+          description: "For add: the capability names the approver may approve, as the
+            server stored them (duplicates removed)."
+          items:
+            type: string
+            pattern: ^[a-z0-9][a-z0-9._:-]{0,127}$
       examples:
         - changeId: ba7c5827-5844-4069-94fc-9b438ef08f78
           action: add
@@ -17004,6 +16966,15 @@ components:
           type: string
           minLength: 1
           maxLength: 2000
+        capabilities:
+          type: array
+          minItems: 1
+          maxItems: 50
+          description: "Required for add, not allowed for revoke: the capability names
+            this approver may approve. The server removes duplicates."
+          items:
+            type: string
+            pattern: ^[a-z0-9][a-z0-9._:-]{0,127}$
       examples:
         - action: add
           approverId: approver-example
@@ -17013,10 +16984,33 @@ components:
             MCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=
             -----END PUBLIC KEY-----
           reason: Priya approves refunds for the West region from October.
+          capabilities:
+            - erp:pay-invoice
         - action: revoke
           approverId: approver-example
           keyId: approver-example-key-1
           reason: Priya moved to another team.
+      allOf:
+        - if:
+            properties:
+              action:
+                const: add
+            required:
+              - action
+          then:
+            required:
+              - publicKeyPem
+              - capabilities
+        - if:
+            properties:
+              action:
+                const: revoke
+            required:
+              - action
+          then:
+            not:
+              required:
+                - capabilities
     approval-issuer-change-response.schema:
       title: Approver Change Response
       description: Response of POST /approval-issuers/changes (201) and of approve and

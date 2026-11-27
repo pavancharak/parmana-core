@@ -88,7 +88,6 @@ describe("verifyExecutionIntentOffline", () => {
     expect(result).toMatchObject({
       valid: true,
       hashValid: true,
-      legacySignatureValid: true,
       errors: [],
     });
     expect(result.algorithmsChecked).toContain("ed25519");
@@ -131,7 +130,7 @@ describe("verifyExecutionIntentOffline", () => {
 
       expect(result.valid).toBe(false);
       expect(result.hashValid).toBe(false);
-      expect(result.legacySignatureValid).toBe(false);
+      expect(result.valid).toBe(false);
     },
   );
 
@@ -148,7 +147,7 @@ describe("verifyExecutionIntentOffline", () => {
 
     expect(result.valid).toBe(false);
     expect(result.hashValid).toBe(true);
-    expect(result.legacySignatureValid).toBe(false);
+    expect(result.valid).toBe(false);
   });
 
   it("says so when no public key was supplied for the keyId", async () => {

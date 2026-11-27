@@ -7,7 +7,7 @@ import {
   CryptoBootstrap,
   KMS_RAW_MESSAGE_LIMIT_BYTES,
   VerificationCrypto,
-  canonicalExecutionTrustRecord,
+  hybridSignedCanonicalView,
   commitmentMessage,
   requiresCommitment,
   type Signer,
@@ -72,7 +72,6 @@ const draft = {
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     signals: { amount: 100, vendorId: "vendor-café" },
   },
-  overrides: [],
   executions: [],
   verifications: [],
   receipts: [],
@@ -85,11 +84,16 @@ const trustRecordHash = await crypto.hash(draft);
 const withHash: ExecutionTrustRecord = {
   ...draft,
   trustRecordHash,
-  signature: { algorithm: "ed25519", keyId, value: "", signedAt: new Date() },
 };
 
-const signature = await crypto.sign(withHash);
-const record: ExecutionTrustRecord = { ...withHash, signature };
+// Schema version 3 only (decision D24): the signatures array covers the whole record. Single mode
+// carries one entry, for Ed25519, the algorithm this fixture's key is.
+const signatures = await crypto.signWholeRecord(withHash);
+const record = {
+  ...withHash,
+  schemaVersion: 3,
+  signatures,
+} as unknown as ExecutionTrustRecord;
 
 writeFileSync(`${outDir}/record.json`, JSON.stringify(record, null, 2));
 writeFileSync(
@@ -126,7 +130,6 @@ const largeHash = await crypto.hash(largeDraft);
 const largeWithHash: ExecutionTrustRecord = {
   ...largeDraft,
   trustRecordHash: largeHash,
-  signature: { algorithm: "ed25519", keyId, value: "", signedAt: new Date() },
 };
 
 const kmsLikeSigner = {
@@ -141,7 +144,7 @@ const kmsLikeSigner = {
   },
 } as unknown as Signer;
 
-const largeCanonical = canonicalExecutionTrustRecord(largeWithHash);
+const largeCanonical = hybridSignedCanonicalView(largeWithHash, 3);
 
 if (!requiresCommitment(new CanonicalSerializer().serialize(largeCanonical))) {
   throw new Error("Large fixture is not over the KMS raw message limit.");
@@ -151,15 +154,11 @@ const largeSignatureValue = await new ArtifactSigner(
   CryptoBootstrap.create(),
 ).signWithSigner(largeCanonical, keyId, kmsLikeSigner);
 
-const largeRecord: ExecutionTrustRecord = {
+const largeRecord = {
   ...largeWithHash,
-  signature: {
-    algorithm: "ed25519",
-    keyId,
-    value: largeSignatureValue,
-    signedAt: new Date(),
-  },
-};
+  schemaVersion: 3,
+  signatures: [{ algorithm: "ed25519", keyId, signature: largeSignatureValue }],
+} as unknown as ExecutionTrustRecord;
 
 writeFileSync(
   `${outDir}/record-large.json`,

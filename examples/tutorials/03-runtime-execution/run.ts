@@ -12,6 +12,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 const root = path.resolve(import.meta.dirname);
 
@@ -29,6 +30,7 @@ const policyRepository = new FilePolicyRepository(
 const trustRecords = new MemoryExecutionTrustRecordRepository();
 
 const runtime = new RuntimeBuilder()
+  .withBusinessSignalSources(demoTrustedSources())
   .withSignalStateVerifier(demoApprovalSignalVerifier())
   .withPolicyRepository(policyRepository)
   .build(trustRecords);

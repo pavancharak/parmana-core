@@ -216,9 +216,6 @@ kept in sync field-for-field against the real JSON schemas (`schemas/common/*.sc
   matching the real API.
 - `ExecutionTrustRecord` includes the required `signature` field and the optional
   `settlementConfirmations` field, with their own `SettlementConfirmation`/`Signature` models.
-- `Override.approvedBy` is the real field name (the real schema has no `authorityId` on
-  `Override`), plus the optional `justification` field. Currently unreachable in practice, no
-  route in this repository creates an `Override`.
 - `Decision.outcome`, `Execution.status`, `Execution.mode`, and `BusinessTransaction.status`
   are literal unions matching the real enums, not bare `string`.
 - `Execution` includes `completedAt`, `evidence` (where Connector evidence lives), and
@@ -545,7 +542,7 @@ const { pem } = await client.publicKey("default");
 
 const record = await client.trustRecord("5015499d-b7ba-48fe-a9ad-821862d70ad0");
 const result = verifyExecutionTrustRecordOffline(record, { default: pem });
-// { valid: true, hashValid: true, legacySignatureValid: true, algorithmsChecked: ["ed25519"], errors: [] }
+// { valid: true, hashValid: true, hybridSignaturesValid: true, algorithmsChecked: ["ed25519"], errors: [] }
 
 const view = await client.executionIntent(
   "5015499d-b7ba-48fe-a9ad-821862d70ad0",

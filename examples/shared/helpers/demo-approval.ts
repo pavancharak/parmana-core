@@ -14,6 +14,7 @@ import {
 import type { Policy } from "@parmana/policy";
 import { MemoryApprovalNonceLedger } from "@parmana/storage";
 import type { BusinessTransaction } from "@parmana/shared";
+import { recordDemoFacts } from "./demo-trusted-sources.js";
 
 /**
  * A demo approver for the tutorials.
@@ -63,7 +64,7 @@ const DEMO_CAPABILITIES = [
   "erp:record-update",
 ] as const;
 
-/** Trusts DEMO_APPROVER only. Pass to createApplication(). */
+/** Trusts DEMO_APPROVER only. Pass to createApplication(undefined, undefined, undefined, undefined, demoTrustedSources()). */
 export function demoApprovalVerifier(): ApprovalVerifier {
   return new ApprovalVerifier({
     crypto: APPROVAL_ARTIFACT_CRYPTO_PROVIDER,
@@ -123,6 +124,9 @@ export async function withDemoApproval<T extends BusinessTransaction>(
     ),
   ) as Policy,
 ): Promise<T> {
+  // The demo business system answers sourced facts with the values this transaction declares.
+  recordDemoFacts(transaction.signals);
+
   const [signalKey, declaration] =
     Object.entries(policy.approvalSignals ?? {})[0] ?? [];
 

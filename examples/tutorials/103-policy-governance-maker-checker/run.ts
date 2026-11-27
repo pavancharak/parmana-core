@@ -14,6 +14,7 @@ import {
 import { FilePolicyRepository } from "@parmana/policy";
 import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import { MemoryPolicyChangeApprovalRecordRepository } from "@parmana/storage";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // docs/internal/CLAIMS.md 2.26: policy content changes go through a human-only,
@@ -118,7 +119,13 @@ const authenticator = new StaticKeyAuthenticator([
 ]);
 
 const executionSystem = await createExecutionSystem();
-const application = createApplication(executionSystem);
+const application = createApplication(
+  executionSystem,
+  undefined,
+  undefined,
+  undefined,
+  demoTrustedSources(),
+);
 const app = createApp(application, {
   callerAuth: { authenticator, auditSink: { record: async () => {} } },
   stepUpVerifier: new PolicyChangeStepUpVerifier({

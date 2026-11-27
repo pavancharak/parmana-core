@@ -1,0 +1,79 @@
+{
+  "businessTransactionId": "339b6460-9f52-4137-9acb-45ca2c23b11a",
+  "metadata": {
+    "businessTransactionId": "339b6460-9f52-4137-9acb-45ca2c23b11a",
+    "correlationId": "8b732247-4319-49a6-b225-c601f39ed7b1",
+    "createdBy": "integration-test",
+    "createdAt": "2026-11-27T07:46:38.869Z"
+  },
+  "authority": {
+    "authorityId": "035b3f78-bc8a-4355-90b3-9de13563222e",
+    "authorityType": "USER",
+    "principalId": "integration-test",
+    "displayName": "Integration Test",
+    "issuedAt": "2026-11-27T07:46:38.869Z"
+  },
+  "authorization": {
+    "authorizationId": "5b398955-2381-40b1-a3de-9b5bba1e439c",
+    "authorityId": "035b3f78-bc8a-4355-90b3-9de13563222e",
+    "purpose": "Integration Test",
+    "authorizedAt": "2026-11-27T07:46:38.869Z"
+  },
+  "intent": {
+    "intentId": "5b840b5e-9911-4b9c-ba89-d0a0e576f7f0",
+    "authorizationId": "5b398955-2381-40b1-a3de-9b5bba1e439c",
+    "action": "test:fixture-execute",
+    "target": "vendor://payments",
+    "parameters": {
+      "paymentId": "payment-001",
+      "amount": 1000
+    },
+    "createdAt": "2026-11-27T07:46:38.869Z"
+  },
+  "policy": {
+    "name": "payment-limit",
+    "version": "1.0.0",
+    "schemaVersion": "1.0.0"
+  },
+  "signals": {
+    "vendorVerified": true,
+    "invoiceVerified": true,
+    "paymentApproved": true,
+    "sufficientFunds": true,
+    "paymentAmount": 1000,
+    "riskScore": 10,
+    "vendorId": "vendor://payments",
+    "humanApproved": true,
+    "approvalArtifact": {
+      "payload": {
+        "version": 1,
+        "approvalId": "023598de-dedb-4d57-bb5a-01b74be509ee",
+        "issuer": {
+          "approverId": "test-approver",
+          "keyId": "test-approver-key-1"
+        },
+        "issuedAt": "2026-11-27T07:46:38.869Z",
+        "expiresAt": "2026-11-27T08:01:38.869Z",
+        "capability": "test:fixture-execute",
+        "resourceId": "vendor://payments",
+        "scope": {
+          "field": "value",
+          "comparator": "lte",
+          "value": 1000
+        },
+        "nonce": "5e820657-6d74-47fd-95d5-22f876f460df"
+      },
+      "signature": {
+        "algorithm": "ed25519",
+        "keyId": "test-approver-key-1",
+        "value": "3t5IRLgypAQU6JCbl1XAvOFOc7kGDkCGb0XhXsfz+n8sU7z2TU2x2RXVnJ1gEilThCNZdq+3A2bAh5YcXUJaAQ==",
+        "signedAt": "2026-11-27T07:46:38.869Z"
+      }
+    }
+  },
+  "decision": {
+    "outcome": "APPROVED"
+  },
+  "status": "APPROVED",
+  "createdAt": "2026-11-27T07:46:38.869Z"
+}

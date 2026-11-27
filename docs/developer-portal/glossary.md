@@ -58,7 +58,7 @@ The only path through which Parmana releases an approved request to a connector.
 
 ## Execution Trust Record
 
-The signed evidence for one Business Transaction. It holds the transaction, the authorization, the overrides, the executions (with their decisions), the verifications, the receipts, an evidence anchor, timestamps, the `trustRecordHash`, and the signature. Verify it with the server or offline. See [Evidence verification](security/evidence-verification.md).
+The signed evidence for one Business Transaction. It holds the transaction, the authorization, the executions (with their decisions), the verifications, the receipts, an evidence anchor, timestamps, the `trustRecordHash`, and the signature. Verify it with the server or offline. See [Evidence verification](security/evidence-verification.md).
 
 ## Fail closed
 

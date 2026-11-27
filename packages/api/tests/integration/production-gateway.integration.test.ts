@@ -23,6 +23,8 @@ import {
   approvePolicyVersion,
   seedPolicyGovernanceApprovals,
 } from "../../../../test-support/policy-governance.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * End to end through the production gateway factory (createExecutionGateway),
@@ -135,7 +137,13 @@ describe("production gateway, end to end", () => {
   beforeAll(async () => {
     // Production binds the signal verifier here (application.ts, G-31). The
     // gateway refuses every release until it is bound, so bind it first.
-    createApplication();
+    createApplication(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
     await seedPolicyGovernanceApprovals();
     // This file executes access-control 1.0.0, so make it the version in effect.
     await approvePolicyVersion(POLICY_NAME, POLICY_VERSION);

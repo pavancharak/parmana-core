@@ -2,10 +2,11 @@
 
 # Error code index
 
-106 error code literals found in the server source. "Triggered in verification" means a request in this portal's runs produced the code. The others are defined in source and were not triggered; their meaning is in the file named, and their HTTP status is in that file's error path.
+107 error code literals found in the server source. "Triggered in verification" means a request in this portal's runs produced the code. The others are defined in source and were not triggered; their meaning is in the file named, and their HTTP status is in that file's error path.
 
 | Code                                      | Triggered in verification | Raised most often in                                                          |
 | ----------------------------------------- | ------------------------- | ----------------------------------------------------------------------------- |
+| `ACTION_NOT_LIVE`                         | no                        | `packages/policy/src/v2/decision.ts`                                          |
 | `ALREADY_FINALIZED`                       | no                        | `packages/runtime/src/ExecutionIntentFinalizer.ts`                            |
 | `ALREADY_RESOLVED`                        | no                        | `packages/runtime/src/ExecutionIntentService.ts`                              |
 | `APPROVAL_ISSUER_CHANGE_NOT_FOUND`        | no                        | `packages/shared/src/errors/approval-issuer-change-not-found-error.ts`        |
@@ -74,7 +75,6 @@
 | `NOT_READY`                               | no                        | `packages/api/src/routes/ready.ts`                                            |
 | `NOT_YET_VALID`                           | no                        | `packages/policy/src/v2/approvals.ts`                                         |
 | `OUTCOME_UNKNOWN`                         | no                        | `packages/shared/src/errors/outcome-unknown-error.ts`                         |
-| `OVERRIDE_NOT_ALLOWED`                    | no                        | `packages/shared/src/errors/override-not-allowed-error.ts`                    |
 | `PAYTM_CONNECTOR_SHARED_SECRET`           | no                        | `packages/api/src/bootstrap/createSandboxOptions.ts`                          |
 | `PAYTM_CONNECTOR_TIMEOUT_MS`              | no                        | `packages/api/src/bootstrap/createSandboxOptions.ts`                          |
 | `PAYTM_CONNECTOR_URL`                     | no                        | `packages/api/src/bootstrap/createSandboxOptions.ts`                          |

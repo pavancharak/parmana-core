@@ -31,6 +31,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "..", "..", "..");
 const portalDir = resolve(here, "..");
 const outDir = resolve(repo, "docs", "portal");
+// Where the portal is published. Absolute links in the discovery files use this.
+const siteBase = "https://pavancharak.github.io/parmana-core/portal/";
 const repoUrl = "https://github.com/pavancharak/parmana-core";
 const branch = "main";
 const PORTAL_IN_REPO = "docs/developer-portal";
@@ -46,7 +48,9 @@ const NAV = [
     pages: [
       "architecture.md",
       "glossary.md",
+      "security/key-management.md",
       "policies/README.md",
+      "policies/payment-refund-coverage.md",
       "security/README.md",
       "security/evidence-verification.md",
       "security/schema-v3.md",
@@ -231,6 +235,7 @@ function renderPage(src, text) {
   const seen = new Map();
   const fromOut = outPathFor(src);
 
+  let hasMermaid = false;
   const marked = new Marked({
     gfm: true,
     renderer: {
@@ -257,6 +262,11 @@ function renderPage(src, text) {
       },
       code({ text: code, lang }) {
         const label = (lang || "text").split(/\s+/)[0];
+        if (label === "mermaid") {
+          // Rendered in the browser by the Mermaid script, which replaces this text with the diagram.
+          hasMermaid = true;
+          return `<pre class="mermaid">${escapeHtml(code)}</pre>\n`;
+        }
         return (
           `<div class="code">` +
           `<div class="code-bar"><span>${escapeHtml(label)}</span>` +
@@ -282,12 +292,25 @@ function renderPage(src, text) {
     .replace(/[`*_>#|]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+  // The first real sentence of prose: skip headings, lists, tables, quotes, code and navigation links.
+  const prose = text
+    .split(/\n\s*\n/)
+    .map((b) => b.trim())
+    .find((b) => b.length > 40 && !/^(#|\[|>|-|\*|\d+\.|\||```|<)/.test(b));
+  const summary = (prose ?? plain)
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/[`*_]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 200);
   return {
     src,
     title,
     headings,
     html,
     excerpt: plain.slice(0, 240),
+    summary,
+    hasMermaid,
     outRel: fromOut,
   };
 }
@@ -324,6 +347,19 @@ if (anchorProblems.length > 0) {
 // ---------------------------------------------------------------------------
 // Page chrome
 
+// Mermaid renders the diagrams in the browser. Pinned to a release that is well past the two-week
+// minimum age for new versions; the page loads it from cdnjs only where a diagram is present.
+const MERMAID_SCRIPT = `<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) {
+    window.mermaid.initialize({
+      startOnLoad: true,
+      securityLevel: "strict",
+      theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default",
+    });
+  }
+</script>
+`;
 const CSS = readFileSync(join(here, "portal-assets", "portal.css"), "utf8");
 const JS = readFileSync(join(here, "portal-assets", "portal.js"), "utf8");
 
@@ -422,7 +458,7 @@ ${page.html}
 </div>
 <script>window.PORTAL_ROOT = ${JSON.stringify(rootPrefix)};</script>
 <script src="${rootPrefix}search-index.js"></script>
-<script src="${rootPrefix}portal.js"></script>
+${page.hasMermaid ? MERMAID_SCRIPT : ""}<script src="${rootPrefix}portal.js"></script>
 </body>
 </html>
 `;
@@ -462,6 +498,70 @@ const index = flatOrder.map((p) => {
 writeFileSync(
   join(outDir, "search-index.js"),
   `/* global window */\nwindow.PORTAL_INDEX = ${JSON.stringify(index)};\n`,
+);
+
+// ---------------------------------------------------------------------------
+// Discovery files for crawlers and AI agents.
+//   docs/portal/sitemap.xml   every page, for search engines
+//   docs/portal/llms.txt      an index of the pages, with a one-line summary each
+//   docs/portal/llms-full.txt the full text of every page, in reading order
+//   docs/robots.txt           allows crawling and points to the sitemap (site root)
+
+const absolute = (outRel) => siteBase + outRel;
+
+writeFileSync(
+  join(outDir, "sitemap.xml"),
+  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+    flatOrder
+      .map(
+        (p) =>
+          `  <url><loc>${escapeHtml(absolute(rendered.get(p.src).outRel))}</loc></url>`,
+      )
+      .join("\n") +
+    `\n</urlset>\n`,
+);
+
+const llmsLines = [
+  "# Parmana developer docs",
+  "",
+  "> Parmana sets clear limits on what AI agents and business systems may do, checks every action against those limits, and records each decision as a verifiable Execution Trust Record. These pages document the API, the SDKs, the policy model and the operations.",
+  "",
+  "The API is described by an OpenAPI document at https://pavancharak.github.io/parmana-core/site/openapi.bundled.yaml. Experimental Policy version 2 operations are marked as such in that document.",
+];
+for (const g of navGroups) {
+  llmsLines.push("", `## ${g.group}`, "");
+  for (const src of g.pages) {
+    const page = rendered.get(src);
+    llmsLines.push(
+      `- [${page.title}](${absolute(page.outRel)}): ${page.summary}`,
+    );
+  }
+}
+writeFileSync(join(outDir, "llms.txt"), llmsLines.join("\n") + "\n");
+
+const fullParts = [
+  "# Parmana developer docs: full text",
+  "",
+  "Every page of the developer portal, in reading order. Source: docs/developer-portal/ in https://github.com/pavancharak/parmana-core.",
+];
+for (const p of flatOrder) {
+  const page = rendered.get(p.src);
+  const text = readFileSync(join(portalDir, p.src), "utf8").trimEnd();
+  fullParts.push(
+    "",
+    "---",
+    "",
+    `Page: ${absolute(page.outRel)}`,
+    `Source: docs/developer-portal/${p.src}`,
+    "",
+    text,
+  );
+}
+writeFileSync(join(outDir, "llms-full.txt"), fullParts.join("\n") + "\n");
+
+writeFileSync(
+  resolve(repo, "docs", "robots.txt"),
+  `User-agent: *\nAllow: /\n\nSitemap: ${siteBase}sitemap.xml\n`,
 );
 
 const sep2 = sep;

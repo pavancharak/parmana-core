@@ -186,8 +186,8 @@ The full list, with the exact messages, is the [error catalog](/api-reference/er
 
 | You use                                | Package                                     | Current version | Install                                                       |
 | -------------------------------------- | ------------------------------------------- | --------------- | ------------------------------------------------------------- |
-| TypeScript or JavaScript               | [`@parmana/sdk`](/sdks/typescript) on npm   | 4.1.1           | `npm install @parmana/sdk`                                    |
-| Python                                 | [`parmana`](/sdks/python) on PyPI           | 4.1.1           | `pip install parmana`                                         |
+| TypeScript or JavaScript               | [`@parmana/sdk`](/sdks/typescript) on npm   | 5.0.0           | `npm install @parmana/sdk`                                    |
+| Python                                 | [`parmana`](/sdks/python) on PyPI           | 5.0.0           | `pip install parmana`                                         |
 | Python, and you verify records offline | `parmana` with the `verify` extra           | 4.1.1           | `pip install "parmana[verify]"`                               |
 | Another language                       | The [REST API](/api-reference/introduction) | Not applicable  | Any HTTP client, see [Other languages](/sdks/other-languages) |
 
@@ -3993,6 +3993,7 @@ change = proposer.approvers.propose_add(
     approver_id="approver-example",
     key_id="approver-example-key-1",
     public_key_pem=Path("approver-example__approver-example-key-1.public.pem").read_text(),
+    capabilities=["erp:pay-invoice"],  # 1 to 50 capabilities the approver may approve
     reason="The approver approves refunds for the West region from October.",
 )
 
@@ -5701,9 +5702,6 @@ kept in sync field-for-field against the real JSON schemas (`schemas/common/*.sc
   matching the real API.
 - `ExecutionTrustRecord` includes the required `signature` field and the optional
   `settlementConfirmations` field, with their own `SettlementConfirmation`/`Signature` models.
-- `Override.approvedBy` is the real field name (the real schema has no `authorityId` on
-  `Override`), plus the optional `justification` field. Currently unreachable in practice, no
-  route in this repository creates an `Override`.
 - `Decision.outcome`, `Execution.status`, `Execution.mode`, and `BusinessTransaction.status`
   are literal unions matching the real enums, not bare `string`.
 - `Execution` includes `completedAt`, `evidence` (where Connector evidence lives), and
@@ -6030,7 +6028,7 @@ const { pem } = await client.publicKey("default");
 
 const record = await client.trustRecord("5015499d-b7ba-48fe-a9ad-821862d70ad0");
 const result = verifyExecutionTrustRecordOffline(record, { default: pem });
-// { valid: true, hashValid: true, legacySignatureValid: true, algorithmsChecked: ["ed25519"], errors: [] }
+// { valid: true, hashValid: true, hybridSignaturesValid: true, algorithmsChecked: ["ed25519"], errors: [] }
 
 const view = await client.executionIntent(
   "5015499d-b7ba-48fe-a9ad-821862d70ad0",
@@ -6839,6 +6837,7 @@ Enums are real Python `str, Enum` classes (e.g. `SignatureAlgorithm`,
 ## Errors, correctly mapped to real conditions
 
 ```python
+transaction = ...  # a BusinessTransaction you already created, as in create_business_transaction() below
 from parmana import ConflictError, NotFoundError, ValidationError
 
 try:
@@ -6882,6 +6881,10 @@ GETs with backoff on 429/502/503/504, POSTs are never retried.
 ## Every product endpoint has a method
 
 ```python
+transaction = ...  # a BusinessTransaction, built as in create_business_transaction() below
+id = "<businessTransactionId>"  # an id you already have
+record = ...  # an ExecutionTrustRecord you already have
+step_up = ...  # the checker's signed step up authorization, from "Approve a policy change" below
 client.execution.execute(transaction)             # POST /execute
 client.execution.health()                         # GET /health
 client.execution.version()                        # GET /version (the server's version)
@@ -6949,6 +6952,8 @@ automatically:
 ```python
 from parmana import ParmanaClient, PolicyReference, create_business_transaction
 
+endpoint = "http://127.0.0.1:3000"
+approval = ...  # the approver's signed approval, from sign_approval() in "Sign an approval" below
 client = ParmanaClient(endpoint=endpoint)
 
 transaction = create_business_transaction(
@@ -6986,6 +6991,20 @@ server's idempotency key. `authority_type` defaults to `AuthorityType.SERVICE` (
 generated ids round-trip correctly through a real running server, not just in isolation).
 
 ## New in 1.6.0
+
+The examples in this section and the next two use three clients: `maker` proposes a change, `checker` approves it, and `proposer` is the maker's client in the approver examples. Each uses its own API key, and each is a human credential.
+
+```python
+from pathlib import Path
+
+from parmana import ParmanaClient
+from parmana.crypto import sign_approval, sign_policy_change_step_up
+
+endpoint = "http://127.0.0.1:3000"
+maker = ParmanaClient(endpoint=endpoint, api_key="pk_local_... (maker)")
+checker = ParmanaClient(endpoint=endpoint, api_key="pk_local_... (checker)")
+proposer = maker
+```
 
 ### Register a business signal source
 
@@ -7026,6 +7045,7 @@ Say which agent may have which action decided, within which limits, until when. 
 decides a request only for a caller holding a grant in force.
 
 ```python
+step_up = ...  # the checker's signed step up authorization, from "Approve a policy change" below
 change = maker.authority_grants.propose_grant(
     caller_id="warehouse-agent",
     capability="erp:release-goods",
@@ -7161,6 +7181,7 @@ change = proposer.approvers.propose_add(
     approver_id="approver-example",
     key_id="approver-example-key-1",
     public_key_pem=public_key_pem,  # the approver's.public.pem file
+    capabilities=["erp:pay-invoice"],  # 1 to 50 capabilities the approver may approve
     reason="The approver approves refunds for the West region from October.",
 )
 
@@ -7221,7 +7242,7 @@ pem = client.public_key("default").pem
 
 record = client.trust_record("5015499d-b7ba-48fe-a9ad-821862d70ad0")
 result = verify_execution_trust_record_offline(record, {"default": pem})
-# OfflineVerificationResult(valid=True, hash_valid=True, legacy_signature_valid=True,...)
+# OfflineVerificationResult(valid=True, hash_valid=True, hybrid_signatures_valid=True,...)
 
 view = client.execution_intent("5015499d-b7ba-48fe-a9ad-821862d70ad0")
 verify_execution_intent_offline(view.intent, {"default": pem})
@@ -8004,7 +8025,7 @@ Both write into `./keys` unless `PARMANA_KEY_DIR` is set. They refuse to overwri
 
 **Check:** `keys/` contains `default.private.pem`, `default.public.pem`, `gateway.private.pem` and `gateway.public.pem`.
 
-Never commit the private files and never bake them into the image. The image starts with an empty `keys/` directory on purpose. To keep the signing key inside AWS KMS instead, set `KEY_PROVIDER=aws-kms` and read the signing keys section of the environment reference. The gateway key is still a file.
+Never commit the private files and never bake them into the image. The image starts with an empty `keys/` directory on purpose. To keep the signing key inside AWS KMS instead, set `KEY_PROVIDER=aws-kms` and read the signing keys section of the environment reference. The gateway key is still a file. The developer portal's key management page (`docs/developer-portal/security/key-management.md`) compares the options.
 
 ## Step 2: Create the database schema
 
@@ -8696,6 +8717,12 @@ that names `PARMANA_API_KEYS`.
 | `PARMANA_DB_SCHEMA` | No           | Unset (the `public` schema) | A plain Postgres name, such as `parmana_sandbox` | Puts this process's tables on another schema of the same database, so two systems can share one database. Connections set `search_path` to it. Use the session pooler (port 5432) with it: a transaction pooler may not keep the setting.                                                                                                                                                                                                                          |
 | `DATABASE_PROVIDER` | Never set it | None                        | None                                             | Removed. If it is set at all, the server stops with "DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead."                                                                                                                                                                                                                                                                                                                                            |
 
+## Refusal records
+
+| Variable                         | Required | Default | Accepted values      | Meaning                                                                                                                                                                                        |
+| -------------------------------- | -------- | ------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PARMANA_REFUSAL_OUTBOX_SECONDS` | No       | `30`    | Whole number 1-86400 | How often refusals whose Refusal Record could not be written at the time are retried from the outbox. A refusal takes effect either way; the outbox only delays its record when storage fails. |
+
 ## Signing keys and gateway identity
 
 | Variable                                | Required                                                                              | Default             | Values or format                                                                                                                                                                                                                                               | What it does                                                                                                                                                                                                                                                                                                                                                                                                                            |
@@ -8732,9 +8759,11 @@ Both write into `PARMANA_KEY_DIR`, or `./keys` if it is unset, and refuse to ove
 | `PRIMARY_SIGNATURE_PROVIDER`              | No                                   | `ed25519`                  | `ed25519`, `dilithium3` (alias `ml-dsa-65`)                                                            | The signature algorithm. Only these two are implemented. The values `ecdsa-p256`, `dilithium5` and `sphincs-plus` have no implementation, so the server refuses to start with them. `dilithium3` needs Node 24 or later and produces randomized signatures.                                                                                                                                                                                                                  |
 | `SECONDARY_SIGNATURE_PROVIDER`            | If `CRYPTO_MODE` is `hybrid`         | None                       | Same values as above                                                                                   | The second algorithm for hybrid signing.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `CRYPTO_MODE`                             | No                                   | `single`                   | `single`, `hybrid`                                                                                     | `hybrid` adds a second signature from `SECONDARY_SIGNATURE_PROVIDER`. `hybrid` needs `KEY_PROVIDER=local` and both key pairs (`default` and `default-secondary`) in `PARMANA_KEY_DIR`; the server refuses to start otherwise, and refuses `hybrid` with `KEY_PROVIDER=aws-kms`.                                                                                                                                                                                              |
+| `PARMANA_HYBRID_KMS`                      | No                                   | `false`                    | `true`                                                                                                 | Lets `CRYPTO_MODE=hybrid` run with `KEY_PROVIDER=aws-kms`, with the primary ed25519 signature made by the KMS key. Not yet verified against a real KMS key; off by default.                                                                                                                                                                                                                                                                                                  |
+| `PARMANA_SECONDARY_KEY_SECRET_ID`         | No                                   | None                       | Name or ARN of an AWS Secrets Manager secret                                                           | Holds the secondary (post-quantum) private key as PEM, so it is never written to disk. Read in `AWS_REGION`. Not yet verified against a real Secrets Manager secret.                                                                                                                                                                                                                                                                                                         |
 | `HASH_PROVIDER`                           | No                                   | `sha256`                   | `sha256`                                                                                               | The hash algorithm. The values `sha3-512` and `blake3` have no implementation, so the server refuses to start with them.                                                                                                                                                                                                                                                                                                                                                     |
 | `HYBRID_SIGNATURE_REQUIRED`               | No                                   | Off                        | Only the exact string `true` turns it on                                                               | When on, a record without a valid hybrid signature is rejected instead of passing on its classical signature alone.                                                                                                                                                                                                                                                                                                                                                          |
-| `HYBRID_SCHEMA_VERSION`                   | No                                   | `3` (unset)                | `2`, `3`                                                                                               | The schema version that hybrid signatures are made under (ADR-0016). `3` is the default, decided 2026-11-20: it signs every top-level field except the signature envelope, `verifications` and `receipts`. Set `2` only to roll back. Any other value is refused at start-up.                                                                                                                                                                                                |
+| `HYBRID_SCHEMA_VERSION`                   | No                                   | `3` (unset)                | `3`                                                                                                    | The schema version that hybrid signatures are made under (ADR-0016). `3` is the default, decided 2026-11-20: it signs every top-level field except the signature envelope, `verifications` and `receipts`. Schema version 2 is discarded (decision D24): `2` and any other value are refused at start-up.                                                                                                                                                                    |
 | `POLICY_CHANGE_CHECKERS`                  | No                                   | Unset (no one may approve) | A JSON object of policy name to an array of caller ids, for example `{"vendor-payment":["checker-1"]}` | Which callers may approve a change to each policy. A caller not listed for a policy gets `403 CHECKER_NOT_IN_SCOPE`. Unset lists no one, so policy changes cannot be approved until this is set.                                                                                                                                                                                                                                                                             |
 | `KILL_SWITCH_ENABLED`                     | No                                   | Unset (switch off)         | `true` or `false`                                                                                      | Turns on the operator kill switch. Off means no kill switch routes or guards are mounted. On needs a database (`DATABASE_URL`) and `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR`. Any other value stops startup.                                                                                                                                                                                                                                                                 |
 | `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` | Yes, when `KILL_SWITCH_ENABLED=true` | None                       | `true` or `false`                                                                                      | `true` in production: a reset takes two different operators. `false` only for test or non-production use. Nothing defaults it.                                                                                                                                                                                                                                                                                                                                               |

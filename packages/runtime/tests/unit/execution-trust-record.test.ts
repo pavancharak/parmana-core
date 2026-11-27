@@ -123,8 +123,6 @@ describe("Runtime Engine", () => {
 
       transaction,
 
-      overrides: [],
-
       executions: [execution],
 
       verifications: [],

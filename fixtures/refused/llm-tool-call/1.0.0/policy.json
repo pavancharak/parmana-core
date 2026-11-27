@@ -3,7 +3,6 @@
   "policyVersion": "1.0.0",
   "schemaVersion": "1.0.0",
   "description": "Authorizes AI-initiated tool execution after validating tool authorization, resource authorization, human approval, execution environment, and operational risk.",
-
   "signalsSchema": {
     "toolAllowed": "boolean",
     "resourceAuthorized": "boolean",
@@ -11,15 +10,7 @@
     "executionEnvironment": "string",
     "riskScore": "number"
   },
-
-  "unboundSignalReasons": {
-    "toolAllowed": "Result of an independent tool-allowlist check; the Intent's target/parameters describe what is being called, not whether the tool itself is authorized.",
-    "resourceAuthorized": "Result of an independent resource-authorization check; not a value the Intent itself declares.",
-    "humanApproval": "Attested by a separate human-approval step; the Intent carries no approval-status field to bind against.",
-    "executionEnvironment": "A property of the runtime environment the call executes in, not of the call being made -- has no Intent-side equivalent.",
-    "riskScore": "A computed operational-risk score, not a value the caller's Intent declares or could be checked against."
-  },
-
+  "unboundSignalReasons": {},
   "rules": [
     {
       "id": "approve-tool-call",
@@ -127,5 +118,32 @@
         "reason": "Tool execution rejected because one or more required policy conditions were not satisfied."
       }
     }
-  ]
+  ],
+  "signalSources": {
+    "executionEnvironment": {
+      "source": "trusted-test",
+      "claim": "fact.executionEnvironment",
+      "subject": "target"
+    },
+    "humanApproval": {
+      "source": "trusted-test",
+      "claim": "fact.humanApproval",
+      "subject": "target"
+    },
+    "resourceAuthorized": {
+      "source": "trusted-test",
+      "claim": "fact.resourceAuthorized",
+      "subject": "target"
+    },
+    "riskScore": {
+      "source": "trusted-test",
+      "claim": "fact.riskScore",
+      "subject": "target"
+    },
+    "toolAllowed": {
+      "source": "trusted-test",
+      "claim": "fact.toolAllowed",
+      "subject": "target"
+    }
+  }
 }

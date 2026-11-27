@@ -695,6 +695,15 @@ export class PolicyRegister {
    * The approved version of an action, if it may be used now. It is not used until the
    * action has passed the go-live gate. Returns undefined otherwise.
    */
+  /**
+   * True when a version is approved for the capability but the action is not live. The
+   * decision path uses it to name the real reason it refuses.
+   */
+  approvedButNotLive(capability: string): boolean {
+    if (this.approvedVersion(capability) === undefined) return false;
+    return this.actions.get(capability)?.live !== true;
+  }
+
   activePolicy(capability: string): ActivePolicy | undefined {
     const active = this.approvedVersion(capability);
     if (active === undefined) return undefined;

@@ -23,6 +23,7 @@ import {
   ExecutionTrustRecord,
   JsonValue,
   ParmanaError,
+  RefusalRecordOutboxRepository,
   RefusalRecordRepository,
   toExecutableContent,
 } from "@parmana/shared";
@@ -93,11 +94,29 @@ export interface DecideOptions {
   /** Inbound checks consume approvals with their decision record, not here (G-143, O1). */
   readonly deferApprovalConsumption?: boolean;
   /**
+   * A probe decides without side effects: approvals are checked but not consumed, and no refusal record is
+   * written. It also removes every declared fact that nothing verifies (see decide()).
+   */
+  readonly probe?: boolean;
+  /**
    * Execute with status events on (decision D24): approvals are checked here but consumed by the APPROVED status write,
    * in the same transaction. A nonce already consumed fails the decision.
    */
   readonly consumeApprovalsWithStatus?: boolean;
 }
+
+/** What one drain of the refusal outbox did. */
+export interface RefusalOutboxDrainResult {
+  readonly delivered: number;
+  readonly failed: number;
+}
+
+/**
+ * The method behind a refusal the runtime makes itself, before or instead of
+ * PolicyEngine's verdict (R3). The policy engine's method is never claimed for
+ * these: they were not produced by evaluating the policy's rules.
+ */
+const RUNTIME_GATE_METHOD = { id: "runtime-gate", version: "1" } as const;
 
 export class RuntimeEngine {
   private readonly hookRunner: RuntimeHookRunner;
@@ -264,6 +283,13 @@ export class RuntimeEngine {
      * release stops the release.
      */
     private readonly transactionStatus?: TransactionStatusRecorder,
+    /**
+     * Refusal Record outbox (RFC-0021). When a refusal's record cannot be
+     * built or stored at the time, its inputs are saved here and drained later
+     * by drainRefusalOutbox. Optional and trailing. Omitted, a failed write is
+     * only logged, as before.
+     */
+    private readonly refusalRecordOutbox?: RefusalRecordOutboxRepository,
   ) {
     if (!pipeline) {
       throw new Error("RuntimePipeline is required.");
@@ -327,7 +353,7 @@ export class RuntimeEngine {
     // Runtime signals
     //
 
-    const signals = (transaction.signals ?? {}) as Record<string, JsonValue>;
+    let signals = (transaction.signals ?? {}) as Record<string, JsonValue>;
 
     //
     // Policy loading
@@ -339,6 +365,26 @@ export class RuntimeEngine {
       transaction.policy.name,
       transaction.policy.version,
     );
+
+    //
+    // A probe keeps only the declared facts that something verifies: a fact the policy checks against the
+    // Intent (boundSignals), or a fact backed by a verified approval (approvalSignals). Every other declared
+    // fact is removed, so the probe approves only on facts nothing verified. Sourced facts are resolved
+    // from their trusted source below, whatever the caller declared.
+    //
+    if (options.probe === true) {
+      // An approval-backed signal keeps its approval artifact too: the artifact is what verifies it.
+      const verified = new Set([
+        ...Object.keys(policy.boundSignals ?? {}),
+        ...Object.keys(policy.approvalSignals ?? {}),
+        ...Object.values(policy.approvalSignals ?? {}).map(
+          (declaration) => declaration.artifact ?? "approvalArtifact",
+        ),
+      ]);
+      signals = Object.fromEntries(
+        Object.entries(signals).filter(([key]) => verified.has(key)),
+      );
+    }
 
     await this.hookRunner.afterPolicyLoad(transaction, policy);
 
@@ -587,6 +633,8 @@ export class RuntimeEngine {
             matchedRuleId: "policy-execution-verification-violation",
             evaluatedRules: 0,
             matchedPath: [],
+            evaluationMethod: RUNTIME_GATE_METHOD,
+            evidence: { status: "sufficient" },
           }
         : capabilityBindingViolation !== undefined
           ? {
@@ -602,6 +650,8 @@ export class RuntimeEngine {
               matchedRuleId: "capability-policy-binding-violation",
               evaluatedRules: 0,
               matchedPath: [],
+              evaluationMethod: RUNTIME_GATE_METHOD,
+              evidence: { status: "sufficient" },
             }
           : authorityGrantRefused
             ? {
@@ -615,6 +665,8 @@ export class RuntimeEngine {
                   .replace(/_/g, "-")}`,
                 evaluatedRules: 0,
                 matchedPath: [],
+                evaluationMethod: RUNTIME_GATE_METHOD,
+                evidence: { status: "sufficient" },
               }
             : bindingViolations.length > 0
               ? {
@@ -633,6 +685,8 @@ export class RuntimeEngine {
                   matchedRuleId: "signal-intent-binding-violation",
                   evaluatedRules: 0,
                   matchedPath: [],
+                  evaluationMethod: RUNTIME_GATE_METHOD,
+                  evidence: { status: "sufficient" },
                 }
               : businessValidationFailed
                 ? {
@@ -643,6 +697,8 @@ export class RuntimeEngine {
                     matchedRuleId: `business-validation-${businessValidation.status.toLowerCase().replace(/_/g, "-")}`,
                     evaluatedRules: 0,
                     matchedPath: [],
+                    evaluationMethod: RUNTIME_GATE_METHOD,
+                    evidence: { status: "sufficient" },
                   }
                 : this.policyEngine.evaluate(policy, evaluatedSignals);
 
@@ -684,6 +740,7 @@ export class RuntimeEngine {
               },
               deferApprovalConsumption:
                 options.deferApprovalConsumption === true ||
+                options.probe === true ||
                 options.consumeApprovalsWithStatus === true,
               checkApprovalNonce: options.consumeApprovalsWithStatus === true,
             },
@@ -711,6 +768,13 @@ export class RuntimeEngine {
             matchedRuleId: "approval-verifier-not-configured",
             evaluatedRules: 0,
             matchedPath: [],
+            evaluationMethod: RUNTIME_GATE_METHOD,
+            // The signed approval could not be checked, so the evidence needed
+            // to decide is missing (R5), not evidence that it was invalid.
+            evidence: {
+              status: "insufficient",
+              missingFacts: ["approval-verification"],
+            },
           }
         : stateViolations.length > 0
           ? {
@@ -721,6 +785,8 @@ export class RuntimeEngine {
               matchedRuleId: "signal-state-verification-violation",
               evaluatedRules: 0,
               matchedPath: [],
+              evaluationMethod: RUNTIME_GATE_METHOD,
+              evidence: { status: "sufficient" },
             }
           : provisionalDecision;
 
@@ -756,6 +822,7 @@ export class RuntimeEngine {
       transaction,
       policyDecision,
       assessment,
+      validation.trustedValues,
     );
 
     //
@@ -772,12 +839,14 @@ export class RuntimeEngine {
     // none of which reach this point at all.
     //
     if (decision.outcome !== DecisionOutcome.APPROVED) {
-      await this.writeRefusalRecord(
-        transaction,
-        decision,
-        bindingViolations,
-        policyContentHash,
-      );
+      if (options.probe !== true) {
+        await this.writeRefusalRecord(
+          transaction,
+          decision,
+          bindingViolations,
+          policyContentHash,
+        );
+      }
 
       // Only a refusal by the policy's own rules, or by an approval
       // that did not verify, can be cured by an approval. A binding,
@@ -812,6 +881,22 @@ export class RuntimeEngine {
     context: RuntimeContext;
     trustRecord: ExecutionTrustRecord;
   }> {
+    //
+    // Declared facts may refuse, never approve. When the caller declared facts, a probe decides with only the
+    // facts that something verifies. It runs first, before any approval is consumed, so the probe sees the
+    // approvals as unused. If the probe does not approve, the request is refused, and the real decision
+    // does not consume its approvals.
+    //
+    const declaredAny = Object.keys(transaction.signals ?? {}).length > 0;
+    const probeRefused =
+      declaredAny &&
+      (
+        await this.decide(transaction, {
+          probe: true,
+          deferApprovalConsumption: true,
+        })
+      ).decision.outcome !== DecisionOutcome.APPROVED;
+
     const {
       decision,
       policyContentHash,
@@ -825,14 +910,37 @@ export class RuntimeEngine {
     } = await this.decide(transaction, {
       // With status events on, the APPROVED write consumes the approvals (decision D24).
       consumeApprovalsWithStatus: this.transactionStatus !== undefined,
+      deferApprovalConsumption: probeRefused,
     });
+
+    //
+    // Declared facts may refuse, never approve. The caller's declared signals are evaluated above. If the
+    // decision approves only because of them, the policy is run again with them removed; anything not
+    // approved then is refused. Facts from a trusted source are still resolved inside decide(), so they
+    // are unaffected.
+    //
+    // Set when the APPROVED write loses a race for an approval, or when declared facts alone carried the
+    // approval: the refusal that is enforced below instead.
+    let refusal: typeof decision | undefined;
+
+    if (probeRefused && decision.outcome === DecisionOutcome.APPROVED) {
+      refusal = {
+        ...decision,
+        outcome: DecisionOutcome.REJECTED,
+        reason: "requires_trusted_facts",
+      };
+      await this.writeRefusalRecord(
+        transaction,
+        refusal,
+        bindingViolations,
+        policyContentHash,
+      );
+    }
 
     //
     // Status: the policy decision (D23). A decision that does not allow
     // execution is recorded as REJECTED before the enforce below refuses it.
     //
-    // Set when the APPROVED write loses a race for an approval: the refusal that is enforced below instead.
-    let refusal: typeof decision | undefined;
 
     if (this.transactionStatus) {
       const businessTransactionId = transaction.businessTransactionId;
@@ -843,7 +951,7 @@ export class RuntimeEngine {
         "decide",
       );
 
-      if (this.executionGate.canExecute(decision)) {
+      if (this.executionGate.canExecute(refusal ?? decision)) {
         const approvalNonces = usedApprovals.map((approval) => ({
           nonce: approval.nonce,
           expiresAt: approval.expiresAt,
@@ -887,7 +995,10 @@ export class RuntimeEngine {
           businessTransactionId,
           "REJECTED",
           "decide",
-          { reason: decision.reason ?? "Policy rejected execution." },
+          {
+            reason:
+              (refusal ?? decision).reason ?? "Policy rejected execution.",
+          },
         );
       }
     }
@@ -1263,13 +1374,123 @@ export class RuntimeEngine {
 
       await this.refusalRecordRepository.create(refusalRecord);
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+
       console.error({
         event: "refusal_record_write_failed",
         businessTransactionId: transaction.businessTransactionId,
         decisionId: decision.decisionId,
-        error: error instanceof Error ? error.message : String(error),
+        error: message,
       });
+
+      //
+      // Save the inputs so the record can be built later. This needs the
+      // database; if that is down too, the entry cannot be saved and the
+      // refusal is still enforced (see the migration's known limit).
+      //
+      if (this.refusalRecordOutbox !== undefined) {
+        try {
+          await this.refusalRecordOutbox.enqueue({
+            businessTransactionId: transaction.businessTransactionId,
+            decision,
+            evaluatedIntent: {
+              target: transaction.intent.target,
+              parameters: transaction.intent.parameters,
+            },
+            bindingViolations,
+            submittedBy: transaction.metadata?.submittedBy,
+            policyContentHash,
+            enqueuedAt: new Date(),
+            attempts: 0,
+            lastError: message,
+          });
+        } catch (enqueueError) {
+          console.error({
+            event: "refusal_record_outbox_enqueue_failed",
+            businessTransactionId: transaction.businessTransactionId,
+            decisionId: decision.decisionId,
+            error:
+              enqueueError instanceof Error
+                ? enqueueError.message
+                : String(enqueueError),
+          });
+        }
+      }
     }
+  }
+
+  /**
+   * Builds and stores the Refusal Record for each refusal in the outbox that
+   * is not yet delivered, oldest first. An entry is marked delivered once its
+   * record exists, including when it was already written by an earlier attempt
+   * (the record for a transaction is unique). A failed attempt is recorded and
+   * the entry stays pending. Never calls a connector and never changes a
+   * decision.
+   */
+  public async drainRefusalOutbox(
+    limit = 100,
+  ): Promise<RefusalOutboxDrainResult> {
+    if (
+      this.refusalRecordOutbox === undefined ||
+      this.refusalRecordBuilder === undefined ||
+      this.refusalRecordRepository === undefined
+    ) {
+      return { delivered: 0, failed: 0 };
+    }
+
+    const entries = await this.refusalRecordOutbox.listPending(limit);
+    let delivered = 0;
+    let failed = 0;
+
+    for (const entry of entries) {
+      const id = entry.businessTransactionId;
+
+      try {
+        const existing =
+          await this.refusalRecordRepository.findByTransactionId(id);
+
+        if (existing === null) {
+          const record = await this.refusalRecordBuilder.build(
+            id,
+            entry.decision,
+            entry.evaluatedIntent,
+            entry.bindingViolations,
+            entry.submittedBy,
+            entry.policyContentHash,
+          );
+
+          await this.refusalRecordRepository.create(record);
+        }
+
+        await this.refusalRecordOutbox.markDelivered(id);
+        delivered += 1;
+      } catch (error) {
+        failed += 1;
+
+        const message = error instanceof Error ? error.message : String(error);
+
+        console.error({
+          event: "refusal_record_outbox_delivery_failed",
+          businessTransactionId: id,
+          error: message,
+        });
+
+        try {
+          await this.refusalRecordOutbox.recordFailure(id, message);
+        } catch (recordError) {
+          console.error({
+            event: "refusal_record_outbox_failure_not_recorded",
+            businessTransactionId: id,
+            error:
+              recordError instanceof Error
+                ? recordError.message
+                : String(recordError),
+          });
+        }
+      }
+    }
+
+    return { delivered, failed };
   }
 
   /**
