@@ -59,6 +59,11 @@ from tests.local_approver import local_approver_env, sign_local_approval
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 RAW_API_KEY = "python-sdk-integration-test-key"
+
+# Must match test-support/trusted-test-source.ts: the subjects whose facts the test source answers.
+APPROVED_TARGET = "vendor/V-python-sdk"
+RISKY_TARGET = "vendor/V-python-sdk-risky"
+DEFAULT_RISK_SCORE = 10
 CALLER_ID = "python-sdk-integration-test"
 
 
@@ -188,8 +193,12 @@ def _transaction(
     principal_id: str = CALLER_ID,
     business_transaction_id: str | None = None,
     risk_score: int = 10,
-    target: str = "vendor/V-python-sdk",
+    target: str | None = None,
 ) -> BusinessTransaction:
+    # The test trusted source (test-support/trusted-test-source.ts) answers each subject from fixed facts.
+    # Only RISKY_TARGET is assessed above the threshold, so a non-default risk score picks that subject.
+    if target is None:
+        target = RISKY_TARGET if risk_score != DEFAULT_RISK_SCORE else APPROVED_TARGET
     now = datetime.now(UTC)
     btx_id = business_transaction_id or str(uuid.uuid4())
     authority_id = str(uuid.uuid4())
