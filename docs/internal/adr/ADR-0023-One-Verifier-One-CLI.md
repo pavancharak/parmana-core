@@ -1,6 +1,6 @@
 # ADR-0023: One Verifier and One CLI
 
-**Status:** Accepted (owner decision, 2026-11-27). The npm deprecation of `@parmanasystems/verifier-cli` is not yet done; see "Still open".
+**Status:** Accepted (owner decision, 2026-11-27). The npm deprecation of `@parmanasystems/verifier-cli` is in place on every published version (checked 2026-11-27); see "Still open".
 
 **Date:** Proposed and accepted 2026-11-27.
 
@@ -31,5 +31,4 @@ The owner has confirmed that `@parmanasystems/verifier-cli` has no existing user
 
 ## Still open
 
-- The npm deprecation notice on `@parmanasystems/verifier-cli` is not yet published. Its wording is in the owner's review.
 - The generated CLI reference describes `log verify` as "the approval log's chain"; it does not state that trust records are checked elsewhere. The offline verifier page now says so.
