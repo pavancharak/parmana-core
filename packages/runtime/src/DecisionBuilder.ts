@@ -30,9 +30,11 @@ export class DecisionBuilder {
     transaction: DecisionRequest,
     policyDecision: PolicyDecision,
     assessment?: DecisionAssessment,
+    trustedValues: Record<string, JsonValue> = {},
   ): Decision {
     return {
       decisionId: crypto.randomUUID(),
+      ...(Object.keys(trustedValues).length > 0 && { trustedValues }),
       // Copied from the engine that produced the verdict (R3). The runtime
       // does not name the method itself, so the record cannot disagree with
       // the verdict about how it was reached.

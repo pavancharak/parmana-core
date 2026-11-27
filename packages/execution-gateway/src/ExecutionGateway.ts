@@ -515,6 +515,7 @@ export class ExecutionGateway implements ExecutionSystem {
     let signalsStillCurrent: boolean | undefined;
     let signalsHashMismatch: GatewayVerificationResult["signalsHashMismatch"];
     let signalDivergence: GatewayVerificationResult["signalDivergence"];
+    let signalCheck: GatewayVerificationResult["signalCheck"];
 
     const { signalsHash } = request.authorization.payload;
 
@@ -529,6 +530,7 @@ export class ExecutionGateway implements ExecutionSystem {
     //
     if (signalsHash === undefined) {
       signalsStillCurrent = false;
+      signalCheck = { status: "not_run", reason: "no_signals_hash" };
     } else if (
       passed &&
       businessTransactionHashMatches &&
@@ -547,11 +549,14 @@ export class ExecutionGateway implements ExecutionSystem {
 
       if (currentSignalsHash !== signalsHash) {
         signalsStillCurrent = false;
+        signalCheck = { status: "refuted", reason: "hash_mismatch" };
         signalsHashMismatch = {
           expected: signalsHash,
           actual: currentSignalsHash,
         };
-      } else if (this.signalStateVerifier !== undefined) {
+      } else if (this.signalStateVerifier === undefined) {
+        signalCheck = { status: "not_run", reason: "verifier_not_consulted" };
+      } else {
         const violations = await this.signalStateVerifier.findViolations(
           {
             action: executableContent.action,
@@ -568,6 +573,9 @@ export class ExecutionGateway implements ExecutionSystem {
 
         if (violations.length > 0) {
           signalDivergence = violations;
+          signalCheck = { status: "refuted", reason: "verifier_divergence" };
+        } else {
+          signalCheck = { status: "passed" };
         }
       }
     }
@@ -707,6 +715,7 @@ export class ExecutionGateway implements ExecutionSystem {
       ...(policyContentMismatch ? { policyContentMismatch } : {}),
       ...(policyGovernanceViolation ? { policyGovernanceViolation } : {}),
       ...(signalsHashMismatch ? { signalsHashMismatch } : {}),
+      ...(signalCheck ? { signalCheck } : {}),
       ...(signalDivergence ? { signalDivergence } : {}),
       ...(expiredConditions !== undefined && expiredConditions.length > 0
         ? { expiredConditions }

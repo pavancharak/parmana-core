@@ -50,6 +50,8 @@ class Decision:
 
     evidence: Any | None = None
 
+    trusted_values: dict[str, Any] | None = None
+
     assessment: DecisionAssessment | None = None
 
 

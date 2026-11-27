@@ -102,6 +102,13 @@ export interface Decision {
     | { readonly status: "invalid"; readonly invalidFacts: readonly string[] };
 
   /**
+   * Facts the runtime supplied itself, from its trusted signal sources, and merged over `signals`
+   * before evaluation (R3). Recorded so a replay evaluates exactly what the verdict evaluated.
+   * Present only when at least one such fact was supplied. Absent otherwise.
+   */
+  readonly trustedValues?: Record<string, JsonValue>;
+
+  /**
    * UTC timestamp when evaluation completed.
    */
   readonly evaluatedAt: Date;
