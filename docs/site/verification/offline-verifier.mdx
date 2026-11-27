@@ -18,6 +18,11 @@ description: "Check an Execution Trust Record yourself: no network calls, no tru
   as schema version 3.
 </Info>
 
+This is the only offline verifier for Execution Trust Records. It also has a `policy-v2` command
+for Policy version 2 evidence chains. It does not check the approval log: for that, use
+`parmana-ops log verify`, which runs against the approval log and needs no network access to
+check its chain and signatures.
+
 It recomputes an Execution Trust Record's hash and checks its signatures against the keys you
 pin in a trust file. It makes no network calls, so a result does not depend on Parmana's servers
 or database.
