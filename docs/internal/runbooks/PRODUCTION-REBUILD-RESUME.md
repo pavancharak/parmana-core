@@ -8,20 +8,20 @@ Read this whole file before running any AWS command. It records what has been do
 
 ## 1. Current status
 
-| Item | Status |
-|---|---|
-| Production account `<ACCOUNT_ID>` (Parmana) | Active. Holds the $1,000 AWS Activate credit (expires 2028-11-30). |
-| IAM Identity Center | Enabled, `ap-south-1`, single-Region instance `<SSOINS-ID>`. Identity source: Identity Center directory. |
-| Human admin user | `pavan`, MFA on, `AdministratorAccess` on account `<ACCOUNT_ID>`. |
-| CLI profile `parmana-prod` | Working. `aws sts get-caller-identity --profile parmana-prod` returns `pavan` in `<ACCOUNT_ID>`. |
-| Root account | Not used for this work. MFA and access keys still to be confirmed with a credential report (see section 7). |
-| Network stack `infra/parmana-prod-network` | **Applied 2026-11-27.** 8 resources created. |
-| Database stack `infra/parmana-prod-database` | **Applied 2026-11-27.** 2 resources created (subnet group and RDS instance). Endpoint in section 4.3. |
-| API (App Runner) | **Phase 1 applied 2026-11-27.** Phase 2 (service) blocked by the account restriction. |
-| Secrets | Database URL created by the database stack. API keys and key material are empty placeholders, to be set by hand. New KMS signing key not started. |
-| CI (GitHub OIDC role) | Not started. |
-| Budget alerts | Not started. |
-| Remote Terraform state | Not set up. State is local. |
+| Item                                         | Status                                                                                                                                            |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Production account `<ACCOUNT_ID>` (Parmana)  | Active. Holds the $1,000 AWS Activate credit (expires 2028-11-30).                                                                                |
+| IAM Identity Center                          | Enabled, `ap-south-1`, single-Region instance `<SSOINS-ID>`. Identity source: Identity Center directory.                                          |
+| Human admin user                             | `pavan`, MFA on, `AdministratorAccess` on account `<ACCOUNT_ID>`.                                                                                 |
+| CLI profile `parmana-prod`                   | Working. `aws sts get-caller-identity --profile parmana-prod` returns `pavan` in `<ACCOUNT_ID>`.                                                  |
+| Root account                                 | Not used for this work. MFA and access keys still to be confirmed with a credential report (see section 7).                                       |
+| Network stack `infra/parmana-prod-network`   | **Applied 2026-11-27.** 8 resources created.                                                                                                      |
+| Database stack `infra/parmana-prod-database` | **Applied 2026-11-27.** 2 resources created (subnet group and RDS instance). Endpoint in section 4.3.                                             |
+| API (App Runner)                             | **Phase 1 applied 2026-11-27.** Phase 2 (service) blocked by the account restriction.                                                             |
+| Secrets                                      | Database URL created by the database stack. API keys and key material are empty placeholders, to be set by hand. New KMS signing key not started. |
+| CI (GitHub OIDC role)                        | Not started.                                                                                                                                      |
+| Budget alerts                                | Not started.                                                                                                                                      |
+| Remote Terraform state                       | Not set up. State is local.                                                                                                                       |
 
 ---
 
@@ -30,12 +30,14 @@ Read this whole file before running any AWS command. It records what has been do
 **Status: open.** AWS restricted account `<ACCOUNT_ID>` on 2026-11-26 with the notice "temporarily restricted", and CreateService is blocked. Security review is case `<CASE-ID>` (reopened for a reply, 2026-11-27). The App Runner VPC case `<CASE-ID>` is pending customer action.
 
 ### What was found
+
 - **Root access key** created 2026-11-20 13:56 UTC by root, one minute after a root console sign-in from `<REDACTED-IP>` (an AWS-hosted address) at 13:55 UTC. The key was used in `ap-southeast-2` for SES and account checks on 2026-11-20 and 21 (IST).
 - **IAM user `parmana-kms-drill`** called `CreateUser` from `<REDACTED-IP>` at 2026-11-25 17:14 UTC. That address is not a known location.
 - **SES in `ap-southeast-2`:** no identities, no sends in the last 24 hours, and no sends in the last 14 days of send statistics. Sandbox mode.
 - **Root sign-ins** from several addresses, recorded in the private incident file. The Indian addresses match the owner. `<REDACTED-IP>` is not yet explained.
 
 ### Steps completed (2026-11-27)
+
 1. Root access key deleted. Root now has no access keys (confirmed on the root Security credentials page).
 2. Root password changed on the Account Details page.
 3. Root MFA checked: device `Authapp` (virtual, created 2026-09-20), owner's device.
@@ -46,6 +48,7 @@ Read this whole file before running any AWS command. It records what has been do
 8. Security case reply drafted and sent on `<CASE-ID>` (summary of steps 1 to 7 and the open items).
 
 ### Open items
+
 - Owner to confirm the root `GetResources` and `ListAgentSpaces` calls in `ap-southeast-2` on 2026-11-26 and 2026-11-27 (IST) were not run by the owner.
 - Owner to confirm whether the root sign-in from `<REDACTED-IP>` on 2026-11-20 was theirs.
 - AWS to confirm what triggered the restriction and what is needed to lift it.
@@ -53,6 +56,7 @@ Read this whole file before running any AWS command. It records what has been do
 - The `parmana-kms-drill` user and its key were deleted on 2026-11-27. Keep the CloudTrail record.
 
 ### Build and API progress
+
 - **API phase 1** applied 2026-11-27 (13 resources). App Runner service not created.
 - **Image build:** blocked. Local `docker login` to ECR fails with a Windows credential-helper error (`The stub received bad data`). Switched to CodeBuild (stack `infra/parmana-prod-build`, applied 2026-11-27, 9 resources).
 - **CodeBuild start blocked:** `AccountLimitExceededException`. The quota `L-9D07B6EF` (Concurrently running builds for Linux/Small environment) is 0.0. The request API returns AccessDenied, so the increase must be raised through Support. Case not yet created.
@@ -60,6 +64,7 @@ Read this whole file before running any AWS command. It records what has been do
 - **App Runner VPC connector:** `parmana-prod`, created by the API phase 1 stack and ACTIVE. This is separate from `parmana-connector`, the earlier attempt in support case `<CASE-ID>`. The networking service-linked role `AWSServiceRoleForAppRunnerNetworking` was created on 2026-11-26 (08:28 UTC) following Support's instructions.
 
 ### Rules from this review
+
 - Do not create or change resources while the account is restricted, unless AWS asks for it.
 - Use root only for account-level actions. Routine work uses `parmana-prod` (Identity Center).
 - Do not delete CloudTrail-visible evidence until the case is closed.
@@ -69,11 +74,11 @@ Read this whole file before running any AWS command. It records what has been do
 
 ## 2. Accounts and what each one is for
 
-| Account | Role | Use |
-|---|---|---|
-| `<ACCOUNT_ID>` | Parmana. Management account of organization `o-ue5snvmsp0`. Holds the credit. | **Production. Use this.** |
-| `<TEST_ACCOUNT_ID>` | Member of organization `o-d3kwxef51u`, managed by `<MGMT_ACCOUNT_ID>`. | **Not usable.** SCP `p-2snbjrpj` denies EC2 actions, including `ec2:DescribeAvailabilityZones`. Not changed. |
-| `<MGMT_ACCOUNT_ID>` | Management account of `o-d3kwxef51u`. | Root email unknown. Recovery needed only if its SCPs must change. Not required for production. |
+| Account             | Role                                                                          | Use                                                                                                          |
+| ------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `<ACCOUNT_ID>`      | Parmana. Management account of organization `o-ue5snvmsp0`. Holds the credit. | **Production. Use this.**                                                                                    |
+| `<TEST_ACCOUNT_ID>` | Member of organization `o-d3kwxef51u`, managed by `<MGMT_ACCOUNT_ID>`.        | **Not usable.** SCP `p-2snbjrpj` denies EC2 actions, including `ec2:DescribeAvailabilityZones`. Not changed. |
+| `<MGMT_ACCOUNT_ID>` | Management account of `o-d3kwxef51u`.                                         | Root email unknown. Recovery needed only if its SCPs must change. Not required for production.               |
 
 Do not use the free-plan test account route. It was tried and closed. The account sign-up flow redirects to AWS Builder ID, and a second new account was not created.
 
@@ -95,41 +100,45 @@ Do not use the free-plan test account route. It was tried and closed. The accoun
 ## 4. Completed steps, with IDs
 
 ### 4.1 Identity and CLI
+
 - Identity Center enabled in `ap-south-1`. Access portal: `https://<SSO-PORTAL-ID>.awsapps.com/start`.
 - User `pavan` created, MFA registered, `AdministratorAccess` permission set created and assigned to account `<ACCOUNT_ID>`.
 - CLI profile created with `aws configure sso --profile parmana-prod`.
 - Verified identity: role `AWSReservedSSO_AdministratorAccess_*/pavan`, account `<ACCOUNT_ID>`.
 
 ### 4.2 Network (applied 2026-11-27)
-| Resource | ID |
-|---|---|
-| VPC `10.30.0.0/16` | `<VPC-ID>` |
-| Private subnet, ap-south-1a (`10.30.1.0/24`) | `<PRIVATE-SUBNET-A>` |
-| Private subnet, ap-south-1b (`10.30.2.0/24`) | `<PRIVATE-SUBNET-B>` |
-| Route table (private, no internet route) | `<RTB-ID>` |
-| Route table associations | `<RTBASSOC-ID>`, `<RTBASSOC-ID>` |
-| Default security group (locked down) | `<DEFAULT-SG-ID>` |
-| Database security group (PostgreSQL 5432 from VPC only) | `<DB-SG-ID>` |
+
+| Resource                                                | ID                               |
+| ------------------------------------------------------- | -------------------------------- |
+| VPC `10.30.0.0/16`                                      | `<VPC-ID>`                       |
+| Private subnet, ap-south-1a (`10.30.1.0/24`)            | `<PRIVATE-SUBNET-A>`             |
+| Private subnet, ap-south-1b (`10.30.2.0/24`)            | `<PRIVATE-SUBNET-B>`             |
+| Route table (private, no internet route)                | `<RTB-ID>`                       |
+| Route table associations                                | `<RTBASSOC-ID>`, `<RTBASSOC-ID>` |
+| Default security group (locked down)                    | `<DEFAULT-SG-ID>`                |
+| Database security group (PostgreSQL 5432 from VPC only) | `<DB-SG-ID>`                     |
 
 Code: `infra/parmana-prod-network` (commit `fbb99aa3`, then `41b5928` for the profile change).
 
 ### 4.3 Database (applied 2026-11-27)
+
 - Code: `infra/parmana-prod-database` (commit `40169fa`).
 - Plan (2026-11-27): **2 to add, 0 to change, 0 to destroy.**
   - `aws_db_subnet_group.main`: `parmana-prod`, in the two private subnets.
   - `aws_db_instance.main`: `parmana-prod`, PostgreSQL `16`, `db.t4g.micro`, 20 GB gp3 autoscaling to 100 GB, encrypted, single-AZ, not public, deletion protection on, final snapshot `parmana-prod-final`, 7-day backups, master password managed by RDS.
 - Applied with the saved plan. Result:
-  | Output | Value |
-  |---|---|
-  | DB subnet group | `parmana-prod` |
-  | DB instance identifier | `parmana-prod` (resource `<DB-RESOURCE-ID>`) |
-  | Endpoint | `<DB-HOST-PREFIX>.ap-south-1.rds.amazonaws.com` |
-  | Port | `5432` |
+  | Output                 | Value                                                                                         |
+  | ---------------------- | --------------------------------------------------------------------------------------------- |
+  | DB subnet group        | `parmana-prod`                                                                                |
+  | DB instance identifier | `parmana-prod` (resource `<DB-RESOURCE-ID>`)                                                  |
+  | Endpoint               | `<DB-HOST-PREFIX>.ap-south-1.rds.amazonaws.com`                                               |
+  | Port                   | `5432`                                                                                        |
   | Master password secret | `arn:aws:secretsmanager:ap-south-1:<ACCOUNT_ID>:secret:<RDS-MANAGED-SECRET>` (managed by RDS) |
 - Creation took about 7 minutes 22 seconds.
 - Reachable only from inside the VPC, through `<DB-SG-ID>`. Not publicly accessible.
 
 ### 4.3a Database password change (pending apply)
+
 - The database stack now generates the master password with `random_password` and writes the full `DATABASE_URL` to `parmana/prod/database-url`. It replaces the RDS-managed password.
 - **Plan run 2026-11-27 (after pulling `843389b6`):** `3 to add, 1 to change, 0 to destroy`.
   - `~ aws_db_instance.main`: **update in place.** `manage_master_user_password` true to null, and `password` set (sensitive). Not replaced.
@@ -147,20 +156,21 @@ Code: `infra/parmana-prod-network` (commit `fbb99aa3`, then `41b5928` for the pr
 - The password is now in the database stack's state file. Protect that state file the same way as before.
 
 ### 4.3b API stack (written, not applied)
+
 - Code: `infra/parmana-prod-api`.
 - Phase 1 creates: ECR repository `parmana-api` (immutable tags, scan on push, keeps 10 images), secret containers `parmana/prod/api-keys` and `parmana/prod/key-material` (placeholders, set by hand), VPC connector `parmana-prod` with its security group (outbound 5432 to the database only), access role for ECR pull, instance role that reads only the three secrets, and a scaling configuration (1 to 2 instances).
 - **Phase 1 applied 2026-11-27:** `13 added, 0 changed, 0 destroyed`. No App Runner service yet.
 
-| Resource | ID or value |
-|---|---|
-| ECR repository | `<ACCOUNT_ID>.dkr.ecr.ap-south-1.amazonaws.com/parmana-api` (immutable tags) |
-| Secret: API keys (placeholder `[]`) | `parmana/prod/api-keys`, `arn:aws:secretsmanager:ap-south-1:<ACCOUNT_ID>:secret:parmana/prod/api-keys-<SUFFIX>` |
-| Secret: key material (placeholder `{}`) | `parmana/prod/key-material`, `arn:aws:secretsmanager:ap-south-1:<ACCOUNT_ID>:secret:parmana/prod/key-material-<SUFFIX>` |
-| VPC connector | `parmana-prod`, `arn:aws:apprunner:ap-south-1:<ACCOUNT_ID>:vpcconnector/parmana-prod/1/<CONNECTOR-UUID>` |
-| Connector security group | `<CONNECTOR-SG-ID>` (outbound 5432 to `<DB-SG-ID>` only) |
-| Auto scaling (1 to 2 instances) | `arn:aws:apprunner:ap-south-1:<ACCOUNT_ID>:autoscalingconfiguration/parmana-prod/1/<AUTOSCALE-UUID>` |
-| ECR-pull role | `parmana-prod-apprunner-access` |
-| Instance role (reads three secrets only) | `parmana-prod-api-instance` |
+| Resource                                 | ID or value                                                                                                             |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| ECR repository                           | `<ACCOUNT_ID>.dkr.ecr.ap-south-1.amazonaws.com/parmana-api` (immutable tags)                                            |
+| Secret: API keys (placeholder `[]`)      | `parmana/prod/api-keys`, `arn:aws:secretsmanager:ap-south-1:<ACCOUNT_ID>:secret:parmana/prod/api-keys-<SUFFIX>`         |
+| Secret: key material (placeholder `{}`)  | `parmana/prod/key-material`, `arn:aws:secretsmanager:ap-south-1:<ACCOUNT_ID>:secret:parmana/prod/key-material-<SUFFIX>` |
+| VPC connector                            | `parmana-prod`, `arn:aws:apprunner:ap-south-1:<ACCOUNT_ID>:vpcconnector/parmana-prod/1/<CONNECTOR-UUID>`                |
+| Connector security group                 | `<CONNECTOR-SG-ID>` (outbound 5432 to `<DB-SG-ID>` only)                                                                |
+| Auto scaling (1 to 2 instances)          | `arn:aws:apprunner:ap-south-1:<ACCOUNT_ID>:autoscalingconfiguration/parmana-prod/1/<AUTOSCALE-UUID>`                    |
+| ECR-pull role                            | `parmana-prod-apprunner-access`                                                                                         |
+| Instance role (reads three secrets only) | `parmana-prod-api-instance`                                                                                             |
 
 The secret values are still placeholders. They must be set by hand before phase 2.
 
@@ -169,6 +179,7 @@ The secret values are still placeholders. They must be set by hand before phase 
 - Image build and push steps, and the secret upload steps, are in `infra/parmana-prod-api/README.md`.
 
 ### 4.4 Incident record
+
 - Earlier teardown of the core stack and the `dip-*` resources, and the loss of test data: recorded in `04-INCIDENTS-LOG.md`, entry INC-16.
 
 ---
@@ -199,18 +210,22 @@ The secret values are still placeholders. They must be set by hand before phase 
 ## 7. Checks to run
 
 Confirm the account before any plan or apply:
+
 ```powershell
 aws sts get-caller-identity --profile parmana-prod
 ```
+
 The `Account` must be `<ACCOUNT_ID>`.
 
 Root check:
+
 ```powershell
 aws iam generate-credential-report
 $c = aws iam get-credential-report --query Content --output text
 $report = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($c))
 $report.Split("`n") | Where-Object { $_ -like "<root_account>*" }
 ```
+
 If the report isn't ready, run the generate command again after a few seconds.
 
 Sign in each day with `aws sso login --profile parmana-prod` if the session has expired.
@@ -225,6 +240,7 @@ Terraform state is **local** until a remote backend is added. Each stack keeps i
 - `infra/parmana-prod-database/terraform.tfstate`: holds the live database instance.
 
 Rules:
+
 - **Back up both state files** to a location outside the repo before any apply or destroy.
 - **Never commit state files.** They are git-ignored by `.terraform` and state patterns, but check before every commit.
 - The database state file (`infra/parmana-prod-database/terraform.tfstate`) now records a live instance. Losing it is serious, so back it up first.
@@ -259,11 +275,11 @@ Rules:
 
 ## 11. Repo files for this work
 
-| Path | Purpose |
-|---|---|
-| `infra/parmana-prod-network/` | Production network stack (applied) |
-| `infra/parmana-prod-database/` | Production database stack (planned, not applied) |
-| `infra/parmana-test-network/` | Earlier test network stack for the test account (not used) |
-| `infra/parmana-prod-signing/` | Earlier production signing stack, from before this rebuild. Review before reuse. |
-| `04-INCIDENTS-LOG.md` | Incident record, including INC-16 |
-| `docs/internal/runbooks/PRODUCTION-REBUILD-RESUME.md` | This runbook |
+| Path                                                  | Purpose                                                                          |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `infra/parmana-prod-network/`                         | Production network stack (applied)                                               |
+| `infra/parmana-prod-database/`                        | Production database stack (planned, not applied)                                 |
+| `infra/parmana-test-network/`                         | Earlier test network stack for the test account (not used)                       |
+| `infra/parmana-prod-signing/`                         | Earlier production signing stack, from before this rebuild. Review before reuse. |
+| `04-INCIDENTS-LOG.md`                                 | Incident record, including INC-16                                                |
+| `docs/internal/runbooks/PRODUCTION-REBUILD-RESUME.md` | This runbook                                                                     |

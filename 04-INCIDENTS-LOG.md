@@ -561,6 +561,7 @@ not affected.
 the teardown ran without deletion protection or a final snapshot.
 
 **Resolution:**
+
 - The deployer key was deactivated, then deleted, and the user was deleted. No activity from the key was recorded after the teardown.
 - The root account has MFA enabled and no active access keys, checked with a credential report.
 - All Parmana IAM users, roles and customer-managed policies were removed.
@@ -572,6 +573,7 @@ the teardown ran without deletion protection or a final snapshot.
   the keys awaiting deletion.
 
 **Still open:**
+
 - Confirm the teardown was intended, and record the cause.
 - Before 2026-12-04, confirm that no signed evidence needs verifying with the deleted signing keys. Cancel the deletion
   if one does.
@@ -579,6 +581,7 @@ the teardown ran without deletion protection or a final snapshot.
 - Rebuild from scratch with deletion protection, a final snapshot on delete, and no long-lived deployer keys.
 
 **Lessons:**
+
 - Teardown scripts should not run without a snapshot and deletion protection on the database.
 - Tag-based resource scans miss untagged resources such as CloudWatch log groups and ECR repositories. Scan each service directly.
 - KMS keys cannot be deleted immediately. They should be disabled first, and deletion scheduled only after confirmation.
