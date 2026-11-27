@@ -111,3 +111,7 @@ These cover work that most contributors will not need:
 - [Dependency updates](docs/internal/contributing/dependency-updates.md)
 - [TypeScript versions](docs/internal/contributing/typescript-versions.md)
 - [Fuzz and mutation testing](docs/internal/contributing/fuzz-and-mutation-testing.md)
+
+## Local test database
+
+The pre-push check needs the test database on `127.0.0.1:54329`. The Docker Compose database starts itself. For a local PostgreSQL install, run `scripts/dev/start-test-db.sh` before you push. It starts the database if it is down, creates it if it is missing, and applies pending migrations. Set `PARMANA_TEST_DB_DATA` to your data directory; the other settings and their defaults are listed at the top of the script.
