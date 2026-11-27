@@ -15,6 +15,8 @@ import {
 } from "../../src/killSwitch/KillSwitchService.js";
 
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * Kill switch over HTTP (ADR-0017, first slice). Operator keys hold the
@@ -28,7 +30,13 @@ const PROBE_KEY = "kill-switch-probe-raw-key-for-tests-only";
 
 function buildApp() {
   const { executionSystem } = createInspectableExecutionSystem();
-  const application = createApplication(executionSystem);
+  const application = createApplication(
+    executionSystem,
+    undefined,
+    undefined,
+    undefined,
+    trustedFacts.registry,
+  );
   const killSwitch = new KillSwitchService(new MemoryKillSwitchStore(), {
     resetNeedsSecondOperator: true,
     probes: new MemoryKillSwitchProbeLog(),

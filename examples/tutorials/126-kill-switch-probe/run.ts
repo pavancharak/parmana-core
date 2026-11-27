@@ -1,4 +1,5 @@
 // Tutorial 126: an external probe checks the kill switch from outside. It sends
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 // a request to /execute with a probe key, reports what came back, and Parmana
 // records whether the refusal matched the switch state. A probe that reports a
 // request getting through while the switch is tripped is recorded as failed.
@@ -41,7 +42,13 @@ const authenticator = new StaticKeyAuthenticator([
   },
 ]);
 
-const application = createApplication(await createExecutionSystem());
+const application = createApplication(
+  await createExecutionSystem(),
+  undefined,
+  undefined,
+  undefined,
+  demoTrustedSources(),
+);
 const app = createApp(application, {
   callerAuth: { authenticator, auditSink: { record: async () => {} } },
   killSwitch,

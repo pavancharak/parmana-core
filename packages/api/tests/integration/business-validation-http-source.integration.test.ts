@@ -274,7 +274,8 @@ describe("A registered business system decides through the runtime (RFC-0023 pha
 
     const result = await engine.execute(transaction);
 
-    expect(queries).toEqual([ENDPOINT]);
+    // Twice: the probe that checks the approval does not rest on declared facts asks the source too.
+    expect(queries).toEqual([ENDPOINT, ENDPOINT]);
     expect(result.context.decision.assessment).toMatchObject({
       authority: { status: AuthorityStatus.AUTHORIZED },
       businessValidation: { status: BusinessValidationStatus.VALID },

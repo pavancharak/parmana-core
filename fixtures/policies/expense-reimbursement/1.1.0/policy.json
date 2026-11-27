@@ -13,11 +13,7 @@
   "boundSignals": {
     "expenseAmount": "parameters.amount"
   },
-  "unboundSignalReasons": {
-    "employeeVerified": "Independently attested by an HR/identity system; no Intent-side equivalent field exists to bind against.",
-    "receiptAttached": "Result of a document-upload check; not a value the Intent itself declares.",
-    "categoryApproved": "Result of an expense-category policy lookup, evaluated independently of this Intent."
-  },
+  "unboundSignalReasons": {},
   "approvalSignals": {
     "humanApproved": {
       "resourceId": "target",
@@ -94,5 +90,22 @@
         "reason": "Expense rejected: one or more required conditions were not satisfied."
       }
     }
-  ]
+  ],
+  "signalSources": {
+    "categoryApproved": {
+      "source": "trusted-test",
+      "claim": "fact.categoryApproved",
+      "subject": "target"
+    },
+    "employeeVerified": {
+      "source": "trusted-test",
+      "claim": "fact.employeeVerified",
+      "subject": "target"
+    },
+    "receiptAttached": {
+      "source": "trusted-test",
+      "claim": "fact.receiptAttached",
+      "subject": "target"
+    }
+  }
 }

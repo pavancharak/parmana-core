@@ -17,13 +17,7 @@
     "paymentAmount": "parameters.amount",
     "vendorId": "target"
   },
-  "unboundSignalReasons": {
-    "vendorVerified": "Independently attested by upstream vendor verification; no Intent-side equivalent field exists to bind against.",
-    "invoiceVerified": "Result of an independent invoice-verification check; not a value the Intent itself declares.",
-    "paymentApproved": "Attested by a separate payment-approval step; the Intent carries no approval-status field to bind against.",
-    "sufficientFunds": "Result of an independent funds-availability check against account state; not expressible via the Intent's target/parameters.",
-    "riskScore": "A computed payment-risk score, not a value the caller's Intent declares or could be checked against."
-  },
+  "unboundSignalReasons": {},
   "approvalSignals": {
     "humanApproved": {
       "resourceId": "target",
@@ -158,5 +152,33 @@
         "reason": "Vendor payment rejected because one or more required policy conditions were not satisfied."
       }
     }
-  ]
+  ],
+  "signalSources": {
+    "vendorVerified": {
+      "source": "trusted-test",
+      "claim": "vendor.verified",
+      "subject": "target"
+    },
+    "invoiceVerified": {
+      "source": "trusted-test",
+      "claim": "invoice.verified",
+      "subject": "target"
+    },
+    "paymentApproved": {
+      "source": "trusted-test",
+      "claim": "payment.approved",
+      "subject": "target"
+    },
+    "sufficientFunds": {
+      "source": "trusted-test",
+      "claim": "funds.sufficient",
+      "subject": "target"
+    },
+    "riskScore": {
+      "source": "trusted-test",
+      "claim": "payment.risk-score",
+      "subject": "target",
+      "maxAgeSeconds": 60
+    }
+  }
 }

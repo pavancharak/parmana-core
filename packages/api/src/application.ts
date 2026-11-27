@@ -37,6 +37,7 @@ import {
   authorityGrantRepository,
 } from "./repositories.js";
 import { RepositoryBusinessSignalSourceRegistry } from "./business-sources/HttpBusinessSignalSource.js";
+import type { BusinessSignalSourceRegistry } from "@parmana/runtime";
 
 import type { ApprovalVerifier } from "@parmana/approval";
 
@@ -109,6 +110,11 @@ export function createApplication(
   approvalVerifier: ApprovalVerifier = createApprovalVerifier(),
   killSwitch?: KillSwitchService,
   alertSink?: AlertSink,
+  /**
+   * The registry that answers a policy's signalSources. Defaults to the business systems registered through
+   * maker checker. Tests pass a registry they control; production never does.
+   */
+  businessSignalSources?: BusinessSignalSourceRegistry,
 ) {
   const signalStateVerifier = new CompositeSignalStateVerifier([
     createApprovalSignalVerifier(approvalVerifier),
@@ -139,7 +145,10 @@ export function createApplication(
     createExternalPolicyBindingSource(),
     // RFC-0023 phase 2: the business systems registered through maker
     // checker answer policies' signalSources.
-    new RepositoryBusinessSignalSourceRegistry(businessSignalSourceRepository),
+    businessSignalSources ??
+      new RepositoryBusinessSignalSourceRegistry(
+        businessSignalSourceRepository,
+      ),
     // RFC-0023 phase 3: the authority grants approved through maker
     // checker, for policies with requireAuthorityGrant.
     authorityGrantRepository,

@@ -249,12 +249,12 @@ export interface Policy {
    * before any authorization is generated.
    *
    * Only signals with a genuine Intent-side equivalent belong here
-   * (e.g. an amount or a target/vendor identifier). Signals that
-   * represent an external fact with no Intent-side equivalent (for
-   * example vendorVerified or riskScore) are not expressible as a
-   * binding and remain ordinary caller-declared signals — binding
-   * them is a separate, larger problem (deriving them from an
-   * independently verified source) than this mechanism solves.
+   * (e.g. an amount or a target/vendor identifier). A signal that
+   * represents an external fact with no Intent-side equivalent (for
+   * example vendorVerified or riskScore) is not a binding. It belongs
+   * in signalSources, so that a trusted business system supplies it.
+   * A caller-declared fact that nothing verifies can refuse a request,
+   * but never approve it (see RuntimeEngine.execute).
    *
    * Example:
    *

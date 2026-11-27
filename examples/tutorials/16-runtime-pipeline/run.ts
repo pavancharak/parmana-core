@@ -21,6 +21,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 const root = path.resolve(import.meta.dirname);
 
@@ -39,6 +40,7 @@ const refusalRecords = new MemoryRefusalRecordRepository();
 // Build a custom Runtime Pipeline.
 //
 const runtime = new RuntimeBuilder()
+  .withBusinessSignalSources(demoTrustedSources())
   .withSignalStateVerifier(demoApprovalSignalVerifier())
   .withPolicyRepository(policyRepository)
   .addStage(new LoggingComponent())

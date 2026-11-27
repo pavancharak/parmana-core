@@ -3,20 +3,14 @@
   "policyVersion": "1.0.0",
   "schemaVersion": "1.0.0",
   "description": "Reference policy demonstrating capability-based authorization for Connector SDK connectors. Outcomes are strictly approve (ALLOW) or reject (BLOCK) — there is no approval-workflow, pending, or human-approval outcome.",
-
   "signalsSchema": {
     "capability": "string",
     "paymentAmount": "number"
   },
-
   "boundSignals": {
     "paymentAmount": "parameters.amount"
   },
-
-  "unboundSignalReasons": {
-    "capability": "The Intent snapshot boundSignals binds against exposes only { target, parameters } (see SignalIntentBinder), not the executed action itself, so the capability selector has no dot-path to bind to -- it is independently enforced by capability-registry's CANONICAL_CAPABILITY_POLICY_BINDINGS / assertConnectorCapabilitiesBound instead."
-  },
-
+  "unboundSignalReasons": {},
   "rules": [
     {
       "id": "allow-crm-read",
@@ -94,5 +88,12 @@
         "reason": "BLOCK: capability is not explicitly authorized by this reference policy."
       }
     }
-  ]
+  ],
+  "signalSources": {
+    "capability": {
+      "source": "trusted-test",
+      "claim": "fact.capability",
+      "subject": "target"
+    }
+  }
 }

@@ -31,6 +31,8 @@ import type { RuntimeComponent } from "../../src/RuntimeComponent.js";
 import type { SigningReadiness } from "../../src/SigningReadiness.js";
 import { ExecutionRecordIncompleteError } from "../../src/errors/ExecutionRecordIncompleteError.js";
 import { SigningUnavailableError } from "../../src/errors/SigningUnavailableError.js";
+import { TrustedSignalResolver } from "../../src/business-validation/TrustedSignalResolver.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
 
 import {
   testApprovalSignalVerifier,
@@ -46,7 +48,20 @@ const policyRepository = new FilePolicyRepository(
   path.resolve(import.meta.dirname, "../../../../fixtures/policies"),
 );
 
+const trustedFacts = createTrustedFacts();
+
+const DECLARED_SIGNALS = {
+  vendorVerified: true,
+  invoiceVerified: true,
+  paymentApproved: true,
+  sufficientFunds: true,
+  paymentAmount: 100,
+  riskScore: 10,
+  vendorId: "vendor://payments",
+};
+
 function transaction(): Promise<BusinessTransaction> {
+  trustedFacts.set(DECLARED_SIGNALS);
   return withTestApproval({
     businessTransactionId: "tx-g52",
     metadata: { executionMode: "SYNC" } as unknown as TransactionMetadata,
@@ -65,15 +80,7 @@ function transaction(): Promise<BusinessTransaction> {
       version: "1.0.0",
       schemaVersion: "1.0.0",
     },
-    signals: {
-      vendorVerified: true,
-      invoiceVerified: true,
-      paymentApproved: true,
-      sufficientFunds: true,
-      paymentAmount: 100,
-      riskScore: 10,
-      vendorId: "vendor://payments",
-    },
+    signals: DECLARED_SIGNALS,
     status: BusinessTransactionStatus.RECEIVED,
     createdAt: new Date(),
   });
@@ -116,6 +123,9 @@ function engineWith(
     undefined,
     undefined,
     signingReadiness,
+    undefined,
+    undefined,
+    new TrustedSignalResolver(trustedFacts.registry),
   );
 }
 

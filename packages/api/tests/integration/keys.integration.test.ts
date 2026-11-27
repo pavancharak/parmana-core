@@ -13,6 +13,8 @@ import { createInspectableExecutionSystem } from "../bootstrap/createInspectable
 import { hashApiKey } from "../../src/auth/hashApiKey.js";
 import { StaticKeyAuthenticator } from "../../src/auth/StaticKeyAuthenticator.js";
 import { InMemoryCallerAuditSink } from "../../src/auth/InMemoryCallerAuditSink.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * HTTP-level proof of the public-key discovery endpoints (PQC audit
@@ -25,7 +27,13 @@ import { InMemoryCallerAuditSink } from "../../src/auth/InMemoryCallerAuditSink.
 describe("Public-key discovery (HTTP boundary)", () => {
   function buildApp() {
     const { executionSystem } = createInspectableExecutionSystem();
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     return createApp(application, {
       callerAuth: "disabled",
@@ -67,7 +75,13 @@ describe("Public-key discovery (HTTP boundary)", () => {
 
   it("does not require caller authentication", async () => {
     const { executionSystem } = createInspectableExecutionSystem();
-    const application = createApplication(executionSystem);
+    const application = createApplication(
+      executionSystem,
+      undefined,
+      undefined,
+      undefined,
+      trustedFacts.registry,
+    );
 
     // Caller-auth genuinely enabled (not "disabled") to prove this
     // route is reachable with no credential even when caller-auth

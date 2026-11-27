@@ -5,6 +5,7 @@ import {
   demoApprovalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // Caller authentication is the layer in front of nearly every route,
@@ -103,6 +104,9 @@ async function startServer(
   const application = createApplication(
     executionSystem,
     demoApprovalVerifier(),
+    undefined,
+    undefined,
+    demoTrustedSources(),
   );
   const app = createApp(application, {
     callerAuth: { authenticator, auditSink },

@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // Rate limiting: the API protects itself, per caller and per source.
@@ -40,28 +41,37 @@ const BOB_KEY = "tutorial-130-bob-key";
 const EXECUTE_PER_MINUTE = 3;
 const AUTH_FAILURES_PER_MINUTE = 2;
 
-const app = createApp(createApplication(await createExecutionSystem()), {
-  callerAuth: {
-    authenticator: new StaticKeyAuthenticator([
-      {
-        callerId: "alice",
-        keyHash: hashApiKey(ALICE_KEY),
-        credentialHolderType: AuthorityType.USER,
-      },
-      {
-        callerId: "bob",
-        keyHash: hashApiKey(BOB_KEY),
-        credentialHolderType: AuthorityType.USER,
-      },
-    ]),
-    auditSink: new InMemoryCallerAuditSink(),
+const app = createApp(
+  createApplication(
+    await createExecutionSystem(),
+    undefined,
+    undefined,
+    undefined,
+    demoTrustedSources(),
+  ),
+  {
+    callerAuth: {
+      authenticator: new StaticKeyAuthenticator([
+        {
+          callerId: "alice",
+          keyHash: hashApiKey(ALICE_KEY),
+          credentialHolderType: AuthorityType.USER,
+        },
+        {
+          callerId: "bob",
+          keyHash: hashApiKey(BOB_KEY),
+          credentialHolderType: AuthorityType.USER,
+        },
+      ]),
+      auditSink: new InMemoryCallerAuditSink(),
+    },
+    rateLimit: {
+      executePerMinute: EXECUTE_PER_MINUTE,
+      healthPerMinute: 600,
+      authFailurePerMinute: AUTH_FAILURES_PER_MINUTE,
+    },
   },
-  rateLimit: {
-    executePerMinute: EXECUTE_PER_MINUTE,
-    healthPerMinute: 600,
-    authFailurePerMinute: AUTH_FAILURES_PER_MINUTE,
-  },
-});
+);
 
 const server = createServer(app);
 await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));

@@ -20,7 +20,9 @@ describe("policy change checkers are wired on every entry point", () => {
     "%s parses POLICY_CHANGE_CHECKERS and passes it to createApp",
     (file) => {
       const source = read(
-        file === "server.ts" ? "packages/api/src/server.ts" : "api/index.ts",
+        file === "server.ts"
+          ? "packages/api/src/startServer.ts"
+          : "api/index.ts",
       );
 
       expect(source).toMatch(

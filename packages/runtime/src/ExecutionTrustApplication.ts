@@ -118,9 +118,15 @@ export class ExecutionTrustApplication {
     return this.runtime.drainRefusalOutbox(limit);
   }
 
-  async decideInbound(request: DecisionRequest) {
+  async decideInbound(
+    request: DecisionRequest,
+    options?: { readonly probe?: boolean },
+  ) {
     // Approvals are consumed with the decision record, in one transaction (G-143, O1).
-    return this.runtime.decide(request, { deferApprovalConsumption: true });
+    return this.runtime.decide(request, {
+      deferApprovalConsumption: true,
+      ...options,
+    });
   }
 
   /**

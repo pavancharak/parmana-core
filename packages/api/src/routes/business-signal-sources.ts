@@ -246,10 +246,14 @@ export function createBusinessSignalSourcesRouter(
 
         if (action === "register") {
           const timeout = parseTimeoutMs(timeoutMs);
-          const key =
-            publicKeyPem === undefined
-              ? undefined
-              : parsePublicKey(publicKeyPem);
+          // Anything not signed is untrusted: a source with no key cannot prove its answers, so it is not
+          // registered at all.
+          if (publicKeyPem === undefined) {
+            throw new InvalidSourceError(
+              "a business signal source must be registered with a publicKeyPem: its answers are trusted only when signed.",
+            );
+          }
+          const key = parsePublicKey(publicKeyPem);
 
           if (keyId !== undefined) {
             if (key === undefined) {

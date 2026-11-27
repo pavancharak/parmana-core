@@ -11,13 +11,7 @@
     "deviceTrusted": "boolean",
     "sessionRiskScore": "number"
   },
-  "unboundSignalReasons": {
-    "userAuthenticated": "Attested by the identity provider at authentication time; no Intent field describes whether the caller authenticated, only what they are asking to do.",
-    "userAuthorized": "Result of an independent authorization check against the requester's entitlements; not something the Intent itself declares.",
-    "mfaVerified": "Attested by the identity provider's MFA challenge; the Intent carries no MFA-completion field to bind against.",
-    "deviceTrusted": "Result of independent device-posture assessment; not a property the Intent's target/parameters could express.",
-    "sessionRiskScore": "A computed risk score from session/behavioral signals, not a value the caller's Intent declares or could be checked against."
-  },
+  "unboundSignalReasons": {},
   "approvalSignals": {
     "humanApproved": {
       "resourceId": "target"
@@ -98,5 +92,32 @@
         "reason": "Access rejected because one or more required authorization conditions were not satisfied."
       }
     }
-  ]
+  ],
+  "signalSources": {
+    "deviceTrusted": {
+      "source": "trusted-test",
+      "claim": "fact.deviceTrusted",
+      "subject": "target"
+    },
+    "mfaVerified": {
+      "source": "trusted-test",
+      "claim": "fact.mfaVerified",
+      "subject": "target"
+    },
+    "sessionRiskScore": {
+      "source": "trusted-test",
+      "claim": "fact.sessionRiskScore",
+      "subject": "target"
+    },
+    "userAuthenticated": {
+      "source": "trusted-test",
+      "claim": "fact.userAuthenticated",
+      "subject": "target"
+    },
+    "userAuthorized": {
+      "source": "trusted-test",
+      "claim": "fact.userAuthorized",
+      "subject": "target"
+    }
+  }
 }

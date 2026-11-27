@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { load } from "js-yaml";
 import $RefParser from "@apidevtools/json-schema-ref-parser";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // GET /openapi.yaml serves this API's own bundled OpenAPI 3.1
@@ -31,7 +32,13 @@ console.log("==================================================");
 console.log();
 
 const executionSystem = await createExecutionSystem();
-const application = createApplication(executionSystem);
+const application = createApplication(
+  executionSystem,
+  undefined,
+  undefined,
+  undefined,
+  demoTrustedSources(),
+);
 const app = createApp(application, { callerAuth: "disabled" });
 
 const server = app.listen(0);

@@ -27,6 +27,7 @@ import {
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
 import { withRequiredFields } from "../../shared/helpers/business-transaction.js";
+import { demoTrustedSources } from "../../shared/helpers/demo-trusted-sources.js";
 
 //
 // A trivial Connector: this tutorial cares about whether the Execution
@@ -103,6 +104,7 @@ async function main(): Promise<void> {
   const governed = await governedPolicyDirectory("fixtures/policies");
 
   const runtime = new RuntimeBuilder()
+    .withBusinessSignalSources(demoTrustedSources())
     .withSignalStateVerifier(demoApprovalSignalVerifier())
     .withPolicyRepository(governed.policyRepository)
     .build(new MemoryExecutionTrustRecordRepository());

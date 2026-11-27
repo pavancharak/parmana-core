@@ -3,7 +3,6 @@
   "policyVersion": "3.0.0",
   "schemaVersion": "1.0.0",
   "description": "Authorizes production database changes after validating change approval, migration verification, backup availability, maintenance window, and operational risk.",
-
   "signalsSchema": {
     "changeApproved": "boolean",
     "migrationValidated": "boolean",
@@ -11,15 +10,7 @@
     "maintenanceWindow": "boolean",
     "riskScore": "number"
   },
-
-  "unboundSignalReasons": {
-    "changeApproved": "Attested by a separate change-management approval step; the Intent carries no approval-status field to bind against.",
-    "migrationValidated": "Result of an independent migration-validation check; not a value the Intent itself declares.",
-    "backupAvailable": "Result of an independent backup-verification check against operational state; not expressible via the Intent's target/parameters.",
-    "maintenanceWindow": "A point-in-time schedule check against the current clock; not a property of the Intent being executed.",
-    "riskScore": "A computed operational-risk score, not a value the caller's Intent declares or could be checked against."
-  },
-
+  "unboundSignalReasons": {},
   "rules": [
     {
       "id": "approve-database-change",
@@ -103,5 +94,32 @@
         "reason": "Database change rejected because one or more required policy conditions were not satisfied."
       }
     }
-  ]
+  ],
+  "signalSources": {
+    "backupAvailable": {
+      "source": "trusted-test",
+      "claim": "fact.backupAvailable",
+      "subject": "target"
+    },
+    "changeApproved": {
+      "source": "trusted-test",
+      "claim": "fact.changeApproved",
+      "subject": "target"
+    },
+    "maintenanceWindow": {
+      "source": "trusted-test",
+      "claim": "fact.maintenanceWindow",
+      "subject": "target"
+    },
+    "migrationValidated": {
+      "source": "trusted-test",
+      "claim": "fact.migrationValidated",
+      "subject": "target"
+    },
+    "riskScore": {
+      "source": "trusted-test",
+      "claim": "fact.riskScore",
+      "subject": "target"
+    }
+  }
 }

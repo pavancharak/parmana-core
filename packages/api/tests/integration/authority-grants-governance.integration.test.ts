@@ -16,6 +16,8 @@ import { InMemoryCallerAuditSink } from "../../src/auth/InMemoryCallerAuditSink.
 import { PolicyChangeStepUpVerifier } from "../../src/auth/PolicyChangeStepUpVerifier.js";
 
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
+import { createTrustedFacts } from "../helpers/trusted-facts.js";
+const trustedFacts = createTrustedFacts();
 
 /**
  * Per-agent authority grants (RFC-0023 phase 3), at the HTTP boundary:
@@ -71,12 +73,21 @@ describe("Authority grant changes (HTTP boundary)", () => {
       },
     ]);
 
-    return createApp(createApplication(executionSystem), {
-      callerAuth: { authenticator, auditSink: new InMemoryCallerAuditSink() },
-      stepUpVerifier: new PolicyChangeStepUpVerifier({
-        nonceStore: new MemoryNonceStore(),
-      }),
-    });
+    return createApp(
+      createApplication(
+        executionSystem,
+        undefined,
+        undefined,
+        undefined,
+        trustedFacts.registry,
+      ),
+      {
+        callerAuth: { authenticator, auditSink: new InMemoryCallerAuditSink() },
+        stepUpVerifier: new PolicyChangeStepUpVerifier({
+          nonceStore: new MemoryNonceStore(),
+        }),
+      },
+    );
   }
 
   let sequence = 0;
