@@ -509,3 +509,48 @@ Open items:
 **Survivor classification:** not applicable to this run. No survivors were classified.
 
 **Phase status change:** none. These are non-blocking tools. The strict mode is not yet in CI, which needs an owner decision (see EXECUTION_PLAN.md section 9).
+
+### 2026-11-27: outcome-store local-mode fix and gateway wiring tests
+
+- **Command:**
+  - `npx vitest run packages/api/tests/unit/bootstrap/create-execution-outcome-store.test.ts packages/api/tests/unit/bootstrap/create-nonce-store.test.ts packages/execution-gateway/tests/unit/gateway-release-wiring.test.ts`
+  - Regression check: the outcome-store factory restored to its parent commit (`34bcfea`), the same test file run, then the fix restored.
+  - `npx vitest run packages/api/tests/unit packages/execution-gateway`
+  - `npx vitest run tests/assurance/frozen-core.test.ts tests/architecture/execution-boundary.test.ts`
+  - `npx prettier --check` on the three changed files.
+  - Setup before the suite run: `npm ci --ignore-scripts`, `npm rebuild re2`, `npm run build --workspace=typescript`.
+- **Runtime:** Node 24.22.3 (observed; `.nvmrc` pins 24.22.2), Linux sandbox. Duration not recorded for the full suite run.
+- **Commit tested:** `799fcab` (the fix and the tests). Follow-up `a197a1b` is a prettier-only formatting change to one test file, re-run after formatting.
+- **Branch:** `claude/trusting-goodall-djgzgs`
+- **Run by:** session (Claude Code), at the owner's direction
+
+**Results**
+
+| Measurement                                                                               |                                                                                                    Value |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------: |
+| Outcome-store tests, after the fix                                                        |                                                                                              5 of 5 pass |
+| Same outcome-store test file, against the parent factory (`34bcfea`)                      |                                                                 4 pass, 1 fail (the NODE_ENV-alone case) |
+| Three targeted files (outcome store, nonce store, gateway wiring)                         |                                                                                            13 of 13 pass |
+| `packages/api/tests/unit` and `packages/execution-gateway`, after the setup above         |                                                                           134 files, 937 tests, all pass |
+| Same two packages, before the setup above                                                 | 56 files failed at load (missing `re2` native module; `@parmana/sdk` unresolved). Environment, not code. |
+| `tests/assurance/frozen-core.test.ts` and `tests/architecture/execution-boundary.test.ts` |                                                                                           163 tests pass |
+| `prettier --check` on the three changed files                                             |                                                                                                     pass |
+
+**Checks not run**
+
+- Integration tests (`packages/*/tests/integration`), which need PostgreSQL. CI runs them with `TEST_DATABASE_URL`. Not run here.
+- Full root `npm test` (the repository-wide suite). Not run here.
+- Mutation testing, the bypass and kill-switch probe workflows, and secret scanning. Not run.
+- Commit signature verification. The commit is SSH-signed, but this environment has an empty public key file and no allowed-signers file, so it cannot be verified locally. GitHub's verified status was not read.
+
+**Survivor classification:** not applicable. No mutation run.
+
+**Open items**
+
+1. Audit failure after a successful connector call is not verified (review finding 3). Needs a fault-injection test.
+2. Whether the connector enforces authorization itself, outside the gateway (review finding 4). Depends on whether `parmana-connectors` can be called without the gateway, which is not yet confirmed.
+3. The gateway's `connector` option (direct path) is accepted when passed. Production wiring does not pass it, but no test asserts that.
+4. Postgres durability of the outcome store is tested only in CI integration tests, not here.
+5. `packages/execution-gateway/` is owned by `@pavancharak` in `.github/CODEOWNERS`. The new test file and the `packages/api` change need that owner's review.
+
+**Phase status change:** none. This work covers one fail-closed item listed under Phase 2, item 3. Phase 2 stays "Not started" because its exit criteria are not met.

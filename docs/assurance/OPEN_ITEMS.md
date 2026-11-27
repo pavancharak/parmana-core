@@ -1,6 +1,6 @@
 # Open items register
 
-**Status:** Current as of 21 November 2026 (test account run recorded). Update it when an item closes or a new one is found.
+**Status:** Current as of 27 November 2026 (test account run recorded 21 November; outcome-store and gateway wiring review 27 November, see ASSURANCE_RESULTS.md). Update it when an item closes or a new one is found.
 **Owner:** Pavan Charak, unless a row says otherwise.
 
 Each row names the item, what is needed, who decides, and the document with the detail. Items marked "decision" need the owner's answer before work can start.
@@ -37,17 +37,21 @@ Each row names the item, what is needed, who decides, and the document with the 
 | Verifier      | Verifier that runs without Parmana's infrastructure            | Target, not started                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | [PERMANENT_DIRECTION.md](PERMANENT_DIRECTION.md)                   |
 | Razorpay bind | razorpay:refund has no policy binding                          | Open. Dropped on branch `claude/bind-razorpay-refund` by D15, because it conflicted with the G-77 assertion. Needs a G-77 classification decision first.                                                                                                                                                                                                                                                                                                                                    | [POLICY_BINDING_RAZORPAY.md](POLICY_BINDING_RAZORPAY.md)           |
 | Python        | Generated Python types for correspondence fields               | Typed `Any` by the generator's fallback                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Commit `e1c186d4`                                                  |
+| GW-1          | Gateway direct connector path                                  | Open. The `connector` option releases to a connector without `ExecutionControlService`. Production wiring does not pass it, but no test asserts that.                                                                                                                                                                                                                                                                                                                                       | ASSURANCE_RESULTS.md, 2026-11-27, open item 3                      |
+| GW-2          | Connector enforcement outside the gateway                      | Open. Depends on whether `parmana-connectors` can be called without going through the gateway.                                                                                                                                                                                                                                                                                                                                                                                              | ASSURANCE_RESULTS.md, 2026-11-27, open item 2                      |
+| GW-3          | Audit failure after a successful connector call                | Open. Not verified. Needs a fault-injection test in the execution-control path.                                                                                                                                                                                                                                                                                                                                                                                                             | ASSURANCE_RESULTS.md, 2026-11-27, open item 1                      |
 
 ## 3. Testing
 
-| ID                  | Item                                        | Status                                                                                       |
-| ------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| AM-04               | Authority version test                      | Gap (see D12)                                                                                |
-| Vectors             | RFC 8785 reference vectors                  | Test file exists. Coverage of the vectors not reviewed.                                      |
-| Chain head          | `CallerAuditChainVerifier` chain-head check | Tests exist; whether they cover the chain-head check is not confirmed. Plan Phase 1, item 2. |
-| Mutation survivors  | 101 crypto survivors                        | 0 of 101 classified. Plan Phase 1, item 1.                                                   |
-| Probes              | Bypass and kill-switch probe workflows      | Exist; their coverage not reviewed.                                                          |
-| Frozen-core vectors | Test vectors for the frozen files           | Enforcement by hash is done. Vectors for the frozen code are not reviewed.                   |
+| ID                       | Item                                                                                 | Status                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| AM-04                    | Authority version test                                                               | Gap (see D12)                                                                                |
+| Vectors                  | RFC 8785 reference vectors                                                           | Test file exists. Coverage of the vectors not reviewed.                                      |
+| Chain head               | `CallerAuditChainVerifier` chain-head check                                          | Tests exist; whether they cover the chain-head check is not confirmed. Plan Phase 1, item 2. |
+| Mutation survivors       | 101 crypto survivors                                                                 | 0 of 101 classified. Plan Phase 1, item 1.                                                   |
+| Probes                   | Bypass and kill-switch probe workflows                                               | Exist; their coverage not reviewed.                                                          |
+| Frozen-core vectors      | Test vectors for the frozen files                                                    | Enforcement by hash is done. Vectors for the frozen code are not reviewed.                   |
+| Outcome-store durability | Postgres path is tested by CI integration tests only. Not run locally on 2026-11-27. | ASSURANCE_RESULTS.md, 2026-11-27                                                             |
 
 ## 4. Standard and plan
 
@@ -60,13 +64,15 @@ Each row names the item, what is needed, who decides, and the document with the 
 
 ## 5. Governance and review
 
-| ID              | Item                                                                         | Status                                                                                  |
-| --------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Protect         | Branch protection on `main` requiring the code-owner review for frozen paths | Owner action in repository settings. Not verified from here.                            |
-| PR-633          | CI on PR #633                                                                | Merged into `main` as `0c1773d4`. Required checks passed on the last head before merge. |
-| PR-633-merge    | Merge of PR #633 into `main`                                                 | Done (`0c1773d4`).                                                                      |
-| Challenge       | ChallengeRecord (RFC-0022) for the signature-encoding correction             | Reviewer to decide                                                                      |
-| Verifier-review | Independent review of the verifier                                           | Not started                                                                             |
+| ID                | Item                                                                                                                                                                  | Status                                                                                  |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Protect           | Branch protection on `main` requiring the code-owner review for frozen paths                                                                                          | Owner action in repository settings. Not verified from here.                            |
+| PR-633            | CI on PR #633                                                                                                                                                         | Merged into `main` as `0c1773d4`. Required checks passed on the last head before merge. |
+| PR-633-merge      | Merge of PR #633 into `main`                                                                                                                                          | Done (`0c1773d4`).                                                                      |
+| Challenge         | ChallengeRecord (RFC-0022) for the signature-encoding correction                                                                                                      | Reviewer to decide                                                                      |
+| Verifier-review   | Independent review of the verifier                                                                                                                                    | Not started                                                                             |
+| Commit signing    | The 2026-11-27 commits are SSH-signed, but this environment cannot verify them (empty public key file, no allowed-signers file). Check the verified status on GitHub. | Owner or operator                                                                       |
+| Gateway ownership | Changes under `packages/execution-gateway/` (test file added 2026-11-27) need review by the CODEOWNER `@pavancharak`.                                                 | `.github/CODEOWNERS`                                                                    |
 
 ## 6. Closed in this work (for reference)
 
