@@ -35,13 +35,20 @@ export class MemoryInboundCheckRepository implements InboundCheckRepository {
     if (this.records.has(record.decisionId)) {
       throw new Error(`Inbound check ${record.decisionId} already exists.`);
     }
+    // A nonce is refused when it was consumed before, or when this batch names it twice. The Postgres
+    // store gets the second case from its unique constraint inside one transaction; this must match it.
+    const batchNonces = new Set<string>();
     for (const approval of approvals) {
-      if (this.consumedNonces.has(approval.nonce)) {
+      if (
+        this.consumedNonces.has(approval.nonce) ||
+        batchNonces.has(approval.nonce)
+      ) {
         throw new ApprovalAlreadyUsedError(approval.nonce);
       }
+      batchNonces.add(approval.nonce);
     }
-    for (const approval of approvals) {
-      this.consumedNonces.add(approval.nonce);
+    for (const nonce of batchNonces) {
+      this.consumedNonces.add(nonce);
     }
     this.records.set(record.decisionId, record);
   }
