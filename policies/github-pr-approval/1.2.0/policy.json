@@ -1,0 +1,173 @@
+{
+  "policyId": "github-pr-approval",
+  "policyVersion": "1.2.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes the merge of one GitHub pull request, owner/repo#number, through the GitHub connector (github:pr-merge). A merge needs a signed human approval for that exact pull request and that exact head commit (the expectedHeadSha). If the head has moved since the approval, the merge is refused. The branch protection, repository authorization, required reviews and status checks are read from GitHub by a signal source, and each must hold. Only the merge method is allowed. A merge with any other method is refused. A merge is refused when no head commit is given, when the branch is not protected, the repository is not authorized, required reviews are not complete, a status check is not passing.",
+  "signalsSchema": {
+    "targetRef": "string",
+    "headSha": "string",
+    "mergeMethod": "string",
+    "mergeApproved": "boolean",
+    "branchProtected": "boolean",
+    "repositoryAuthorized": "boolean",
+    "requiredReviewsCompleted": "boolean",
+    "statusChecksPassed": "boolean"
+  },
+  "boundSignals": {
+    "targetRef": "target",
+    "headSha": "parameters.expectedHeadSha",
+    "mergeMethod": "parameters.mergeMethod"
+  },
+  "signalSources": {
+    "repositoryAuthorized": {
+      "source": "github-pull-requests",
+      "claim": "repo.authorized",
+      "subject": "target",
+      "maxAgeSeconds": 60,
+      "parameters": []
+    },
+    "branchProtected": {
+      "source": "github-pull-requests",
+      "claim": "pr.branch-protected",
+      "subject": "target",
+      "maxAgeSeconds": 60,
+      "parameters": ["expectedHeadSha"]
+    },
+    "requiredReviewsCompleted": {
+      "source": "github-pull-requests",
+      "claim": "pr.reviews-complete",
+      "subject": "target",
+      "maxAgeSeconds": 60,
+      "parameters": ["expectedHeadSha"]
+    },
+    "statusChecksPassed": {
+      "source": "github-pull-requests",
+      "claim": "pr.checks-passing",
+      "subject": "target",
+      "maxAgeSeconds": 60,
+      "parameters": ["expectedHeadSha"]
+    }
+  },
+  "approvalSignals": {
+    "mergeApproved": {
+      "resourceId": "target",
+      "value": "parameters.expectedHeadSha"
+    }
+  },
+  "rules": [
+    {
+      "id": "reject-no-approval",
+      "condition": {
+        "fact": "mergeApproved",
+        "operator": "is_false"
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refused: no signed approval covers merging this pull request at this head commit."
+      }
+    },
+    {
+      "id": "reject-no-head-sha",
+      "condition": {
+        "fact": "headSha",
+        "operator": "is_null"
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refused: the merge does not name the head commit the approver reviewed (expectedHeadSha)."
+      }
+    },
+    {
+      "id": "reject-not-merge-method",
+      "condition": {
+        "fact": "mergeMethod",
+        "operator": "neq",
+        "value": "merge"
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refused: only the merge method may be used for this policy."
+      }
+    },
+    {
+      "id": "reject-unsafe-state",
+      "condition": {
+        "any": [
+          {
+            "fact": "branchProtected",
+            "operator": "is_false"
+          },
+          {
+            "fact": "repositoryAuthorized",
+            "operator": "is_false"
+          },
+          {
+            "fact": "requiredReviewsCompleted",
+            "operator": "is_false"
+          },
+          {
+            "fact": "statusChecksPassed",
+            "operator": "is_false"
+          }
+        ]
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refused: the branch, reviews, status checks or repository do not meet the merge requirements."
+      }
+    },
+    {
+      "id": "approve-approved-merge",
+      "condition": {
+        "all": [
+          {
+            "fact": "targetRef",
+            "operator": "matches",
+            "value": "^[A-Za-z0-9-]{1,39}/[A-Za-z0-9._-]{1,100}#[0-9]{1,10}$"
+          },
+          {
+            "fact": "mergeApproved",
+            "operator": "is_true"
+          },
+          {
+            "fact": "headSha",
+            "operator": "is_not_null"
+          },
+          {
+            "fact": "branchProtected",
+            "operator": "is_true"
+          },
+          {
+            "fact": "repositoryAuthorized",
+            "operator": "is_true"
+          },
+          {
+            "fact": "requiredReviewsCompleted",
+            "operator": "is_true"
+          },
+          {
+            "fact": "statusChecksPassed",
+            "operator": "is_true"
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Merge approved: a signed approval covers this pull request at this head commit, and GitHub confirms the branch, repository, reviews and checks."
+      }
+    },
+    {
+      "id": "reject-otherwise",
+      "condition": {
+        "fact": "targetRef",
+        "operator": "matches",
+        "value": "^"
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refused: the target is not a pull request reference."
+      }
+    }
+  ],
+  "unboundSignalReasons": {}
+}
