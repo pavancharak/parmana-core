@@ -595,6 +595,86 @@ dropped. The sentence "Production was not affected." was removed from the public
 
 ---
 
+**Update 2026-11-28 (dated note, see INC-17):** the teardown also removed the Vercel signing role
+`parmana-vercel-kms-signer` and scheduled the production signing key `7b0c7156` for deletion. Production
+`parmana-api-real` then failed on every request. The role was recreated and the key's deletion was cancelled and the key
+re-enabled on 2026-11-28. The "all Parmana roles removed" statement above is therefore incomplete, and the key is no
+longer scheduled for deletion.
+
+---
+
+## INC-17 — Production API outage: the signing role and signing key were removed by the INC-16 teardown (OPERATIONS, PRODUCTION OUTAGE)
+
+**What:** Production `parmana-api-real` (Vercel, project `pavan-dev-singh-charaks-projects`) returned `500 FUNCTION_INVOCATION_FAILED`
+for `/health`, `/ready` and `/policies`. The first failure in the logs reviewed was on 2026-11-28 at 19:18 IST. The cause was
+present from 2026-11-27 05:35 IST, when the teardown in INC-16 deleted the role the API assumes.
+
+**Timeline (CloudTrail and deployment times; IST unless marked UTC):**
+
+- 2026-11-27 05:35:42 IST: root deleted `parmana-vercel-kms-signer`, the role in `AWS_ROLE_ARN`. Within the same batch,
+  root deleted `parmana-apprunner-ecr-access` (05:36:42), `parmana-apprunner-instance` (05:36:50), `dip-api-signer-prod`
+  (05:46:11) and `dip-ecs-execution-prod` (05:46:21).
+- 2026-11-27 05:43:57 and 05:44:14 IST: root scheduled two KMS keys for deletion. The production signing key `7b0c7156`
+  was due for deletion on 2026-12-04 05:43 IST. The other key is not identified in this entry.
+- `alias/parmana-prod` no longer resolves. The `DeleteAlias` event has not been checked yet.
+- 2026-11-28 13:37 UTC: PR #809 (OIDC probe code behind a flag, off by default) was merged. The probe flag and repository
+  id were not in the production variable list checked at 19:3x IST, so the OIDC path was not active in production.
+- 2026-11-28 about 13:48 UTC (19:18 IST): first `AccessDenied: Not authorized to perform sts:AssumeRoleWithWebIdentity`
+  errors seen in the logs. Every request failed at startup, because the policy and key checks call AWS.
+- 2026-11-28 about 14:43 and 14:44 UTC: two earlier production builds (`3zx80a7ga`, about 14 hours old, and `hmg873orf`,
+  about 15 hours old) were tested directly with `vercel curl`. Both returned `500` with the same error, so the code was
+  ruled out as the cause and rollback was not possible.
+- 2026-11-28 15:02:15 UTC: role `parmana-vercel-kms-signer` was recreated with a trust policy for the Vercel OIDC provider
+  `oidc.vercel.com/pavan-dev-singh-charaks-projects`, scoped to project `parmana-api-real` in production. The provider was
+  still present and had not been deleted. The role was recreated with no permission policies.
+- After the role was recreated, the error changed. The API reached AWS and failed on
+  `NotFoundException: alias/parmana-prod is not found`, and the key itself was `PendingDeletion` and disabled.
+- The key's deletion was cancelled and the key was re-enabled. `describe-key` then reported `Enabled`.
+- Terraform in `infra/parmana-prod-signing` was initialised. A full plan was blocked: `prod.tfvars` does not set
+  `secondary_key_secret_name` or `secret_key_admin_arn`, which the README says it should. A targeted plan for the alias and
+  the role policy was proposed, but has not produced a result yet.
+- Last state checked: the endpoints still return `500`. At that point the alias was missing and the role had no permission
+  policies.
+
+**Impact:** all production API requests failed from the time the role was deleted, or at least from 2026-11-28 19:18 IST
+when first observed. Execution authorisations, receipts and settlement confirmations that the API signs could not be
+produced. The window between 2026-11-27 05:35 IST and 2026-11-28 19:18 IST has not been checked for failures.
+
+**Root cause:** the teardown in INC-16 deleted a role and a KMS key that production depended on. Nothing checked whether a
+live service referenced `AWS_ROLE_ARN` or the key before deleting them.
+
+**What was not the cause:** the PR #809 code. Two earlier builds that predate it failed the same way.
+
+**Resolution so far:**
+
+- Recreated the role `parmana-vercel-kms-signer` with the Vercel OIDC trust, the same name, and therefore the same
+  `AWS_ROLE_ARN`.
+- Cancelled the scheduled deletion of key `7b0c7156` and re-enabled it.
+
+**Still open:**
+
+- Recreate `alias/parmana-prod` and attach the signing-key policy to the role. Terraform does this, but only after
+  `secondary_key_secret_name` and `secret_key_admin_arn` are set in `prod.tfvars`, or after a targeted plan.
+- Confirm `/health` returns `200`, and that `GET /policies` without credentials returns `401`.
+- Check the `DeleteAlias` event and identify the second key that was scheduled for deletion. Cancel its deletion if
+  signed evidence needs it.
+- Confirm no live service used `parmana-apprunner-*`, `dip-api-signer-prod` or `dip-ecs-execution-prod`.
+- Decide whether the teardown was intended. The owner has not yet said so.
+- Restore any other permission policies the role had. The restored role has none, and the Terraform code only covers the
+  signing-key and secret policies.
+
+**Lessons:**
+
+- Check what depends on a role or key before deleting it. Vercel's `AWS_ROLE_ARN` was a live dependency that no inventory
+  listed.
+- A 7-day KMS deletion window saved the production signing key. Keep that window, and alert on any
+  `ScheduleKeyDeletion` on a production key.
+- Add an SCP that denies `iam:DeleteRole` and `kms:ScheduleKeyDeletion` on production-tagged resources, and require a
+  dependency check first.
+- The production variable list does not show which settings are in use. Record the AWS dependencies of each deployment.
+
+---
+
 ## Minor / dead-code findings (logged, non-urgent)
 
 - `LedgerSerializer.serialize()` — replacer-array misuse silently drops nested payload
