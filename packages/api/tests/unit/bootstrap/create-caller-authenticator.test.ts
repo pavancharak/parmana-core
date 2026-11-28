@@ -127,6 +127,89 @@ describe("createCallerAuthenticator", () => {
   });
 });
 
+describe("probe OIDC acceptance (PROBE-OIDC-AUTH phase 2)", () => {
+  const REPO_ID = "1424855835";
+  const rawKey = "a-real-configured-key";
+
+  function configWith(probeOidc?: {
+    enabled: boolean;
+    repositoryId: string | undefined;
+  }) {
+    return {
+      ...baseConfig(),
+      auth: {
+        keys: [{ callerId: "caller-1", keyHash: hashApiKey(rawKey) }],
+        disabled: false,
+        ...(probeOidc === undefined ? {} : { probeOidc }),
+      },
+    };
+  }
+
+  /** A JWT-shaped credential that is refused before any network call (alg none). */
+  function unsignedJwtShape(): string {
+    const b64 = (value: unknown) =>
+      Buffer.from(JSON.stringify(value), "utf8").toString("base64url");
+    return `${b64({ alg: "none" })}.${b64({ iss: "x" })}.sig`;
+  }
+
+  it("leaves a JWT-shaped credential unauthenticated when the flag is off", async () => {
+    const result = createCallerAuthenticator(
+      configWith({ enabled: false, repositoryId: REPO_ID }),
+    );
+    if (result.disabled) throw new Error("unreachable");
+
+    await expect(
+      result.authenticator.authenticate(unsignedJwtShape()),
+    ).resolves.toBeUndefined();
+  });
+
+  it("keeps static keys working when the flag is on", async () => {
+    const result = createCallerAuthenticator(
+      configWith({ enabled: true, repositoryId: REPO_ID }),
+    );
+    if (result.disabled) throw new Error("unreachable");
+
+    await expect(result.authenticator.authenticate(rawKey)).resolves.toEqual({
+      callerId: "caller-1",
+    });
+  });
+
+  it("routes a JWT-shaped credential to OIDC when the flag is on, and refuses it", async () => {
+    const result = createCallerAuthenticator(
+      configWith({ enabled: true, repositoryId: REPO_ID }),
+    );
+    if (result.disabled) throw new Error("unreachable");
+
+    await expect(
+      result.authenticator.authenticate(unsignedJwtShape()),
+    ).resolves.toBeUndefined();
+  });
+
+  it("refuses to start when the flag is on and the repository id is missing", () => {
+    expect(() =>
+      createCallerAuthenticator(
+        configWith({ enabled: true, repositoryId: undefined }),
+      ),
+    ).toThrow(/PARMANA_PROBE_REPOSITORY_ID/);
+  });
+
+  it("refuses to start when the repository id is not numeric", () => {
+    expect(() =>
+      createCallerAuthenticator(
+        configWith({ enabled: true, repositoryId: "pavancharak/parmana-core" }),
+      ),
+    ).toThrow(/PARMANA_PROBE_REPOSITORY_ID/);
+  });
+
+  it("ignores a missing repository id while the flag is off", () => {
+    expect(() =>
+      createCallerAuthenticator(
+        configWith({ enabled: false, repositoryId: undefined }),
+      ),
+    ).not.toThrow();
+  });
+});
+
 describe("PARMANA_LOCAL_MODE under the wrong NODE_ENV refuses to start", () => {
   const originalNodeEnv = process.env.NODE_ENV;
   const originalLocal = process.env.PARMANA_LOCAL_MODE;

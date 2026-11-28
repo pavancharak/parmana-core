@@ -134,6 +134,19 @@ Every claim is taken from the code, unless marked **(not tested)**. Read [ENV-FI
 - **If missing:** authentication is on.
 - **Values:** only the exact string `true` turns it on. `GET /ready` reports `authDisabled: true`. Never set it in production.
 
+### PARMANA_PROBE_OIDC_ENABLED
+
+- **What it is:** lets the kill-switch probe authenticate with a short-lived GitHub Actions OIDC token instead of its static key. See `docs/internal/designs/PROBE-OIDC-AUTH.md`.
+- **Required:** no. Off by default.
+- **Used:** at startup, to decide whether to build the OIDC authenticator.
+- **Values:** only the exact string `true` turns it on. Accepted tokens must match the pinned claims for `pavancharak/parmana-core`, `refs/heads/main` and `kill-switch-probe.yml`, and grant only `kill-switch:probe`.
+
+### PARMANA_PROBE_REPOSITORY_ID
+
+- **What it is:** the numeric id of the repository, pinned in the OIDC token check.
+- **Required:** yes, when `PARMANA_PROBE_OIDC_ENABLED=true`. Refused at startup if missing or not digits only.
+- **Values:** digits only, for example `1424855835`.
+
 ---
 
 ## Keys and signing

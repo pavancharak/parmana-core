@@ -1,6 +1,9 @@
 import { loadConfig, type Config } from "@parmana/shared";
 
 import { StaticKeyAuthenticator } from "../auth/StaticKeyAuthenticator.js";
+import { CompositeCallerAuthenticator } from "../auth/CompositeCallerAuthenticator.js";
+import { GitHubOidcAuthenticator } from "../auth/GitHubOidcAuthenticator.js";
+import { probeOidcPolicy } from "../auth/probeOidcPolicy.js";
 import type { CallerAuthenticator } from "../auth/CallerAuthenticator.js";
 import type { CallerAuditSink } from "../auth/CallerAuditSink.js";
 
@@ -69,12 +72,43 @@ export function createCallerAuthenticator(
     );
   }
 
+  const staticKeys = new StaticKeyAuthenticator(
+    config.auth.keys,
+    callerKeyRevocationRepository,
+  );
+
   return {
     disabled: false,
-    authenticator: new StaticKeyAuthenticator(
-      config.auth.keys,
-      callerKeyRevocationRepository,
-    ),
+    authenticator: probeOidcEnabled(config)
+      ? new CompositeCallerAuthenticator(
+          probeOidcAuthenticator(config),
+          staticKeys,
+        )
+      : staticKeys,
     auditSink: createCallerAuditSink(),
   };
+}
+
+function probeOidcEnabled(config: Config): boolean {
+  return config.auth.probeOidc?.enabled === true;
+}
+
+/**
+ * Builds the GitHub OIDC authenticator for the kill-switch probe. Refuses to start
+ * when the repository id is missing or not numeric, since the pinned claim cannot
+ * be checked without it.
+ */
+function probeOidcAuthenticator(config: Config): CallerAuthenticator {
+  const repositoryId = config.auth.probeOidc?.repositoryId;
+  if (repositoryId === undefined || !/^\d+$/.test(repositoryId)) {
+    throw new Error(
+      "PARMANA_PROBE_OIDC_ENABLED=true needs PARMANA_PROBE_REPOSITORY_ID set to the " +
+        "numeric id of the repository (digits only). Refusing to start with an " +
+        "unpinned probe identity.",
+    );
+  }
+
+  return new GitHubOidcAuthenticator({
+    policy: probeOidcPolicy(repositoryId),
+  });
 }
