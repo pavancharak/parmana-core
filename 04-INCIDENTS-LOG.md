@@ -662,6 +662,10 @@ live service referenced `AWS_ROLE_ARN` or the key before deleting them.
   is restored. The two keys scheduled in `us-east-1`, `af7f0ef1-191b-4c80-a1d4-f05009604a59` and
   `24b750e9-5487-4943-87bb-48c06914fac7`, are still `PendingDeletion`, due 2026-12-04. Their state needs checking, and
   the owner must decide whether to cancel their deletion. Cancel it if any signed evidence needs them.
+  On 2026-11-28 the scheduled deletion of both keys was cancelled, so neither is scheduled for deletion. A cancelled
+  key stays disabled until someone enables it. `24b750e9` is described as "DIP engine decision-signing key, production".
+  `af7f0ef1` has no alias, no description, and only an empty tag `d`, so it is still unidentified. The owner must decide
+  whether either key is kept or deleted. Neither has been enabled.
 - Management-event CloudTrail shows no use of `parmana-apprunner-instance`, `parmana-apprunner-ecr-access`,
   `dip-api-signer-prod` or `dip-ecs-execution-prod` after they were created. Data events were not checked, and the
   owner should confirm the result.
