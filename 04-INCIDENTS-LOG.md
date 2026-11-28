@@ -668,8 +668,11 @@ live service referenced `AWS_ROLE_ARN` or the key before deleting them.
   whether either key is kept or deleted. Neither has been enabled.
   Decision by the owner: the signed records of the DIP decision-signing key `24b750e9` do not need to be kept. Its
   deletion was scheduled with a 7-day window, so `KeyState` is `PendingDeletion` and it can be cancelled until
-  2026-12-05 20:59 IST. The key `af7f0ef1` is still unidentified. Its deletion is cancelled, and nothing is scheduled
-  for it.
+  2026-12-05 20:59 IST. The key `af7f0ef1` was unidentified, with no alias and no description. The owner decided to
+  delete it. Its deletion was scheduled on 2026-11-28 with a 7-day window, and it can be cancelled until 2026-12-05
+  21:02 IST. No `Sign`, `Encrypt`, `Decrypt` or `GenerateDataKey` call appears in its CloudTrail history. Its
+  `CreateKey` and `CreateAlias` calls were on 2026-11-09, in the same minute as the `dip-api-signer-prod` role. A check
+  for remaining `dip` aliases, roles and users in both regions found none.
 - Management-event CloudTrail shows no use of `parmana-apprunner-instance`, `parmana-apprunner-ecr-access`,
   `dip-api-signer-prod` or `dip-ecs-execution-prod` after they were created. Data events were not checked, and the
   owner should confirm the result.
