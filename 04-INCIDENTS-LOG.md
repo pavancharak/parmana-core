@@ -666,6 +666,10 @@ live service referenced `AWS_ROLE_ARN` or the key before deleting them.
   key stays disabled until someone enables it. `24b750e9` is described as "DIP engine decision-signing key, production".
   `af7f0ef1` has no alias, no description, and only an empty tag `d`, so it is still unidentified. The owner must decide
   whether either key is kept or deleted. Neither has been enabled.
+  Decision by the owner: the signed records of the DIP decision-signing key `24b750e9` do not need to be kept. Its
+  deletion was scheduled with a 7-day window, so `KeyState` is `PendingDeletion` and it can be cancelled until
+  2026-12-05 20:59 IST. The key `af7f0ef1` is still unidentified. Its deletion is cancelled, and nothing is scheduled
+  for it.
 - Management-event CloudTrail shows no use of `parmana-apprunner-instance`, `parmana-apprunner-ecr-access`,
   `dip-api-signer-prod` or `dip-ecs-execution-prod` after they were created. Data events were not checked, and the
   owner should confirm the result.
