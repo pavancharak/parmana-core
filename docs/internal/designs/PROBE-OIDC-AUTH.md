@@ -111,7 +111,7 @@ Each phase is reversible, and the static key remains valid until phase 4.
 
 **Rollback:** set `PROBE_AUTH=static` in the repository variable and keep the static entry until phase 5. After phase 5, rollback means restoring the key entry and secret from the password manager.
 
-**Ordering constraint:** the startup check that requires a `kill-switch-probe` entry with `kill-switch:probe` in `PARMANA_API_KEYS` must be relaxed in phase 5, or the kill switch will refuse to start. That change is part of phase 5, not earlier.
+**Ordering constraint:** `assertProbeKeyEntry` (`packages/api/src/bootstrap/assertProbeKeyEntry.ts`, called from `createKillSwitch.ts` via `assertProbeKeyEntryFromEnv`) refuses to start when the kill switch is on and `PARMANA_API_KEYS` has no `kill-switch-probe` entry holding exactly `kill-switch:probe`. Removing the static entry without changing this check stops the kill switch from starting. Phase 5 must therefore do both in one change: remove the entry, and replace the check with the OIDC probe configuration check (the pinned claims are present and OIDC is enabled). Its unit tests change in the same commit. Do not merge the entry removal alone.
 
 ## 6. Failure modes
 
@@ -129,7 +129,7 @@ Failure should produce one alert, not repeated P1 issues. The existing "open an 
 ## 7. Risks
 
 - **New auth code in the critical path.** Mitigated by fail-closed defaults, pinned algorithms and claim checks, and by phase 2 running before any caller depends on it.
-- **Trust in GitHub's OIDC issuer.** Accepted as the trust root for this path. The repo's existing workflows (for example `release.yml` and the image workflows) request OIDC tokens for cloud access; reviewers should confirm that pattern and reuse its claim checks where they fit. I have not audited those workflows.
+- **Trust in GitHub's OIDC issuer.** Accepted as the trust root for this path. Checked: no workflow in this repo logs in to a cloud provider with OIDC (no `configure-aws-credentials`, `google-github-actions/auth` or `azure/login`). The four workflows that request `id-token: write` (`release.yml`, `server-image.yml`, `cli-image.yml`, `scorecard.yml`) use it for signing, not for accessing a service. So there is no existing Parmana-side OIDC verification to reuse, and this path is new code.
 - **Pins that are too tight.** Renaming the workflow file or changing the default branch breaks the probe. The pins are constants, so updating them is a reviewed change.
 - **A compromised `main` branch.** Anyone who can push to `main` can change the workflow and mint a probe token. This is no worse than today, where anyone with that access can read `PARMANA_PROBE_KEY` from a workflow run. Branch protection on `main` is a prerequisite and should be checked.
 
@@ -139,7 +139,7 @@ Failure should produce one alert, not repeated P1 issues. The existing "open an 
 2. Is a live config flag for disabling OIDC available in production, or is a redeploy the only kill path?
 3. Should the OIDC identity also be allowed for `POST /execute` with other capabilities later, or stay fixed to `kill-switch:probe`? This doc assumes fixed.
 4. Who owns the JWKS cache policy and the claim-pin constants after this lands?
-5. Is branch protection on `main` (required reviews and no direct push) already enforced? Section 7 depends on it.
+5. Branch protection on `main` is **not enabled**. The GitHub API returns `404 Branch not protected` for `pavancharak/parmana-core` `main`. Section 7 depends on it, so enabling it (required reviews, no direct push, required status checks) is a prerequisite for this design, and should happen regardless of the design.
 
 ## 9. Test plan
 
