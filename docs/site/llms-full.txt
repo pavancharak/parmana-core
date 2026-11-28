@@ -8665,10 +8665,12 @@ Follow [Production deployment](/deployment/production) for the full procedure.
 
 ## Caller authentication
 
-| Variable                | Required                                         | Default | Values or format                         | What it does                                                                                                                                                                           |
-| ----------------------- | ------------------------------------------------ | ------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PARMANA_API_KEYS`      | Always, unless `PARMANA_AUTH_DISABLED` is `true` | Empty   | JSON array, see below                    | The callers allowed to use the API. The server refuses to start if it is empty or unset.                                                                                               |
-| `PARMANA_AUTH_DISABLED` | No                                               | Off     | Only the exact string `true` turns it on | Accepts every request with no caller authentication. For local development only. Never set it in a real deployment. `GET /ready` reports `authDisabled` so monitoring can alert on it. |
+| Variable                      | Required                                         | Default | Values or format                         | What it does                                                                                                                                                                           |
+| ----------------------------- | ------------------------------------------------ | ------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PARMANA_API_KEYS`            | Always, unless `PARMANA_AUTH_DISABLED` is `true` | Empty   | JSON array, see below                    | The callers allowed to use the API. The server refuses to start if it is empty or unset.                                                                                               |
+| `PARMANA_AUTH_DISABLED`       | No                                               | Off     | Only the exact string `true` turns it on | Accepts every request with no caller authentication. For local development only. Never set it in a real deployment. `GET /ready` reports `authDisabled` so monitoring can alert on it. |
+| `PARMANA_PROBE_OIDC_ENABLED`  | No                                               | Off     | Only the exact string `true` turns it on | Lets the kill-switch probe authenticate with a short-lived GitHub Actions OIDC token instead of a static key. See `docs/internal/designs/PROBE-OIDC-AUTH.md`.                          |
+| `PARMANA_PROBE_REPOSITORY_ID` | Only when `PARMANA_PROBE_OIDC_ENABLED` is `true` | Empty   | Digits only, for example `1424855835`    | The numeric id of the repository, pinned in the OIDC token check. The server refuses to start if it is missing or not digits only.                                                     |
 
 ### The format of `PARMANA_API_KEYS`
 
