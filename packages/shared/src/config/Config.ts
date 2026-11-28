@@ -318,6 +318,19 @@ export interface ApiAuthConfig {
   readonly keys: readonly ApiKeyEntry[];
 
   readonly disabled: boolean;
+
+  /**
+   * GitHub Actions OIDC acceptance for the kill-switch probe. Off unless
+   * PARMANA_PROBE_OIDC_ENABLED is "true". See docs/internal/designs/PROBE-OIDC-AUTH.md.
+   */
+  readonly probeOidc?: ProbeOidcConfig;
+}
+
+export interface ProbeOidcConfig {
+  readonly enabled: boolean;
+
+  /** Numeric id of the repository, from PARMANA_PROBE_REPOSITORY_ID. */
+  readonly repositoryId: string | undefined;
 }
 
 /**
@@ -492,6 +505,13 @@ export function loadConfig(): Readonly<Config> {
       keys: parseApiKeys(process.env.PARMANA_API_KEYS),
 
       disabled: process.env.PARMANA_AUTH_DISABLED === "true",
+
+      probeOidc: Object.freeze({
+        enabled: process.env.PARMANA_PROBE_OIDC_ENABLED === "true",
+
+        repositoryId:
+          process.env.PARMANA_PROBE_REPOSITORY_ID?.trim() || undefined,
+      }),
     }),
 
     rateLimit: Object.freeze({
