@@ -658,9 +658,13 @@ live service referenced `AWS_ROLE_ARN` or the key before deleting them.
 - Record the output of the targeted `terraform apply` for the alias and the role policy, and the commit that changed the
   state.
 - Set `secondary_key_secret_name` and `secret_key_admin_arn` in `prod.tfvars`, so a full plan can run without `-target`.
-- Check the `DeleteAlias` event and identify the second key that was scheduled for deletion. Cancel its deletion if
-  signed evidence needs it.
-- Confirm no live service used `parmana-apprunner-*`, `dip-api-signer-prod` or `dip-ecs-execution-prod`.
+- Two `DeleteAlias` events by the root user, on 2026-11-27 at 05:43 IST, are confirmed. Key `7b0c7156` (ap-south-1)
+  is restored. The two keys scheduled in `us-east-1`, `af7f0ef1-191b-4c80-a1d4-f05009604a59` and
+  `24b750e9-5487-4943-87bb-48c06914fac7`, are still `PendingDeletion`, due 2026-12-04. Their state needs checking, and
+  the owner must decide whether to cancel their deletion. Cancel it if any signed evidence needs them.
+- Management-event CloudTrail shows no use of `parmana-apprunner-instance`, `parmana-apprunner-ecr-access`,
+  `dip-api-signer-prod` or `dip-ecs-execution-prod` after they were created. Data events were not checked, and the
+  owner should confirm the result.
 - Decide whether the teardown was intended. The owner has not yet said so.
 - Restore any other permission policies the role had. The restored role has none, and the Terraform code only covers the
   signing-key and secret policies.
