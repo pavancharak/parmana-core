@@ -39,7 +39,10 @@ export class MemoryInboundCheckRepository implements InboundCheckRepository {
     // store gets the second case from its unique constraint inside one transaction; this must match it.
     const batchNonces = new Set<string>();
     for (const approval of approvals) {
-      if (this.consumedNonces.has(approval.nonce) || batchNonces.has(approval.nonce)) {
+      if (
+        this.consumedNonces.has(approval.nonce) ||
+        batchNonces.has(approval.nonce)
+      ) {
         throw new ApprovalAlreadyUsedError(approval.nonce);
       }
       batchNonces.add(approval.nonce);
