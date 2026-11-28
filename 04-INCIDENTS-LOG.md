@@ -683,6 +683,10 @@ live service referenced `AWS_ROLE_ARN` or the key before deleting them.
 - Management-event CloudTrail shows no use of `parmana-apprunner-instance`, `parmana-apprunner-ecr-access`,
   `dip-api-signer-prod` or `dip-ecs-execution-prod` after they were created. Data events were not checked, and the
   owner should confirm the result.
+- Organization `o-ue5snvmsp0` was created on 2026-11-27 at 05:53 IST by the root user. The owner confirmed on 2026-11-28
+  that the organization was created by them. The organization contains only the management account, named "Parmana".
+  Two `CreateAccount` requests at 05:55 IST failed with `ConstraintViolationException` (account limit reached), so no
+  member account was created.
 - Decide whether the teardown was intended. The owner has not yet said so.
 - Restore any other permission policies the role had. The restored role has none, and the Terraform code only covers the
   signing-key and secret policies.
