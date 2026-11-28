@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evidence | Parmana</title>
+<meta name="description" content="Parmana keeps signed records of every authorization decision and execution, which an auditor or customer can verify without access to your systems.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html" aria-label="Parmana home">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#F5F3FF" stroke="#1A1A1A" stroke-width="2"/><circle cx="32" cy="32" r="24" fill="none" stroke="#6366F1" stroke-width="1.5"/><text x="32" y="43" text-anchor="middle" font-family="Noto Sans Devanagari, Arial, sans-serif" font-size="30" fill="#1A1A1A">प्र</text></svg>
+      Parmana
+    </a>
+    <nav class="nav">
+      <a href="how-it-works.html">How it works</a>
+      <a href="evidence.html" aria-current="page">Evidence</a>
+      <a href="industries.html">Industries</a>
+      <a href="compare.html">Compare</a>
+      <a href="status.html">Status</a>
+      <a href="docs.html">Docs</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap page-hero">
+    <p class="eyebrow">Evidence</p>
+    <h1>Evidence that someone else can check.</h1>
+    <p class="sub">Each decision and each release leaves a signed record. An auditor, regulator or customer can verify it without access to your systems and without trusting Parmana.</p>
+  </div>
+
+  <div class="wrap">
+    <section class="block">
+      <h2>What a record contains</h2>
+      <div class="grid three">
+        <div class="card"><h3>The request</h3><p>What the agent asked to do, with its exact parameters and amount.</p></div>
+        <div class="card"><h3>The decision</h3><p>Whether the action was authorized, which rule applied, and any approval that was required and given.</p></div>
+        <div class="card"><h3>The release</h3><p>What actually ran, or the refusal if nothing ran. Each record is hashed and signed.</p></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>How verification works</h2>
+      <p class="lede">Verification runs four checks. All four always run, and a single report names every check that fails, not just the first.</p>
+      <div class="grid two">
+        <div class="card"><span class="num">1</span><h3>Integrity</h3><p>The record's content still matches its recorded hash.</p></div>
+        <div class="card"><span class="num">2</span><h3>Signature</h3><p>The signature verifies against the public key the record names.</p></div>
+        <div class="card"><span class="num">3</span><h3>Authorization binding</h3><p>Every approved execution carries the authorization it relied on. Refusals are recorded as refusals.</p></div>
+        <div class="card"><span class="num">4</span><h3>Chain integrity</h3><p>Chained records link to their predecessor, so changing or removing one is detectable. Records written before chaining began are not covered.</p></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>Check a record yourself</h2>
+      <p class="lede">You do not need to install Parmana to verify a record. You need the record and the public key you trust.</p>
+      <div class="cta">
+        <a class="btn primary" href="docs.html">Verification documentation</a>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="note">Verification shows that a record is intact and was signed by the key it names. It does not show that the key's owner is trustworthy, and it cannot prove an action happened outside the gateway. Key management is your responsibility. Parmana's key custody is local files or AWS KMS today.</div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© Parmana Systems. Apache License 2.0.</span>
+    <span><a href="status.html">Status</a><a href="docs.html">Docs</a><a href="https://github.com/pavancharak/parmana-core">GitHub</a></span>
+  </div>
+</footer>
+</body>
+</html>

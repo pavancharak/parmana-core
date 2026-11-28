@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Status and limitations | Parmana</title>
+<meta name="description" content="What Parmana does today, what it does not do, and what is still being built.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html" aria-label="Parmana home">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#F5F3FF" stroke="#1A1A1A" stroke-width="2"/><circle cx="32" cy="32" r="24" fill="none" stroke="#6366F1" stroke-width="1.5"/><text x="32" y="43" text-anchor="middle" font-family="Noto Sans Devanagari, Arial, sans-serif" font-size="30" fill="#1A1A1A">प्र</text></svg>
+      Parmana
+    </a>
+    <nav class="nav">
+      <a href="how-it-works.html">How it works</a>
+      <a href="evidence.html">Evidence</a>
+      <a href="industries.html">Industries</a>
+      <a href="compare.html">Compare</a>
+      <a href="status.html" aria-current="page">Status</a>
+      <a href="docs.html">Docs</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap page-hero">
+    <p class="eyebrow">Status</p>
+    <h1>Parmana is a prototype.</h1>
+    <p class="sub">We would rather you know the limits now than find them in production. This page lists what works, what does not, and what is not yet built.</p>
+  </div>
+
+  <div class="wrap">
+    <section class="block">
+      <h2>Available today</h2>
+      <ul class="plain">
+        <li>Declared, versioned authority rules, checked per action with its exact parameters. No matching rule means refusal.</li>
+        <li>Signed human approval bound to one action, resource and amount, single use and expiring.</li>
+        <li>Credential isolation on supported paths: the gateway holds connector credentials.</li>
+        <li>Signed execution and refusal records, with four verification checks run on each verification.</li>
+        <li>Maker checker for policy, approver and connector changes.</li>
+        <li>Open source under the Apache License 2.0, including the server and the client and connector SDKs.</li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h2>Known limitations</h2>
+      <ul class="plain">
+        <li><strong>No text inspection.</strong> Parmana does not detect prompt injection, toxic output or data leakage in model text.</li>
+        <li><strong>Covers only routed actions.</strong> There is no network-level enforcement.</li>
+        <li><strong>Human approval on every action that needs it.</strong> Latency is by design.</li>
+        <li><strong>Declared facts are not checked against your systems</strong> unless a policy names a business signal source. No shipped policy does yet.</li>
+        <li><strong>Approvers are not yet scoped</strong> to particular actions or policies.</li>
+        <li><strong>No ready-made connectors.</strong> Use a registered external endpoint or write a connector.</li>
+        <li><strong>No metrics, tracing or dashboards yet.</strong> Key custody is local files or AWS KMS only.</li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h2>Not yet built</h2>
+      <p class="lede">The roadmap in the documentation lists planned work. Anything not in this list is not available, whatever a slide or a conversation suggests.</p>
+      <div class="cta"><a class="btn ghost" href="https://docs.parmanasystems.com/roadmap">Read the roadmap</a></div>
+    </section>
+
+    <section class="block">
+      <div class="note">Before you rely on Parmana for a regulated process, get an independent review of your own configuration, your key custody and your deployment. Report security issues through the process in <a href="https://github.com/pavancharak/parmana-core/blob/main/SECURITY.md">SECURITY.md</a>.</div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© Parmana Systems. Apache License 2.0.</span>
+    <span><a href="status.html">Status</a><a href="docs.html">Docs</a><a href="https://github.com/pavancharak/parmana-core">GitHub</a></span>
+  </div>
+</footer>
+</body>
+</html>
