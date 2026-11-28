@@ -1,8 +1,8 @@
-# RFC-0031 — Cross-repository conformance vectors and live smoke test
+# RFC-0033 — Cross-repository conformance vectors and live smoke test
 
 Status: Proposed (draft, not yet reviewed). The decisions under "Decisions for the owner" need the owner's answer before Phase 1.
 
-Number: this number is also used by `docs/internal/rfcs/RFC-0031-Standing-Approvals-And-Tenants.md`, and RFC-0032 is used by `docs/internal/rfcs/RFC-0032-Tenant-Isolation.md`. Renumbering this RFC is an owner decision; until it is made, cite it as "RFC-0031 (cross-repository conformance, new-docs-2026-11)".
+Number: renumbered from RFC-0031 on 2026-11-28, which is used by `docs/internal/rfcs/RFC-0031-Standing-Approvals-And-Tenants.md`. RFC-0032 is used by `docs/internal/rfcs/RFC-0032-Tenant-Isolation.md`, so this is RFC-0033.
 
 Created: 2026-11-27
 
@@ -70,4 +70,4 @@ The file is published with the SDK release and is named by core version. Core's 
 # Progress
 
 - 2026-11-27: draft written after the 27 November Dependabot review (connectors #94, connect #58 unverified against core).
-- 2026-11-28: review. Corrected the reference to section 8, the location of the fixtures header, and recorded the number clash with RFC-0031 (Standing Approvals) and RFC-0032 (Tenant Isolation) as an open owner decision.
+- 2026-11-28: review. Corrected the reference to section 8 and the location of the fixtures header. Renumbered from RFC-0031 to RFC-0033, as the owner decided, because RFC-0031 and RFC-0032 are taken.
