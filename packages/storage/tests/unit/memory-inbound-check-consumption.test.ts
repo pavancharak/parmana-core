@@ -63,3 +63,22 @@ describe("MemoryInboundCheckRepository.appendConsumingApprovals (G-143, O1)", ()
     ).resolves.toBeUndefined();
   });
 });
+
+describe("MemoryInboundCheckRepository.appendConsumingApprovals, duplicate nonce in one batch", () => {
+  it("refuses one approval named twice in the same decision, and records nothing", async () => {
+    const repo = new MemoryInboundCheckRepository();
+    await expect(
+      repo.appendConsumingApprovals(record("chk-dup"), [
+        { nonce: "n-once", expiresAt: "2026-11-02T10:10:00.000Z" },
+        { nonce: "n-once", expiresAt: "2026-11-02T10:10:00.000Z" },
+      ]),
+    ).rejects.toBeInstanceOf(ApprovalAlreadyUsedError);
+    expect(await repo.findById("chk-dup")).toBeNull();
+    // The refused batch consumed nothing, so the approval is still usable by a valid decision.
+    await expect(
+      repo.appendConsumingApprovals(record("chk-ok"), [
+        { nonce: "n-once", expiresAt: "2026-11-02T10:10:00.000Z" },
+      ]),
+    ).resolves.toBeUndefined();
+  });
+});
