@@ -5,119 +5,218 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Parmana | Independent evidence that AI followed your policies</title>
 <meta name="description" content="Parmana independently verifies whether AI agents acted within the authority your business defined, and binds that decision to tamper-evident evidence of what actually executed.">
-<link rel="stylesheet" href="styles.css">
+<style>
+  :root {
+    --bg: #FAFAFA;
+    --surface: #FFFFFF;
+    --ink: #1A1A1A;
+    --muted: #55556A;
+    --line: #E4E4EC;
+    --accent: #6366F1;
+    --accent-soft: #F5F3FF;
+    --radius: 12px;
+    --max: 1080px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F0F14;
+      --surface: #17171F;
+      --ink: #F2F2F7;
+      --muted: #A3A3B8;
+      --line: #2A2A36;
+      --accent: #8B8CF8;
+      --accent-soft: #1E1D2E;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F0F14;
+    --surface: #17171F;
+    --ink: #F2F2F7;
+    --muted: #A3A3B8;
+    --line: #2A2A36;
+    --accent: #8B8CF8;
+    --accent-soft: #1E1D2E;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  a { color: var(--accent); }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 16px; }
+
+  header.top {
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+    position: sticky; top: 0; z-index: 5;
+  }
+  .top .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--ink); text-decoration: none; font-size: 18px; }
+  .brand svg { width: 32px; height: 32px; }
+  nav a { color: var(--muted); text-decoration: none; margin-left: 20px; font-size: 14px; }
+  nav a:hover { color: var(--ink); }
+
+  .hero { padding: 88px 0 72px; }
+  .eyebrow { color: var(--accent); font-weight: 600; font-size: 14px; letter-spacing: .04em; text-transform: uppercase; margin: 0 0 16px; }
+  h1 { font-size: clamp(32px, 5.2vw, 54px); line-height: 1.1; margin: 0 0 20px; letter-spacing: -0.02em; max-width: 18ch; }
+  .sub { font-size: clamp(18px, 2.2vw, 21px); color: var(--muted); max-width: 60ch; margin: 0 0 32px; }
+  .promise { font-size: 18px; font-weight: 600; margin: 0 0 32px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn { display: inline-block; padding: 12px 20px; border-radius: 8px; font-weight: 600; text-decoration: none; border: 1px solid var(--accent); }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn.ghost { color: var(--accent); background: transparent; }
+
+  section { padding: 64px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: clamp(24px, 3.4vw, 32px); line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.01em; }
+  .lede { color: var(--muted); max-width: 64ch; margin: 0 0 32px; }
+
+  .grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .grid.three { grid-template-columns: repeat(3, 1fr); } .grid.four { grid-template-columns: repeat(2, 1fr); } }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+  .card h3 { margin: 0 0 8px; font-size: 18px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .num { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 14px; margin-bottom: 12px; }
+
+  .stages { display: grid; gap: 12px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .stages { grid-template-columns: repeat(4, 1fr); } }
+  .stage { border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; }
+  .stage strong { display: block; margin-bottom: 4px; }
+  .stage span { color: var(--muted); font-size: 15px; }
+
+  .example { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; }
+  .example p { margin: 0 0 12px; }
+  .example p:last-child { margin: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th, td { text-align: left; padding: 14px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; width: 32%; }
+  .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+
+  .callout { background: var(--accent-soft); border-radius: var(--radius); padding: 24px 28px; font-size: 18px; }
+  .callout strong { color: var(--accent); }
+
+  footer { border-top: 1px solid var(--line); padding: 32px 0; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+  footer a { color: var(--muted); margin-right: 16px; }
+
+  @media (max-width: 560px) {
+    nav a { margin-left: 12px; font-size: 13px; }
+    .hero { padding: 56px 0 48px; }
+  }
+</style>
 </head>
 <body>
 
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="index.html" aria-label="Parmana home">
+    <a class="brand" href="#top" aria-label="Parmana home">
       <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#F5F3FF" stroke="#1A1A1A" stroke-width="2"/><circle cx="32" cy="32" r="24" fill="none" stroke="#6366F1" stroke-width="1.5"/><text x="32" y="43" text-anchor="middle" font-family="Noto Sans Devanagari, Arial, sans-serif" font-size="30" fill="#1A1A1A">प्र</text></svg>
       Parmana
     </a>
-    <nav class="nav">
-      <a href="how-it-works.html">How it works</a>
-      <a href="evidence.html">Evidence</a>
-      <a href="industries.html">Industries</a>
-      <a href="compare.html">Compare</a>
-      <a href="status.html">Status</a>
-      <a href="docs.html">Docs</a>
+    <nav>
+      <a href="#how">How it works</a>
+      <a href="#proof">Evidence</a>
+      <a href="#compare">Compare</a>
+      <a href="#docs">Docs</a>
     </nav>
   </div>
 </header>
 
-<main>
+<main id="top">
   <div class="wrap hero">
     <p class="eyebrow">Parmana Systems</p>
     <h1>Independent evidence that AI followed your policies.</h1>
     <p class="sub">Know whether every AI action was authorized, within scope and executed as permitted, checked independently of the agent's own claims.</p>
-    <p style="font-size:18px;font-weight:600;margin-bottom:32px">Don't just trust that your AI followed the rules. Have evidence that it did.</p>
+    <p class="promise">Don't just trust that your AI followed the rules. Have evidence that it did.</p>
     <div class="cta">
-      <a class="btn primary" href="docs.html">Evaluate Parmana</a>
-      <a class="btn ghost" href="how-it-works.html">See how it works</a>
+      <a class="btn primary" href="#docs">Read the documentation</a>
+      <a class="btn ghost" href="#how">See how it works</a>
     </div>
   </div>
-
-  <div class="wrap">
-    <section class="block">
-      <p class="eyebrow">The problem</p>
-      <h2>Access is not authority.</h2>
-      <p class="lede">Access controls answer one question: can this agent reach this system? That matters, but it does not answer the question that matters when an agent is about to issue a refund or change a record: was this specific action, for this amount and in these circumstances, actually delegated to it?</p>
-      <div class="callout"><strong>Keep control when AI acts for your business.</strong> Parmana answers that question before the action runs, using rules your business writes.</div>
-    </section>
-
-    <section class="block">
-      <p class="eyebrow">What Parmana does</p>
-      <h2>Three capabilities, one record.</h2>
-      <p class="lede">Parmana does not record what an AI agent says it did. It checks each action against your authority, and binds that decision to evidence of what actually executed.</p>
-      <div class="grid three">
-        <div class="card">
-          <span class="num">1</span>
-          <h3>Independent verification</h3>
-          <p>Check whether an action was authorized against your policies, without relying on the agent's own claims.</p>
-        </div>
-        <div class="card">
-          <span class="num">2</span>
-          <h3>Execution evidence</h3>
-          <p>Establish what was requested, what was authorized and what actually ran, including refusals.</p>
-        </div>
-        <div class="card">
-          <span class="num">3</span>
-          <h3>Tamper-evident record</h3>
-          <p>Signed evidence that anyone can check offline, with only the public key they choose to trust.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="block">
-      <p class="eyebrow">How it works</p>
-      <h2>Four stages before an action runs.</h2>
-      <p class="lede">Each stage is built and tested. <a href="how-it-works.html">Read the detail</a>.</p>
-      <div class="stages">
-        <div class="stage"><strong>Declared</strong><span>Your authority is written as explicit, versioned rules: what each action may do, up to what amount, and when a person must approve.</span></div>
-        <div class="stage"><strong>Authorized</strong><span>Each proposed action is checked against those rules. If no rule matches, the action is refused.</span></div>
-        <div class="stage"><strong>Executed</strong><span>Only permitted actions pass the enforcement boundary. On supported paths the agent never holds the connector credentials.</span></div>
-        <div class="stage"><strong>Proven</strong><span>A signed record of the decision and the release, verifiable offline by anyone you choose to trust.</span></div>
-      </div>
-    </section>
-
-    <section class="block">
-      <p class="eyebrow">An example</p>
-      <h2>A refund that needed a manager.</h2>
-      <div class="example">
-        <p>A support agent asks to refund 4,000 to a customer. Your policy lets the agent refund up to 500 on its own. Above 500, it needs a signed approval from a named manager for that order and that amount.</p>
-        <p>Parmana refuses the request, so nothing is refunded. The manager signs an approval for that order and amount, valid for 15 minutes and usable once. The agent sends the request again. Parmana releases the refund, and the record shows the decision, the approval and the release.</p>
-      </div>
-    </section>
-
-    <section class="block">
-      <p class="eyebrow">Built for regulated business</p>
-      <h2>Where a record of authority matters.</h2>
-      <div class="grid three">
-        <div class="card"><h3>Banking</h3><p>Limits on payments, account changes and credit decisions, with a signed record for each one.</p></div>
-        <div class="card"><h3>Insurance</h3><p>Claims and settlements within the authority your claims policy delegates, and a record of any exception.</p></div>
-        <div class="card"><h3>Payments</h3><p>Refunds, payouts and reversals that need a named approver above a threshold.</p></div>
-      </div>
-      <p style="margin-top:20px"><a href="industries.html">See examples for each sector</a></p>
-    </section>
-
-    <section class="block">
-      <p class="eyebrow">Be clear about the limits</p>
-      <h2>Parmana is a prototype.</h2>
-      <p class="lede">It enforces authority for actions that pass through it. It does not read the text a model produces, and it does not replace access control, AI security or governance. <a href="status.html">Read the status and limitations</a> before you evaluate it.</p>
-      <div class="cta">
-        <a class="btn primary" href="docs.html">Evaluate Parmana</a>
-        <a class="btn ghost" href="compare.html">Compare with other tools</a>
-      </div>
-    </section>
-  </div>
 </main>
+
+<div class="wrap">
+  <section>
+    <h2>Keep control when AI acts for your business.</h2>
+    <p class="lede">Parmana independently verifies whether AI agents acted within the authority your business defined. Access controls only answer whether an agent can reach a system. Parmana answers whether this specific action, for this amount and in these circumstances, was delegated.</p>
+    <div class="grid three">
+      <div class="card">
+        <span class="num">1</span>
+        <h3>Independent verification</h3>
+        <p>Check whether an action was authorized against your policies, without relying on the AI agent's own claims.</p>
+      </div>
+      <div class="card">
+        <span class="num">2</span>
+        <h3>Execution evidence</h3>
+        <p>Establish what was requested, what was authorized and what actually ran.</p>
+      </div>
+      <div class="card">
+        <span class="num">3</span>
+        <h3>Tamper-evident record</h3>
+        <p>Produce signed evidence that anyone can check later, without trusting Parmana or the agent.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <h2>How it works</h2>
+    <p class="lede">Each action passes through four stages before it runs. Each stage is built and tested. Parmana is open source under the Apache License 2.0.</p>
+    <div class="stages">
+      <div class="stage"><strong>Declared</strong><span>Your institution writes its authority as explicit, versioned rules: what each action may do, up to what amount, and when a person must approve.</span></div>
+      <div class="stage"><strong>Authorized</strong><span>Each proposed action is checked against those rules. If no rule matches, the action is refused.</span></div>
+      <div class="stage"><strong>Executed</strong><span>Only permitted actions pass the enforcement boundary. On supported paths the agent never holds the connector credentials.</span></div>
+      <div class="stage"><strong>Proven</strong><span>A signed record of the decision and the release, which anyone can verify offline with the public key they choose to trust.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>An example</h2>
+    <p class="lede">A support agent asks to refund 4,000 to a customer.</p>
+    <div class="example">
+      <p>Your policy lets the agent refund up to 500 on its own. Above 500, it needs a signed approval from a named manager for that order and that amount.</p>
+      <p>Parmana refuses the request, so nothing is refunded. The manager reviews it and signs an approval for that order and amount, valid for 15 minutes and usable once. The agent sends the request again. Parmana releases the refund, and the record shows the decision, the approval and the release.</p>
+    </div>
+  </section>
+
+  <section id="proof">
+    <h2>What makes this important</h2>
+    <p class="lede">Parmana does not record what an AI agent says it did. It checks authorization independently and binds that decision to evidence of what actually executed.</p>
+    <div class="callout"><strong>Keep control when AI acts for your business.</strong> Parmana shows whether every AI action stayed within the authority you gave it, and gives you evidence you can check.</div>
+  </section>
+
+  <section id="compare">
+    <h2>How it compares</h2>
+    <p class="lede">Parmana sits between an agent's request and the system it would change. It is not a monitoring dashboard, a prompt filter or an access-control list.</p>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Access controls</th><td>Decide whether an agent can reach a system. They do not decide whether a specific action was delegated.</td></tr>
+        <tr><th>Logs and monitoring</th><td>Record what the agent reports, or what the system saw. Parmana checks the action against your rules before it runs.</td></tr>
+        <tr><th>Parmana</th><td>Checks each action against authority your institution defined, and produces signed evidence of the decision and the release.</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section id="docs">
+    <h2>Evaluate it</h2>
+    <p class="lede">Start with the documentation, then verify a record yourself. Parmana is at prototype stage.</p>
+    <div class="grid four">
+      <div class="card"><h3><a href="https://docs.parmanasystems.com/quickstart">Quickstart</a></h3><p>Run Parmana locally and make your first authorized action.</p></div>
+      <div class="card"><h3><a href="https://docs.parmanasystems.com/how-parmana-compares">How Parmana compares</a></h3><p>Where Parmana fits alongside access controls, logs and monitoring.</p></div>
+      <div class="card"><h3><a href="https://docs.parmanasystems.com/guides/verify-independently">Verify independently</a></h3><p>Check a signed record offline, with the public key you trust.</p></div>
+      <div class="card"><h3><a href="https://github.com/pavancharak/parmana-core">Source on GitHub</a></h3><p>Apache License 2.0. Read the code and the tests.</p></div>
+    </div>
+  </section>
+</div>
 
 <footer>
   <div class="wrap">
     <span>© Parmana Systems. Apache License 2.0.</span>
-    <span><a href="status.html">Status</a><a href="docs.html">Docs</a><a href="https://github.com/pavancharak/parmana-core">GitHub</a></span>
+    <span><a href="https://docs.parmanasystems.com/license">License</a><a href="https://github.com/pavancharak/parmana-core/blob/main/SECURITY.md">Security</a><a href="https://docs.parmanasystems.com/roadmap">Roadmap</a></span>
   </div>
 </footer>
+
 </body>
 </html>
