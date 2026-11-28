@@ -51,16 +51,16 @@ Nothing else in the middleware changes. The identity returned has the same shape
 
 The authenticator must check all of the following. Any failure returns `undefined` (unauthenticated), not an exception.
 
-| Check | Value required | Why |
-| --- | --- | --- |
-| Signature | Verified against GitHub's JWKS for `https://token.actions.githubusercontent.com` | Proves the token was issued by GitHub Actions |
-| `iss` | `https://token.actions.githubusercontent.com` | Issuer pin |
-| `aud` | A fixed Parmana audience, for example `https://parmana-api-real.vercel.app` | Stops tokens minted for another service being replayed here |
-| `exp`, `iat`, `nbf` | Current time within the window; token lifetime at most 10 minutes | Short-lived by construction |
-| `repository_id` | The numeric id of `pavancharak/parmana-core` | Stable id, not a name that can be reused after a rename or transfer |
-| `ref` | `refs/heads/main` | The probe runs only from `main`. A branch cannot mint a probe credential |
-| `job_workflow_ref` | `pavancharak/parmana-core/.github/workflows/kill-switch-probe.yml@refs/heads/main` | Pins the workflow file. Other workflows in the repo, even ones with the same permissions, get no access |
-| `event_name` | `schedule` or `workflow_dispatch` | Mirrors the workflow's triggers |
+| Check               | Value required                                                                     | Why                                                                                                     |
+| ------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Signature           | Verified against GitHub's JWKS for `https://token.actions.githubusercontent.com`   | Proves the token was issued by GitHub Actions                                                           |
+| `iss`               | `https://token.actions.githubusercontent.com`                                      | Issuer pin                                                                                              |
+| `aud`               | A fixed Parmana audience, for example `https://parmana-api-real.vercel.app`        | Stops tokens minted for another service being replayed here                                             |
+| `exp`, `iat`, `nbf` | Current time within the window; token lifetime at most 10 minutes                  | Short-lived by construction                                                                             |
+| `repository_id`     | The numeric id of `pavancharak/parmana-core`                                       | Stable id, not a name that can be reused after a rename or transfer                                     |
+| `ref`               | `refs/heads/main`                                                                  | The probe runs only from `main`. A branch cannot mint a probe credential                                |
+| `job_workflow_ref`  | `pavancharak/parmana-core/.github/workflows/kill-switch-probe.yml@refs/heads/main` | Pins the workflow file. Other workflows in the repo, even ones with the same permissions, get no access |
+| `event_name`        | `schedule` or `workflow_dispatch`                                                  | Mirrors the workflow's triggers                                                                         |
 
 The mapping from a valid token to a `CallerIdentity`:
 
@@ -115,14 +115,14 @@ Each phase is reversible, and the static key remains valid until phase 4.
 
 ## 6. Failure modes
 
-| Situation | Behaviour |
-| --- | --- |
-| GitHub OIDC endpoint down | Token request fails; the probe run fails visibly. Parmana is unaffected |
-| JWKS unreachable and no cache | Tokens rejected; probe fails with 401; Parmana still serves other callers |
-| Token from another workflow in the repo | Rejected by `job_workflow_ref` pin |
-| Token minted on a branch | Rejected by `ref` pin |
-| Repository renamed or transferred | `repository_id` still matches; review whether `ref`/`job_workflow_ref` pins still apply |
-| Config flag set to disable OIDC | Probe fails with 401 until re-enabled; this is the intended kill path |
+| Situation                               | Behaviour                                                                               |
+| --------------------------------------- | --------------------------------------------------------------------------------------- |
+| GitHub OIDC endpoint down               | Token request fails; the probe run fails visibly. Parmana is unaffected                 |
+| JWKS unreachable and no cache           | Tokens rejected; probe fails with 401; Parmana still serves other callers               |
+| Token from another workflow in the repo | Rejected by `job_workflow_ref` pin                                                      |
+| Token minted on a branch                | Rejected by `ref` pin                                                                   |
+| Repository renamed or transferred       | `repository_id` still matches; review whether `ref`/`job_workflow_ref` pins still apply |
+| Config flag set to disable OIDC         | Probe fails with 401 until re-enabled; this is the intended kill path                   |
 
 Failure should produce one alert, not repeated P1 issues. The existing "open an issue unless one is open" check in the workflow still applies.
 
