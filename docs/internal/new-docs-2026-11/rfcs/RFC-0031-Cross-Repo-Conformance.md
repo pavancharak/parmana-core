@@ -1,6 +1,8 @@
 # RFC-0031 — Cross-repository conformance vectors and live smoke test
 
-Status: Proposed (draft, not yet reviewed). Decisions in section 8 need the owner's decision before Phase 1.
+Status: Proposed (draft, not yet reviewed). The decisions under "Decisions for the owner" need the owner's answer before Phase 1.
+
+Number: this number is also used by `docs/internal/rfcs/RFC-0031-Standing-Approvals-And-Tenants.md`, and RFC-0032 is used by `docs/internal/rfcs/RFC-0032-Tenant-Isolation.md`. Renumbering this RFC is an owner decision; until it is made, cite it as "RFC-0031 (cross-repository conformance, new-docs-2026-11)".
 
 Created: 2026-11-27
 
@@ -18,7 +20,7 @@ This RFC proposes that parmana-core publish a versioned set of conformance vecto
 
 # Problem
 
-1. **The fixtures are a snapshot.** `parmana-connect/tests/fixtures/parmana-core` was generated on 2026-10-29. Its header says "Regenerate them from parmana-core, not by hand, when the format changes", but no script in either repository does that.
+1. **The fixtures are a snapshot.** `parmana-connect/tests/fixtures/parmana-core` was generated on 2026-10-29. The test that loads them, `parmana-connect/tests/core-fixtures.test.ts`, says "Regenerate them from parmana-core, not by hand, when the format changes", but no script in either repository does that.
 2. **Major-version bumps are not verified against core.** The 27 November 2026 Dependabot PRs moved `@parmana/crypto` from 0.1.1 to 5.0.0 (connectors #94) and `@parmana/envelope-verifier` from 0.1.0 to 5.0.0 (connect #58). Both pass the local test suites, but those suites check the connectors' own output and the old fixtures. Neither was checked against a release signed by the current core.
 3. **A live check needs an undocumented setup.** A local parmana-core instance (`npm run dev:setup`) refused an execution request from the dev caller because the caller is not permitted to assert the request's `principalId`. The authority grants and approval steps needed for one authorized execution are not written down anywhere a consumer can run them.
 4. **The verifier already does this, and nothing else does.** The offline verifier publishes test vectors that core's signing code generated. Connect and connectors do not use them.
@@ -68,3 +70,4 @@ The file is published with the SDK release and is named by core version. Core's 
 # Progress
 
 - 2026-11-27: draft written after the 27 November Dependabot review (connectors #94, connect #58 unverified against core).
+- 2026-11-28: review. Corrected the reference to section 8, the location of the fixtures header, and recorded the number clash with RFC-0031 (Standing Approvals) and RFC-0032 (Tenant Isolation) as an open owner decision.
