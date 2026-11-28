@@ -633,8 +633,10 @@ present from 2026-11-27 05:35 IST, when the teardown in INC-16 deleted the role 
 - Terraform in `infra/parmana-prod-signing` was initialised. A full plan was blocked: `prod.tfvars` does not set
   `secondary_key_secret_name` or `secret_key_admin_arn`, which the README says it should. A targeted plan for the alias and
   the role policy was proposed, but has not produced a result yet.
-- Last state checked: the endpoints still return `500`. At that point the alias was missing and the role had no permission
-  policies.
+- Terraform plan for the alias and the role policy: 2 to add, 0 to change, 0 to destroy. The plan was run with
+  `-target` for the two resources only, so the secret stack was not touched.
+- Service restored: `/health` and `/ready` return `200` and `/policies` returns `401` without credentials, checked on
+  2026-11-28. The `terraform apply` output has not been recorded in this entry yet.
 
 **Impact:** all production API requests failed from the time the role was deleted, or at least from 2026-11-28 19:18 IST
 when first observed. Execution authorisations, receipts and settlement confirmations that the API signs could not be
@@ -653,9 +655,9 @@ live service referenced `AWS_ROLE_ARN` or the key before deleting them.
 
 **Still open:**
 
-- Recreate `alias/parmana-prod` and attach the signing-key policy to the role. Terraform does this, but only after
-  `secondary_key_secret_name` and `secret_key_admin_arn` are set in `prod.tfvars`, or after a targeted plan.
-- Confirm `/health` returns `200`, and that `GET /policies` without credentials returns `401`.
+- Record the output of the targeted `terraform apply` for the alias and the role policy, and the commit that changed the
+  state.
+- Set `secondary_key_secret_name` and `secret_key_admin_arn` in `prod.tfvars`, so a full plan can run without `-target`.
 - Check the `DeleteAlias` event and identify the second key that was scheduled for deletion. Cancel its deletion if
   signed evidence needs it.
 - Confirm no live service used `parmana-apprunner-*`, `dip-api-signer-prod` or `dip-ecs-execution-prod`.
