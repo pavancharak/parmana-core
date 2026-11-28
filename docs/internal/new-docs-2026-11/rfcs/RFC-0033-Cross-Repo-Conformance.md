@@ -71,3 +71,4 @@ The file is published with the SDK release and is named by core version. Core's 
 
 - 2026-11-27: draft written after the 27 November Dependabot review (connectors #94, connect #58 unverified against core).
 - 2026-11-28: review. Corrected the reference to section 8 and the location of the fixtures header. Renumbered from RFC-0031 to RFC-0033, as the owner decided, because RFC-0031 and RFC-0032 are taken.
+- 2026-11-28: Phase 1 implemented in PR #812 (`claude/rfc-0033-phase1-vectors`): the vectors file `tests/conformance/vectors/parmana-core-5.0.0.json`, its generator, and a test that the committed file is byte-identical to a fresh build. The test key is a provisional fixed seed, pending the owner's decision. Publishing with the SDK release is not wired in yet.
